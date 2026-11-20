@@ -67,8 +67,10 @@ import { switchSceneCurrentAccount } from './accountsSwitcher';
 import {
   setCurrentKeychainVersion,
   setSensitiveSceneProtectionEnabled,
+  storeApiExpSettingData,
   type CurrentKeychainVersion,
 } from './appSettings';
+import { evaluateMaintenanceGate } from './maintenanceCommandGate';
 import { IS_IOS } from '@/core/native/utils';
 import { parseKeychainVersionDeepLinkValue } from '@/core/apis/keychainVersionShared';
 import RNHelpers from '@/core/native/RNHelpers';
@@ -120,6 +122,22 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'toggle-pager-offset-sampling'
     | 'toggle-home-chrome-bridge'
     | 'debug-import-test-accounts'
+    | 'debug-open-screen'
+    | 'debug-import-private-key'
+    | 'debug-dump-route'
+    | 'debug-export-history'
+    | 'debug-open-modal'
+    | 'debug-inject-approval'
+    | 'debug-dump-approval'
+    | 'debug-capture-requests'
+    | 'debug-disconnect-dapp'
+    | 'debug-set-current-account'
+    | 'debug-dapp-eval'
+    | 'debug-browser-tabs'
+    | 'debug-biometrics'
+    | 'debug-set-clipboard'
+    | 'debug-open-bridge-detail'
+    | 'debug-open-history-local-detail'
     | 'regression-scenario';
   target?: RabbyGoTarget;
   dappUrl?: string;
@@ -155,6 +173,89 @@ type OnParseUrlAndProcessAction = (payload: {
   debugLanguage?: string;
   /** Non-production only: address seeded by `debug-create-address`. */
   debugAddress?: string;
+  /**
+   * Non-production only: import private-key accounts through the same API the
+   * Import Private Key screen calls, after unlocking with the test password.
+   */
+  debugPrivateKeyImport?: {
+    keys: string[];
+    password?: string;
+  };
+  /** Non-production only: dump the current route's params to the sandbox. */
+  debugDumpRoute?: {
+    name?: string;
+  };
+  /** Non-production only: export an address's API history to the sandbox. */
+  debugExportHistory?: {
+    address?: string;
+    chain?: string;
+    days?: number;
+    pages?: number;
+    name?: string;
+  };
+  /** Non-production only: dump the current approval request to the sandbox. */
+  debugDumpApproval?: {
+    name?: string;
+  };
+  /** Non-production only: toggle raw provider-request capture. */
+  debugCaptureRequests?: {
+    on?: boolean;
+    allowAnyApproval?: boolean;
+  };
+  /** Non-production only: disconnect a dapp origin (broadcasts accountsChanged). */
+  debugDisconnectDapp?: {
+    origin?: string;
+  };
+  /** Non-production only: switch the app's current account by address. */
+  debugSetCurrentAccount?: {
+    address?: string;
+  };
+  /** Non-production only: inject JavaScript into the active dapp webview. */
+  debugDappEval?: {
+    code?: string;
+  };
+  /** Non-production only: list/activate/close dapp browser tabs. */
+  debugBrowserTabs?: {
+    action?: 'list' | 'activate' | 'close-all';
+    match?: string;
+  };
+  /** Non-production only: toggle biometrics auth. */
+  debugBiometrics?: {
+    on?: boolean;
+  };
+  /** Non-production only: write text to the device clipboard. */
+  debugSetClipboard?: {
+    text?: string;
+  };
+  /** Non-production only: open a global bottom-sheet modal by name. */
+  debugOpenModal?: {
+    modal?: string;
+    props?: Record<string, unknown>;
+    list?: boolean;
+  };
+  /** Non-production only: inject an approval request (SignTx / SignTypedData / ...). */
+  debugInjectApproval?: {
+    component?: string;
+    params?: Record<string, unknown>;
+    paramsFile?: string;
+    parseFile?: string;
+    parseCapture?: string;
+    origin?: string;
+    approvalType?: string;
+  };
+  /** Non-production only: open BridgeDetail from a real local+remote record. */
+  debugOpenBridgeDetail?: {
+    address?: string;
+    index?: number;
+  };
+  /** Non-production only: open HistoryLocalDetail from a real local tx group. */
+  debugOpenHistoryLocalDetail?: {
+    address?: string;
+    index?: number;
+    prefer?: 'pending' | 'completed';
+    /** Seed a synthetic pending local tx when the local store is empty. */
+    seed?: boolean;
+  };
   debugChainStatsLoading?: boolean;
   debugChainStatsLoadingForMs?: number;
   debugChainStatsLoadingOff?: boolean;
@@ -164,6 +265,20 @@ type OnParseUrlAndProcessAction = (payload: {
   debugHomeChromeBridge?: HomeChromeBridgeMode;
   /** Device path of the test-account list read by the import command. */
   debugImportAccountsPath?: string;
+  /** Screen-level test entry: open any navigator-registered screen. */
+  debugOpenScreen?: {
+    screen?: string;
+    params?: Record<string, unknown>;
+    /** Read route params from a dumped fixture instead of inline `params`. */
+    paramsFile?: string;
+    props?: Record<string, unknown>;
+    store?: Record<string, unknown>;
+    /** Sticky store patch: re-applied whenever the store's producers write. */
+    storePin?: Record<string, unknown>;
+    storePinClear?: boolean;
+    list?: boolean;
+    push?: boolean;
+  };
   regressionScenarioCommand?: RegressionScenarioCommand | null;
   regressionScenarioError?: string;
 }) => void;
@@ -395,6 +510,26 @@ function parseNonProductionMaintenanceLink(appLink: string) {
   const target = getRabbyGoTarget(urlInfo);
   const rabbyGoCmd = urlInfo.searchParams.get('_cmd');
 
+  // A debug link alone must never grant state / approval / biometric mutation
+  // authority. These commands only run while the persisted Screen E2E session
+  // is explicitly armed from Testkits → Dev switches on this device.
+  const maintenanceCommand = rabbyGoCmd || target || '';
+  const expiresAtRaw = urlInfo.searchParams.get('expiresAt');
+  const expiresAt = expiresAtRaw == null ? null : Number(expiresAtRaw);
+  const commandDecision = evaluateMaintenanceGate(maintenanceCommand, {
+    sessionArmed: storeApiExpSettingData.getScreenE2EEnabled(),
+    walletUnlocked: true,
+    expiresAt,
+  });
+  if (!commandDecision.allowed) {
+    console.warn(
+      '[useUniversalLinkOnTop] maintenance command rejected:',
+      maintenanceCommand,
+      commandDecision.reason,
+    );
+    return null;
+  }
+
   if (
     rabbyGoCmd === 'clear-app-cache' ||
     target === 'clear-app-cache' ||
@@ -509,6 +644,337 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
+  // Non-production only: open HistoryLocalDetail from the address's local
+  // transaction groups (the same `getList` the swap history popup uses).
+  // `?_cmd=debug-open-history-local-detail&address=0x..&index=0&prefer=pending`
+  if (
+    rabbyGoCmd === 'debug-open-history-local-detail' ||
+    target === 'debug-open-history-local-detail'
+  ) {
+    const indexRaw = Number(urlInfo.searchParams.get('index') || '0');
+    const preferRaw = urlInfo.searchParams.get('prefer');
+    return {
+      type: 'debug-open-history-local-detail',
+      debugOpenHistoryLocalDetail: {
+        address: urlInfo.searchParams.get('address') || undefined,
+        index: Number.isFinite(indexRaw)
+          ? Math.max(0, Math.trunc(indexRaw))
+          : 0,
+        prefer: preferRaw === 'pending' ? 'pending' : 'completed',
+        seed: ['1', 'true', 'yes'].includes(
+          (urlInfo.searchParams.get('seed') || '').toLowerCase(),
+        ),
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: open BridgeDetail from the address's real bridge
+  // history (local record + the openapi bridge record for the same tx id).
+  // `?_cmd=debug-open-bridge-detail&address=0x..&index=0`
+  if (
+    rabbyGoCmd === 'debug-open-bridge-detail' ||
+    target === 'debug-open-bridge-detail'
+  ) {
+    const indexRaw = Number(urlInfo.searchParams.get('index') || '0');
+    return {
+      type: 'debug-open-bridge-detail',
+      debugOpenBridgeDetail: {
+        address: urlInfo.searchParams.get('address') || undefined,
+        index: Number.isFinite(indexRaw)
+          ? Math.max(0, Math.trunc(indexRaw))
+          : 0,
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: capture the current route params so a real flow can
+  // be replayed later through `debug-open-screen&paramsFile=`.
+  // `?_cmd=debug-dump-route&name=bridge-detail`
+  if (rabbyGoCmd === 'debug-dump-route' || target === 'debug-dump-route') {
+    return {
+      type: 'debug-dump-route',
+      debugDumpRoute: {
+        name: urlInfo.searchParams.get('name') || undefined,
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: export an address's API history page by page so the
+  // host can turn real items into HistoryDetail fixtures.
+  // `?_cmd=debug-export-history&address=0x..&chain=eth&days=90&pages=50`
+  if (
+    rabbyGoCmd === 'debug-export-history' ||
+    target === 'debug-export-history'
+  ) {
+    const daysRaw = Number(urlInfo.searchParams.get('days') || '30');
+    const pagesRaw = Number(urlInfo.searchParams.get('pages') || '10');
+    return {
+      type: 'debug-export-history',
+      debugExportHistory: {
+        address: urlInfo.searchParams.get('address') || undefined,
+        chain: urlInfo.searchParams.get('chain') || undefined,
+        days:
+          Number.isFinite(daysRaw) && daysRaw > 0
+            ? Math.min(365, Math.trunc(daysRaw))
+            : 30,
+        pages:
+          Number.isFinite(pagesRaw) && pagesRaw > 0
+            ? Math.min(200, Math.trunc(pagesRaw))
+            : 10,
+        name: urlInfo.searchParams.get('name') || undefined,
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: toggle raw provider-request capture.
+  // `?_cmd=debug-capture-requests&on=1`
+  if (
+    rabbyGoCmd === 'debug-capture-requests' ||
+    target === 'debug-capture-requests'
+  ) {
+    return {
+      type: 'debug-capture-requests',
+      debugCaptureRequests: {
+        on: ['1', 'true', 'yes'].includes(
+          (urlInfo.searchParams.get('on') || '').toLowerCase(),
+        ),
+        allowAnyApproval: ['1', 'true', 'yes'].includes(
+          (urlInfo.searchParams.get('allowAnyApproval') || '').toLowerCase(),
+        ),
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: write text to the device clipboard.
+  // `?_cmd=debug-set-clipboard&text=<urlencoded>`
+  if (
+    rabbyGoCmd === 'debug-set-clipboard' ||
+    target === 'debug-set-clipboard'
+  ) {
+    return {
+      type: 'debug-set-clipboard',
+      debugSetClipboard: {
+        text: urlInfo.searchParams.get('text') || undefined,
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: toggle biometrics so signing falls back to the
+  // dev password. `?_cmd=debug-biometrics&on=0`
+  if (rabbyGoCmd === 'debug-biometrics' || target === 'debug-biometrics') {
+    return {
+      type: 'debug-biometrics',
+      debugBiometrics: {
+        on: ['1', 'true', 'yes'].includes(
+          (urlInfo.searchParams.get('on') || '').toLowerCase(),
+        ),
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: inspect or switch dapp browser tabs.
+  // `?_cmd=debug-browser-tabs&action=list|activate|close-all&match=safe.global`
+  if (rabbyGoCmd === 'debug-browser-tabs' || target === 'debug-browser-tabs') {
+    const actionRaw = urlInfo.searchParams.get('action') || 'list';
+    const action =
+      actionRaw === 'activate' || actionRaw === 'close-all'
+        ? actionRaw
+        : 'list';
+    return {
+      type: 'debug-browser-tabs',
+      debugBrowserTabs: {
+        action,
+        match: urlInfo.searchParams.get('match') || undefined,
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: run JS in the active dapp webview.
+  // `?_cmd=debug-dapp-eval&code=<urlencoded js>`
+  if (rabbyGoCmd === 'debug-dapp-eval' || target === 'debug-dapp-eval') {
+    return {
+      type: 'debug-dapp-eval',
+      debugDappEval: {
+        code: urlInfo.searchParams.get('code') || undefined,
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: switch the app's current account by exact address or
+  // by prefix/suffix match. `?_cmd=debug-set-current-account&address=0x5952..3ee7`
+  if (
+    rabbyGoCmd === 'debug-set-current-account' ||
+    target === 'debug-set-current-account'
+  ) {
+    return {
+      type: 'debug-set-current-account',
+      debugSetCurrentAccount: {
+        address: urlInfo.searchParams.get('address') || undefined,
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: disconnect a dapp origin so the next connect asks for
+  // an account again. `?_cmd=debug-disconnect-dapp&origin=https://opensea.io`
+  if (
+    rabbyGoCmd === 'debug-disconnect-dapp' ||
+    target === 'debug-disconnect-dapp'
+  ) {
+    return {
+      type: 'debug-disconnect-dapp',
+      debugDisconnectDapp: {
+        origin: urlInfo.searchParams.get('origin') || undefined,
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: dump the current approval request so a real dapp
+  // request can be turned into a fixture.
+  // `?_cmd=debug-dump-approval&name=opensea-sell`
+  if (
+    rabbyGoCmd === 'debug-dump-approval' ||
+    target === 'debug-dump-approval'
+  ) {
+    return {
+      type: 'debug-dump-approval',
+      debugDumpApproval: {
+        name: urlInfo.searchParams.get('name') || undefined,
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: open a global bottom-sheet modal by name.
+  // `?_cmd=debug-open-modal&modal=SIMPLE_CONFIRM&props={"title":"..."}`
+  if (rabbyGoCmd === 'debug-open-modal' || target === 'debug-open-modal') {
+    const parseProps = () => {
+      const raw = urlInfo.searchParams.get('props');
+      if (!raw) {
+        return undefined;
+      }
+      try {
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+          ? (parsed as Record<string, unknown>)
+          : undefined;
+      } catch {
+        console.warn('[debug-open-modal] invalid props JSON');
+        return undefined;
+      }
+    };
+    return {
+      type: 'debug-open-modal',
+      debugOpenModal: {
+        modal: urlInfo.searchParams.get('modal') || undefined,
+        props: parseProps(),
+        list: ['1', 'true', 'yes'].includes(
+          (urlInfo.searchParams.get('list') || '').toLowerCase(),
+        ),
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: inject an approval request exactly like the RPC flow.
+  // `?_cmd=debug-inject-approval&component=SignTx[&params=<json>|&paramsFile=<name>]`
+  if (
+    rabbyGoCmd === 'debug-inject-approval' ||
+    target === 'debug-inject-approval'
+  ) {
+    const parseApprovalParams = () => {
+      const raw = urlInfo.searchParams.get('params');
+      if (!raw) {
+        return undefined;
+      }
+      try {
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+          ? (parsed as Record<string, unknown>)
+          : undefined;
+      } catch {
+        console.warn('[debug-inject-approval] invalid params JSON');
+        return undefined;
+      }
+    };
+    return {
+      type: 'debug-inject-approval',
+      debugInjectApproval: {
+        component: urlInfo.searchParams.get('component') || undefined,
+        params: parseApprovalParams(),
+        paramsFile: urlInfo.searchParams.get('paramsFile') || undefined,
+        parseFile: urlInfo.searchParams.get('parseFile') || undefined,
+        parseCapture: urlInfo.searchParams.get('parseCapture') || undefined,
+        origin: urlInfo.searchParams.get('origin') || undefined,
+        approvalType: urlInfo.searchParams.get('approvalType') || undefined,
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: open any screen a navigator actually registers,
+  // straight from a deeplink. `screen` must exist in the generated registry;
+  // the optional JSON `params` / `store` are injected before navigating.
+  if (rabbyGoCmd === 'debug-open-screen' || target === 'debug-open-screen') {
+    const rawScreen = urlInfo.searchParams.get('screen') || undefined;
+    const wantsList = ['1', 'true', 'yes'].includes(
+      (urlInfo.searchParams.get('list') || '').toLowerCase(),
+    );
+    const parseJsonParam = (key: string) => {
+      const raw = urlInfo.searchParams.get(key);
+      if (!raw) {
+        return undefined;
+      }
+      try {
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+          ? (parsed as Record<string, unknown>)
+          : undefined;
+      } catch {
+        console.warn(
+          `[useUniversalLinkOnTop] debug-open-screen ignored invalid ${key} JSON`,
+        );
+        return undefined;
+      }
+    };
+
+    if (!rawScreen && !wantsList) {
+      console.warn(
+        '[useUniversalLinkOnTop] debug-open-screen requires ?screen=<id> (or ?list=1)',
+      );
+      return null;
+    }
+
+    // Plain navigation stays available, but injecting a store snapshot from a
+    // debug link must be armed locally (Screen E2E), same as the other state
+    // mutations above.
+    const injectsStore =
+      urlInfo.searchParams.has('store') ||
+      urlInfo.searchParams.has('storePin') ||
+      urlInfo.searchParams.has('storePinClear');
+    if (injectsStore && !storeApiExpSettingData.getScreenE2EEnabled()) {
+      console.warn(
+        '[useUniversalLinkOnTop] debug-open-screen store injection rejected: Screen E2E session is not armed',
+      );
+      return null;
+    }
+
+    return {
+      type: 'debug-open-screen',
+      debugOpenScreen: {
+        screen: rawScreen,
+        params: parseJsonParam('params'),
+        paramsFile: urlInfo.searchParams.get('paramsFile') || undefined,
+        props: parseJsonParam('props'),
+        store: parseJsonParam('store'),
+        storePin: parseJsonParam('storePin'),
+        storePinClear: ['1', 'true', 'yes'].includes(
+          (urlInfo.searchParams.get('storePinClear') || '').toLowerCase(),
+        ),
+        list: wantsList,
+        push: ['1', 'true', 'yes'].includes(
+          (urlInfo.searchParams.get('push') || '').toLowerCase(),
+        ),
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
   // Non-production only: force the UI language so layout bugs that only show up
   // with a long translation (QA 1352) can be reproduced without changing the
   // device settings. `?_cmd=debug-set-language&lang=pt-BR`.
@@ -609,6 +1075,35 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     return {
       type: 'debug-import-test-accounts',
       debugImportAccountsPath: path,
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: import private-key accounts exactly the way the
+  // Import Private Key screen does (unlock, then apiPrivateKey.importPrivateKey),
+  // so QA state can be rebuilt without tapping through the UI.
+  // `?_cmd=debug-import-private-key&keys=<hex>,<hex>&password=...`
+  if (
+    rabbyGoCmd === 'debug-import-private-key' ||
+    target === 'debug-import-private-key'
+  ) {
+    const rawKeys =
+      urlInfo.searchParams.get('keys') || urlInfo.searchParams.get('key') || '';
+    const keys = rawKeys
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean);
+    if (keys.length === 0) {
+      console.warn(
+        '[useUniversalLinkOnTop] debug-import-private-key needs ?keys=<hex>[,<hex>]',
+      );
+      return null;
+    }
+    return {
+      type: 'debug-import-private-key',
+      debugPrivateKeyImport: {
+        keys,
+        password: urlInfo.searchParams.get('password') || undefined,
+      },
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -873,6 +1368,19 @@ async function openRabbyGoTarget(target: RabbyGoTarget) {
 }
 
 const handleActions: OnParseUrlAndProcessAction = payload => {
+  const dispatchDecision = evaluateMaintenanceGate(payload.type, {
+    sessionArmed: storeApiExpSettingData.getScreenE2EEnabled(),
+    walletUnlocked: isKeyringUnlockedSnapshot() || isUnlockSessionValid(),
+  });
+  if (!dispatchDecision.allowed) {
+    console.warn(
+      '[useUniversalLinkOnTop] maintenance command rejected at dispatch:',
+      payload.type,
+      dispatchDecision.reason,
+    );
+    return;
+  }
+
   switch (payload.type) {
     case 'open-target': {
       const target = payload.target || 'home';
@@ -1203,6 +1711,43 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
         void openRabbyGoTarget(target);
       }, `debug-open-${payload.debugOpenTarget}`);
       break;
+    case 'debug-open-screen':
+      if (!isNonPublicProductionEnv || !payload.debugOpenScreen) {
+        return;
+      }
+      void import('@/devtools/screenRegistry')
+        .then(async module => {
+          const request = payload.debugOpenScreen!;
+          if (request.list) {
+            console.log(
+              '[debug-open-screen] registered screens:',
+              JSON.stringify(module.listRegisteredScreens()),
+            );
+            if (!request.screen) {
+              return;
+            }
+          }
+          if (!request.screen) {
+            return;
+          }
+          const opened = await module.openScreenForDebug({
+            screen: request.screen,
+            params: request.params,
+            paramsFile: request.paramsFile,
+            props: request.props,
+            store: request.store,
+            storePin: request.storePin,
+            storePinClear: request.storePinClear,
+            push: request.push,
+          });
+          console.log(
+            `[debug-open-screen] screen=${request.screen} opened=${opened}`,
+          );
+        })
+        .catch(error => {
+          console.error('[debug-open-screen] failed', error);
+        });
+      break;
     case 'debug-set-language':
       if (!isNonPublicProductionEnv || !payload.debugLanguage) {
         return;
@@ -1211,6 +1756,1004 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
         setAppLanguage(payload.debugLanguage!),
       );
       break;
+    case 'debug-open-history-local-detail':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const [
+            { transactionHistoryServiceApi },
+            { getSelectedBalanceAddressesSnapshot },
+            { naviPush },
+            { RootNames },
+            { HistoryItemCateType },
+            { toast },
+          ] = await Promise.all([
+            import('@/core/serviceApi/transactionHistory'),
+            import('@/store/balance'),
+            import('@/utils/navigation'),
+            import('@/constant/layout'),
+            import('@/types/history'),
+            import('@/components2024/Toast'),
+          ]);
+          const address = (
+            payload.debugOpenHistoryLocalDetail?.address ||
+            getSelectedBalanceAddressesSnapshot()[0] ||
+            ''
+          ).toLowerCase();
+          if (!address) {
+            throw new Error('no address available');
+          }
+          let { pendings, completeds } =
+            await transactionHistoryServiceApi.getList(address);
+          // The dispatch gate ran before these awaits; the session can be
+          // disarmed or the wallet locked while they are in flight, so the
+          // state-changing seed is checked again right before it runs.
+          const seedDecision = evaluateMaintenanceGate(
+            'debug-open-history-local-detail',
+            {
+              sessionArmed: storeApiExpSettingData.getScreenE2EEnabled(),
+              walletUnlocked:
+                isKeyringUnlockedSnapshot() || isUnlockSessionValid(),
+            },
+          );
+          if (
+            !seedDecision.allowed &&
+            payload.debugOpenHistoryLocalDetail?.seed
+          ) {
+            console.warn(
+              '[debug-open-history-local-detail] seed rejected after async:',
+              seedDecision.reason,
+            );
+            return;
+          }
+          if (
+            pendings.length === 0 &&
+            completeds.length === 0 &&
+            payload.debugOpenHistoryLocalDetail?.seed
+          ) {
+            // A locally-submitted transaction only exists after this install
+            // sends something. Seed the real store shape so the screen can be
+            // exercised without spending gas; it stays in the local store until
+            // the app data is cleared.
+            const nonce = Math.floor(Date.now() / 1000) % 100000;
+            const random = Math.random().toString(16).slice(2).padEnd(64, '0');
+            const seedTx = {
+              address,
+              chainId: 1,
+              nonce,
+              rawTx: {
+                chainId: 1,
+                from: address,
+                to: '0x000000000000000000000000000000000000dEaD',
+                value: '0x0',
+                nonce: `0x${nonce.toString(16)}`,
+                gasPrice: '0x3b9aca00',
+                gas: '0x5208',
+                data: '0x',
+              },
+              createdAt: Date.now(),
+              hash: `0x${random}`,
+              reqId: `debug-${Date.now()}`,
+              isPending: true,
+              gasTokenSymbol: 'ETH',
+              gasUSDValue: 0.01,
+              gasTokenCount: 0.0001,
+            } as never;
+            transactionHistoryServiceApi.setStore(draft => [...draft, seedTx]);
+            ({ pendings, completeds } =
+              await transactionHistoryServiceApi.getList(address));
+            console.log(
+              '[debug-open-history-local-detail] seeded pending tx',
+              JSON.stringify({ address, nonce }),
+            );
+          }
+          const list =
+            payload.debugOpenHistoryLocalDetail?.prefer === 'pending'
+              ? [...pendings, ...completeds]
+              : [...completeds, ...pendings];
+          const data = list[payload.debugOpenHistoryLocalDetail?.index ?? 0];
+          if (!data) {
+            throw new Error(
+              `no local tx groups (pending=${pendings.length}, completed=${completeds.length})`,
+            );
+          }
+          naviPush(RootNames.StackTransaction, {
+            screen: RootNames.HistoryLocalDetail,
+            params: {
+              isForMultipleAddress: false,
+              data,
+              type: HistoryItemCateType.Swap,
+              title: 'Transactions',
+            },
+          });
+          console.log(
+            '[debug-open-history-local-detail] opened',
+            JSON.stringify({
+              address,
+              pending: pendings.length,
+              completed: completeds.length,
+              isPending: (data as { isPending?: boolean }).isPending,
+            }),
+          );
+        } catch (error) {
+          console.warn('[debug-open-history-local-detail] failed', error);
+          const { toast } = await import('@/components2024/Toast');
+          toast.show(`open-history-local-detail failed: ${String(error)}`);
+        }
+      })();
+      break;
+    case 'debug-open-bridge-detail':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const [
+            { transactionHistoryServiceApi },
+            { getSelectedBalanceAddressesSnapshot },
+            { openapi },
+            bridgeHistoryUtils,
+            { openBridgeDetail },
+            { toast },
+          ] = await Promise.all([
+            import('@/core/serviceApi/transactionHistory'),
+            import('@/store/balance'),
+            import('@/core/request'),
+            import('@/screens/Transaction/utils/bridgeHistory'),
+            import('@/screens/Bridge/utils/navigation'),
+            import('@/components2024/Toast'),
+          ]);
+
+          const address = (
+            payload.debugOpenBridgeDetail?.address ||
+            getSelectedBalanceAddressesSnapshot()[0] ||
+            ''
+          ).toLowerCase();
+          if (!address) {
+            throw new Error('no address available');
+          }
+          const locals = (await transactionHistoryServiceApi.getBridgeTxHistory(
+            address,
+          )) as Array<{
+            hash: string;
+            fromToken?: { chain?: string };
+            fromChainId?: number;
+          }>;
+          const local = locals[payload.debugOpenBridgeDetail?.index ?? 0];
+
+          // Indexed bridge rows live in the history DB, not in the local
+          // pending-tx store; fall back to `cate_id === 'bridge'` rows there.
+          let candidates: Array<{ hash: string; chain: string }> = local
+            ? [{ hash: local.hash, chain: local.fromToken?.chain || '' }]
+            : [];
+          if (candidates.length === 0) {
+            const { HistoryItemEntity } = await import(
+              '@/databases/entities/historyItem'
+            );
+            const page = await HistoryItemEntity.getHistoryItemsPaginated(
+              [address],
+              { pageSize: 200 },
+            );
+            // Bridge rows are not stored with `cate_id === 'bridge'`; the
+            // bridge lookup resolves them from the tx id, so probe every recent
+            // row and let the bridge API decide which ones are bridges.
+            candidates = page.items
+              .filter(item => !!item.txHash)
+              .slice(0, 100)
+              .map(item => ({ hash: item.txHash, chain: item.chain }));
+          }
+          if (candidates.length === 0) {
+            throw new Error(
+              `no bridge history rows (local=${locals.length}) for ${address}`,
+            );
+          }
+
+          // The API caps `from_tx_ids`; probe recent hashes in small batches and
+          // stop at the first record that resolves to a bridge.
+          const hashes = [
+            ...new Set(candidates.map(item => item.hash.toLowerCase())),
+          ];
+          const BATCH = 10;
+          let history: Record<string, unknown> | undefined;
+          for (let start = 0; start < hashes.length; start += BATCH) {
+            const batch = hashes.slice(start, start + BATCH);
+            const { data } = await openapi.request.post<{
+              history_list?: Array<Record<string, unknown>>;
+            }>('/v1/bridge/history_list_by_tx_ids', {
+              from_tx_ids: batch,
+            });
+            const list = Array.isArray(data?.history_list)
+              ? data!.history_list
+              : [];
+            const found = list.find(item =>
+              candidates.some(
+                candidate =>
+                  bridgeHistoryUtils.bridgeSourceKey(item as never) ===
+                  bridgeHistoryUtils.historyTxKey(
+                    candidate.chain,
+                    candidate.hash,
+                  ),
+              ),
+            );
+            if (found) {
+              history = found;
+              break;
+            }
+          }
+          if (!history) {
+            throw new Error(
+              `bridge history API returned nothing (candidates=${candidates.length})`,
+            );
+          }
+          openBridgeDetail({
+            address,
+            history: history as never,
+            local: local as never,
+          });
+          console.log(
+            '[debug-open-bridge-detail] opened',
+            JSON.stringify({
+              address,
+              candidates: candidates.length,
+              chain: candidates[0]?.chain,
+              hasHistory: true,
+            }),
+          );
+        } catch (error) {
+          console.warn('[debug-open-bridge-detail] failed', error);
+          const { toast } = await import('@/components2024/Toast');
+          toast.show(`open-bridge-detail failed: ${String(error)}`);
+        }
+      })();
+      break;
+    case 'debug-dump-route':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const [{ getLatestNavigationName }, { navigationRef }] =
+            await Promise.all([
+              import('@/utils/navigation'),
+              import('@/utils/navigation'),
+            ]);
+          const currentRoute = navigationRef.getCurrentRoute();
+          const { dumpRouteParams } = await import(
+            '@/devtools/screenRegistry/routeFixtures'
+          );
+          await dumpRouteParams(
+            currentRoute?.name || getLatestNavigationName(),
+            currentRoute?.params as Record<string, unknown> | undefined,
+            payload.debugDumpRoute?.name,
+          );
+        } catch (error) {
+          console.warn(
+            '[useUniversalLinkOnTop] debug-dump-route failed',
+            error,
+          );
+        }
+      })();
+      break;
+    case 'debug-export-history':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const [
+            { openapi },
+            { getSelectedBalanceAddressesSnapshot },
+            { DocumentDirectoryPath, mkdir, writeFile },
+            { txResultToToHistoryDisplayItem },
+          ] = await Promise.all([
+            import('@/core/request'),
+            import('@/store/balance'),
+            import('@rabby-wallet/react-native-fs'),
+            import('@/utils/transaction'),
+          ]);
+          const address = (
+            payload.debugExportHistory?.address ||
+            getSelectedBalanceAddressesSnapshot()[0] ||
+            ''
+          ).toLowerCase();
+          if (!address) {
+            throw new Error('no address available');
+          }
+          const chain = payload.debugExportHistory?.chain;
+          const days = payload.debugExportHistory?.days ?? 30;
+          const maxPages = payload.debugExportHistory?.pages ?? 10;
+          const pageCount = 20;
+          const until = Math.floor(Date.now() / 1000) - days * 24 * 60 * 60;
+          const historyList: Record<string, any>[] = [];
+          const tokenDict: Record<string, any> = {};
+          const projectDict: Record<string, any> = {};
+          const cateDict: Record<string, any> = {};
+          const seen = new Set<string>();
+          let startTime = 0;
+          for (let page = 0; page < maxPages; page++) {
+            const res = (await openapi.listTxHistory({
+              id: address,
+              ...(chain ? { chain_id: chain } : {}),
+              start_time: startTime,
+              page_count: pageCount,
+            })) as any;
+            const list: Record<string, any>[] = res?.history_list ?? [];
+            Object.assign(tokenDict, res?.token_dict ?? {});
+            Object.assign(projectDict, res?.project_dict ?? {});
+            Object.assign(cateDict, res?.cate_dict ?? {});
+            for (const item of list) {
+              const key = String(item?.id ?? '');
+              if (!key || seen.has(key)) {
+                continue;
+              }
+              seen.add(key);
+              historyList.push(item);
+            }
+            const lastItem = list[list.length - 1];
+            if (!lastItem?.time_at || lastItem.time_at < until) {
+              break;
+            }
+            if (lastItem.time_at === startTime) {
+              break;
+            }
+            startTime = lastItem.time_at;
+            if (list.length < pageCount) {
+              break;
+            }
+          }
+          const displayItems = txResultToToHistoryDisplayItem({
+            address,
+            res: {
+              history_list: historyList,
+              token_dict: tokenDict,
+              project_dict: projectDict,
+              cate_dict: cateDict,
+            } as any,
+            pinedQueue: [],
+            customTxItemsMap: {},
+            transactions: [],
+          });
+          const dir = `${DocumentDirectoryPath}/screen-registry-fixtures`;
+          await mkdir(dir);
+          const fileName = (
+            payload.debugExportHistory?.name ||
+            `history-export-${address.slice(-6)}`
+          )
+            .replace(/[^\w.-]/g, '_')
+            .slice(0, 80);
+          const filePath = `${dir}/${fileName}.json`;
+          await writeFile(
+            filePath,
+            JSON.stringify(
+              {
+                address,
+                chain: chain ?? null,
+                days,
+                fetchedAt: Date.now(),
+                count: displayItems.length,
+                items: displayItems,
+              },
+              null,
+              2,
+            ),
+            'utf8',
+          );
+          const histogram: Record<string, number> = {};
+          for (const item of displayItems) {
+            const key = String(
+              (item as any)?.history_type ?? item?.historyType ?? 'unknown',
+            );
+            histogram[key] = (histogram[key] ?? 0) + 1;
+          }
+          console.log(
+            `[debug-export-history] ${displayItems.length} items -> ${fileName}.json`,
+            histogram,
+          );
+        } catch (error) {
+          console.warn('[debug-export-history] failed', error);
+        }
+      })();
+      break;
+    case 'debug-capture-requests':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const { setRequestCaptureEnabled, setAllowAnyApproval } =
+            await import('@/devtools/screenRegistry/requestCapture');
+          const on = payload.debugCaptureRequests?.on ?? false;
+          setRequestCaptureEnabled(on);
+          setAllowAnyApproval(
+            payload.debugCaptureRequests?.allowAnyApproval ?? false,
+          );
+          console.log(
+            '[debug-capture-requests]',
+            on ? 'enabled' : 'disabled',
+            'allowAnyApproval=',
+            payload.debugCaptureRequests?.allowAnyApproval ?? false,
+          );
+        } catch (error) {
+          console.warn('[debug-capture-requests] failed', error);
+        }
+      })();
+      break;
+    case 'debug-set-clipboard':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const text = payload.debugSetClipboard?.text;
+          if (!text) {
+            throw new Error('missing text');
+          }
+          const Clipboard = (await import('@react-native-clipboard/clipboard'))
+            .default;
+          Clipboard.setString(text);
+          console.log('[debug-set-clipboard] wrote', text.length, 'chars');
+        } catch (error) {
+          console.warn('[debug-set-clipboard] failed', error);
+        }
+      })();
+      break;
+    case 'debug-biometrics':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const { setBiometrics } = await import('@/hooks/biometrics');
+          const on = payload.debugBiometrics?.on ?? false;
+          setBiometrics(prev => ({ ...prev, authEnabled: on }));
+          console.log('[debug-biometrics] authEnabled=', on);
+        } catch (error) {
+          console.warn('[debug-biometrics] failed', error);
+        }
+      })();
+      break;
+    case 'debug-browser-tabs':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const { browserApis, getBrowserTabsSnapshot } = await import(
+            '@/hooks/browser/useBrowser'
+          );
+          const action = payload.debugBrowserTabs?.action ?? 'list';
+          if (action === 'close-all') {
+            browserApis.closeAllTabs();
+            console.log('[debug-browser-tabs] closed all');
+            return;
+          }
+          const state = getBrowserTabsSnapshot();
+          const summary = state.tabs.map(tab => ({
+            id: tab.id,
+            url: tab.initialUrl || tab.url,
+            isDapp: tab.isDapp,
+          }));
+          if (action === 'activate') {
+            const match = payload.debugBrowserTabs?.match;
+            const tab = state.tabs.find(item =>
+              String(item.initialUrl || item.url || '').includes(match || ''),
+            );
+            if (!tab) {
+              console.warn('[debug-browser-tabs] no match', match, summary);
+              return;
+            }
+            browserApis.switchToTab(tab.id);
+            console.log('[debug-browser-tabs] activated', tab.id, summary);
+            return;
+          }
+          console.log(
+            '[debug-browser-tabs] active=',
+            state.activeTabId,
+            summary,
+          );
+        } catch (error) {
+          console.warn('[debug-browser-tabs] failed', error);
+        }
+      })();
+      break;
+    case 'debug-dapp-eval':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const { runDebugDappEval } = await import('@/devtools/debugDappEval');
+          await runDebugDappEval(payload.debugDappEval?.code);
+          console.log('[debug-dapp-eval] dispatched');
+        } catch (error) {
+          console.warn('[debug-dapp-eval] failed', error);
+        }
+      })();
+      break;
+    case 'debug-set-current-account':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const [{ getAllAccountsToDisplay }, { setCurrentAccount }] =
+            await Promise.all([
+              import('@/core/apis/account'),
+              import('@/core/serviceApi/preference'),
+            ]);
+          const input = (payload.debugSetCurrentAccount?.address || '')
+            .toLowerCase()
+            .trim();
+          if (!input) {
+            throw new Error('missing address');
+          }
+          const accounts = await getAllAccountsToDisplay();
+          const match = accounts.find(account => {
+            const address = String(account.address || '').toLowerCase();
+            if (address === input) {
+              return true;
+            }
+            const [prefix, suffix] = input.split('...');
+            return Boolean(
+              prefix &&
+                suffix &&
+                address.startsWith(prefix) &&
+                address.endsWith(suffix),
+            );
+          });
+          if (!match) {
+            console.warn(
+              '[debug-set-current-account] available',
+              accounts
+                .map(account => `${account.address}:${account.brandName}`)
+                .join(', '),
+            );
+            throw new Error(`account not found: ${input}`);
+          }
+          await setCurrentAccount(match as any);
+          console.log(
+            '[debug-set-current-account] set',
+            match.address,
+            match.brandName,
+          );
+        } catch (error) {
+          console.warn('[debug-set-current-account] failed', error);
+        }
+      })();
+      break;
+    case 'debug-disconnect-dapp':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const { removeDapp } = await import('@/core/apis/dapp');
+          const origin = payload.debugDisconnectDapp?.origin;
+          if (!origin) {
+            throw new Error('missing origin');
+          }
+          await removeDapp(origin);
+          console.log('[debug-disconnect-dapp] removed', origin);
+        } catch (error) {
+          console.warn('[debug-disconnect-dapp] failed', error);
+        }
+      })();
+      break;
+    case 'debug-dump-approval':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const [
+            { notificationServiceApi },
+            { DocumentDirectoryPath, mkdir, writeFile },
+          ] = await Promise.all([
+            import('@/core/serviceApi/notification'),
+            import('@rabby-wallet/react-native-fs'),
+          ]);
+          const approval = await notificationServiceApi.getApproval();
+          if (!approval) {
+            console.warn('[debug-dump-approval] no current approval');
+            return;
+          }
+          const data = (approval as any).data;
+          const name = (
+            payload.debugDumpApproval?.name ||
+            `approval-${data?.approvalComponent || 'unknown'}`
+          )
+            .replace(/[^\w.-]/g, '_')
+            .slice(0, 80);
+          const dir = `${DocumentDirectoryPath}/screen-registry-fixtures`;
+          await mkdir(dir);
+          await writeFile(
+            `${dir}/${name}.json`,
+            JSON.stringify(
+              {
+                capturedAt: Date.now(),
+                approvalComponent: data?.approvalComponent,
+                origin: data?.origin,
+                approvalType: data?.approvalType,
+                params: data?.params,
+              },
+              null,
+              2,
+            ),
+            'utf8',
+          );
+          console.log(
+            '[debug-dump-approval] wrote',
+            name,
+            data?.approvalComponent,
+            data?.origin,
+          );
+        } catch (error) {
+          console.warn('[debug-dump-approval] failed', error);
+        }
+      })();
+      break;
+    case 'debug-open-modal':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const { createGlobalBottomSheetModal2024 } = await import(
+            '@/components2024/GlobalBottomSheetModal'
+          );
+          const { MODAL_CONFIGS } = await import(
+            '@/components2024/GlobalBottomSheetModal/utils'
+          );
+          if (payload.debugOpenModal?.list) {
+            const list = Object.entries(MODAL_CONFIGS).map(
+              ([modalName, cfg]) => ({
+                name: modalName,
+                snapPoints: (cfg as any)?.snapPoints,
+              }),
+            );
+            console.log(
+              `[debug-open-modal] ${list.length} modals`,
+              list.map(item => item.name).join(', '),
+            );
+            const { DocumentDirectoryPath, mkdir, writeFile } = await import(
+              '@rabby-wallet/react-native-fs'
+            );
+            const dir = `${DocumentDirectoryPath}/screen-registry-fixtures`;
+            await mkdir(dir);
+            await writeFile(
+              `${dir}/modals.json`,
+              JSON.stringify(list, null, 2),
+              'utf8',
+            );
+            return;
+          }
+          const name = payload.debugOpenModal?.modal;
+          if (!name) {
+            throw new Error('missing modal name');
+          }
+          if (!(name in MODAL_CONFIGS)) {
+            console.warn(
+              '[debug-open-modal] unknown modal',
+              name,
+              'available:',
+              Object.keys(MODAL_CONFIGS).join(', '),
+            );
+            return;
+          }
+          const id = createGlobalBottomSheetModal2024({
+            name: name as any,
+            ...(payload.debugOpenModal?.props ?? {}),
+          });
+          console.log('[debug-open-modal] opened', name, id);
+        } catch (error) {
+          console.warn('[debug-open-modal] failed', error);
+        }
+      })();
+      break;
+    case 'debug-inject-approval':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const [
+            { notificationServiceApi, unlockNotificationSync },
+            { getFallbackAccountSnapshot },
+            { getSelectedBalanceAddressesSnapshot },
+            { INTERNAL_REQUEST_ORIGIN },
+            { readRouteFixture, getRouteFixturePath },
+            { readFile },
+            {
+              setApprovalParseOverride,
+              clearApprovalParseOverride,
+              setApprovalParseCapture,
+            },
+          ] = await Promise.all([
+            import('@/core/serviceApi/notification'),
+            import('@/core/serviceApi/preference'),
+            import('@/store/balance'),
+            import('@/constant'),
+            import('@/devtools/screenRegistry/routeFixtures'),
+            import('@rabby-wallet/react-native-fs'),
+            import('@/devtools/screenRegistry/approvalParseOverride'),
+          ]);
+          const fallbackAccount = getFallbackAccountSnapshot();
+          const address = (
+            (payload.debugInjectApproval as any)?.address ||
+            fallbackAccount?.address ||
+            getSelectedBalanceAddressesSnapshot()[0] ||
+            ''
+          ).toLowerCase();
+          if (!address) {
+            throw new Error('no account available');
+          }
+          const account = fallbackAccount || {
+            address,
+            type: 'Simple Key Pair',
+            brandName: 'Simple Key Pair',
+            aliasName: '',
+          };
+          let params = payload.debugInjectApproval?.params as
+            | Record<string, unknown>
+            | undefined;
+          if (!params && payload.debugInjectApproval?.paramsFile) {
+            params = await readRouteFixture(
+              payload.debugInjectApproval.paramsFile,
+            );
+          }
+          if (!params) {
+            const component =
+              payload.debugInjectApproval?.component ?? 'SignTx';
+            const session = { origin: INTERNAL_REQUEST_ORIGIN };
+            if (component === 'SignText') {
+              // "Hello, Rabby!" as hex; SignText decodes hex2Text(data[0]).
+              params = {
+                data: ['0x48656c6c6f2c20526162627921', address],
+                session,
+                requestContext: { chainId: 1 },
+              };
+            } else if (component === 'SignTypedData') {
+              const typedData = {
+                types: {
+                  EIP712Domain: [
+                    { name: 'name', type: 'string' },
+                    { name: 'version', type: 'string' },
+                    { name: 'chainId', type: 'uint256' },
+                    { name: 'verifyingContract', type: 'address' },
+                  ],
+                  Person: [
+                    { name: 'name', type: 'string' },
+                    { name: 'wallet', type: 'address' },
+                  ],
+                  Mail: [
+                    { name: 'from', type: 'Person' },
+                    { name: 'to', type: 'Person' },
+                    { name: 'contents', type: 'string' },
+                  ],
+                },
+                primaryType: 'Mail',
+                domain: {
+                  name: 'Rabby Debug',
+                  version: '1',
+                  chainId: 1,
+                  verifyingContract:
+                    '0x0000000000000000000000000000000000000000',
+                },
+                message: {
+                  from: { name: 'Alice', wallet: address },
+                  to: { name: 'Bob', wallet: address },
+                  contents: 'Hello from the debug harness',
+                },
+              };
+              params = {
+                data: [address, JSON.stringify(typedData)],
+                session,
+                method: 'eth_signTypedData_v4',
+                requestContext: { chainId: 1 },
+              };
+            } else if (component === 'Connect') {
+              params = {
+                icon: 'https://app.uniswap.org/favicon.png',
+                origin: 'https://app.uniswap.org',
+              };
+            } else if (component === 'AddChain') {
+              params = {
+                data: [
+                  {
+                    chainId: '0x1',
+                    chainName: 'Rabby Debug Chain',
+                    rpcUrls: ['https://eth.llamarpc.com'],
+                    nativeCurrency: {
+                      name: 'Ether',
+                      symbol: 'ETH',
+                      decimals: 18,
+                    },
+                    blockExplorerUrls: ['https://etherscan.io'],
+                  },
+                ],
+                session,
+              };
+            } else if (component === 'AddAsset') {
+              params = {
+                data: {
+                  type: 'ERC20',
+                  options: {
+                    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+                    symbol: 'USDT',
+                    decimals: 6,
+                    image: '',
+                  },
+                },
+                session,
+                requestContext: { chainId: 1 },
+              };
+            } else {
+              params = {
+                data: [
+                  {
+                    from: address,
+                    to: '0x000000000000000000000000000000000000dEaD',
+                    value: '0x0',
+                    data: '0x',
+                    chainId: 1,
+                    gas: '0x5208',
+                    gasPrice: '0x3b9aca00',
+                  },
+                ],
+                session,
+                requestContext: { chainId: 1 },
+              };
+            }
+          }
+          if (payload.debugInjectApproval?.parseFile) {
+            const raw = await readFile(
+              getRouteFixturePath(payload.debugInjectApproval.parseFile),
+              'utf8',
+            );
+            const parsed = JSON.parse(raw);
+            setApprovalParseOverride({
+              typedDataKey: parsed.typedDataKey,
+              response: parsed.response,
+            });
+            console.log(
+              '[debug-inject-approval] parse override set',
+              payload.debugInjectApproval.parseFile,
+            );
+          } else {
+            clearApprovalParseOverride();
+          }
+          if (payload.debugInjectApproval?.parseCapture) {
+            setApprovalParseCapture(payload.debugInjectApproval.parseCapture);
+          }
+          // Recover from a stale modal handle left by a previous dismissal.
+          try {
+            await notificationServiceApi.clear();
+          } catch {
+            // ignore
+          }
+          // The notification service locks itself when a window opens and only
+          // the rpc flow unlocks it. A direct injection must do the same.
+          unlockNotificationSync();
+          const result = await notificationServiceApi.requestApproval({
+            approvalComponent:
+              payload.debugInjectApproval?.component ?? 'SignTx',
+            params,
+            account: account as any,
+            origin:
+              payload.debugInjectApproval?.origin ?? INTERNAL_REQUEST_ORIGIN,
+            approvalType:
+              payload.debugInjectApproval?.approvalType ??
+              payload.debugInjectApproval?.component ??
+              'SignTx',
+          } as any);
+          unlockNotificationSync();
+          console.log('[debug-inject-approval] resolved', result);
+        } catch (error) {
+          try {
+            const { unlockNotificationSync: unlock } = await import(
+              '@/core/serviceApi/notification'
+            );
+            unlock();
+          } catch {
+            // ignore
+          }
+          console.warn('[debug-inject-approval] failed', error);
+        }
+      })();
+      break;
+    case 'debug-import-private-key':
+      if (
+        !isNonPublicProductionEnv ||
+        !payload.debugPrivateKeyImport?.keys.length
+      ) {
+        return;
+      }
+      void (async () => {
+        const imported: Array<{ address: string; label?: string }> = [];
+        try {
+          const [{ verifyPasswordOrUnlock }, { importPrivateKey }, { toast }] =
+            await Promise.all([
+              import('@/core/apis/lock'),
+              import('@/core/apis/privateKey'),
+              import('@/components2024/Toast'),
+            ]);
+          const { REGRESSION_DEFAULT_PASSWORD } = await import(
+            '@/devtools/regressionScenarios/credentials.nonprod'
+          );
+          // The import API is guarded by ensureWalletUnlocked(); unlocking with
+          // the regression password first keeps the flow headless.
+          await verifyPasswordOrUnlock(
+            payload.debugPrivateKeyImport!.password ||
+              REGRESSION_DEFAULT_PASSWORD,
+          );
+          for (const key of payload.debugPrivateKeyImport!.keys) {
+            const accounts = await importPrivateKey(key);
+            const address = accounts?.[0]?.address || '';
+            imported.push({ address });
+            console.log('[debug-import-private-key] imported', address);
+          }
+          toast.success(
+            `debug import: ${imported.length} private-key account(s)`,
+          );
+        } catch (error) {
+          console.warn(
+            '[useUniversalLinkOnTop] debug-import-private-key failed',
+            imported.length,
+            String(error),
+          );
+          const { toast } = await import('@/components2024/Toast');
+          toast.show(
+            `import-private-key failed after ${imported.length}: ${String(
+              error,
+            )}`,
+          );
+        }
+      })();
+      break;
+    case 'debug-create-address':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          // Same data mutations as the onboarding UI, in the same order:
+          // the create-seed-phrase page prepares the wallet, then the
+          // set-password / create-address pages submit it (password, keyring,
+          // persisted accounts, backup reminder). No direct keyring shortcut.
+          const { prepareWalletCreation, completeWalletCreation } =
+            await import('@/hooks/address/useSetupWallet');
+          const { REGRESSION_DEFAULT_PASSWORD } = await import(
+            '@/devtools/regressionScenarios/credentials.nonprod'
+          );
+          const { toast } = await import('@/components2024/Toast');
+          const { default: accountStore } = await import('@/store/account');
+
+          const prepared = await prepareWalletCreation({ mode: 'create' });
+          // `PasswordFormValues` differs between stacks (develop still has
+          // `checked`, tmp carries `enableDataAnalysis`); pass the fields the
+          // submit path reads and let the call site stay version-agnostic.
+          await completeWalletCreation(prepared, {
+            password: REGRESSION_DEFAULT_PASSWORD,
+            confirmPassword: REGRESSION_DEFAULT_PASSWORD,
+            checked: true,
+            enableBiometrics: false,
+          } as any);
+          await accountStore.fetchAccounts({ force: true });
+          toast.success(`debug address created: ${prepared.address || ''}`);
+          apisHomeTabIndex.setTabIndex(1, true);
+        } catch (error) {
+          console.warn(
+            '[useUniversalLinkOnTop] debug-create-address failed',
+            error,
+          );
+          const { Alert } = await import('react-native');
+          Alert.alert('debug-create-address failed', String(error));
+          const { toast } = await import('@/components2024/Toast');
+          toast.show(`create-address failed: ${String(error)}`);
+        }
+      })();
     case 'toggle-pager-offset-sampling':
       if (!isNonPublicProductionEnv) {
         return;

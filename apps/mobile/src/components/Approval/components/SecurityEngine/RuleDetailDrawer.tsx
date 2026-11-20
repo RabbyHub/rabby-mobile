@@ -10,14 +10,13 @@ import { sortBy } from 'lodash';
 import SecurityLevel from './SecurityLevel';
 import { SecurityEngineLevelOrder } from '@/constant/security';
 
-import { Animated, Dimensions, Easing, StyleSheet, View } from 'react-native';
+import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { RcIconNavBack } from '@/components/WebView/icons';
 import { Text } from '@/components/Typography';
-
-const width = Dimensions.get('window').width;
 
 const getThresholdWrapperStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -68,7 +67,9 @@ const ThresholdItem = ({ rule, level }: { rule: RuleConfig; level: Level }) => {
     const levelThreshold = threshold[level];
     switch (rule.valueDefine.type) {
       case 'boolean':
-        if (value === true) return 'Yes';
+        if (value === true) {
+          return 'Yes';
+        }
         return 'No';
       case 'percent':
       case 'float':
@@ -203,6 +204,7 @@ const RuleDetailDrawer = ({
 
   const colors = useThemeColors();
   const styles = getRuleDetailDrawerWrapperStyles(colors);
+  const width = getDimensionsSnapshot('window').width;
 
   const transAnim = React.useRef(new Animated.Value(0));
   const trans = transAnim.current.interpolate({

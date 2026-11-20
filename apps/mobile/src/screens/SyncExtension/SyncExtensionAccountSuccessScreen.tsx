@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { KeyboardAvoidingView, Platform, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
@@ -26,6 +27,7 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { top, bottom } = useSafeAreaInsets();
+  const columnInset = useSystemColumnInset();
 
   const navigation = useRabbyAppNavigation();
 
@@ -155,7 +157,13 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.keyboardAvoidingView}>
+      style={[
+        styles.keyboardAvoidingView,
+        {
+          paddingLeft: columnInset.left,
+          paddingRight: columnInset.right,
+        },
+      ]}>
       <View style={[styles.container, { paddingTop: top }]}>
         {addressItems.length > 0 && (
           <WalletSuccessCard

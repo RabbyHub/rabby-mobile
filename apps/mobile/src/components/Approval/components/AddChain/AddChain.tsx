@@ -6,7 +6,8 @@ import { CustomTestnetForm } from '@/screens/CustomTestnet/components/CustomTest
 import { useCustomTestnetForm } from '@/screens/CustomTestnet/hooks/useCustomTestnetForm';
 import { Button } from '@/components/Button';
 import clsx from 'clsx';
-import { Dimensions, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
@@ -149,7 +150,7 @@ const getStyle = createGetStyles(colors => {
     },
     footer: {
       width: '100%',
-      maxWidth: Dimensions.get('window').width,
+      maxWidth: getDimensionsSnapshot('window').width,
       display: 'flex',
       flexDirection: 'row',
       gap: 16,
