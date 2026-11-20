@@ -69,14 +69,15 @@ function SwapBridgeActivationProbe({
   return null;
 }
 
-// The business form and its subscriptions stay unchanged; only the scene
-// activity reaches this boundary, so pager previews never activate quotes.
+// Keep the selected tab on navigation blur so returning preserves its form.
 const SwapBridgeRootPage = memo(function SwapBridgeRootPage({
   tab,
+  tabSelected,
   sceneActive,
   isForMultipleAddress,
 }: {
   tab: SwapBridgeTab;
+  tabSelected: boolean;
   sceneActive: boolean;
   isForMultipleAddress: boolean;
 }) {
@@ -92,6 +93,7 @@ const SwapBridgeRootPage = memo(function SwapBridgeRootPage({
     <Component
       disableHeaderRight
       disableAccountSwitcherModal
+      tabSelected={tabSelected}
       sceneActive={sceneActive}
       diagnosticActive={isNonProductionDiagnosticsEnabled && sceneActive}
     />
@@ -220,6 +222,7 @@ function SwapBridgeScreenContent({
       return (
         <SwapBridgeRootPage
           tab={tab}
+          tabSelected={activeTab === tab}
           sceneActive={isSwapBridgeSceneActive({
             activeTab,
             scene: tab,
