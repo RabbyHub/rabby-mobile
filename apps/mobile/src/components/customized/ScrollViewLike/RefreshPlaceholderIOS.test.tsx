@@ -16,6 +16,7 @@ jest.mock('react-native-reanimated', () => ({
   default: { createAnimatedComponent: (component: unknown) => component },
   useSharedValue: (value: unknown) =>
     require('react').useRef({ value }).current,
+  makeMutable: (value: unknown) => ({ value }),
   useAnimatedStyle: (callback: () => object) => callback(),
   interpolate: (
     value: number,

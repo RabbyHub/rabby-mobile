@@ -189,3 +189,14 @@ jest.mock('@sentry/react-native', () => {
 // ESM-only react-navigation module; tests that touch the navigator do not
 // render a native header and only need the module to resolve.
 jest.mock('@react-navigation/elements', () => ({ __esModule: true, default: {} }));
+
+// Reanimated ships an ESM build; the official mock keeps the worklet API
+// synchronous in tests that only render the surrounding screen.
+jest.mock('react-native-reanimated', () => {
+  const mock = require('react-native-reanimated/mock');
+  return {
+    ...mock,
+    // The app layout seeds its shared values at module scope.
+    makeMutable: (value) => ({ value }),
+  };
+});

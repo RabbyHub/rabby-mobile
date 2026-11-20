@@ -131,6 +131,7 @@ jest.mock('react-native-reanimated', () => {
       View: ReactNative.View,
     },
     cancelAnimation: jest.fn(),
+    makeMutable: (value: unknown) => ({ value }),
     dispatchCommand: (
       ref: { current: Record<string, (...args: unknown[]) => void> },
       name: string,
