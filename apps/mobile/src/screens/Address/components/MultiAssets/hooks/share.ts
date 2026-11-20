@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { useFocusedTab } from 'react-native-collapsible-tab-view';
+import { useCollapsibleScene } from '@rabby-wallet/rn-collapsible-scene-view';
 
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
@@ -13,7 +13,7 @@ import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 export const useIsFocusedCurrentTab = (tabName: TabName) => {
   const hasBeenFocusedRef = useRef(false);
-  const focusedTab = useFocusedTab();
+  const { activeTab: focusedTab } = useCollapsibleScene();
 
   const isFocused = useMemo(() => {
     const currentFocused = focusedTab === tabName;

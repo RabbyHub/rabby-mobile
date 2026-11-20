@@ -51,6 +51,10 @@ type Props<TExtra> = Omit<
       TokenProjectionSection<TExtra>
     >;
     ListComponent: React.ComponentType<any>;
+    /** Scene tab the produced list publishes its scroll offset for. */
+    sceneTabKey?: string;
+    /** Space the scene layers occupy above the first row. */
+    sceneContentInsetTop?: number;
     storeLabel: string;
   };
 
@@ -59,6 +63,8 @@ export function TokenProjectionSectionList<TExtra>({
   scene,
   sectionSpecs,
   ListComponent,
+  sceneTabKey,
+  sceneContentInsetTop,
   storeLabel,
   ...listProps
 }: Props<TExtra>) {
@@ -115,5 +121,13 @@ export function TokenProjectionSectionList<TExtra>({
     return nextSections;
   }, [sectionSpecs, segmentRows]);
 
-  return <ListComponent {...listProps} sections={sections} />;
+  return (
+    <ListComponent
+      {...listProps}
+      {...(sceneTabKey !== undefined && sceneContentInsetTop !== undefined
+        ? { contentInsetTop: sceneContentInsetTop, tabKey: sceneTabKey }
+        : {})}
+      sections={sections}
+    />
+  );
 }

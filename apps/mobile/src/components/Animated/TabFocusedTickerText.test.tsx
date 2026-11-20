@@ -30,6 +30,11 @@ jest.mock('react-native-collapsible-tab-view', () => ({
       () => mockFocusedTab,
     ),
 }));
+// This leaf runs outside a home scene: no scene context means the legacy
+// collapsible-tab-view focus source is used.
+jest.mock('@rabby-wallet/rn-collapsible-scene-view', () => ({
+  useMaybeCollapsibleScene: () => null,
+}));
 jest.mock('./RefreshNudgedTickerText', () => {
   const ReactModule = require('react');
   const View = require('react-native').View;

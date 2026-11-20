@@ -25,9 +25,10 @@ import { fetchTop5TokensForAllAccountsOnce } from '@/components/AccountSwitcher/
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { clearLendingActionPopupState } from '@/screens/Lending/utils/actionPopup';
 import { createGetStyles2024 } from '@/utils/styles';
+import { isNonPublicProductionEnv } from '@/constant';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import type { ScrollView, ViewProps } from 'react-native';
+import type { ScrollView, ScrollViewProps, ViewProps } from 'react-native';
 import {
   Dimensions,
   StyleSheet,
@@ -58,7 +59,11 @@ import {
   refreshMemeHoldings,
   refreshMemeHoldingsIfStale,
 } from '@/screens/MemeCoin/data/memeHoldingsStore';
-import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
+import {
+  apisHomeTabIndex,
+  HomeTabName,
+  useRabbyAppNavigation,
+} from '@/hooks/navigation';
 import { navigateToPerpsHome } from '@/hooks/perps/navigation/navigateToPreferredPerps';
 import addressBalanceStore, {
   balanceAccountsStore,
@@ -125,8 +130,8 @@ import {
   useHomeHistoryCount,
   useHomePendingTxCount,
 } from '../hooks/history';
-import type { TabsScrollViewProps } from '@/components/customized/react-native-collapsible-tab-view/ScrollView';
-import { TabsScrollView } from '@/components/customized/react-native-collapsible-tab-view/ScrollView';
+import { SceneScrollViewSurface } from '@/components/RetainedScenePagerList/SceneSurfaces';
+import { getHomeSceneContentInset } from './scene/homeSceneLayout';
 import type { RNGHScrollView } from '@/components/customized/reexports';
 import { RNGHRefreshControl } from '@/components/customized/reexports';
 import {
@@ -136,8 +141,7 @@ import {
   SCROLLABLE_STATUS,
   THRESHOLD_PERCENT,
 } from '../hooks/useHomeDrawerAnimate';
-import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
-import type { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
+import { useCollapsibleScene } from '@rabby-wallet/rn-collapsible-scene-view';
 import { triggerImpact } from '@/utils/common';
 import type { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
 import { IS_ANDROID } from '@/core/native/utils';
@@ -251,10 +255,10 @@ function hasOverThreshold() {
 const tabsScrollHandlers = {
   onContentSizeChange: ((_, height) => {
     scrollViewContentHeight.value = height;
-  }) as TabsScrollViewProps['onContentSizeChange'] & object,
+  }) as ScrollViewProps['onContentSizeChange'] & object,
   onLayout: (event => {
     scrollViewLayoutHeight.value = event.nativeEvent.layout.height;
-  }) as TabsScrollViewProps['onLayout'] & object,
+  }) as ScrollViewProps['onLayout'] & object,
 };
 
 const swipeUpViewHandlers = {
@@ -276,7 +280,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
   onJsPulldownRefresh?: OnRefreshOnJs;
 } = {}) => {
   const scrollableRef = useAnimatedRef<T>();
-  const scrollY = useCurrentTabScrollY();
+  const { scrollY } = useCollapsibleScene();
 
   const scrollableStatus = useSharedValue<SCROLLABLE_STATUS>(
     SCROLLABLE_STATUS.UNLOCKED,
@@ -329,6 +333,17 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
     };
   }, [svIsRefreshing, pullDistance, svIsManualRefreshing]);
 
+  // Diagnostics for the non-production pager panel: publish the scene offset so
+  // the panel can show why the pull-up drawer gate did or did not open.
+  useAnimatedReaction(
+    () => scrollY.value,
+    value => {
+      if (isNonPublicProductionEnv) {
+        homeDrawerAnimateMutable.debugSceneScrollY.value = value;
+      }
+    },
+  );
+
   useAnimatedReaction(
     () => translateY.value,
     translateYValue => {
@@ -359,32 +374,6 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
     [scrollToEnd],
   );
 
-  const onScrollHandlers = {
-    onAnimatedScrollBeginDrag: useCallback<
-      ScrollHandlerProps['onAnimatedScrollBeginDrag'] & object
-    >(() => {
-      // // leave here for debug on some android devices
-      // console.debug(
-      //   '[onScrollHandlers] onAnimatedScrollBeginDrag:: event.nativeEvent',
-      //   event.nativeEvent,
-      // );
-    }, []),
-    onScroll: useCallback<ScrollHandlerProps['onScroll'] & object>(() => {
-      // console.debug(
-      //   '[onScrollHandlers] onScroll:: event.nativeEvent',
-      //   event.nativeEvent,
-      // );
-    }, []),
-    onAnimatedScrollEndDrag: useCallback<
-      ScrollHandlerProps['onAnimatedScrollEndDrag'] & object
-    >(() => {
-      // console.debug(
-      //   '[onScrollHandlers] onAnimatedScrollEndDrag:: event.nativeEvent',
-      //   event.nativeEvent,
-      // );
-    }, []),
-  };
-
   const startValues = useSharedValue({
     startedAtTop: scrollY.value <= 5,
     startedAtBottom: false,
@@ -392,11 +381,65 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
     hasImpactOnPanup: false,
   });
 
+  // The drawer must not compete with the list's own scroll: the pan only
+  // activates when the gesture cannot be a normal scroll (pulling up at the
+  // very bottom, or pulling down at the very top for the iOS indicator).
+  const touchOrigin = useSharedValue({ x: 0, y: 0 });
+  const touchDecided = useSharedValue(false);
+
   const panGestureRef = useRef(
     Gesture.Pan()
       .shouldCancelWhenOutside(false)
-      .activeOffsetY([-homeGestureConfs.activeY, homeGestureConfs.activeY])
+      .manualActivation(true)
       .maxPointers(1)
+      .onTouchesDown(event => {
+        'worklet';
+        const touch = event.allTouches[0];
+        touchOrigin.value = { x: touch ? touch.x : 0, y: touch ? touch.y : 0 };
+        touchDecided.value = false;
+      })
+      .onTouchesMove((event, manager) => {
+        'worklet';
+        if (touchDecided.value) {
+          return;
+        }
+        const touch = event.allTouches[0];
+        if (!touch) {
+          touchDecided.value = true;
+          manager.fail();
+          return;
+        }
+        const deltaX = touch.x - touchOrigin.value.x;
+        const deltaY = touch.y - touchOrigin.value.y;
+
+        // A horizontal drag belongs to the pager. Until this pan fails, iOS
+        // keeps the page's scroll view waiting on it, so a never-deciding pan
+        // also blocks the horizontal swipe. Decide early and get out of the way.
+        if (
+          Math.abs(deltaX) > 12 &&
+          Math.abs(deltaX) > Math.abs(deltaY) * 1.2
+        ) {
+          touchDecided.value = true;
+          manager.fail();
+          return;
+        }
+
+        if (Math.abs(deltaY) < homeGestureConfs.activeY) {
+          return;
+        }
+        touchDecided.value = true;
+        const pullingRefresh =
+          SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
+          scrollY.value <= 5 &&
+          deltaY > 0 &&
+          !svIsRefreshing.value;
+        const pullingDrawer = deltaY < 0 && getIsAtBottom(scrollY.value);
+        if (pullingRefresh || pullingDrawer) {
+          manager.activate();
+        } else {
+          manager.fail();
+        }
+      })
       .onStart(() => {
         startValues.value.startedAtBottom = getIsAtBottom(scrollY.value);
         startValues.value.startedAtTop = scrollY.value <= 5;
@@ -495,8 +538,6 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
 
   return {
     panGestureRef,
-
-    onScrollHandlers,
     uiOnScrollBack,
     scrollableRef,
 
@@ -532,9 +573,10 @@ const getStyle = createGetStyles2024(
       paddingTop: 0,
     },
     scrollViewInner: {
-      marginTop: !SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING
-        ? HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset
-        : 0,
+      // The scene content inset already reserves the gap between the indicator
+      // row and the balance card; adding it again here doubled that gap and
+      // made it larger than the card's gap above the entry matrix.
+      marginTop: 0,
       // ...makeDebugBorder('orange'),
       // ...makeDevOnlyStyle({
       //   backgroundColor: colors2024['orange-light-2'],
@@ -1369,7 +1411,6 @@ export const HomeOverview = React.memo(() => {
   );
 
   const {
-    onScrollHandlers,
     uiOnScrollBack,
     scrollableRef,
     panGestureRef,
@@ -1411,23 +1452,18 @@ export const HomeOverview = React.memo(() => {
       <HomeOverviewDeferredStartupGate triggerUpdate={triggerUpdate} />
       <Animated.View style={[styles.main, mainStyle]}>
         <GestureDetector gesture={panGestureRef.current}>
-          <TabsScrollView
-            ref={scrollableRef}
-            showsVerticalScrollIndicator={false}
-            style={[styles.scroll, { flex: undefined }]}
+          <SceneScrollViewSurface
+            nativeRef={scrollableRef}
+            tabKey={HomeTabName.overview}
+            contentInsetTop={getHomeSceneContentInset(HomeTabName.overview)}
+            style={styles.scroll}
             contentContainerStyle={[styles.scrollContainer]}
             bounces={false}
             overScrollMode={'never'}
-            scrollEventThrottle={16}
             onContentSizeChange={tabsScrollHandlers.onContentSizeChange}
             onLayout={tabsScrollHandlers.onLayout}
-            onAnimatedScrollBeginDrag={
-              onScrollHandlers.onAnimatedScrollBeginDrag
-            }
-            onAnimatedScrollEndDrag={onScrollHandlers.onAnimatedScrollEndDrag}
-            onScroll={onScrollHandlers.onScroll}
-            // scrollableEnabled={scrollableEnabled}
             simultaneousHandlers={[panGestureRef]}
+            waitFor={[panGestureRef]}
             {...(!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING && {
               refreshControl: (
                 <RNGHRefreshControl
@@ -1474,7 +1510,7 @@ export const HomeOverview = React.memo(() => {
                 </View>
               </View>
             </Animated.View>
-          </TabsScrollView>
+          </SceneScrollViewSurface>
         </GestureDetector>
       </Animated.View>
       <DeferredHomeDappDrawer onScrollBack={uiOnScrollBack} />

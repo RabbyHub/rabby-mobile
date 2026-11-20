@@ -32,6 +32,14 @@ jest.mock('react-native-reanimated', () => ({
     (...args: unknown[]) =>
       fn(...args),
 }));
+// The scene-hosted variant of this hook only needs the context lookups; the
+// legacy contract under test must not load the whole scene package.
+jest.mock('@rabby-wallet/rn-collapsible-scene-view', () => ({
+  useCollapsibleScene: () => ({
+    activeTab: 'token',
+    scrollToTab: jest.fn(),
+  }),
+}));
 
 const flushFrames = () =>
   new Promise<void>(resolve => setTimeout(resolve, 350));

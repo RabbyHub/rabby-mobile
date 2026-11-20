@@ -3,6 +3,14 @@ module.exports = {
   setupFiles: ['<rootDir>/../../tests/setup.ts', '<rootDir>/jest.setup.js'],
   setupFilesAfterEnv: ['<rootDir>/../../tests/setupAfterEnv/index.ts'],
   moduleNameMapper: {
+    // Workspace source packages consume the app's native peers. A clean install
+    // does not put those peers in each source package's node_modules directory.
+    '^react$': '<rootDir>/node_modules/react',
+    '^react-native$': '<rootDir>/node_modules/react-native',
+    '^react-native-reanimated(/.*)?$':
+      '<rootDir>/node_modules/react-native-reanimated$1',
+    '^react-native-gesture-handler(/.*)?$':
+      '<rootDir>/node_modules/react-native-gesture-handler$1',
     // The package exposes only "." in package.json; Metro resolves this deep
     // import, while Jest enforces package exports.
     '^@rabby-wallet/biz-utils/(.*)$': '<rootDir>/../../packages/biz-utils/$1',
@@ -24,6 +32,6 @@ module.exports = {
   transformIgnorePatterns: [
     // `rabby-api` and `rabby-action` ship ESM-only `dist/*.js`, so tests that
     // render a screen reaching them must transform those packages too.
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|react-native-root-toast|react-native-root-siblings|react-native-walkthrough-tooltip|@debank|@rabby-wallet/rabby-security-engine|@rabby-wallet/rabby-bridge|@rabby-wallet/rabby-api|@rabby-wallet/rabby-action|p-queue|p-timeout|eventemitter3)/)',
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|@rneui/base|react-native-size-matters|react-native-root-toast|react-native-root-siblings|react-native-walkthrough-tooltip|@debank|@rabby-wallet/rabby-security-engine|@rabby-wallet/rabby-bridge|@rabby-wallet/rabby-api|@rabby-wallet/rabby-action|p-queue|p-timeout|eventemitter3)/)',
   ],
 };

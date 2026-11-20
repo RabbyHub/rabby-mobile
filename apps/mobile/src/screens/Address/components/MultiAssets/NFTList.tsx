@@ -33,9 +33,9 @@ import {
 } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import { RNGHRefreshControl } from '@/components/customized/reexports';
 import { NftItemWithCollection } from '@/screens/Home/hooks/nft';
-import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
-import { useFocusedTab } from 'react-native-collapsible-tab-view';
-import { TabsFlatList } from '@/components/customized/react-native-collapsible-tab-view/FlatList';
+import { useCollapsibleScene } from '@rabby-wallet/rn-collapsible-scene-view';
+import { SceneFlatList } from '@/components/RetainedScenePagerList/SceneSurfaces';
+import { getHomeSceneContentInset } from '@/screens/Home/components/scene/homeSceneLayout';
 import { HomeTabName as TabName } from '@/hooks/navigation';
 import { ListRenderSeparator } from './RenderRow/Common';
 import {
@@ -70,7 +70,7 @@ import { useAppForeground } from '@/hooks/useAppForeground';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
-import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
+import { useSceneScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 import { resolveAssetProjectionViewState } from '@/store/assetProjectionAvailability';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -194,7 +194,7 @@ const NFTListInner = () => {
   const getAccountByAddress = useFindAccountByAddress(myTop10Accounts);
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.nft);
 
-  const suspendVisibleAnchor = useScrollToTopOnChainChange({
+  const suspendVisibleAnchor = useSceneScrollToTopOnChainChange({
     chain,
     isCurrentTab: isFocusing,
   });
@@ -489,7 +489,7 @@ const NFTListInner = () => {
     onForeground: handleForeground,
   });
 
-  const scrollY = useCurrentTabScrollY();
+  const { scrollY } = useCollapsibleScene();
   const {
     panGestureRef,
     isRefreshing,
@@ -529,7 +529,9 @@ const NFTListInner = () => {
 
   return (
     <GestureDetector gesture={panGestureRef.current}>
-      <TabsFlatList
+      <SceneFlatList
+        tabKey={TabName.nft}
+        contentInsetTop={getHomeSceneContentInset(TabName.nft)}
         keyExtractor={getNftListItemId}
         data={
           hasNotAssets
@@ -566,17 +568,13 @@ const NFTListInner = () => {
         // ListFooterComponent={ListRenderFooter}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
-        style={[
-          styles.container,
-          pulldownRefreshReturns.scrollableStyle.container,
-        ]}
+        style={styles.container}
         contentContainerStyle={[
           styles.list,
           pulldownRefreshReturns.scrollableStyle.list,
         ]}
         bounces={false}
         overScrollMode={'never'}
-        scrollEventThrottle={16}
         simultaneousHandlers={[panGestureRef]}
         {...(!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING && {
           refreshControl: (
@@ -593,7 +591,7 @@ const NFTListInner = () => {
 };
 
 export const NFTList = () => {
-  const focusedTab = useFocusedTab();
+  const { activeTab: focusedTab } = useCollapsibleScene();
   const hasBeenFocusedRef = useRef(false);
   if (focusedTab === TabName.nft) {
     hasBeenFocusedRef.current = true;

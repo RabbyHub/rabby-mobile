@@ -12,7 +12,7 @@ import type {
   ViewStyle,
   ViewToken,
 } from 'react-native';
-import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
+import { useCollapsibleScene } from '@rabby-wallet/rn-collapsible-scene-view';
 
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -43,7 +43,8 @@ import {
   SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
 } from '@/constant/home';
 import { IS_ANDROID } from '@/core/native/utils';
-import { TabsFlatList } from '@/components/customized/react-native-collapsible-tab-view/FlatList';
+import { SceneFlatList } from '@/components/RetainedScenePagerList/SceneSurfaces';
+import { getHomeSceneContentInset } from '@/screens/Home/components/scene/homeSceneLayout';
 import {
   pulldownRefreshSizes,
   RefreshPlaceholderIOS,
@@ -60,7 +61,7 @@ import {
   useRegressionScenarioAssertion,
 } from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
-import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
+import { useSceneScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 import { resolveAssetProjectionViewState } from '@/store/assetProjectionAvailability';
 
 const MemoizedFullDefiRenderItem = React.memo(FullDefiRenderItem);
@@ -155,7 +156,7 @@ export const ProtocolList = () => {
   const [showAllProtocols, setShowAllProtocols] = useState(false);
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.defi);
 
-  const suspendVisibleAnchor = useScrollToTopOnChainChange({
+  const suspendVisibleAnchor = useSceneScrollToTopOnChainChange({
     chain,
     isCurrentTab: isFocusing,
   });
@@ -667,7 +668,7 @@ export const ProtocolList = () => {
     }
   }, [triggerUpdate, myTop10Addresses]);
 
-  const scrollY = useCurrentTabScrollY();
+  const { scrollY } = useCollapsibleScene();
   const {
     panGestureRef,
     isRefreshing,
@@ -713,7 +714,9 @@ export const ProtocolList = () => {
   // }
   return (
     <GestureDetector gesture={panGestureRef.current}>
-      <TabsFlatList
+      <SceneFlatList
+        tabKey={TabName.defi}
+        contentInsetTop={getHomeSceneContentInset(TabName.defi)}
         keyExtractor={getProtocolListItemId}
         data={
           hasNotAssets
@@ -754,17 +757,13 @@ export const ProtocolList = () => {
         }
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
-        style={[
-          styles.container,
-          pulldownRefreshReturns.scrollableStyle.container,
-        ]}
+        style={styles.container}
         contentContainerStyle={[
           styles.list,
           pulldownRefreshReturns.scrollableStyle.list,
         ]}
         bounces={false}
         overScrollMode={'never'}
-        scrollEventThrottle={16}
         simultaneousHandlers={[panGestureRef]}
         {...(!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING && {
           refreshControl: (
