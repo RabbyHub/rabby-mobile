@@ -117,16 +117,20 @@ export const apisKeyring = {
     (type: string, _from: string, _data: string, _options?: any) =>
       isSensitiveKeyringType(type),
     async (type: string, from: string, data: string, options?: any) => {
+      const { signingOperationId, ...keyringOptions } = options || {};
       const keyring = await keyringServiceApi.getKeyringForAccount(from, type);
       const res = await keyringServiceApi.signTypedMessage(
         keyring,
         { from, data },
-        options,
+        keyringOptions,
       );
-      eventBus.emit(EVENTS.SIGN_FINISHED, {
-        success: true,
-        data: res,
-      });
+      if (signingOperationId) {
+        eventBus.emit(EVENTS.SIGN_FINISHED, {
+          success: true,
+          data: res,
+          signingOperationId,
+        });
+      }
       return res;
     },
   ),
@@ -135,17 +139,20 @@ export const apisKeyring = {
     type: string,
     from: string,
     data: string,
-    options?: any,
+    options: Record<string, any> & { signingOperationId: string },
   ) => {
     await ensureNotificationServiceReady();
+    const { signingOperationId } = options;
     const fn = async () => {
-      apisKeyring.signTypedData(type, from, data as any, options);
+      return apisKeyring.signTypedData(type, from, data as any, options);
     };
 
-    setCurrentRequestDeferFnSync(fn);
+    setCurrentRequestDeferFnSync(fn, signingOperationId);
     // Only the first attempt waits for the waiting UI to mount; retries are
     // started from that mounted UI, which emits no further mount event.
-    return waitSignComponentAmounted().then(fn);
+    return waitSignComponentAmounted(signingOperationId).then(mounted =>
+      mounted ? fn() : undefined,
+    );
   },
 };
 
