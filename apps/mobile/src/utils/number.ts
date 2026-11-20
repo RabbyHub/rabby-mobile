@@ -1,6 +1,7 @@
 export * from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
 
-import { Dimensions } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
+
 import { formatSpeicalAmount as normalizeSpeicalAmount } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
 import { coerceNumber } from './coerce';
 
@@ -42,7 +43,7 @@ export const formatTokenAmountInput = (
 export function calcAspectRatio(
   orig?: null | { height?: number; width?: number },
   {
-    maxWidth = Dimensions.get('window').width - 20,
+    maxWidth = getDimensionsSnapshot('window').width - 20,
     maxHeight,
   }: { maxWidth?: number; maxHeight?: number } = {},
 ) {

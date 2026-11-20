@@ -41,6 +41,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { HeaderBackButton } from '@/hooks/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { renderFoldableStackHeader } from '@/components/FoldableStackHeader';
+import { isFoldableSideColumnPosture } from '@/core/utils/foldableDevice';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { toast } from '@/components2024/Toast';
@@ -628,6 +630,10 @@ function HistoryContent({
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const insets = useSafeAreaInsets();
+  const foldableOuter = isFoldableSideColumnPosture({
+    top: insets.top,
+    right: insets.right,
+  });
 
   const getHeaderTitle = useCallback(() => {
     return (
@@ -697,13 +703,28 @@ function HistoryContent({
         headerTitle: getHeaderTitle,
         headerRight: getHeaderRight,
       });
+    } else if (foldableOuter) {
+      // The Duo outer screen must use the shared JS replica header. A custom
+      // header row (used by some packaging branches for the native back-item
+      // offset, QA 1384) would put the filter switch back under the system
+      // column (QA 1430).
+      setNavigationOptions({
+        header: renderFoldableStackHeader,
+        headerRight: getHeaderRight,
+      });
     } else {
       setNavigationOptions({
         header: getHeaderRow,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setNavigationOptions, getHeaderTitle, getHeaderRight, getHeaderRow]);
+  }, [
+    setNavigationOptions,
+    getHeaderTitle,
+    getHeaderRight,
+    getHeaderRow,
+    foldableOuter,
+  ]);
 
   const ensureCurrentIsLoading = useMemo(() => {
     if (isNeedFetchFromApi) {

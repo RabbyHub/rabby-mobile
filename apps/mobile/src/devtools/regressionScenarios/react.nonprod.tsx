@@ -28,6 +28,8 @@ import {
 import { registerRegressionScenarioComponentAction } from './componentActions.nonprod';
 import { claimRegressionScenarioAction } from './runtimeStore';
 import { makeScreenContext } from './screenContext';
+import { recordScreenRenderFailure } from '@/devtools/screenRegistry/probe';
+import { getLatestNavigationName } from '@/utils/navigation';
 
 const ScenarioContext = createContext<RegressionScenarioContext>(
   INACTIVE_REGRESSION_SCENARIO_CONTEXT,
@@ -54,6 +56,69 @@ const screenContextRuntime = {
   claimAction: claimRegressionScenarioAction,
   report: reportRegressionScenarioEvent,
 };
+
+class ScreenRenderErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { error: Error | null }
+> {
+  state: { error: Error | null } = { error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error(
+      '[screenRegistry] screen render failed; app shell kept alive:',
+      error?.message,
+      info?.componentStack?.split('\n').slice(0, 4).join(' | '),
+    );
+    // iOS device sweeps cannot read the JS console, so record the failing
+    // route in the sandbox probe file the sweep host reads.
+    void recordScreenRenderFailure(getLatestNavigationName() || 'unknown');
+  }
+
+  render() {
+    if (this.state.error) {
+      const { View, Text } = require('react-native');
+      return (
+        <View
+          style={{
+            flex: 1,
+            padding: 24,
+            justifyContent: 'center',
+            backgroundColor: '#1b1b1f',
+          }}>
+          <Text style={{ color: '#ff6b6b', fontSize: 18, marginBottom: 8 }}>
+            Screen render failed
+          </Text>
+          <Text style={{ color: '#e6e6e6', fontSize: 13 }}>
+            {String(this.state.error?.message || this.state.error)}
+          </Text>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+/**
+ * Non-production only: keeps the app shell (and therefore the universal-link
+ * hook) alive when one screen throws while rendering. Without it a single bad
+ * screen unmounts the whole tree, after which every later debug deeplink is
+ * dropped. The production variant is the identity function.
+ */
+export function withScreenErrorBoundary<P extends object>(
+  Component: React.ComponentType<P>,
+) {
+  return function ScreenErrorBoundaryBoundary(props: P) {
+    return (
+      <ScreenRenderErrorBoundary>
+        <Component {...props} />
+      </ScreenRenderErrorBoundary>
+    );
+  };
+}
 
 export const withRegressionScenario = ((
   Component: React.ComponentType<any>,

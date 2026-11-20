@@ -1,5 +1,6 @@
 import React from 'react';
-import { Dimensions, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -174,7 +175,6 @@ function DevUIDapps() {
   );
 }
 
-const CONTENT_W = Dimensions.get('screen').width - 24;
 const getStyles = createGetStyles2024(ctx =>
   StyleSheet.create({
     screen: {
@@ -216,7 +216,7 @@ const getStyles = createGetStyles2024(ctx =>
     propertyDesc: {
       flexDirection: 'row',
       width: '100%',
-      maxWidth: CONTENT_W,
+      maxWidth: getDimensionsSnapshot('screen').width - 24,
       flexWrap: 'wrap',
       alignItems: 'flex-start',
       justifyContent: 'flex-start',
