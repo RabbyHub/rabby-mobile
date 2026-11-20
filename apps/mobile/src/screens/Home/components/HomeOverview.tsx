@@ -17,6 +17,7 @@ import { RootNames } from '@/constant/layout';
 import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
 import { useTheme2024 } from '@/hooks/theme';
 import { useAppLanguage } from '@/hooks/lang';
+import { useAppForeground } from '@/hooks/useAppForeground';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -25,7 +26,11 @@ import { fetchTop5TokensForAllAccountsOnce } from '@/components/AccountSwitcher/
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { clearLendingActionPopupState } from '@/screens/Lending/utils/actionPopup';
 import { createGetStyles2024 } from '@/utils/styles';
-import { StackActions, useFocusEffect } from '@react-navigation/native';
+import {
+  StackActions,
+  useFocusEffect,
+  useIsFocused,
+} from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { ScrollView, ViewProps } from 'react-native';
 import {
@@ -58,7 +63,11 @@ import {
   refreshMemeHoldings,
   refreshMemeHoldingsIfStale,
 } from '@/screens/MemeCoin/data/memeHoldingsStore';
-import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
+import {
+  apisHomeTabIndex,
+  HomeTabName,
+  useRabbyAppNavigation,
+} from '@/hooks/navigation';
 import { navigateToPerpsHome } from '@/hooks/perps/navigation/navigateToPreferredPerps';
 import addressBalanceStore, {
   balanceAccountsStore,
@@ -107,7 +116,6 @@ import {
   checkGasAccountAddressesEligibility,
   useGasAccountGiftEligibility,
 } from '@/hooks/useGasAccountEligibility';
-import { refreshDayCurve } from '@/store/curve24h';
 import { scene24hBalanceStore } from '@/store/balance24h';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
@@ -141,7 +149,10 @@ import {
   SCROLLABLE_STATUS,
   THRESHOLD_PERCENT,
 } from '../hooks/useHomeDrawerAnimate';
-import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
+import {
+  useCurrentTabScrollY,
+  useFocusedTab,
+} from 'react-native-collapsible-tab-view';
 import type { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
 import { triggerImpact } from '@/utils/common';
 import type { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
@@ -687,6 +698,19 @@ type HomeOverviewTriggerUpdate = ReturnType<
   typeof addressBalanceStore.useAccountsBalanceTrigger
 >['triggerUpdate'];
 
+function refreshOverviewBalances(
+  triggerUpdate: HomeOverviewTriggerUpdate,
+  force: boolean,
+) {
+  return triggerUpdate(force, addresses =>
+    scene24hBalanceStore.refresh24hAssets({
+      addresses: addresses?.length ? addresses : undefined,
+      force,
+      reason: 'manual_refresh',
+    }),
+  );
+}
+
 function HomeOverviewDeferredStartupGate({
   triggerUpdate,
 }: {
@@ -719,7 +743,7 @@ function HomeOverviewCriticalStartupEffects({
     }
     hasTriggeredRef.current = true;
 
-    void triggerUpdate({ localOnly: true });
+    triggerUpdate({ localOnly: true });
   }, [triggerUpdate]);
 
   return null;
@@ -756,8 +780,17 @@ function HomeOverviewPostStartupEffects({
   triggerUpdate: HomeOverviewTriggerUpdate;
 }) {
   const isFirstTriggerRef = useRef(true);
+  const isScreenFocused = useIsFocused();
+  const focusedTab = useFocusedTab();
 
   useFetchCexInfo();
+
+  useAppForeground({
+    enabled: isScreenFocused && focusedTab === HomeTabName.overview,
+    onForeground: () => {
+      refreshOverviewBalances(triggerUpdate, false);
+    },
+  });
 
   useFocusEffect(
     useCallback(() => {
@@ -823,20 +856,7 @@ function HomeOverviewPostStartupEffects({
         isFirstTriggerRef.current = false;
       }
 
-      triggerUpdate(isFirstTrigger || undefined).then(balanceAccounts => {
-        // console.debug('[perf] MultiAddressHome triggerUpdate refreshed:: balanceAccounts', balanceAccounts);
-        const balanceAddresses = Object.keys(balanceAccounts);
-        scene24hBalanceStore.refresh24hAssets({
-          addresses: balanceAddresses.length ? balanceAddresses : undefined,
-          force: isFirstTrigger,
-          reason: 'manual_refresh',
-        });
-        refreshDayCurve({
-          addresses: balanceAddresses.length ? balanceAddresses : undefined,
-          force: isFirstTrigger,
-          reason: 'manual_refresh',
-        });
-      });
+      refreshOverviewBalances(triggerUpdate, isFirstTrigger);
 
       if (!canRefreshOverview) {
         return;
@@ -1014,9 +1034,9 @@ export const HomeOverview = React.memo(() => {
           icon: RcIconPerps,
         },
         {
-          key: MultiHomeFeatTitle.MemeCoin,
-          title: t('page.home.services.meme'),
-          icon: RcIconMemeCoinCC,
+          key: MultiHomeFeatTitle.Lending,
+          title: t('page.home.services.lending'),
+          icon: RcIconLending,
         },
         {
           key: MultiHomeFeatTitle.GasAccount,
@@ -1057,9 +1077,9 @@ export const HomeOverview = React.memo(() => {
           icon: RcIconConvertDustCC,
         },
         {
-          key: MultiHomeFeatTitle.Lending,
-          title: t('page.home.services.lending'),
-          icon: RcIconLending,
+          key: MultiHomeFeatTitle.MemeCoin,
+          title: t('page.home.services.meme'),
+          icon: RcIconMemeCoinCC,
         },
       ].filter(Boolean) as {
         key: MultiHomeFeatTitle;
@@ -1076,19 +1096,7 @@ export const HomeOverview = React.memo(() => {
   const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
 
   const refreshManualBalance = useCallback(() => {
-    return triggerUpdate(true).then(balanceAccounts => {
-      const balanceAddresses = Object.keys(balanceAccounts);
-      scene24hBalanceStore.refresh24hAssets({
-        addresses: balanceAddresses.length ? balanceAddresses : undefined,
-        force: true,
-        reason: 'manual_refresh',
-      });
-      refreshDayCurve({
-        addresses: balanceAddresses.length ? balanceAddresses : undefined,
-        force: true,
-        reason: 'manual_refresh',
-      });
-    });
+    return refreshOverviewBalances(triggerUpdate, true);
   }, [triggerUpdate]);
 
   const refreshManualHomeBackgroundData = useCallback(async () => {
@@ -1101,7 +1109,7 @@ export const HomeOverview = React.memo(() => {
       refreshMemeHoldings(memeAddress);
     }
     const forceRefresh = true;
-    void currencyServiceApi.syncCurrencyList(forceRefresh).catch(error => {
+    currencyServiceApi.syncCurrencyList(forceRefresh).catch(error => {
       console.error('[HomeOverview] refresh currency list failed', error);
     });
 
