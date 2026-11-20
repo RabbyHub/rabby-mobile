@@ -139,6 +139,7 @@ describe('PerpsProMarketBar', () => {
     );
     expect(sourceStyle).toEqual({
       backgroundColor: 'neutral-bg-5',
+      borderCurve: 'continuous',
       borderRadius: 4,
       maxWidth: 52,
       overflow: 'hidden',

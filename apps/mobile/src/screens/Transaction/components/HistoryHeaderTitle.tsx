@@ -16,7 +16,7 @@ export function HistoryHeaderTitle({ children }: React.PropsWithChildren) {
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   title: {
     color: colors2024['neutral-title-1'],
-    fontWeight: '900',
+    fontWeight: '800',
     fontSize: 20,
     fontFamily: 'SF Pro Rounded',
     // Android's explicit LineHeightSpan clamps the first/last line to the

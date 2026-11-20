@@ -195,6 +195,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 4,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-2'],
   },
   chainInfo: {
@@ -209,6 +210,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 20,
     height: 20,
     borderRadius: 1000,
+    borderCurve: 'continuous',
   },
   chainName: {
     //todo

@@ -2066,7 +2066,6 @@
       "dataAnalysis": "Ajudar a melhorar a Rabby",
       "dataAnalysisDesc": "Partilhe dados de utilização anónimos para ajudar a melhorar a Rabby. Os dados recolhidos não são associados a si nem à sua conta.",
       "bugReportChat": "Partilhar feedback através do chat",
-      "features": "Funcionalidades",
       "manageWallets": "Gerir carteiras"
     },
     "settings": {
@@ -2522,7 +2521,10 @@
           "attachedTpSlUnresolved": "Um envio de TP/SL anterior para este mercado continua por resolver. Verifique as Ordens abertas e as Posições antes de tentar novamente.",
           "orderFilled": "Ordem executada.",
           "orderPlaced": "Ordem colocada.",
-          "orderFailed": "A ordem falhou."
+          "orderFailed": "A ordem falhou.",
+          "scale": "Ordem escalonada",
+          "scaleDescription": "Defina um intervalo de preços e coloque várias subordens limitadas",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "O preço post-only deve ser inferior à melhor oferta de venda para evitar uma execução imediata.",
@@ -2536,6 +2538,9 @@
           "tpSl": {
             "title": "TP/SL",
             "description": "Coloca ordens TP/SL de mercado básicas. Para funcionalidades avançadas, como TP/SL parcial, defina o TP/SL numa posição aberta."
+          },
+          "randomize": {
+            "description": "A aleatorização varia o tamanho de cada subordem até ±20%, respeitando o tamanho máximo da ordem e os restantes limites."
           },
           "reduceOnly": {
             "title": "Apenas redução",
@@ -2633,7 +2638,8 @@
             "orders": "Histórico de ordens",
             "trade": "Histórico de negociações",
             "transaction": "Depósitos e levantamentos",
-            "funding": "Comissão de financiamento"
+            "funding": "Comissão de financiamento",
+            "twap": "Histórico TWAP"
           },
           "empty": {
             "orders": "Sem histórico de ordens",
@@ -2815,6 +2821,101 @@
           "cancelPartial": "{{success}} ordens canceladas; {{failed}} falharam",
           "cancelFailed": "Falha ao cancelar a ordem",
           "cancelContextChanged": "A conta foi alterada. Tente novamente."
+        },
+        "scaleOrder": {
+          "lowerPrice": "Preço mínimo",
+          "upperPrice": "Preço máximo",
+          "size": "Quantidade",
+          "count": "N.º de ordens (2–100)",
+          "distribution": "Distribuição",
+          "flat": "Uniforme",
+          "ascending": "Ascendente",
+          "descending": "Descendente",
+          "flatDescription": "Cada ordem recebe a mesma quantidade",
+          "ascendingDescription": "A quantidade aumenta à medida que o preço sobe",
+          "descendingDescription": "A quantidade aumenta à medida que o preço desce",
+          "previewBuy": "Prévia de compra",
+          "previewSell": "Prévia de venda",
+          "totalSize": "Quantidade total",
+          "averagePrice": "Preço médio",
+          "result": "{{accepted}} aceites, {{rejected}} rejeitadas, {{unresolved}} por confirmar",
+          "unknown": "Resultado por confirmar. Verifique as ordens abertas e o histórico antes de colocar outra ordem.",
+          "errors": {
+            "range": "Introduza preços válidos; o máximo deve ser superior ao mínimo.",
+            "count": "Introduza um inteiro entre 2 e 100.",
+            "size": "Introduza uma quantidade de ordem superior a 0 que cumpra os requisitos de precisão de quantidade deste mercado.",
+            "duplicatePrice": "Alguns preços das ordens coincidem após o ajuste à precisão de preço permitida. Alargue o intervalo de preços ou reduza o número de ordens.",
+            "minimum": "Após o ajuste à precisão de quantidade permitida, cada subordem deve ter um valor de, pelo menos, $10.",
+            "maximum": "O valor total das ordens excede o limite permitido para este mercado.",
+            "capacity": "Capacidade de negociação insuficiente para este lote.",
+            "reduceOnly": "A quantidade total das ordens excede a quantidade da posição que pode ser fechada neste momento."
+          }
+        },
+        "twap": {
+          "description": "Coloque ordens a intervalos personalizados",
+          "totalTime": "Tempo total",
+          "durationFieldLabel": "Tempo total (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} min",
+          "minuteValue_one": "{{t}} min",
+          "confirmationDuration": "{{t}} min",
+          "totalSize": "Quantidade total",
+          "selectTime": "Selecionar tempo total",
+          "reset": "Repor",
+          "randomize": "Aleatorizar",
+          "randomized": "Aleatorizado",
+          "durationHint": "A duração da ordem TWAP é de 5 a 1439 minutos.",
+          "minimum": "A quantidade total mínima é {{amount}}",
+          "filled": "Executado",
+          "duration": "Tempo decorrido",
+          "runtime": "Tempo de execução",
+          "averagePrice": "Preço médio",
+          "end": "Terminar",
+          "detail": "Detalhes",
+          "add": "Adicionar",
+          "detailTitle": "Detalhes do TWAP ativo",
+          "historyDetailTitle": "Detalhes do histórico TWAP",
+          "trades": "Transações",
+          "size": "Quantidade",
+          "fee": "Taxa",
+          "noTrades": "Ainda não há transações",
+          "endTitle": "Confirmar o fim da ordem TWAP",
+          "endMessage": "Após a confirmação, a sua ordem TWAP será interrompida e as ordens em aberto deste TWAP serão canceladas automaticamente.",
+          "ending": "A terminar…",
+          "ended": "Ordem TWAP terminada.",
+          "placed": "Ordem TWAP de {{coin}} colocada.",
+          "unknownOutcome": "O resultado do TWAP de {{coin}} aguarda confirmação. Verifique as ordens e o histórico antes de colocar outra ordem.",
+          "unknown": "O resultado do TWAP aguarda confirmação. Verifique as ordens e o histórico antes de tentar novamente.",
+          "loadError": "Não foi possível carregar as ordens TWAP. Toque para tentar novamente.",
+          "endedLabel": "Terminada",
+          "skipConfirmation": "Não voltar a mostrar a dupla confirmação para ordens TWAP.",
+          "averageFilledPrice": "Preço médio de execução",
+          "status": {
+            "working": "Em execução",
+            "waiting": "Em espera",
+            "filled": "Executada",
+            "cancelled": "Cancelada",
+            "expired": "Expirada",
+            "unknown": "Desconhecido"
+          },
+          "fills": {
+            "loading": "A carregar transações…",
+            "error": "Não foi possível carregar as transações. Toque para tentar novamente."
+          },
+          "errors": {
+            "amountRequired": "Introduza a quantidade da ordem.",
+            "amountTooSmall": "A ordem TWAP deve ter um valor mínimo de $100.",
+            "amountExceedsMaximum": "A ordem excede o máximo disponível.",
+            "invalidPrecision": "Introduza uma quantidade com a precisão permitida neste mercado.",
+            "priceUnavailable": "O preço atual não está disponível. Tente novamente.",
+            "durationRequired": "Introduza o tempo total.",
+            "durationInvalid": "Introduza um número inteiro de minutos.",
+            "durationTooShort": "A duração mínima do TWAP é de 5 minutos.",
+            "durationTooLong": "A duração máxima do TWAP é de 1439 minutos.",
+            "capacity": "Capacidade de negociação insuficiente para esta ordem.",
+            "reduceOnly": "A ordem excede a quantidade da posição disponível para fechar.",
+            "contextChanged": "A conta, a ordem ou o mercado mudou. Reveja a ordem."
+          }
         }
       },
       "PerpsCard": {
@@ -3708,7 +3809,7 @@
       "title": "Converter saldos residuais"
     },
     "walletConnect": {
-      "screenTitle": "Ligar carteira",
+      "screenTitle": "Digitalizar para ligar",
       "connectingToRabby": "A ligar ao Rabby",
       "pairingFailed": "O emparelhamento WalletConnect falhou.",
       "proposalNotReceived": "O código QR do WalletConnect pode ter expirado. Atualize-o e tente novamente.",

@@ -2,8 +2,7 @@ import FastImage from 'react-native-fast-image';
 import { getCHAIN_ID_LIST } from '@/constant/chains';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { StyleSheet, View, ViewStyle } from 'react-native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import { StyleSheet, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { IconDefaultNFT } from '@/assets/icons/nft';
 import { Media } from '@/components/Media';
 import { ASSETS_ITEM_HEIGHT_NEW } from '@/constant/layout';
@@ -149,6 +148,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     borderRadius: 16,
+    borderCurve: 'continuous',
     paddingLeft: 12,
     paddingRight: 16,
   },
@@ -169,6 +169,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 16,
     height: 16,
     borderRadius: 16,
+    borderCurve: 'continuous',
     position: 'absolute',
     bottom: -2,
     right: -2,
@@ -201,6 +202,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   imagesView: {
     borderRadius: 4,
+    borderCurve: 'continuous',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -210,5 +212,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
     height: '100%',
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
 }));

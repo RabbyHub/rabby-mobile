@@ -311,6 +311,7 @@ const getStyles = createGetStyles2024(ctx => ({
     width: 18,
     height: 18,
     borderRadius: 1000,
+    borderCurve: 'continuous',
   },
   chainName: {
     fontSize: 14,

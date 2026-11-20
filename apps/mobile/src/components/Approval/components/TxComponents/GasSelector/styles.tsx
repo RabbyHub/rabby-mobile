@@ -22,6 +22,7 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 15,
     backgroundColor: colors2024['neutral-card-1'],
     borderRadius: 6,
+    borderCurve: 'continuous',
     display: 'flex',
     padding: 16,
   },
@@ -155,14 +156,14 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     fontStyle: 'normal',
-    fontWeight: '900',
+    fontWeight: '800',
     lineHeight: 24,
   },
   gasSelectorModalTop: {
     paddingBottom: 24,
   },
   gasSelectorModalAmount: {
-    fontWeight: '900',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
     fontSize: 36,
     lineHeight: 42,
@@ -208,7 +209,7 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
   cardContainerTitle: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '900',
+    fontWeight: '800',
     lineHeight: 18,
     color: colors2024['neutral-title-1'],
     marginBottom: 8,
@@ -224,6 +225,7 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    borderCurve: 'continuous',
   },
   modalScrollView: {
     flex: 1,
@@ -262,6 +264,7 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
   gasLimitInput: {
     padding: 15,
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-card-1'],
     borderColor: colors2024['neutral-line'],
     borderWidth: 1,
@@ -281,6 +284,7 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 4,
     height: 4,
     borderRadius: 2,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-secondary'],
     marginHorizontal: 8,
   },
@@ -296,7 +300,7 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
-    fontWeight: '900',
+    fontWeight: '800',
   },
   gasPriceDescItem: {
     flexDirection: 'row',
@@ -315,7 +319,7 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '900',
+    fontWeight: '800',
     lineHeight: 18,
     marginRight: 2,
   },
@@ -342,6 +346,7 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
         }
       : {}),
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-2'],
     fontSize: 17,
     fontWeight: '700',
@@ -421,6 +426,7 @@ export const getStyles = (colors: AppColorsVariants) =>
       marginTop: 15,
       backgroundColor: colors['neutral-card-1'],
       borderRadius: 6,
+      borderCurve: 'continuous',
       display: 'flex',
       padding: 16,
     },
@@ -626,6 +632,7 @@ export const getStyles = (colors: AppColorsVariants) =>
     gasLimitInput: {
       padding: 15,
       borderRadius: 8,
+      borderCurve: 'continuous',
       backgroundColor: colors['neutral-card-1'],
       borderColor: colors['neutral-line'],
       borderWidth: 1,
@@ -681,6 +688,7 @@ export const getStyles = (colors: AppColorsVariants) =>
     feeInput: {
       padding: 16,
       borderRadius: 8,
+      borderCurve: 'continuous',
       backgroundColor: colors['neutral-card-1'],
       fontSize: 15,
       fontWeight: '500',

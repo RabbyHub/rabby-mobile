@@ -38,10 +38,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   card: {
     backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 12,
+    borderCurve: 'continuous',
     paddingHorizontal: 24,
     paddingVertical: 16,
   },
   skeletonBar: {
     borderRadius: 100,
+    borderCurve: 'continuous',
   },
 }));

@@ -117,5 +117,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   ctaButton: {
     height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
 }));

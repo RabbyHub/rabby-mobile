@@ -69,6 +69,7 @@ export const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 4,
     padding: 8,
     borderRadius: 10,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
     backgroundColor: 'rgba(22, 82, 240, 0.06)',
@@ -77,6 +78,7 @@ export const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 20,
     height: 20,
     borderRadius: 20,
+    borderCurve: 'continuous',
   },
   marketTextGroup: {
     flexDirection: 'row',
@@ -85,7 +87,7 @@ export const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   marketText: {
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '900',
+    fontWeight: '800',
     fontSize: 16,
     lineHeight: 20,
     color: colors2024['neutral-title-1'],
@@ -113,7 +115,7 @@ export const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '900',
+    fontWeight: '800',
     color: colors2024['neutral-title-1'],
     textAlign: 'center',
     marginBottom: 20,
@@ -127,6 +129,7 @@ export const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
     padding: 14,
     borderRadius: 15,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: 'transparent',
     backgroundColor: isLight
@@ -147,6 +150,7 @@ export const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 46,
     height: 46,
     borderRadius: 16,
+    borderCurve: 'continuous',
   },
   sheetItemTextGroup: {
     flexDirection: 'column',

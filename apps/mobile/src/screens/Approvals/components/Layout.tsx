@@ -165,6 +165,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 
   buttonContainer: {
     borderRadius: 16,
+    borderCurve: 'continuous',
   },
   disabledButton: {
     opacity: 0.5,
@@ -185,6 +186,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 20,
+    borderCurve: 'continuous',
     paddingVertical: 24,
     paddingHorizontal: 20,
     alignItems: 'center',
@@ -400,6 +402,7 @@ const getBottomSheetModalFooterButtonStyles = createGetStyles(colors => {
     },
     buttonStyle: {
       borderRadius: 16,
+      borderCurve: 'continuous',
     },
     footerText: {
       color: colors['neutral-title2'],

@@ -1868,7 +1868,6 @@
       "dataAnalysis": "Rabby 개선에 참여하기",
       "dataAnalysisDesc": "익명 사용 데이터를 공유하여 Rabby 개선에 도움을 주세요. 수집된 데이터는 사용자 또는 사용자의 계정과 연결되지 않습니다.",
       "bugReportChat": "채팅으로 피드백 보내기",
-      "features": "기능",
       "manageWallets": "지갑 관리"
     },
     "settings": {
@@ -2236,7 +2235,10 @@
           "attachedTpSlUnresolved": "이 마켓에 이전에 제출한 TP/SL의 결과가 아직 확정되지 않았습니다. 다시 시도하기 전에 미체결 주문과 포지션을 확인하세요.",
           "orderFilled": "주문이 체결되었습니다.",
           "orderPlaced": "주문이 접수되었습니다.",
-          "orderFailed": "주문에 실패했습니다."
+          "orderFailed": "주문에 실패했습니다.",
+          "scale": "분할 주문",
+          "scaleDescription": "가격 범위를 설정하고 여러 지정가 하위 주문을 제출합니다",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "즉시 체결되지 않도록 포스트 온리 가격은 최우선 매도호가보다 낮아야 합니다.",
@@ -2250,6 +2252,9 @@
           "tpSl": {
             "title": "TP/SL",
             "description": "기본 시장가 TP/SL 주문을 설정합니다. 부분 TP/SL 같은 고급 기능은 보유 중인 포지션에서 TP/SL을 설정하세요."
+          },
+          "randomize": {
+            "description": "무작위화는 최대 거래 규모 및 기타 한도를 준수하면서 각 분할 거래의 규모를 최대 ±20%까지 변동시킵니다."
           },
           "reduceOnly": {
             "title": "감소 전용",
@@ -2347,7 +2352,8 @@
             "orders": "주문 내역",
             "trade": "체결 내역",
             "transaction": "입출금 내역",
-            "funding": "펀딩비"
+            "funding": "펀딩비",
+            "twap": "TWAP 내역"
           },
           "empty": {
             "orders": "주문 내역 없음",
@@ -2529,6 +2535,101 @@
           "cancelPartial": "주문 {{success}}건 취소, {{failed}}건 실패",
           "cancelFailed": "주문 취소에 실패했습니다",
           "cancelContextChanged": "계정이 변경되었습니다. 다시 시도하세요."
+        },
+        "scaleOrder": {
+          "lowerPrice": "최저 가격",
+          "upperPrice": "최고 가격",
+          "size": "수량",
+          "count": "주문 수 (2–100)",
+          "distribution": "수량 분배",
+          "flat": "균등",
+          "ascending": "오름차순",
+          "descending": "내림차순",
+          "flatDescription": "각 주문에 동일한 수량을 배분합니다",
+          "ascendingDescription": "가격이 높아질수록 주문 수량이 증가합니다",
+          "descendingDescription": "가격이 낮아질수록 주문 수량이 증가합니다",
+          "previewBuy": "매수 미리보기",
+          "previewSell": "매도 미리보기",
+          "totalSize": "총 수량",
+          "averagePrice": "평균 가격",
+          "result": "접수 {{accepted}}건, 거부 {{rejected}}건, 확인 대기 {{unresolved}}건",
+          "unknown": "주문 결과 확인 대기 중입니다. 새 주문 전에 미체결 주문과 거래 내역을 확인하세요.",
+          "errors": {
+            "range": "유효한 가격을 입력하세요. 최고 가격은 최저 가격보다 높아야 합니다.",
+            "count": "2~100 사이의 정수를 입력하세요.",
+            "size": "0보다 크고 이 시장의 수량 정밀도 요건을 충족하는 주문 수량을 입력하세요.",
+            "duplicatePrice": "가격 정밀도에 맞게 조정한 후 일부 주문 가격이 중복됩니다. 가격 범위를 넓히거나 주문 수를 줄이세요.",
+            "minimum": "수량 정밀도에 맞게 조정한 후 각 하위 주문 금액은 $10 이상이어야 합니다.",
+            "maximum": "총 주문 금액이 이 시장에서 허용되는 한도를 초과합니다.",
+            "capacity": "이 주문 묶음을 제출할 거래 여력이 부족합니다.",
+            "reduceOnly": "총 주문 수량이 현재 청산 가능한 포지션 수량을 초과합니다."
+          }
+        },
+        "twap": {
+          "description": "사용자가 지정한 간격으로 주문합니다",
+          "totalTime": "총 시간",
+          "durationFieldLabel": "총 시간 (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}}분",
+          "minuteValue_one": "{{t}}분",
+          "confirmationDuration": "{{t}}분",
+          "totalSize": "총 수량",
+          "selectTime": "총 시간 선택",
+          "reset": "초기화",
+          "randomize": "무작위화",
+          "randomized": "무작위화됨",
+          "durationHint": "TWAP 주문 실행 시간은 5~1439분입니다.",
+          "minimum": "최소 총 수량은 {{amount}}입니다",
+          "filled": "체결 수량",
+          "duration": "경과 시간",
+          "runtime": "실행 시간",
+          "averagePrice": "평균 가격",
+          "end": "종료",
+          "detail": "상세",
+          "add": "추가",
+          "detailTitle": "TWAP 실행 상세",
+          "historyDetailTitle": "TWAP 내역 상세",
+          "trades": "체결",
+          "size": "수량",
+          "fee": "수수료",
+          "noTrades": "아직 체결 내역이 없습니다",
+          "endTitle": "TWAP 주문 종료 확인",
+          "endMessage": "확인하면 TWAP 주문이 중단되고 이 TWAP의 미체결 주문이 자동으로 취소됩니다.",
+          "ending": "종료 중…",
+          "ended": "TWAP 주문이 종료되었습니다.",
+          "placed": "{{coin}} TWAP 주문이 제출되었습니다.",
+          "unknownOutcome": "{{coin}} TWAP 결과를 확인 중입니다. 다시 주문하기 전에 주문과 내역을 확인하세요.",
+          "unknown": "TWAP 결과를 확인 중입니다. 다시 시도하기 전에 주문과 내역을 확인하세요.",
+          "loadError": "TWAP 주문을 불러올 수 없습니다. 탭하여 다시 시도하세요.",
+          "endedLabel": "종료됨",
+          "skipConfirmation": "TWAP 주문의 추가 확인을 다시 표시하지 않습니다.",
+          "averageFilledPrice": "평균 체결가",
+          "status": {
+            "working": "실행 중",
+            "waiting": "대기 중",
+            "filled": "체결 완료",
+            "cancelled": "취소됨",
+            "expired": "만료됨",
+            "unknown": "알 수 없음"
+          },
+          "fills": {
+            "loading": "체결 내역을 불러오는 중…",
+            "error": "체결 내역을 불러올 수 없습니다. 탭하여 다시 시도하세요."
+          },
+          "errors": {
+            "amountRequired": "주문 수량을 입력하세요.",
+            "amountTooSmall": "TWAP 주문 금액은 $100 이상이어야 합니다.",
+            "amountExceedsMaximum": "주문이 사용 가능한 최대치를 초과합니다.",
+            "invalidPrecision": "이 시장의 수량 정밀도에 맞는 수량을 입력하세요.",
+            "priceUnavailable": "현재 가격을 가져올 수 없습니다. 다시 시도하세요.",
+            "durationRequired": "총 시간을 입력하세요.",
+            "durationInvalid": "분 단위 정수를 입력하세요.",
+            "durationTooShort": "TWAP 최소 실행 시간은 5분입니다.",
+            "durationTooLong": "TWAP 최대 실행 시간은 1439분입니다.",
+            "capacity": "이 주문을 실행할 거래 여력이 부족합니다.",
+            "reduceOnly": "주문 수량이 청산 가능한 포지션 수량을 초과합니다.",
+            "contextChanged": "계정, 주문 또는 시장이 변경되었습니다. 주문을 다시 확인하세요."
+          }
         }
       },
       "limitOrders": "지정가 주문",
@@ -3421,7 +3522,7 @@
       "title": "소액 전환"
     },
     "walletConnect": {
-      "screenTitle": "지갑 연결",
+      "screenTitle": "스캔하여 연결",
       "connectingToRabby": "Rabby에 연결 중",
       "pairingFailed": "WalletConnect 페어링에 실패했습니다.",
       "proposalNotReceived": "WalletConnect QR 코드가 만료되었을 수 있습니다. 새로 고친 후 다시 시도하세요.",

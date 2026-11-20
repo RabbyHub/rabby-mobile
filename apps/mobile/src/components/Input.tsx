@@ -30,6 +30,7 @@ const getStyle = (colors: AppColorsVariants) =>
       fontSize: 14,
       padding: 15,
       borderRadius: 6,
+      borderCurve: 'continuous',
     },
     inputWithAddOnWrapper: {
       display: 'flex',
@@ -42,6 +43,7 @@ const getStyle = (colors: AppColorsVariants) =>
       backgroundColor: colors['neutral-card-2'],
       padding: 15,
       borderRadius: 6,
+      borderCurve: 'continuous',
       width: '100%',
     },
     inputWithAddOn: {

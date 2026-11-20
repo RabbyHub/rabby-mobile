@@ -9,7 +9,10 @@ import {
 
 import { PerpsProSkeletonBlock } from '../loading/PerpsProSkeletonBlock';
 
-const MARKET_PAIR_SKELETON_STYLE = { borderRadius: 2 } as const;
+const MARKET_PAIR_SKELETON_STYLE = {
+  borderRadius: 2,
+  borderCurve: 'continuous',
+} as const;
 
 export const PerpsProMarketPair: React.FC<{
   metadataReady: boolean;

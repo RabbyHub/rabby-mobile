@@ -91,6 +91,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     width: 6,
     height: 6,
     borderRadius: 3,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['green-default'],
     position: 'absolute',
     top: 0,

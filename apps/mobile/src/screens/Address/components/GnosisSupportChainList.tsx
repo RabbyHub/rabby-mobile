@@ -110,6 +110,7 @@ const getStyles = createGetStyles2024(ctx => ({
     gap: 8,
     backgroundColor: ctx.colors2024['neutral-bg-2'],
     borderRadius: 8,
+    borderCurve: 'continuous',
     padding: 6,
     height: 32,
   },
@@ -117,6 +118,7 @@ const getStyles = createGetStyles2024(ctx => ({
     width: 18,
     height: 18,
     borderRadius: 9,
+    borderCurve: 'continuous',
   },
   chainName: {
     fontSize: 14,

@@ -3,7 +3,7 @@ import { autoLoginGasAccountIfNeeded } from '@/utils/autoLoginGasAccount';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect } from 'react';
-import { View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import * as apisAccount from '@/core/apis/account';
@@ -316,10 +316,19 @@ function HomePostStartupEffects() {
   );
 }
 
+// Pixel size of up-home.png / loss-home.png. The overview background box
+// follows this ratio so cover does not crop a shorter asset.
+const HOME_OVERVIEW_BG_IMAGE_WIDTH = 786;
+const HOME_OVERVIEW_BG_IMAGE_HEIGHT = 434;
+
 function MultiAddressHome(): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
+  const { width: windowWidth } = useWindowDimensions();
+  const bgImageHeight =
+    (windowWidth * HOME_OVERVIEW_BG_IMAGE_HEIGHT) /
+    HOME_OVERVIEW_BG_IMAGE_WIDTH;
   const isLoss = useHome24hProjection(state => !!state.value?.isLoss);
   useRendererDetect({ name: 'MultiAddressHome' });
 
@@ -336,6 +345,7 @@ function MultiAddressHome(): JSX.Element {
           ? require('@/assets2024/singleHome/loss-home.png')
           : require('@/assets2024/singleHome/up-home.png')
       }
+      bgImageHeight={bgImageHeight}
       linearProp={{
         colors: isLight
           ? [colors2024['neutral-bg-1'], colors2024['neutral-bg-2']]

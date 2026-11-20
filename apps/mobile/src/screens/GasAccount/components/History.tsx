@@ -550,6 +550,7 @@ export const GasAccountHistory = React.memo<GasAccountHistoryProps>(
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
     borderRadius: 16,
+    borderCurve: 'continuous',
     marginHorizontal: 20,
     marginBottom: 20,
     paddingHorizontal: 16,
@@ -574,6 +575,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     backgroundColor: colors2024['orange-light-1'],
     borderRadius: 100,
+    borderCurve: 'continuous',
     padding: 10,
     borderWidth: 1,
     borderColor: colors2024['orange-light-2'],
@@ -620,7 +622,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
     fontSize: 20,
     fontStyle: 'normal',
-    fontWeight: '900',
+    fontWeight: '800',
     lineHeight: 24,
   },
   giftInfoHeaderText: {
@@ -634,6 +636,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   skeletonStyle: {
     height: 16,
     borderRadius: 4,
+    borderCurve: 'continuous',
     width: 68,
   },
   borderTop: {},
@@ -671,6 +674,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     height: 210,
     padding: 0,
     borderRadius: 6,
+    borderCurve: 'continuous',
     marginBottom: 12,
   },
   leftContainer: {

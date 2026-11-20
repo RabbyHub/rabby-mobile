@@ -1732,7 +1732,6 @@
       "dataAnalysis": "Giúp cải thiện Rabby",
       "dataAnalysisDesc": "Chia sẻ dữ liệu sử dụng ẩn danh để giúp cải thiện Rabby. Dữ liệu thu thập không được liên kết với bạn hoặc tài khoản của bạn.",
       "bugReportChat": "Gửi phản hồi qua trò chuyện",
-      "features": "Tính năng",
       "manageWallets": "Quản lý ví"
     },
     "settings": {
@@ -2353,7 +2352,10 @@
           "attachedTpSlUnresolved": "Một lần gửi TP/SL trước đó cho thị trường này vẫn chưa có kết quả xác định. Hãy kiểm tra Lệnh đang mở và Vị thế trước khi thử lại.",
           "orderFilled": "Lệnh đã khớp.",
           "orderPlaced": "Đã đặt lệnh.",
-          "orderFailed": "Lệnh thất bại."
+          "orderFailed": "Lệnh thất bại.",
+          "scale": "Lệnh chia bậc",
+          "scaleDescription": "Đặt khoảng giá và tạo nhiều lệnh giới hạn con",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "Giá post-only phải thấp hơn giá bán tốt nhất để tránh khớp ngay lập tức.",
@@ -2367,6 +2369,9 @@
           "tpSl": {
             "title": "TP/SL",
             "description": "Đặt các lệnh TP/SL thị trường cơ bản. Với tính năng nâng cao như TP/SL một phần, hãy đặt TP/SL trên vị thế đang mở."
+          },
+          "randomize": {
+            "description": "Tính năng ngẫu nhiên hóa thay đổi quy mô của mỗi lệnh nhỏ trong phạm vi ±20%, đồng thời tuân thủ quy mô giao dịch tối đa và các giới hạn khác."
           },
           "reduceOnly": {
             "title": "Chỉ giảm",
@@ -2464,7 +2469,8 @@
             "orders": "Lịch sử lệnh",
             "trade": "Lịch sử giao dịch",
             "transaction": "Lịch sử nạp/rút",
-            "funding": "Phí funding"
+            "funding": "Phí funding",
+            "twap": "Lịch sử TWAP"
           },
           "empty": {
             "orders": "Không có lịch sử lệnh",
@@ -2646,6 +2652,101 @@
           "cancelPartial": "Đã hủy {{success}} lệnh; {{failed}} lệnh thất bại",
           "cancelFailed": "Không thể hủy lệnh",
           "cancelContextChanged": "Tài khoản đã thay đổi. Hãy thử lại."
+        },
+        "scaleOrder": {
+          "lowerPrice": "Giá thấp nhất",
+          "upperPrice": "Giá cao nhất",
+          "size": "Số lượng",
+          "count": "Số lệnh (2–100)",
+          "distribution": "Phân bổ số lượng",
+          "flat": "Đồng đều",
+          "ascending": "Tăng dần",
+          "descending": "Giảm dần",
+          "flatDescription": "Mỗi lệnh được phân bổ cùng số lượng",
+          "ascendingDescription": "Số lượng lệnh tăng khi giá tăng",
+          "descendingDescription": "Số lượng lệnh tăng khi giá giảm",
+          "previewBuy": "Xem trước mua",
+          "previewSell": "Xem trước bán",
+          "totalSize": "Tổng số lượng",
+          "averagePrice": "Giá trung bình",
+          "result": "{{accepted}} được chấp nhận, {{rejected}} bị từ chối, {{unresolved}} chờ xác nhận",
+          "unknown": "Kết quả lệnh đang chờ xác nhận. Hãy kiểm tra lệnh mở và lịch sử giao dịch trước khi đặt lệnh mới.",
+          "errors": {
+            "range": "Nhập giá hợp lệ; giá cao nhất phải lớn hơn giá thấp nhất.",
+            "count": "Nhập số nguyên từ 2 đến 100.",
+            "size": "Nhập khối lượng lệnh lớn hơn 0 và đáp ứng yêu cầu về độ chính xác khối lượng của thị trường này.",
+            "duplicatePrice": "Một số giá lệnh trùng nhau sau khi điều chỉnh theo độ chính xác giá cho phép. Hãy mở rộng khoảng giá hoặc giảm số lệnh.",
+            "minimum": "Sau khi điều chỉnh theo độ chính xác khối lượng cho phép, mỗi lệnh con phải có giá trị ít nhất $10.",
+            "maximum": "Tổng giá trị các lệnh vượt quá giới hạn cho phép của thị trường này.",
+            "capacity": "Không đủ khả năng giao dịch cho nhóm lệnh này.",
+            "reduceOnly": "Tổng khối lượng các lệnh vượt quá khối lượng vị thế hiện có thể đóng."
+          }
+        },
+        "twap": {
+          "description": "Đặt lệnh theo khoảng thời gian tùy chỉnh",
+          "totalTime": "Tổng thời gian",
+          "durationFieldLabel": "Tổng thời gian (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} phút",
+          "minuteValue_one": "{{t}} phút",
+          "confirmationDuration": "{{t}} phút",
+          "totalSize": "Tổng khối lượng",
+          "selectTime": "Chọn tổng thời gian",
+          "reset": "Đặt lại",
+          "randomize": "Ngẫu nhiên hóa",
+          "randomized": "Đã ngẫu nhiên hóa",
+          "durationHint": "Thời gian chạy lệnh TWAP là 5–1439 phút.",
+          "minimum": "Tổng khối lượng tối thiểu là {{amount}}",
+          "filled": "Đã khớp",
+          "duration": "Đã chạy",
+          "runtime": "Thời gian hoạt động",
+          "averagePrice": "Giá trung bình",
+          "end": "Kết thúc",
+          "detail": "Chi tiết",
+          "add": "Thêm",
+          "detailTitle": "Chi tiết TWAP đang chạy",
+          "historyDetailTitle": "Chi tiết lịch sử TWAP",
+          "trades": "Giao dịch",
+          "size": "Khối lượng",
+          "fee": "Phí",
+          "noTrades": "Chưa có giao dịch",
+          "endTitle": "Xác nhận kết thúc lệnh TWAP",
+          "endMessage": "Sau khi bạn xác nhận, lệnh TWAP sẽ dừng và các lệnh đang mở của TWAP này sẽ tự động bị hủy.",
+          "ending": "Đang kết thúc…",
+          "ended": "Lệnh TWAP đã kết thúc.",
+          "placed": "Đã đặt lệnh TWAP {{coin}}.",
+          "unknownOutcome": "Kết quả TWAP {{coin}} đang chờ xác nhận. Kiểm tra lệnh và lịch sử trước khi đặt lệnh khác.",
+          "unknown": "Kết quả TWAP đang chờ xác nhận. Kiểm tra lệnh và lịch sử trước khi thử lại.",
+          "loadError": "Không thể tải lệnh TWAP. Nhấn để thử lại.",
+          "endedLabel": "Đã kết thúc",
+          "skipConfirmation": "Không hiển thị xác nhận lần hai cho lệnh TWAP nữa.",
+          "averageFilledPrice": "Giá khớp trung bình",
+          "status": {
+            "working": "Đang chạy",
+            "waiting": "Đang chờ",
+            "filled": "Đã khớp",
+            "cancelled": "Đã hủy",
+            "expired": "Hết hiệu lực",
+            "unknown": "Không xác định"
+          },
+          "fills": {
+            "loading": "Đang tải giao dịch…",
+            "error": "Không thể tải giao dịch. Nhấn để thử lại."
+          },
+          "errors": {
+            "amountRequired": "Nhập khối lượng lệnh.",
+            "amountTooSmall": "Giá trị lệnh TWAP phải tối thiểu $100.",
+            "amountExceedsMaximum": "Lệnh vượt quá mức tối đa khả dụng.",
+            "invalidPrecision": "Nhập khối lượng phù hợp với độ chính xác của thị trường này.",
+            "priceUnavailable": "Giá hiện tại không khả dụng. Vui lòng thử lại.",
+            "durationRequired": "Nhập tổng thời gian.",
+            "durationInvalid": "Nhập số phút nguyên.",
+            "durationTooShort": "Thời gian TWAP tối thiểu là 5 phút.",
+            "durationTooLong": "Thời gian TWAP tối đa là 1439 phút.",
+            "capacity": "Không đủ khả năng giao dịch cho lệnh này.",
+            "reduceOnly": "Lệnh vượt quá khối lượng vị thế có thể đóng.",
+            "contextChanged": "Tài khoản, lệnh hoặc thị trường đã thay đổi. Vui lòng kiểm tra lại lệnh."
+          }
         }
       },
       "limitOrders": "Lệnh giới hạn",
@@ -3538,7 +3639,7 @@
       "title": "Chuyển đổi số dư nhỏ"
     },
     "walletConnect": {
-      "screenTitle": "Kết nối ví",
+      "screenTitle": "Quét để kết nối",
       "connectingToRabby": "Đang kết nối với Rabby",
       "pairingFailed": "Ghép nối WalletConnect thất bại.",
       "proposalNotReceived": "Mã QR WalletConnect có thể đã hết hạn. Vui lòng làm mới và thử lại.",

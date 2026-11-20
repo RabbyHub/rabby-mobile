@@ -52,6 +52,7 @@ export default function AllAddressIcon({
               style={StyleSheet.flatten([
                 {
                   borderRadius: imageRadius,
+                  borderCurve: 'continuous',
                   width: size,
                   height: size,
                 },
@@ -61,7 +62,12 @@ export default function AllAddressIcon({
             <Image
               style={[
                 styles.image,
-                { width: size, height: size, borderRadius: imageRadius },
+                {
+                  width: size,
+                  height: size,
+                  borderRadius: imageRadius,
+                  borderCurve: 'continuous',
+                },
               ]}
               source={Icon}
             />
@@ -101,6 +107,7 @@ const getAllAddressIconStyle = createGetStyles2024(ctx => {
     },
     image: {
       borderRadius: 12,
+      borderCurve: 'continuous',
       borderWidth: 2,
       borderColor: 'white',
     },
@@ -190,6 +197,7 @@ const getUseAllAccountsItemInPanelStyle = createGetStyles2024(ctx => {
   return {
     itemContainer: {
       borderRadius: AddressItemSizes.radiusValue,
+      borderCurve: 'continuous',
       borderWidth: 1,
       borderStyle: 'solid',
       borderColor: ctx.colors2024['neutral-line'],

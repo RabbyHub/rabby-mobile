@@ -31,6 +31,7 @@ export const AddressInput: React.FC<Props> = ({
           height: 'auto',
           backgroundColor: colors['neutral-card-1'],
           borderRadius: 8,
+          borderCurve: 'continuous',
           paddingHorizontal: 10,
           paddingTop: 12,
           position: 'relative',
@@ -39,6 +40,7 @@ export const AddressInput: React.FC<Props> = ({
           width: '100%',
           backgroundColor: colors['neutral-card-2'],
           borderRadius: 4,
+          borderCurve: 'continuous',
           paddingHorizontal: 6,
           minHeight: 48,
           color: colors['neutral-title-1'],
@@ -87,6 +89,7 @@ export const AddressInput: React.FC<Props> = ({
           borderBottomWidth: 0,
           backgroundColor: colors['neutral-card-2'],
           borderRadius: 4,
+          borderCurve: 'continuous',
           padding: 0,
         },
         clearIconContainer: {

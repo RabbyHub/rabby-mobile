@@ -121,15 +121,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 130,
     height: 22,
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
   chainSelector: {
     width: 117,
     height: 24,
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
 
   connectContent: {
     borderRadius: 16,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
@@ -147,6 +150,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     height: 22,
     width: 117,
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
   ruleList: {
     flex: 1,
@@ -162,11 +166,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 100,
     height: 20,
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
   value: {
     width: 50,
     height: 20,
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
   footerContainer: {
     paddingTop: 16,
@@ -196,16 +202,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
     height: 56,
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
   connectWalletLabel: {
     width: 106,
     height: 20,
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
   connectWalletValue: {
     width: 118,
     height: 32,
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
 
   titleWrapper: {
@@ -213,5 +222,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  dappIcon: { width: 44, height: 44, borderRadius: 4, marginBottom: 8 },
+  dappIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 4,
+    borderCurve: 'continuous',
+    marginBottom: 8,
+  },
 }));

@@ -182,6 +182,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
     },
     shadowView: {
       borderRadius: SELECT_ACCOUNT_WALLET_ITEM_RADIUS,
+      borderCurve: 'continuous',
       backgroundColor: ctx.isLight
         ? ctx.colors2024['neutral-bg-1']
         : ctx.colors2024['neutral-bg-2'],
@@ -189,6 +190,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
     },
     addressItemContainer: {
       borderRadius: SELECT_ACCOUNT_WALLET_ITEM_RADIUS,
+      borderCurve: 'continuous',
       overflow: 'hidden',
       backgroundColor: ctx.isLight
         ? ctx.colors2024['neutral-bg-1']
@@ -218,7 +220,12 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       marginRight: 8,
       position: 'relative',
     },
-    walletIcon: { width: 46, height: 46, borderRadius: 12 },
+    walletIcon: {
+      width: 46,
+      height: 46,
+      borderRadius: 12,
+      borderCurve: 'continuous',
+    },
     centerInfo: {
       flex: 1,
       flexShrink: 1,
@@ -297,6 +304,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       height: 20,
       marginLeft: 4,
       borderRadius: 6,
+      borderCurve: 'continuous',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',

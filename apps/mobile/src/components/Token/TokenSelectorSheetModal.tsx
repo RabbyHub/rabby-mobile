@@ -240,6 +240,7 @@ const stylesForRenderProbe = StyleSheet.create({
     right: 16,
     bottom: 0,
     borderRadius: 16,
+    borderCurve: 'continuous',
     backgroundColor: 'rgba(18, 28, 45, 0.04)',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(18, 28, 45, 0.12)',
@@ -252,6 +253,7 @@ const stylesForRenderProbe = StyleSheet.create({
     height: 20,
     paddingHorizontal: 6,
     borderRadius: 10,
+    borderCurve: 'continuous',
     backgroundColor: 'rgba(0, 0, 0, 0.48)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -1385,6 +1387,7 @@ const TokenSelectorSheetModalContent = ({
         style: {
           overflow: 'hidden',
           borderRadius: 32,
+          borderCurve: 'continuous',
         },
         handleStyle: {
           backgroundColor: isLight
@@ -1705,6 +1708,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       width: 100,
       justifyContent: 'center',
       borderRadius: 100,
+      borderCurve: 'continuous',
       display: 'flex',
     },
     actionText: {
@@ -1726,6 +1730,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     tardeLevel: {
       borderRadius: 900,
+      borderCurve: 'continuous',
       color: colors2024['green-default'],
       backgroundColor: colors2024['green-light-1'],
       paddingHorizontal: 6,
@@ -1761,6 +1766,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     searchInputContainer: {
       position: 'relative',
       borderRadius: 12,
+      borderCurve: 'continuous',
       alignItems: 'center',
       overflow: 'hidden',
     },
@@ -1824,6 +1830,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
         ? colord(colors2024['neutral-bg-1']).alpha(0.9).toRgbString()
         : colors2024['neutral-bg-2'],
       borderRadius: tokenItemBorderRadius,
+      borderCurve: 'continuous',
     },
     tokenItemOuterInnerBorder: {
       position: 'absolute',
@@ -1832,6 +1839,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       bottom: 0,
       left: 0,
       borderRadius: tokenItemBorderRadius,
+      borderCurve: 'continuous',
       borderWidth: 1,
       borderColor: isLight
         ? colors2024['neutral-bg-1']
@@ -2008,6 +2016,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: colors2024['brand-light-1'],
       marginHorizontal: 12,
       borderRadius: 12,
+      borderCurve: 'continuous',
     },
     tokenHeaderNetworth: {
       color: colors2024['neutral-title-1'],
@@ -2043,6 +2052,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     netSwitchTabsItem: {
       height: 32,
       borderRadius: 16,
+      borderCurve: 'continuous',
     },
     absoluteContainer: {
       position: 'absolute',

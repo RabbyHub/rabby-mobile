@@ -192,10 +192,12 @@ const styles = StyleSheet.create({
   dangerTrigger: {
     paddingVertical: 2,
     borderRadius: 3,
+    borderCurve: 'continuous',
   },
   defaultTrigger: {
     height: 22,
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
   text: {
     maxWidth: 128,
@@ -210,5 +212,6 @@ const styles = StyleSheet.create({
   },
   roundIcon: {
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
 });

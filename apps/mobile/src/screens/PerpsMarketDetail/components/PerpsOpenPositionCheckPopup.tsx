@@ -416,13 +416,14 @@ const getStyle = createGetStyles2024(ctx => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '900',
+      fontWeight: '800',
       color: colors2024['neutral-title-1'],
       marginBottom: 16,
       textAlign: 'center',
     },
     list: {
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: isLight
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
@@ -448,6 +449,7 @@ const getStyle = createGetStyles2024(ctx => {
       padding: 12,
       backgroundColor: colors2024['neutral-bg-2'],
       borderRadius: 6,
+      borderCurve: 'continuous',
       marginTop: 12,
     },
     listSubItem: {
@@ -511,6 +513,7 @@ const getStyle = createGetStyles2024(ctx => {
       paddingHorizontal: 6,
       backgroundColor: colors2024['brand-light-1'],
       borderRadius: 4,
+      borderCurve: 'continuous',
     },
     listTagRow: {
       display: 'flex',

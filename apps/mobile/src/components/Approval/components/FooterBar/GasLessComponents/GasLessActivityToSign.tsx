@@ -316,6 +316,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     paddingLeft: 12,
     paddingRight: 5,
     borderRadius: 8,
+    borderCurve: 'continuous',
     position: 'relative',
     marginBottom: 8,
     marginTop: 5,
@@ -391,6 +392,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     paddingHorizontal: 10,
     paddingVertical: 7,
     borderRadius: 6,
+    borderCurve: 'continuous',
   },
   linearGradientText: {
     color: colors['neutral-title-2'],
@@ -407,6 +409,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     height: 28,
     backgroundColor: colors2024['brand-default'],
     borderRadius: 6,
+    borderCurve: 'continuous',
     marginLeft: 'auto',
     paddingHorizontal: 12,
   },

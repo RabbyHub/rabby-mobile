@@ -1,3 +1,4 @@
+import { PerpsProTwapHistoryRowView } from './rows/PerpsProTwapHistoryRow';
 import type { PerpsProTradeAmountUnit } from '@/core/services/perpsService';
 import type { PerpsFillFeeSnapshot } from '@/utils/perpsFillFee';
 import React from 'react';
@@ -18,6 +19,14 @@ export const PerpsProHistoryRowView: React.FC<{
   row: PerpsProHistoryRow;
 }> = React.memo(({ active = true, amountUnit, onShowFeeExplanation, row }) => {
   switch (row.kind) {
+    case 'twap':
+      return (
+        <PerpsProTwapHistoryRowView
+          active={active}
+          amountUnit={amountUnit}
+          row={row}
+        />
+      );
     case 'orders':
       return <PerpsProOrderHistoryRowView amountUnit={amountUnit} row={row} />;
     case 'trade':

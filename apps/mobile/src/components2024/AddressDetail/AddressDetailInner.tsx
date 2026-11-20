@@ -189,6 +189,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginHorizontal: 16,
     width: 'auto',
     borderRadius: 24,
+    borderCurve: 'continuous',
   },
   delete: {
     borderColor: colors2024['red-default'],

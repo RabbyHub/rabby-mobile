@@ -454,6 +454,7 @@ const getStyle = createGetStyles2024(
     },
     actionButton: {
       borderRadius: 12,
+      borderCurve: 'continuous',
       height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
     },
     normalButton: {

@@ -31,6 +31,7 @@ const getFormInputStyles = createGetStyles(colors => {
     inputContainer: {
       position: 'relative',
       borderRadius: 4,
+      borderCurve: 'continuous',
       borderWidth: 1,
       borderStyle: 'solid',
       borderColor: colors['neutral-line'],

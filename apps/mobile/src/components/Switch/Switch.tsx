@@ -213,6 +213,7 @@ const Switch = ({
             width: circleSize * switchWidthMultiplier,
             height: barHeight || circleSize,
             borderRadius: switchBorderRadius || circleSize,
+            borderCurve: 'continuous',
           },
         ]}>
         <Animated.View
@@ -240,6 +241,7 @@ const Switch = ({
                 width: circleSize,
                 height: circleSize,
                 borderRadius: circleSize / 2,
+                borderCurve: 'continuous',
               },
               innerCircleStyle,
             ]}>
@@ -263,6 +265,7 @@ const styles = StyleSheet.create({
     width: 71,
     height: 30,
     borderRadius: 30,
+    borderCurve: 'continuous',
     backgroundColor: 'black',
   },
   animatedContainer: {
@@ -276,6 +279,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
+    borderCurve: 'continuous',
     backgroundColor: 'white',
   },
   text: {

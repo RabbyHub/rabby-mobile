@@ -1089,7 +1089,7 @@ const getStyles = createGetStyles2024(ctx => ({
   title: {
     color: ctx.colors2024['neutral-title-1'],
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: '800',
     lineHeight: 24,
     textAlign: 'center',
     marginTop: 0,
@@ -1116,12 +1116,14 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingHorizontal: 4,
     paddingVertical: 0,
     borderRadius: 10,
+    borderCurve: 'continuous',
     backgroundColor: ctx.colors2024['neutral-bg-2'],
   },
   sourceSwitchTab: {
     flex: 1,
     height: 34,
     borderRadius: 8,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 8,

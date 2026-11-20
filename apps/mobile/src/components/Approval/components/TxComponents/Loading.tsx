@@ -12,6 +12,7 @@ const rowStyles = StyleSheet.create({
     width: 60,
     height: 15,
     borderRadius: 6,
+    borderCurve: 'continuous',
   },
   row: {
     gap: 8,
@@ -24,36 +25,43 @@ const rowStyles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 16,
+    borderCurve: 'continuous',
   },
   item2: {
     width: 140,
     height: 16,
     borderRadius: 2,
+    borderCurve: 'continuous',
   },
   titleItem: {
     width: 220,
     height: 22,
     borderRadius: 6,
+    borderCurve: 'continuous',
   },
   titleRightItem: {
     width: 73,
     height: 22,
     borderRadius: 6,
+    borderCurve: 'continuous',
   },
   leftItem: {
     width: 60,
     height: 22,
     borderRadius: 6,
+    borderCurve: 'continuous',
   },
   headerRightItem: {
     width: 70,
     height: 22,
     borderRadius: 6,
+    borderCurve: 'continuous',
   },
   tableItem: {
     width: 125,
     height: 15,
     borderRadius: 6,
+    borderCurve: 'continuous',
   },
   tokenBalanceChange: {
     marginTop: 14,

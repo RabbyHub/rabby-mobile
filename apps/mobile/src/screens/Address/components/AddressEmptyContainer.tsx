@@ -10,6 +10,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   empty: {
     borderRadius: 12,
+    borderCurve: 'continuous',
     borderColor: colors2024['brand-light-1'],
     borderWidth: 1,
     paddingVertical: 5,
@@ -22,6 +23,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 22,
     height: 22,
     borderRadius: 17,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['brand-disable'],
   },
   emptyLine1: {
@@ -30,6 +32,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 5,
     backgroundColor: colors2024['brand-light-2'],
     borderRadius: 5,
+    borderCurve: 'continuous',
   },
   emptyLine2: {
     marginTop: 5,
@@ -37,6 +40,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 5,
     backgroundColor: colors2024['brand-light-1'],
     borderRadius: 5,
+    borderCurve: 'continuous',
   },
   text: {
     marginTop: 12,

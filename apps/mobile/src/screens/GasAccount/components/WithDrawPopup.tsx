@@ -375,7 +375,7 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     fontStyle: 'normal',
-    fontWeight: '900',
+    fontWeight: '800',
     lineHeight: 24,
   },
 
@@ -399,6 +399,7 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 30,
+    borderCurve: 'continuous',
     width: '100%',
     height: 62,
     paddingHorizontal: 20,

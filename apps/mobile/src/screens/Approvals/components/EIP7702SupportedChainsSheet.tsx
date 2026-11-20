@@ -114,7 +114,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingTop: 12,
     marginBottom: 16,
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '900',
+    fontWeight: '800',
     fontSize: 20,
     lineHeight: 24,
     color: colors2024['neutral-title-1'],
@@ -133,6 +133,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   chainItem: {
     height: 78,
     borderRadius: 20,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
@@ -144,6 +145,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   chainIcon: {
     borderRadius: 12,
+    borderCurve: 'continuous',
     overflow: 'hidden',
   },
   chainName: {
@@ -163,6 +165,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   footerButton: {
     height: 52,
     borderRadius: 16,
+    borderCurve: 'continuous',
   },
   footerButtonText: {
     fontFamily: 'SF Pro Rounded',

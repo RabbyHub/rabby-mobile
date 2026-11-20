@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView } from 'react-native';
+import { View } from 'react-native';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import type { NftCollectionResourceValue } from '@/store/nftAssetsIndex';
 import { useTheme2024 } from '@/hooks/theme';
@@ -73,14 +74,16 @@ export const CollectionNFTs: React.FC<Props> = ({
           </Text>
         </View>
         <View style={styles.nftListContainer}>
-          <ScrollView
-            horizontal={false}
+          {/* gorhom only hands the pull-down over from its own scrollable, so
+              a plain ScrollView here would swallow the drag and the sheet would
+              never follow. */}
+          <BottomSheetScrollView
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}>
             {data.nft_list.map(nft => (
               <Item item={nft} key={nft.id} onPress={() => onPressItem(nft)} />
             ))}
-          </ScrollView>
+          </BottomSheetScrollView>
         </View>
       </View>
     </AutoLockView>
@@ -96,7 +99,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   titleText: {
     color: colors2024['neutral-title-1'],
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
     lineHeight: 24,
@@ -117,6 +120,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     maxHeight: 281,
     backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 16,
+    borderCurve: 'continuous',
     padding: 16,
     gap: 16,
   },

@@ -1,3 +1,5 @@
+import { formatDurationMinutes } from '@/utils/formatDurationMinutes';
+
 // Ported time formatters from Rabby Bridge utils/duration.ts.
 const SECONDS_PER_MINUTE = 60;
 const SECONDS_PER_HOUR = 60 * SECONDS_PER_MINUTE;
@@ -53,10 +55,11 @@ export const formatBridgeDuration = (
 
   const totalMinutes = getBridgeDurationMinutes(seconds);
   const days = Math.floor(totalMinutes / MINUTES_PER_DAY);
-  const hours = Math.floor((totalMinutes % MINUTES_PER_DAY) / MINUTES_PER_HOUR);
-  const minutes = totalMinutes % MINUTES_PER_HOUR;
-
   if (days > 0) {
+    const hours = Math.floor(
+      (totalMinutes % MINUTES_PER_DAY) / MINUTES_PER_HOUR,
+    );
+    const minutes = totalMinutes % MINUTES_PER_HOUR;
     if (hours > 0 && minutes > 0) {
       return t('page.bridge.duration-day-hour-min', { days, hours, minutes });
     }
@@ -69,14 +72,7 @@ export const formatBridgeDuration = (
     return t('page.bridge.duration-day', { duration: days });
   }
 
-  if (hours > 0) {
-    if (minutes > 0) {
-      return t('page.bridge.duration-hour-min', { hours, minutes });
-    }
-    return t('page.bridge.duration-hour', { duration: hours });
-  }
-
-  return t('page.bridge.duration', { duration: totalMinutes });
+  return formatDurationMinutes(totalMinutes, t);
 };
 
 // 与 formatBridgeDuration 同一取整，颜色档位才与展示的分钟数一致。

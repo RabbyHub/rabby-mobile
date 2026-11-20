@@ -364,13 +364,18 @@ const getStyle = createGetStyles2024(
     header: { alignItems: 'center', gap: 2 },
     headerTitle: {
       fontFamily: 'SF Pro Rounded',
-      fontWeight: '900',
+      fontWeight: '800',
       fontSize: 20,
       lineHeight: 24,
       color: colors2024['neutral-title-1'],
     },
     headerAccount: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    headerWallet: { width: 18, height: 18, borderRadius: 4 },
+    headerWallet: {
+      width: 18,
+      height: 18,
+      borderRadius: 4,
+      borderCurve: 'continuous',
+    },
     headerAddress: {
       fontFamily: 'SF Pro Rounded',
       fontWeight: '500',
@@ -383,6 +388,7 @@ const getStyle = createGetStyles2024(
     addressText: { width: 220 },
     card: {
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: isLight
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-3'],
@@ -418,6 +424,7 @@ const getStyle = createGetStyles2024(
       width: 26,
       height: 26,
       borderRadius: 13,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-bg-2'],
       alignItems: 'center',
       justifyContent: 'center',

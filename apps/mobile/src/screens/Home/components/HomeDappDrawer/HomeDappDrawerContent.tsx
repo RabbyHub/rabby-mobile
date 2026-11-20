@@ -20,7 +20,10 @@ import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import CustomLabel from '@/screens/TokenDetail/components/CustomLabel';
 import type { NativeGesture } from 'react-native-gesture-handler';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import type Animated from 'react-native-reanimated';
+import Animated, {
+  runOnJS,
+  useAnimatedReaction,
+} from 'react-native-reanimated';
 import type { SCROLLABLE_STATUS } from '../../hooks/useHomeDrawerAnimate';
 import { homeDrawerAnimateMutable } from '../../hooks/useHomeDrawerAnimate';
 
@@ -188,8 +191,6 @@ export const HomeDappDrawerContent: React.FC<{
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { isExpanded } = homeDrawerAnimateMutable;
-  const isDrawerExpanded = useValueFromSharedValue(isExpanded);
-  const previousIsDrawerExpandedRef = useRef(isDrawerExpanded);
   const { t } = useTranslation();
   const { bookmarkList, bookmarkStore, removeBookmark } = useBrowserBookmark();
   const { activeTab, setActiveTab, tabs } = useDappTab({
@@ -314,13 +315,18 @@ export const HomeDappDrawerContent: React.FC<{
     setRemovedItems([]);
   }, []);
 
-  useEffect(() => {
-    if (previousIsDrawerExpandedRef.current && !isDrawerExpanded) {
-      resetEditing();
-    }
-
-    previousIsDrawerExpandedRef.current = isDrawerExpanded;
-  }, [isDrawerExpanded, resetEditing]);
+  // Subscribe on the UI thread instead of mirroring `isExpanded` into React
+  // state: a React mirror re-rendered this whole dapp list on every
+  // open/close transition (~150ms hitch on Android), only to reset an editing
+  // flag that is usually already clear.
+  useAnimatedReaction(
+    () => isExpanded.value,
+    (expanded, previousExpanded) => {
+      if (previousExpanded === true && expanded === false) {
+        runOnJS(resetEditing)();
+      }
+    },
+  );
 
   const completeEditing = useCallback(() => {
     setIsEditing(false);
@@ -488,7 +494,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 18,
       lineHeight: 20,
-      fontWeight: '900',
+      fontWeight: '800',
     },
     edit: {
       color: colors2024['neutral-body'],
@@ -549,6 +555,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       backgroundColor: colors2024['neutral-body'],
       height: 4,
       borderRadius: 100,
+      borderCurve: 'continuous',
     },
 
     favoriteLabelContainer: {
@@ -666,6 +673,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       height: 42,
       width: 143,
       borderRadius: 6,
+      borderCurve: 'continuous',
     },
     searchButtonText: {
       fontSize: 16,

@@ -31,6 +31,7 @@ const styles = StyleSheet.create({
     right: -6,
     paddingLeft: 6,
     borderRadius: 3,
+    borderCurve: 'continuous',
     // @ts-expect-error maybe invalid style
     transition: 'all 0.3s',
     maxWidth: 40,

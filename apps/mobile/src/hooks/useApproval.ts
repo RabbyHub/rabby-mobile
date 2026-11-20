@@ -7,20 +7,17 @@ import { eventBus, EVENT_ACTIVE_WINDOW } from '@/utils/events';
 import React, { useCallback } from 'react';
 import { useApprovalPopup } from './useApprovalPopup';
 import { useDeviceConnect } from './useDeviceConnect';
-import { ApprovalIdentityContext } from './approvalIdentity';
+import {
+  ApprovalIdentityContext,
+  matchesApprovalIdentity,
+} from './approvalIdentity';
 
 export const useApproval = (security?: { canResolve: () => boolean }) => {
   const identity = React.useContext(ApprovalIdentityContext);
-  const bound = !!security;
+  const bound = !!security || !!identity;
   const getApproval: () => Promise<Approval | null> = useCallback(async () => {
     const approval = await notificationServiceApi.getApproval();
-    if (
-      bound &&
-      (!identity ||
-        approval?.id !== identity.id ||
-        approval.data.approvalComponent !== identity.component)
-    )
-      return null;
+    if (bound && !matchesApprovalIdentity(approval, identity)) return null;
     return approval;
   }, [bound, identity]);
   const { showPopup, enablePopup, closePopup } = useApprovalPopup();
@@ -41,11 +38,9 @@ export const useApproval = (security?: { canResolve: () => boolean }) => {
     const approval = await getApproval();
 
     if (
-      security &&
-      (!approval ||
-        approval.id !== identity?.id ||
-        approval.data.approvalComponent !== identity.component ||
-        !security.canResolve())
+      bound &&
+      (!matchesApprovalIdentity(approval, identity) ||
+        (security && !security.canResolve()))
     )
       return;
 
@@ -53,7 +48,7 @@ export const useApproval = (security?: { canResolve: () => boolean }) => {
       await notificationServiceApi.resolveApproval(
         data,
         forceReject,
-        security ? identity?.id : approvalId,
+        identity?.id || approvalId,
       );
     }
     if (stay) {
@@ -82,7 +77,12 @@ export const useApproval = (security?: { canResolve: () => boolean }) => {
     }
 
     if (approval) {
-      await notificationServiceApi.rejectApproval(err, stay, isInternal);
+      await notificationServiceApi.rejectApproval(
+        err,
+        stay,
+        isInternal,
+        identity?.id,
+      );
     }
     if (!stay) {
       eventBus.emit(EVENT_ACTIVE_WINDOW, currentNotificationId);

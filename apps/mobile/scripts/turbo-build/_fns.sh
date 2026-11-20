@@ -622,7 +622,10 @@ turbo_compute_cocoapods_cache_key() {
   files_hash=$(
     turbo_hash_git_files "$repo_root" \
       apps/mobile/ios/Podfile \
-      apps/mobile/ios/Podfile.lock
+      apps/mobile/ios/Podfile.lock \
+      apps/mobile/package.json \
+      yarn.lock \
+      apps/mobile/patches
   ) || return $?
 
   printf '%s\n' \
@@ -1281,6 +1284,20 @@ turbo_prepare_cocoapods() {
   else
     turbo_install_cocoapods --repo-update || return $?
     turbo_mark_cocoapods_architecture
+  fi
+}
+
+# Force a real `pod install` without consulting or restoring the Pods cache.
+# Used when the checkout lost gitignored codegen output that only `pod install`
+# can regenerate: the cached Pods layer carries its own readiness stamp, so the
+# normal path logs a cache hit and returns without running the install.
+turbo_reinstall_cocoapods() {
+  turbo_init_env
+  turbo_install_cocoapods || return $?
+  turbo_mark_cocoapods_architecture
+  if turbo_build_enabled; then
+    cache_key=$(turbo_compute_cocoapods_cache_key) || return $?
+    turbo_save_layer cocoapods "$cache_key" apps/mobile/ios/Pods
   fi
 }
 

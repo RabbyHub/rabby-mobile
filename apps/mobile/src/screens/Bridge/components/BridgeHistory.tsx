@@ -250,7 +250,7 @@ export function BridgeTxHistory({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   title: {
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '900',
+    fontWeight: '800',
     fontSize: 20,
     lineHeight: 24,
     textAlign: 'center',
@@ -271,7 +271,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   row: { marginBottom: 8 },
   skeletonList: { gap: 8 },
-  skeleton: { width: '100%', height: 74, borderRadius: 16 },
+  skeleton: {
+    width: '100%',
+    height: 74,
+    borderRadius: 16,
+    borderCurve: 'continuous',
+  },
   emptyImage: { width: 163, height: 126 },
   empty: { marginTop: 100, alignItems: 'center', gap: 16 },
   emptyText: {

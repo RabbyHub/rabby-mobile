@@ -33,7 +33,7 @@ import type { PerpsProHistoryTab } from './types';
 
 const HISTORY_SHEET_MAX_HEIGHT = 748;
 const HISTORY_SHEET_TOP_GAP = 16;
-const HISTORY_TITLE_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '900');
+const HISTORY_TITLE_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '800');
 
 export const getPerpsProHistorySheetHeight = ({
   topInset,
@@ -230,12 +230,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   modal: {
     borderTopLeftRadius: PERPS_PRO_SHEET_CORNER_RADIUS,
     borderTopRightRadius: PERPS_PRO_SHEET_CORNER_RADIUS,
+    borderCurve: 'continuous',
     overflow: 'hidden',
   },
   background: {
     backgroundColor: colors2024['neutral-bg-0'],
     borderTopLeftRadius: PERPS_PRO_SHEET_CORNER_RADIUS,
     borderTopRightRadius: PERPS_PRO_SHEET_CORNER_RADIUS,
+    borderCurve: 'continuous',
   },
   handle: {
     backgroundColor: colors2024['neutral-bg-0'],
@@ -246,6 +248,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   handleIndicator: {
     backgroundColor: colors2024['neutral-sheet-handle'],
     borderRadius: 3,
+    borderCurve: 'continuous',
     height: 6,
     width: 50,
   },

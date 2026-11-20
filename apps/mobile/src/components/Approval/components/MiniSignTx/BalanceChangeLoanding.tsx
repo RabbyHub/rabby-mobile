@@ -18,6 +18,7 @@ export const BalanceChangeLoading = () => {
           paddingHorizontal: 12,
           backgroundColor: colors2024['neutral-bg-2'],
           borderRadius: 8,
+          borderCurve: 'continuous',
           marginBottom: 16,
         },
         title: {
@@ -44,11 +45,19 @@ export const BalanceChangeLoading = () => {
       </Text>
       <View style={styles.row}>
         <CustomSkeleton circle width={24} height={24} />
-        <CustomSkeleton width={158} height={20} style={{ borderRadius: 8 }} />
+        <CustomSkeleton
+          width={158}
+          height={20}
+          style={{ borderRadius: 8, borderCurve: 'continuous' }}
+        />
       </View>
       <View style={styles.row}>
         <CustomSkeleton circle width={24} height={24} />
-        <CustomSkeleton width={158} height={20} style={{ borderRadius: 8 }} />
+        <CustomSkeleton
+          width={158}
+          height={20}
+          style={{ borderRadius: 8, borderCurve: 'continuous' }}
+        />
       </View>
     </View>
   );

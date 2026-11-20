@@ -209,7 +209,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   header: { marginBottom: 16 },
   title: {
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '900',
+    fontWeight: '800',
     fontSize: 20,
     lineHeight: 24,
     textAlign: 'center',
@@ -225,6 +225,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   cardShadow: {
     borderRadius: TOKEN_CARD_RADIUS,
+    borderCurve: 'continuous',
     ...Platform.select({
       ios: {
         shadowColor: '#37383F',
@@ -238,6 +239,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     overflow: 'hidden',
     height: TOKEN_CARD_HEIGHT,
     borderRadius: TOKEN_CARD_RADIUS,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-5'],
     paddingHorizontal: 11,
@@ -247,6 +249,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   skeleton: {
     borderRadius: TOKEN_CARD_RADIUS,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-4'],
   },
   chainIcon: { right: -1, bottom: -1 },

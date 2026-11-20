@@ -411,6 +411,7 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     paddingVertical: 24,
     gap: 24,
     borderRadius: 20,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
     backgroundColor: colors2024['neutral-bg-1'],
@@ -474,7 +475,13 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
-    fontWeight: '900',
+    // Android's default font padding pushes the glyphs below the avatar's
+    // centre (QA: header title sits low); pin the line box instead.
+    lineHeight: 24,
+    includeFontPadding: false,
+    // Keep the Rounded Heavy weight from the 1388 sweep while keeping the
+    // pinned line box from the header centring fix.
+    fontWeight: '800',
     flexWrap: 'nowrap',
   },
   chainLogo: {
@@ -517,6 +524,7 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
+    includeFontPadding: false,
     fontWeight: '700',
     flexWrap: 'nowrap',
   },

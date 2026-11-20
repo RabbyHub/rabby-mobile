@@ -35,6 +35,7 @@ export const MODAL_GATE_IDS = {
   perpsEditTpSlPrice: 'perps-edit-tp-sl-price',
   perpsGuideEntry: 'perps-guide-entry',
   perpsAutoClose: 'perps-auto-close',
+  perpsProEndTwap: 'perps-pro-end-twap',
   perpsProCancelConfirmation: 'perps-pro-cancel-confirmation',
   perpsProCloseAllConfirmation: 'perps-pro-close-all-confirmation',
   perpsProCloseConfirmation: 'perps-pro-close-confirmation',

@@ -35,6 +35,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 8,
+    borderCurve: 'continuous',
     borderColor: 'transparent',
     borderWidth: 1,
     paddingTop: 14,

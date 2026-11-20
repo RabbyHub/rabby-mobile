@@ -159,6 +159,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
     padding: 16,
     borderRadius: 16,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
@@ -190,6 +191,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
     // marginBottom: 12,
     borderRadius: 30,
+    borderCurve: 'continuous',
     display: 'flex',
     alignItems: 'flex-start',
     // padding: 24,
@@ -246,6 +248,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     borderRadius: 16,
+    borderCurve: 'continuous',
   },
 }));
 

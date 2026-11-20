@@ -1918,7 +1918,6 @@
       "dataAnalysis": "Rabby の改善に協力する",
       "dataAnalysisDesc": "匿名の利用データを共有して、Rabby の改善にご協力ください。収集されたデータがお客様やお客様のアカウントに関連付けられることはありません。",
       "bugReportChat": "チャットでフィードバックを送信",
-      "features": "機能",
       "manageWallets": "ウォレットを管理"
     },
     "settings": {
@@ -2286,7 +2285,10 @@
           "attachedTpSlUnresolved": "この市場では、以前に送信したTP/SLの結果が未確定です。再試行する前に未約定注文とポジションを確認してください。",
           "orderFilled": "注文が約定しました。",
           "orderPlaced": "注文を発注しました。",
-          "orderFailed": "注文に失敗しました。"
+          "orderFailed": "注文に失敗しました。",
+          "scale": "スケール注文",
+          "scaleDescription": "価格範囲を指定し、複数の指値注文を発注します",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "即時約定を避けるため、ポストオンリー価格は最良売り気配値より低く設定してください。",
@@ -2300,6 +2302,9 @@
           "tpSl": {
             "title": "TP/SL",
             "description": "基本的な成行TP/SL注文を設定します。部分TP/SLなどの高度な機能は、保有ポジションにTP/SLを設定してください。"
+          },
+          "randomize": {
+            "description": "ランダム化により、最大取引サイズやその他の制限を守りながら、各分割取引のサイズが最大±20%変動します。"
           },
           "reduceOnly": {
             "title": "決済専用",
@@ -2397,7 +2402,8 @@
             "orders": "注文履歴",
             "trade": "約定履歴",
             "transaction": "資金移動履歴",
-            "funding": "資金調達料"
+            "funding": "資金調達料",
+            "twap": "TWAP 履歴"
           },
           "empty": {
             "orders": "注文履歴はありません",
@@ -2579,6 +2585,101 @@
           "cancelPartial": "{{success}}件の注文をキャンセル、{{failed}}件が失敗",
           "cancelFailed": "注文のキャンセルに失敗しました",
           "cancelContextChanged": "アカウントが変更されました。もう一度お試しください。"
+        },
+        "scaleOrder": {
+          "lowerPrice": "最低価格",
+          "upperPrice": "最高価格",
+          "size": "数量",
+          "count": "注文数 (2–100)",
+          "distribution": "数量配分",
+          "flat": "均等",
+          "ascending": "昇順",
+          "descending": "降順",
+          "flatDescription": "各注文に同じ数量を配分します",
+          "ascendingDescription": "価格が上がるほど注文数量が増えます",
+          "descendingDescription": "価格が下がるほど注文数量が増えます",
+          "previewBuy": "買いを確認",
+          "previewSell": "売りを確認",
+          "totalSize": "合計数量",
+          "averagePrice": "平均価格",
+          "result": "受付済み {{accepted}} 件、拒否 {{rejected}} 件、確認待ち {{unresolved}} 件",
+          "unknown": "注文結果は確認待ちです。新たに発注する前に未約定注文と取引履歴を確認してください。",
+          "errors": {
+            "range": "有効な価格を入力してください。最高価格は最低価格を上回る必要があります。",
+            "count": "2～100 の整数を入力してください。",
+            "size": "0 より大きく、この市場の数量精度の要件を満たす注文数量を入力してください。",
+            "duplicatePrice": "価格精度に合わせて調整した結果、一部の注文価格が重複しています。価格範囲を広げるか注文数を減らしてください。",
+            "minimum": "数量精度に合わせて調整した後の各子注文の金額は、$10 以上である必要があります。",
+            "maximum": "注文の合計金額がこの市場で許容される上限を超えています。",
+            "capacity": "この注文一式を発注する取引余力が不足しています。",
+            "reduceOnly": "注文の合計数量が現在決済可能なポジション数量を超えています。"
+          }
+        },
+        "twap": {
+          "description": "指定した間隔で注文を出す",
+          "totalTime": "合計時間",
+          "durationFieldLabel": "合計時間 (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} 分",
+          "minuteValue_one": "{{t}} 分",
+          "confirmationDuration": "{{t}} 分",
+          "totalSize": "合計数量",
+          "selectTime": "合計時間を選択",
+          "reset": "リセット",
+          "randomize": "ランダム化",
+          "randomized": "ランダム化済み",
+          "durationHint": "TWAP 注文の実行時間は 5～1439 分です。",
+          "minimum": "最小合計数量は {{amount}} です",
+          "filled": "約定済み",
+          "duration": "経過時間",
+          "runtime": "実行時間",
+          "averagePrice": "平均価格",
+          "end": "終了",
+          "detail": "詳細",
+          "add": "追加",
+          "detailTitle": "TWAP 実行詳細",
+          "historyDetailTitle": "TWAP 履歴詳細",
+          "trades": "約定",
+          "size": "数量",
+          "fee": "手数料",
+          "noTrades": "約定はまだありません",
+          "endTitle": "TWAP 注文の終了確認",
+          "endMessage": "確定すると TWAP 注文の執行が停止し、この TWAP の未約定注文は自動的にキャンセルされます。",
+          "ending": "終了中…",
+          "ended": "TWAP 注文を終了しました。",
+          "placed": "{{coin}} TWAP 注文を送信しました。",
+          "unknownOutcome": "{{coin}} TWAP の結果を確認中です。再注文する前に、注文と履歴を確認してください。",
+          "unknown": "TWAP の結果を確認中です。再試行する前に、注文と履歴を確認してください。",
+          "loadError": "TWAP 注文を読み込めません。タップして再試行してください。",
+          "endedLabel": "終了済み",
+          "skipConfirmation": "TWAP 注文の二重確認を今後表示しない。",
+          "averageFilledPrice": "平均約定価格",
+          "status": {
+            "working": "実行中",
+            "waiting": "待機中",
+            "filled": "約定済み",
+            "cancelled": "キャンセル済み",
+            "expired": "失効",
+            "unknown": "不明"
+          },
+          "fills": {
+            "loading": "約定を読み込み中…",
+            "error": "約定を読み込めません。タップして再試行してください。"
+          },
+          "errors": {
+            "amountRequired": "注文数量を入力してください。",
+            "amountTooSmall": "TWAP 注文の価値は $100 以上である必要があります。",
+            "amountExceedsMaximum": "注文が利用可能な上限を超えています。",
+            "invalidPrecision": "この市場の数量精度に合う数量を入力してください。",
+            "priceUnavailable": "現在の価格を取得できません。再試行してください。",
+            "durationRequired": "合計時間を入力してください。",
+            "durationInvalid": "分数を整数で入力してください。",
+            "durationTooShort": "TWAP の最短時間は 5 分です。",
+            "durationTooLong": "TWAP の最長時間は 1439 分です。",
+            "capacity": "この注文に必要な取引余力が不足しています。",
+            "reduceOnly": "注文数量が決済可能なポジション数量を超えています。",
+            "contextChanged": "アカウント、注文または市場が変更されました。注文を再確認してください。"
+          }
         }
       },
       "limitOrders": "指値注文",
@@ -3471,7 +3572,7 @@
       "title": "ダスト変換"
     },
     "walletConnect": {
-      "screenTitle": "ウォレットを接続",
+      "screenTitle": "スキャンして接続",
       "connectingToRabby": "Rabbyに接続中",
       "pairingFailed": "WalletConnectのペアリングに失敗しました。",
       "proposalNotReceived": "WalletConnectのQRコードが無効になっている可能性があります。更新して再試行してください。",

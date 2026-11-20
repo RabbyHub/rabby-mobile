@@ -375,6 +375,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
   return {
     addressItemView: {
       borderRadius: AddressItemSizes.radiusValue,
+      borderCurve: 'continuous',
       overflow: 'hidden',
     },
     active: {
@@ -498,6 +499,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       flexShrink: 0,
       marginLeft: 4,
       borderRadius: 6,
+      borderCurve: 'continuous',
       width: 33,
       height: 20,
       flexWrap: 'nowrap',

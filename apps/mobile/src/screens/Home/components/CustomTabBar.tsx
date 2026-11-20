@@ -1,5 +1,6 @@
 import {
   Dimensions,
+  PixelRatio,
   useWindowDimensions,
   View,
   Pressable,
@@ -7,10 +8,16 @@ import {
 } from 'react-native';
 import { MaterialTabBar } from 'react-native-collapsible-tab-view';
 
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import Animated, {
+  Easing,
+  executeOnUIRuntimeSync,
+  clamp,
+  useAnimatedReaction,
+  useFrameCallback,
   useAnimatedStyle,
   useSharedValue,
+  runOnJS,
   withTiming,
   interpolate,
   AnimatedStyle,
@@ -53,6 +60,8 @@ import {
 } from '@/hooks/navigation';
 import CustomLabel from './Tabs/CustomLabel';
 import { getHomeTabIndicatorWidth } from '../utils/homeTabIndicator';
+import { usePagerOffsetStrategy } from '../pagerOffsetStrategy';
+import { useLegacyHomeChromeBridge } from '../debugHomeChromeBridge';
 
 type ItemLayout = {
   width: number;
@@ -103,37 +112,29 @@ const Indicator = ({
     right: 0,
   };
 
-  const stylez = useAnimatedStyle(() => {
-    const firstItemX = itemsLayout[0]?.x ?? 0;
-
-    const transform = [
-      {
-        translateX:
-          itemsLayout.length > 1
-            ? interpolate(
-                indexDecimal.value,
-                itemsLayout.map((_, i) => i),
-                itemsLayout.map(v => v.x),
-              )
-            : firstItemX,
-      },
-    ];
-
-    const width =
-      itemsLayout.length > 1
-        ? interpolate(
-            indexDecimal.value,
-            itemsLayout.map((_, i) => i),
-            itemsLayout.map(v => v.width),
-          )
-        : itemsLayout[0]?.width;
-
+  // Shuttle, not a bar crossing the gap: each slot clips its own plate. The
+  // left plate slides out to the right while the right plate slides in from the
+  // left, so the black fill is only ever visible inside a slot - the 12pt gap
+  // between them never shows the indicator travelling across it.
+  const slotWidth = itemsLayout[0]?.width ?? 0;
+  const snapPixels = (value: number) => {
+    'worklet';
+    return Math.round(value * STRIP_PIXEL) / STRIP_PIXEL;
+  };
+  const leftPlateStyle = useAnimatedStyle(() => {
+    const p = Math.min(Math.max(indexDecimal.value, 0), 1);
     return {
-      transform,
-      width,
+      transform: [{ translateX: snapPixels(p * slotWidth) }],
       opacity: withTiming(opacity.value),
     };
-  }, [indexDecimal, itemsLayout]);
+  }, [indexDecimal, slotWidth]);
+  const rightPlateStyle = useAnimatedStyle(() => {
+    const p = Math.min(Math.max(indexDecimal.value, 0), 1);
+    return {
+      transform: [{ translateX: snapPixels((p - 1) * slotWidth) }],
+      opacity: withTiming(opacity.value),
+    };
+  }, [indexDecimal, slotWidth]);
 
   React.useEffect(() => {
     if (fadeIn) {
@@ -143,7 +144,12 @@ const Indicator = ({
 
   return (
     <Animated.View style={[styles.indicatorContainer, animatedStyle]}>
-      <Animated.View style={[stylez, styles.indicator, style]} />
+      <View style={[styles.slotClip, styles.slotClipLeft]}>
+        <Animated.View style={[styles.slotPlate, leftPlateStyle]} />
+      </View>
+      <View style={[styles.slotClip, styles.slotClipRight]}>
+        <Animated.View style={[styles.slotPlate, rightPlateStyle]} />
+      </View>
       <Animated.View
         style={[rStyles.leftBackground /* , styles.leftBackground */]}
       />
@@ -170,12 +176,21 @@ const Indicator = ({
 
 const indicatorMarginTop = 0;
 const indicatorHeight = HOME_TOP_HEADER_SIZES.headerIndicatorHeight;
+/**
+ * Extra touch area above and below the indicator bars, in pt. The container
+ * grows by twice this value and pulls the same amount back with negative
+ * margins, so the bars keep their exact visual position while the tappable
+ * height grows. Tapping slightly off the bar used to fall through to the pager.
+ */
+const indicatorHitPaddingY = 8;
 // Keep the indicator hit regions below the header's eye/action buttons.
 // Expanding 50pt upward overlaps those controls under Fabric hit testing.
-const leftHitSlopTop = 4;
-const leftHitSlopBottom = 4;
-const rightHitSlopTop = 4;
-const rightHitSlopBottom = 4;
+// The vertical touch area is owned by `indicatorHitPaddingY` on the container
+// now, so the pressables do not add their own slop on top of it.
+const leftHitSlopTop = 0;
+const leftHitSlopBottom = 0;
+const rightHitSlopTop = 0;
+const rightHitSlopBottom = 0;
 
 const indicatorStyles = createGetStyles2024(
   {
@@ -187,7 +202,7 @@ const indicatorStyles = createGetStyles2024(
 
         return {
           position: 'absolute',
-          top: indicatorMarginTop,
+          top: indicatorMarginTop + indicatorHitPaddingY,
           left: 20,
           width: indicatorWidth,
           height: indicatorHeight,
@@ -203,7 +218,7 @@ const indicatorStyles = createGetStyles2024(
 
         return {
           position: 'absolute',
-          top: indicatorMarginTop,
+          top: indicatorMarginTop + indicatorHitPaddingY,
           right: 20,
           width: indicatorWidth,
           height: indicatorHeight,
@@ -217,8 +232,10 @@ const indicatorStyles = createGetStyles2024(
   ({ isLight, colors2024 }) => {
     const winWidth = Dimensions.get('window').width;
     const indicatorWidth = getHomeTabIndicatorWidth(winWidth);
-    const rightPressableWidth = indicatorWidth * 0.5;
-    const rightPressableOffset = indicatorWidth - rightPressableWidth;
+    // The right segment covers the whole right bar: half of it was dead before,
+    // so tapping the right half of the grey bar did nothing.
+    const rightPressableWidth = indicatorWidth;
+    const rightPressableOffset = 0;
     return {
       indicator: {
         height: 6,
@@ -227,13 +244,41 @@ const indicatorStyles = createGetStyles2024(
           : colors2024['brand-default'],
         position: 'absolute',
         borderRadius: 12,
-        top: indicatorMarginTop,
+        top: indicatorMarginTop + indicatorHitPaddingY,
         zIndex: 99,
+      },
+      slotClip: {
+        position: 'absolute',
+        top: indicatorMarginTop + indicatorHitPaddingY,
+        width: indicatorWidth,
+        height: indicatorHeight,
+        borderRadius: 12,
+        overflow: 'hidden',
+        zIndex: 99,
+      },
+      slotClipLeft: {
+        left: 20,
+      },
+      slotClipRight: {
+        right: 20,
+      },
+      slotPlate: {
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        width: '100%',
+        height: '100%',
+        borderRadius: 12,
+        backgroundColor: isLight
+          ? 'rgba(0, 0, 0, 1)'
+          : colors2024['brand-default'],
       },
       indicatorContainer: {
         position: 'relative',
         paddingTop: indicatorMarginTop,
-        height: indicatorMarginTop + indicatorHeight,
+        height: indicatorMarginTop + indicatorHeight + indicatorHitPaddingY * 2,
+        marginTop: -indicatorHitPaddingY,
+        marginBottom: -indicatorHitPaddingY,
       },
       indicatorBgBox: {
         backgroundColor: colors2024['neutral-bg-1'],
@@ -243,7 +288,7 @@ const indicatorStyles = createGetStyles2024(
         top: indicatorMarginTop,
         left: 20,
         width: indicatorWidth,
-        height: indicatorHeight,
+        height: indicatorHeight + indicatorHitPaddingY * 2,
         zIndex: 99,
       },
       rightPressable: {
@@ -251,32 +296,8 @@ const indicatorStyles = createGetStyles2024(
         right: 20 + rightPressableOffset,
         top: indicatorMarginTop,
         width: rightPressableWidth,
-        height: indicatorHeight,
+        height: indicatorHeight + indicatorHitPaddingY * 2,
         zIndex: 99,
-      },
-      leftHitAreaDebug: {
-        position: 'absolute',
-        top: indicatorMarginTop - leftHitSlopTop,
-        left: 20,
-        width: indicatorWidth,
-        height: indicatorHeight + leftHitSlopTop + leftHitSlopBottom,
-        borderRadius: 12,
-        backgroundColor: 'rgba(255, 0, 0, 0.12)',
-        borderWidth: 1,
-        borderColor: 'rgba(255, 0, 0, 0.4)',
-        zIndex: 97,
-      },
-      rightHitAreaDebug: {
-        position: 'absolute',
-        top: indicatorMarginTop - rightHitSlopTop,
-        right: 20 + rightPressableOffset,
-        width: rightPressableWidth,
-        height: indicatorHeight + rightHitSlopTop + rightHitSlopBottom,
-        borderRadius: 12,
-        backgroundColor: 'rgba(255, 0, 0, 0.12)',
-        borderWidth: 1,
-        borderColor: 'rgba(255, 0, 0, 0.4)',
-        zIndex: 97,
       },
     };
   },
@@ -423,34 +444,83 @@ const AssetsTabLabels = [
   TabbarLabels[HomeTabName.nft],
 ];
 
-function AssetsTabBar() {
-  const { styles } = useTheme2024({ getStyle: getStyles });
-  const indexDecimal = apisHomeTabIndex.svTabIndexDecimal;
+// Snap the strip to whole device pixels: a sub-pixel translate makes the whole
+// row shimmer while it rides in.
+const STRIP_PIXEL = PixelRatio.get();
 
+// The assets pager: overview + token + defi + nft. Used to ignore offsets
+// published by an unrelated pager while the home chrome is mounted.
+const HOME_TAB_PAGE_COUNT = AssetsTabLabels.length + 1;
+
+/**
+ * Push variant (QA 1396): native calls this worklet on every sampled frame, so
+ * the shared value is already fresh when Reanimated's frame callbacks run.
+ */
+function applyNativePagerOffset(
+  target: Animated.SharedValue<number>,
+  offset: number,
+  pageCount: number,
+) {
+  'worklet';
+  if (pageCount !== HOME_TAB_PAGE_COUNT) {
+    return;
+  }
+  target.value = offset;
+}
+
+/** Installs the push setter. Returns whether the native binder is available. */
+function bindNativePagerOffset(target: Animated.SharedValue<number>): boolean {
+  'worklet';
+  const bind = (global as any).__pagerOffsetBind;
+  if (typeof bind !== 'function') {
+    return false;
+  }
+  return bind(applyNativePagerOffset, target);
+}
+
+function unbindNativePagerOffset() {
+  'worklet';
+  const bind = (global as any).__pagerOffsetBind;
+  if (typeof bind === 'function') {
+    bind(null, null);
+  }
+}
+
+function AssetsTabBar({
+  indexDecimal,
+}: {
+  indexDecimal: Animated.SharedValue<number>;
+}) {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { width: winWidth } = useWindowDimensions();
+
+  // The strip belongs to the assets pages: it rides in from the right at the
+  // same rate as the pages, so the tab row and the list below look like one
+  // sheet instead of the labels fading in over the overview.
   const stylez = useAnimatedStyle(() => {
+    const progress = clamp(indexDecimal.value, 0, 1);
     return {
+      transform: [
+        {
+          translateX:
+            Math.round((1 - progress) * winWidth * STRIP_PIXEL) / STRIP_PIXEL,
+        },
+      ],
+      // Fallback version: the row still rides in 1:1 with the pager, and the
+      // fade hides the fast-fling tail where the event stream trails the page.
       opacity: interpolate(
-        indexDecimal.value,
-        [0, 0.9, 0.99, 1],
-        [0, 0.1, 0.5, 1],
-        Extrapolation.CLAMP,
-      ),
-      translateY: interpolate(
-        indexDecimal.value,
-        [0, 0.5, 1],
-        [
-          -HOME_TOP_HEADER_SIZES.tabItemLineHeight,
-          -HOME_TOP_HEADER_SIZES.tabItemLineHeight / 2,
-          0,
-        ],
+        progress,
+        [0, 0.45, 0.85, 1],
+        [0, 0.3, 0.8, 1],
         Extrapolation.CLAMP,
       ),
     };
-  });
+  }, [winWidth]);
 
   const tabbarContainerStyle = useAnimatedStyle(() => {
+    const progress = clamp(indexDecimal.value, 0, 1);
     return {
-      pointerEvents: indexDecimal.value < 1 ? 'none' : 'auto',
+      pointerEvents: progress > 0.99 ? 'auto' : 'none',
     };
   });
 
@@ -485,8 +555,167 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
   Pick<MaterialTabBarProps, 'indexDecimal'>
 >) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const indexDecimal = apisHomeTabIndex.svTabIndexDecimal;
+  const rawIndexDecimal = apisHomeTabIndex.svTabIndexDecimal;
   const { tabsOpacity } = useHomeDrawerOpacityStyle();
+
+  // `onPageScroll` delivers the pager position as discrete samples (~60 per
+  // second, while the pager itself moves natively at the display rate). Driving
+  // the chrome straight from that value makes it advance in steps on a fast
+  // fling. Bridge each sample with a linear `withTiming` whose duration equals
+  // the *measured* sample interval (wall clock, so any refresh rate works), and
+  // lead the target by ~half a sample to cancel the ~1-sample lag of the event
+  // stream. The lead is dropped once samples stop so the settle lands exactly.
+  const indexDecimal = useSharedValue(rawIndexDecimal.value);
+  const nowMs = useSharedValue(0);
+  const lastSampleMs = useSharedValue(0);
+  const sampleIntervalMs = useSharedValue(16);
+  const lastRawValue = useSharedValue(rawIndexDecimal.value);
+  const velocity = useSharedValue(0); // pages per ms
+  const restSettled = useSharedValue(1);
+
+  // Native path (QA 1396): the patched pager samples the real page offset at
+  // the display rate and hands it to the UI runtime. `pull` reads it from this
+  // frame callback, `push` lets native write `indexDecimal` itself. Both are
+  // debug-switch driven; `off` keeps the interpolation fallback below, which is
+  // still the shipped behaviour.
+  const pagerOffsetStrategy = usePagerOffsetStrategy();
+  // iOS falls back to the pre-#2395 raw sample stream by default; Android keeps
+  // the tuned bridge. Flip with `_cmd=toggle-home-chrome-bridge` on device.
+  const legacyBridge = useLegacyHomeChromeBridge();
+  // 0 = off, 1 = pull, 2 = push
+  const nativeMode = useSharedValue(0);
+  // Whether the push setter is actually installed on this app session.
+  const pushBound = useSharedValue(0);
+  const nativeActive = useSharedValue(0);
+
+  useEffect(() => {
+    nativeMode.value =
+      pagerOffsetStrategy === 'push'
+        ? 2
+        : pagerOffsetStrategy === 'pull'
+        ? 1
+        : 0;
+    let bound = false;
+    if (pagerOffsetStrategy === 'push') {
+      try {
+        bound = executeOnUIRuntimeSync(bindNativePagerOffset)(indexDecimal);
+      } catch (error) {
+        console.warn('[pager-offset-strategy] push bind failed:', error);
+      }
+      if (__DEV__) {
+        console.log('[pager-offset-strategy] push bound:', bound);
+      }
+    }
+    pushBound.value = bound ? 1 : 0;
+    return () => {
+      if (!bound) {
+        return;
+      }
+      pushBound.value = 0;
+      try {
+        executeOnUIRuntimeSync(unbindNativePagerOffset)();
+      } catch (error) {
+        console.warn('[pager-offset-strategy] push unbind failed:', error);
+      }
+    };
+  }, [pagerOffsetStrategy, indexDecimal, nativeMode, pushBound]);
+
+  const frameCallback = useFrameCallback(info => {
+    if (legacyBridge) {
+      return;
+    }
+    nowMs.value += info.timeSincePreviousFrame ?? 1000 / 60;
+    if (nativeMode.value === 2) {
+      // Native writes `indexDecimal`; just keep the fallback writer quiet.
+      nativeActive.value = pushBound.value;
+      if (pushBound.value === 1) {
+        return;
+      }
+    } else if (nativeMode.value === 1) {
+      const readOffset = (global as any).__pagerOffset;
+      const readPageCount = (global as any).__pagerOffsetPages;
+      if (
+        typeof readOffset === 'function' &&
+        typeof readPageCount === 'function' &&
+        readPageCount() === HOME_TAB_PAGE_COUNT
+      ) {
+        const nativeOffset = readOffset();
+        if (typeof nativeOffset === 'number' && Number.isFinite(nativeOffset)) {
+          nativeActive.value = 1;
+          indexDecimal.value = nativeOffset;
+          return;
+        }
+      }
+    }
+    nativeActive.value = 0;
+    // Once samples stop, land on the exact last sample: the timing target
+    // carries a small velocity lead that must not survive the settle.
+    if (
+      !restSettled.value &&
+      nowMs.value - lastSampleMs.value > sampleIntervalMs.value * 1.5
+    ) {
+      restSettled.value = 1;
+      indexDecimal.value = withTiming(lastRawValue.value, {
+        duration: 80,
+        easing: Easing.linear,
+      });
+      // Nothing left to correct: stop scheduling frames until the next sample.
+      runOnJS(setFrameActive)(false);
+    }
+  }, false);
+
+  // The tuned bridge is a JS-mode callback: `autostart` only seeds the ref, so
+  // switching the A/B mode has to go through `setActive` as well.
+  const frameActiveRef = React.useRef(false);
+  const setFrameActive = React.useCallback(
+    (active: boolean) => {
+      if (frameActiveRef.current === active) {
+        return;
+      }
+      frameActiveRef.current = active;
+      frameCallback.setActive(active);
+    },
+    [frameCallback],
+  );
+  React.useEffect(() => {
+    setFrameActive(!legacyBridge);
+  }, [legacyBridge, setFrameActive]);
+
+  useAnimatedReaction(
+    () => rawIndexDecimal.value,
+    value => {
+      // Legacy raw stream: mirror the sample straight through, no extrapolation.
+      if (legacyBridge) {
+        indexDecimal.value = value;
+        return;
+      }
+      const gapMs = Math.max(
+        8,
+        Math.min(120, nowMs.value - lastSampleMs.value),
+      );
+      lastSampleMs.value = nowMs.value;
+      restSettled.value = 0;
+      runOnJS(setFrameActive)(true);
+      const dv = value - lastRawValue.value;
+      lastRawValue.value = value;
+      velocity.value = velocity.value * 0.6 + (dv / gapMs) * 0.4;
+      // Light smoothing: one unusually long gap should not stall the chrome.
+      sampleIntervalMs.value = sampleIntervalMs.value * 0.7 + gapMs * 0.3;
+      const lead = Math.max(
+        -0.2,
+        Math.min(0.2, velocity.value * sampleIntervalMs.value * 0.5),
+      );
+      // The native sampler already owns `indexDecimal` while it is live.
+      if (nativeActive.value === 1) {
+        return;
+      }
+      indexDecimal.value = withTiming(value + lead, {
+        duration: Math.max(16, Math.min(80, sampleIntervalMs.value)),
+        easing: Easing.linear,
+      });
+    },
+    [legacyBridge, setFrameActive],
+  );
 
   // Keep the native sibling order stable while PagerView is settling. Changing
   // zIndex here can detach/reinsert the pager under Fabric and stop its scroll.
@@ -553,7 +782,7 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
           }
         }}
       />
-      <AssetsTabBar />
+      <AssetsTabBar indexDecimal={indexDecimal} />
     </Animated.View>
   );
 };

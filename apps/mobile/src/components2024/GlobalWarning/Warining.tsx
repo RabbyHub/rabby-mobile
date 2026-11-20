@@ -68,6 +68,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
+    borderCurve: 'continuous',
     flexDirection: 'row',
     gap: 6,
     backgroundColor: isLight
@@ -83,7 +84,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   title: {
     color: colors2024['neutral-title-1'],
-    fontWeight: '900',
+    fontWeight: '800',
     fontSize: 14,
     lineHeight: 18,
     fontFamily: 'SF Pro Rounded',

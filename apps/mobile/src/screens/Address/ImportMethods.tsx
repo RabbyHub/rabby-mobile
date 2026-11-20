@@ -360,6 +360,7 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingVertical: 20,
     paddingHorizontal: 20,
     borderRadius: 20,
+    borderCurve: 'continuous',
     flexDirection: 'row',
     justifyContent: 'flex-start',
     gap: 12,

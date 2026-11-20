@@ -151,6 +151,7 @@ const getStyles = createGetStyles(colors => ({
     paddingTop: SIZES.containerPaddingVertical,
     paddingBottom: SIZES.footer,
     borderRadius: 16,
+    borderCurve: 'continuous',
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'center',

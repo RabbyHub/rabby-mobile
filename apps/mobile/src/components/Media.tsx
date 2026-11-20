@@ -11,6 +11,7 @@ import React, {
   useState,
 } from 'react';
 import {
+  Platform,
   StyleSheet,
   TouchableOpacityProps,
   View,
@@ -111,7 +112,12 @@ export const Media = ({
     turnOff: loadingSucceed,
     turnOn: loadingFail,
   } = useSwitch(false);
-  const { on: pause, toggle } = useSwitch(true);
+  const {
+    on: pause,
+    toggle,
+    turnOn: pauseTurnOn,
+    turnOff: pauseTurnOff,
+  } = useSwitch(true);
   const [safeSvgState, setSafeSvgState] = useState<SafeSvgState>({
     status: 'idle',
   });
@@ -243,9 +249,31 @@ export const Media = ({
   }, [loadingFail, reportError, turnOff]);
 
   const changePlay = useCallback(() => {
+    // End of playback: seek back to the first frame and pause explicitly.
+    // Toggling would restart the clip when the native player started it (the
+    // custom button was never pressed, so `pause` could still be true).
     ref?.current?.seek(0);
-    toggle();
-  }, [toggle]);
+    pauseTurnOn();
+  }, [pauseTurnOn]);
+
+  // Keep the custom overlay in sync with the native player's own play/pause
+  // (e.g. the AVPlayer/ExoPlayer control bar), so the pause overlay does not
+  // stay visible while the video is actually playing (and vice versa).
+  const handlePlaybackStateChanged = useCallback(
+    (e: { isPlaying?: boolean }) => {
+      if (e?.isPlaying) {
+        pauseTurnOff();
+        return;
+      }
+      // Android's ExoPlayer also reports `isPlaying: false` while it buffers or
+      // seeks, so only take the pause transition from iOS: turning `pause` on
+      // there would hide the native controls mid-playback.
+      if (Platform.OS === 'ios') {
+        pauseTurnOn();
+      }
+    },
+    [pauseTurnOff, pauseTurnOn],
+  );
   const containerStyles = useMemo(
     () => StyleSheet.flatten([styles.view, style]),
     [styles.view, style],
@@ -258,6 +286,28 @@ export const Media = ({
   const handleLoad = useCallback(
     () => !pause && onSuccess(),
     [pause, onSuccess],
+  );
+
+  const renderVideoNode = (controls: boolean) => (
+    <>
+      <Video
+        style={mediaContainerStyles}
+        source={srcSource}
+        controls={controls}
+        onLoad={handleLoad}
+        onError={onError}
+        paused={pause}
+        ref={ref}
+        onEnd={changePlay}
+        poster={_poster}
+        onPlaybackStateChanged={handlePlaybackStateChanged}
+      />
+      {pause ? (
+        <CustomTouchableOpacity onPress={toggle} style={styles.detailPlayIcon}>
+          <IconPlay width={72} height={72} />
+        </CustomTouchableOpacity>
+      ) : null}
+    </>
   );
 
   const safeSvgFailed = safeSvgState.status === 'failed';
@@ -301,27 +351,15 @@ export const Media = ({
       ) : null}
       {type === MEDIA_TYPE.VIDEO_URL ? (
         playable ? (
-          <CustomTouchableOpacity style={mediaContainerStyles} onPress={toggle}>
-            <Video
+          Platform.OS === 'ios' ? (
+            <View style={mediaContainerStyles}>{renderVideoNode(true)}</View>
+          ) : (
+            <CustomTouchableOpacity
               style={mediaContainerStyles}
-              source={srcSource}
-              controls={!pause}
-              onLoad={handleLoad}
-              onError={onError}
-              paused={pause}
-              ref={ref}
-              onEnd={changePlay}
-              poster={_poster}
-            />
-
-            {pause ? (
-              <CustomTouchableOpacity
-                onPress={toggle}
-                style={styles.detailPlayIcon}>
-                <IconPlay width={72} height={72} />
-              </CustomTouchableOpacity>
-            ) : null}
-          </CustomTouchableOpacity>
+              onPress={toggle}>
+              {renderVideoNode(!pause)}
+            </CustomTouchableOpacity>
+          )
         ) : (
           <>
             {_thumbnail ? (
