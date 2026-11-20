@@ -9,7 +9,7 @@ import { ViewRawDetail } from '../Approval/components/TxComponents/ViewRawModal'
 import { SelectChain } from '../SelectChain';
 import { CancelTxPopup } from '../CancelTxPopup';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
-import type { ThemeColors, ThemeColors2024 } from '@/constant/theme';
+import { ThemeColors, type ThemeColors2024 } from '@/constant/theme';
 import { ConnectLedger } from '../ConnectLedger/ConnectLedger';
 import { SettingLedger } from '../HDSetting/SettingLedger';
 import { TipUpgradeModalInner } from '../Upgrade/TipUpgrade';
@@ -117,6 +117,26 @@ export function makeClassicalBottomSheetProps(ctx: {
       },
       handleIndicatorStyle: {
         backgroundColor: ctx.colors2024['neutral-line'],
+      },
+    };
+  }
+
+  if (
+    ctx.params?.name === MODAL_NAMES.TIP_PRIVACY_POLICY ||
+    ctx.params?.name === MODAL_NAMES.TIP_TERM_OF_USE
+  ) {
+    // The rabby.io docs pages in these WebViews only have a light theme, so
+    // keep the sheet chrome light in every app theme to match them.
+    const lightColors = ThemeColors.light;
+    return {
+      handleStyle: {
+        backgroundColor: lightColors['neutral-bg-1'],
+      },
+      handleIndicatorStyle: {
+        backgroundColor: lightColors['neutral-line'],
+      },
+      backgroundStyle: {
+        backgroundColor: lightColors['neutral-bg-1'],
       },
     };
   }
