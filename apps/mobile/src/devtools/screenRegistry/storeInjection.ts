@@ -18,6 +18,9 @@
  * Only the stores listed here can be written. The allowlist keeps a debug link
  * from mutating wallet/keyring state.
  */
+import { storeApiExpSettingData } from '@/hooks/appSettings';
+import { isUnlockSessionValid, isUnlocked } from '@/core/apis/lock';
+
 type StatefulStore = {
   setState?: (value: Record<string, unknown>) => void;
   getState?: () => object;
@@ -153,6 +156,13 @@ function isPatchApplied(store: StatefulStore, patch: Record<string, unknown>) {
   return Object.keys(patch).every(key => sameValue(state[key], patch[key]));
 }
 
+function isAutomationSessionActive() {
+  return (
+    storeApiExpSettingData.getScreenE2EEnabled() &&
+    (isUnlocked() || isUnlockSessionValid())
+  );
+}
+
 export async function pinInjectedStore(pinPatch: Record<string, unknown>) {
   for (const [storeId, rawPatch] of Object.entries(pinPatch)) {
     const patch = normalizePatch(storeId, rawPatch);
@@ -169,6 +179,11 @@ export async function pinInjectedStore(pinPatch: Record<string, unknown>) {
 
     let applying = false;
     const unsubscribe = store.subscribe?.(() => {
+      if (!isAutomationSessionActive()) {
+        // Screen E2E off or wallet locked: stop holding the fixture value.
+        clearInjectedStorePins();
+        return;
+      }
       if (applying || isPatchApplied(store, patch)) {
         return;
       }

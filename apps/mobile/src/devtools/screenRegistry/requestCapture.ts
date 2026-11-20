@@ -5,13 +5,28 @@ import {
 } from '@rabby-wallet/react-native-fs';
 
 let captureEnabled = false;
+import { storeApiExpSettingData } from '@/hooks/appSettings';
+import { isUnlockSessionValid, isUnlocked } from '@/core/apis/lock';
+
 let allowAnyApproval = false;
 
 export function setAllowAnyApproval(value: boolean) {
   allowAnyApproval = value;
 }
 
+/**
+ * `debug-capture-requests&allowAnyApproval=1` is process-global, so it must not
+ * outlive the automation session: report (and clear) it once Screen E2E is
+ * disarmed or the wallet is locked.
+ */
 export function isAllowAnyApproval() {
+  if (
+    allowAnyApproval &&
+    (!storeApiExpSettingData.getScreenE2EEnabled() ||
+      !(isUnlocked() || isUnlockSessionValid()))
+  ) {
+    allowAnyApproval = false;
+  }
   return allowAnyApproval;
 }
 
