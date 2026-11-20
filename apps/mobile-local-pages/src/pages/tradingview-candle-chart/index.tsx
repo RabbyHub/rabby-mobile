@@ -2158,6 +2158,12 @@ function handleSetCandlestickData(
       });
     } else if (message.fitContent) {
       chartState.chart.timeScale().fitContent();
+    } else {
+      chartState.chart
+        .timeScale()
+        .setVisibleLogicalRange(
+          getInitialVisibleLogicalRange(message.data.length, 51),
+        );
     }
     if (!chartState.proConfig) {
       resetSimplePriceScale(chartState.candlestickSeries);
