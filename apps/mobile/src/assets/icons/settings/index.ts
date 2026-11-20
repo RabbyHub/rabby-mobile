@@ -221,9 +221,9 @@ export const RcIconCurrency = makeThemeIcon2024FromCC(
   }),
 );
 
-import { default as RcWalletConnectCC } from './icon-wallet-connect-cc.svg';
-export const RcWalletConnect = makeThemeIcon2024FromCC(
-  RcWalletConnectCC,
+import { default as RcScanToConnectCC } from './icon-scan-cc.svg';
+export const RcScanToConnect = makeThemeIcon2024FromCC(
+  RcScanToConnectCC,
   ctx => ({
     onLight: ctx.colors2024['brand-default'],
     onDark: ctx.colors2024['brand-default'],

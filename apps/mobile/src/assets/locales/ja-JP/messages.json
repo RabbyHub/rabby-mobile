@@ -1918,7 +1918,6 @@
       "dataAnalysis": "Rabby の改善に協力する",
       "dataAnalysisDesc": "匿名の利用データを共有して、Rabby の改善にご協力ください。収集されたデータがお客様やお客様のアカウントに関連付けられることはありません。",
       "bugReportChat": "チャットでフィードバックを送信",
-      "features": "機能",
       "manageWallets": "ウォレットを管理"
     },
     "settings": {
@@ -3471,7 +3470,7 @@
       "title": "ダスト変換"
     },
     "walletConnect": {
-      "screenTitle": "ウォレットを接続",
+      "screenTitle": "スキャンして接続",
       "connectingToRabby": "Rabbyに接続中",
       "pairingFailed": "WalletConnectのペアリングに失敗しました。",
       "proposalNotReceived": "WalletConnectのQRコードが無効になっている可能性があります。更新して再試行してください。",

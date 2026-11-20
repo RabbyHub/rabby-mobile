@@ -2037,7 +2037,6 @@
       "dataAnalysis": "ช่วยปรับปรุง Rabby",
       "dataAnalysisDesc": "แชร์ข้อมูลการใช้งานแบบไม่ระบุตัวตนเพื่อช่วยปรับปรุง Rabby ข้อมูลที่เก็บรวบรวมจะไม่เชื่อมโยงกับคุณหรือบัญชีของคุณ",
       "bugReportChat": "ส่งข้อเสนอแนะผ่านแชต",
-      "features": "ฟีเจอร์",
       "manageWallets": "จัดการกระเป๋าเงิน"
     },
     "settings": {
@@ -3590,7 +3589,7 @@
       "title": "แปลงยอดคงเหลือเล็กน้อย"
     },
     "walletConnect": {
-      "screenTitle": "เชื่อมต่อวอลเล็ต",
+      "screenTitle": "สแกนเพื่อเชื่อมต่อ",
       "connectingToRabby": "กำลังเชื่อมต่อกับ Rabby",
       "pairingFailed": "การจับคู่ WalletConnect ล้มเหลว",
       "proposalNotReceived": "คิวอาร์โค้ด WalletConnect อาจหมดอายุแล้ว โปรดรีเฟรชแล้วลองอีกครั้ง",

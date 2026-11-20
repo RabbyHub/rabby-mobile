@@ -3,6 +3,7 @@ import {
   StoreServiceBase,
 } from '@rabby-wallet/persist-store';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
+import { normalizeAddressKey } from '@/utils/address';
 
 export type RabbyPointsStore = {
   signatures: Record<string, string>;
@@ -24,16 +25,16 @@ export class RabbyPointsService extends StoreServiceBase<
 
   setSignature = (addr: string, signature: string) => {
     this.mutateStore(draft => {
-      draft.signatures[addr.toLowerCase()] = signature;
+      draft.signatures[normalizeAddressKey(addr)] = signature;
     });
   };
 
   getSignature = (addr: string) => {
-    return this.store.signatures[addr.toLowerCase()];
+    return this.store.signatures[normalizeAddressKey(addr)];
   };
   clearSignatureByAddr = (addr: string) => {
     this.mutateStore(draft => {
-      delete draft.signatures[addr.toLowerCase()];
+      delete draft.signatures[normalizeAddressKey(addr)];
     });
   };
   clearSignature = () => {

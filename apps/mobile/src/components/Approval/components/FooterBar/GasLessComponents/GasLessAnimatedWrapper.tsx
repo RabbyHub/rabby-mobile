@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: 12, // keep in sync with components2024/Button
     paddingHorizontal: 0,
     width: '100%',
   },

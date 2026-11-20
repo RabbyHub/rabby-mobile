@@ -1918,7 +1918,6 @@
       "dataAnalysis": "Bantu tingkatkan Rabby",
       "dataAnalysisDesc": "Bagikan data penggunaan anonim untuk membantu meningkatkan Rabby. Data yang dikumpulkan tidak dikaitkan dengan Anda atau akun Anda.",
       "bugReportChat": "Bagikan Umpan Balik melalui Obrolan",
-      "features": "Fitur",
       "manageWallets": "Kelola Dompet"
     },
     "settings": {
@@ -3421,7 +3420,7 @@
       "title": "Konversi Dust"
     },
     "walletConnect": {
-      "screenTitle": "Hubungkan Dompet",
+      "screenTitle": "Pindai untuk Terhubung",
       "connectingToRabby": "Menghubungkan ke Rabby",
       "pairingFailed": "Penyandingan WalletConnect gagal.",
       "proposalNotReceived": "Kode QR WalletConnect mungkin sudah kedaluwarsa. Muat ulang lalu coba lagi.",
