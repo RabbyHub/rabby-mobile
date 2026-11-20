@@ -29,7 +29,7 @@ import type {
 } from '@rabby-wallet/rabby-api/dist/types';
 import type { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
-import { useDebounceFn, useMemoizedFn } from 'ahooks';
+import { useDebounceFn, useMemoizedFn, useUnmount } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import _, { omit } from 'lodash';
 import type { ReactNode } from 'react';
@@ -63,7 +63,10 @@ import { toast as toast2024 } from '@/components2024/Toast';
 import { useGasAccountSnapshotActivation } from '@/screens/GasAccount/hooks';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 import type { MiniApprovalTaskType } from '@/hooks/useMiniApprovalTask';
-import { useMiniApprovalTask } from '@/hooks/useMiniApprovalTask';
+import {
+  releaseOneKeyMiniSign,
+  useMiniApprovalTask,
+} from '@/hooks/useMiniApprovalTask';
 import type { sendTransaction } from '@/utils/sendTransaction';
 import { EVENT_MINI_APPROVAL_START_SIGN, eventBus } from '@/utils/events';
 import AutoLockView from '@/components/AutoLockView';
@@ -1444,6 +1447,9 @@ export const MiniApproval = ({
   const task = useMiniApprovalTask({
     ga,
   });
+
+  // Closing the sheet while the OneKey shows the confirmation must release it.
+  useUnmount(releaseOneKeyMiniSign);
 
   if (!txs?.length) {
     return null;

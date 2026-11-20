@@ -44,6 +44,109 @@ describe('KeyringService setup', () => {
       await keyringService.setLocked();
       expect(spy.calledOnce).toBe(true);
     });
+
+    it('cancels and cleans up only OneKey keyrings on lock', async () => {
+      const onekey = {
+        type: 'Onekey Hardware',
+        cancelPendingWork: sinon.stub().resolves(undefined),
+        cleanUp: sinon.stub().resolves(undefined),
+      };
+      const other = {
+        type: 'HD Key Tree',
+        cancelPendingWork: sinon.stub().resolves(undefined),
+        cleanUp: sinon.stub().resolves(undefined),
+      };
+      keyringService.keyrings = [onekey, other] as any;
+
+      await keyringService.setLocked();
+
+      expect(onekey.cancelPendingWork.calledOnce).toBe(true);
+      expect(onekey.cleanUp.calledOnce).toBe(true);
+      expect(other.cancelPendingWork.called).toBe(false);
+      expect(other.cleanUp.called).toBe(false);
+    });
+  });
+});
+
+describe('OneKey passphrase persistence', () => {
+  const oneKeyPassword = 'password123';
+
+  it('persists after signing when a stale passphrase state was cleared', async () => {
+    const keyringService = new KeyringService({
+      encryptor: mockEncryptor as any,
+    });
+    keyringService.loadStore({});
+    await keyringService.boot(oneKeyPassword);
+    const keyring = {
+      type: 'Onekey Hardware',
+      signTransaction: sinon.stub().resolves('signed'),
+      consumePassphraseStateCleared: sinon.stub().returns(true),
+    };
+    const persist = sinon
+      .stub(keyringService, 'persistAllKeyrings')
+      .resolves(true);
+
+    const signed = await keyringService.signTransaction(
+      keyring,
+      {},
+      '0x1111111111111111111111111111111111111111',
+      {},
+    );
+    expect(signed).toBe('signed');
+    expect(keyring.consumePassphraseStateCleared.calledOnce).toBe(true);
+    expect(persist.calledOnce).toBe(true);
+  });
+
+  it('does not persist when recovery did not clear a stored passphrase', async () => {
+    const keyringService = new KeyringService({
+      encryptor: mockEncryptor as any,
+    });
+    keyringService.loadStore({});
+    await keyringService.boot(oneKeyPassword);
+    const keyring = {
+      type: 'Onekey Hardware',
+      signPersonalMessage: sinon.stub().resolves('0xsig'),
+      consumePassphraseStateCleared: sinon.stub().returns(false),
+    };
+    const persist = sinon
+      .stub(keyringService, 'persistAllKeyrings')
+      .resolves(true);
+
+    await keyringService.signPersonalMessage(keyring, {
+      from: '0x1111111111111111111111111111111111111111',
+      data: '0x01',
+    });
+
+    expect(persist.called).toBe(false);
+  });
+
+  it('does not persist a cleared passphrase after the wallet is locked', async () => {
+    const keyringService = new KeyringService({
+      encryptor: mockEncryptor as any,
+    });
+    keyringService.loadStore({});
+    await keyringService.boot(oneKeyPassword);
+    keyringService.memStore.updateState({ isUnlocked: false });
+    const keyring = {
+      type: 'Onekey Hardware',
+      signTypedData: sinon.stub().resolves('0xsig'),
+      consumePassphraseStateCleared: sinon.stub().returns(true),
+    };
+    const persist = sinon
+      .stub(keyringService, 'persistAllKeyrings')
+      .resolves(true);
+
+    await keyringService.signTypedMessage(
+      keyring,
+      {
+        from: '0x1111111111111111111111111111111111111111',
+        data: {},
+      },
+      { version: 'V4' },
+    );
+
+    expect(keyring.consumePassphraseStateCleared.calledOnce).toBe(true);
+    expect(persist.called).toBe(false);
   });
 });
 
