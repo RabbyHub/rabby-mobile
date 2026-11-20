@@ -1,0 +1,407 @@
+name: iOS Startup KPI
+
+# Cold-start KPI on an iOS Simulator: native process start -> first user-visible
+# content frame, from a freshly created simulator with imported test accounts.
+#
+# Packages are either prebuilt simulator bundles (.zip with RabbyMobile.app) at
+# an allowlisted https host / the build bucket, or built from a git ref by this
+# workflow. Every downloaded package must match its SHA-256 input.
+# The baseline's commit is read from the app bundle itself and checked against
+# origin/develop; a baseline outside develop only warns.
+#
+# A package that never emits the marker is INVALID - a broken measurement, not
+# a "no difference".
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_app:
+        description: 'Baseline: https/s3 URL of RabbyMobile-simulator.zip, or empty to build from base_ref'
+        required: false
+        type: string
+        default: ''
+      candidate_app:
+        description: 'Candidate: https/s3 URL of RabbyMobile-simulator.zip, or empty to build from candidate_ref'
+        required: false
+        type: string
+        default: ''
+      base_sha256:
+        description: 'Required SHA-256 of base_app when base_app is provided'
+        required: false
+        type: string
+        default: ''
+      candidate_sha256:
+        description: 'Required SHA-256 of candidate_app when candidate_app is provided'
+        required: false
+        type: string
+        default: ''
+      base_ref:
+        description: 'Git ref to build the baseline from when base_app is empty'
+        required: false
+        type: string
+        default: 'origin/develop'
+      candidate_ref:
+        description: 'Git ref to build the candidate from when candidate_app is empty'
+        required: false
+        type: string
+        default: ''
+      runs:
+        description: 'Cold starts per package'
+        required: true
+        type: choice
+        options:
+          - '3'
+          - '5'
+          - '7'
+        default: '5'
+      simulator_device:
+        description: 'Simulator device type'
+        required: false
+        type: string
+        default: 'iPhone 17 Pro'
+      simulator_runtime:
+        description: 'Simulator runtime, e.g. iOS 27.1'
+        required: false
+        type: string
+        default: 'iOS 27.1'
+      settle_seconds:
+        description: 'Idle time after seeding'
+        required: false
+        type: string
+        default: '35'
+      package_name:
+        description: 'Bundle id'
+        required: false
+        type: string
+        default: 'com.debank.rabby-mobile-regression'
+      notify_lark:
+        description: 'Push the result to the mobile Lark chat'
+        required: true
+        type: boolean
+        default: true
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -eo pipefail {0}
+
+concurrency:
+  group: rabby-ios-startup-kpi-simulator
+  cancel-in-progress: false
+
+jobs:
+  measure:
+    name: Measure cold start (simulator)
+    # workflow_dispatch only, and mobile-local is reserved for private/trusted
+    # triggers after the CI migration. Package authenticity is enforced by the
+    # SHA-256/host/bucket checks in the resolve step instead of an environment
+    # approval gate.
+    runs-on:
+      - self-hosted
+      - macOS
+      - ARM64
+      - mobile-local
+      - mobile-ios-simulator
+    timeout-minutes: 180
+    env:
+      BASE_APP_SOURCE: ${{ inputs.base_app }}
+      CANDIDATE_APP_SOURCE: ${{ inputs.candidate_app }}
+      BASE_APP_SHA256: ${{ inputs.base_sha256 }}
+      CANDIDATE_APP_SHA256: ${{ inputs.candidate_sha256 }}
+      BASE_REF: ${{ inputs.base_ref }}
+      CANDIDATE_REF: ${{ inputs.candidate_ref }}
+      RUNS: ${{ inputs.runs }}
+      SIM_DEVICE: ${{ inputs.simulator_device }}
+      SIM_RUNTIME: ${{ inputs.simulator_runtime }}
+      SETTLE_SECONDS: ${{ inputs.settle_seconds }}
+      PACKAGE_NAME: ${{ inputs.package_name }}
+      RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+          clean: false
+          persist-credentials: false
+
+      - name: Check tooling
+        run: |
+          xcodebuild -version
+          xcrun simctl list runtimes | head -20
+          git fetch --no-tags origin '+refs/heads/develop:refs/remotes/origin/develop' || true
+          echo "RESULT_FILE=$RUNNER_TEMP/startup-kpi-ios.json" >> "$GITHUB_ENV"
+          echo "WORK=$RUNNER_TEMP/startup-kpi-ios" >> "$GITHUB_ENV"
+
+      - name: Prepare simulator runtimes and node
+        run: |
+          mkdir -p "$WORK"
+          if [ -s "$HOME/.nvm/nvm.sh" ]; then
+            source "$HOME/.nvm/nvm.sh"
+            nvm use "$(tr -d '\r\n' < .nvmrc)" || nvm use 22 || true
+            printf '%s\n' "$(dirname "$(command -v node)")" >> "$GITHUB_PATH"
+          fi
+          corepack enable || true
+          node --version
+
+      - name: Validate inputs
+        run: |
+          case "$PACKAGE_NAME" in
+            com.debank.rabby-mobile|com.debank.rabby-mobile-debug|com.debank.rabby-mobile-regression) ;;
+            *)
+              echo "unsupported package_name: $PACKAGE_NAME" >&2
+              exit 1
+              ;;
+          esac
+          if [ -n "$BASE_APP_SOURCE" ] && \
+            ! printf '%s' "$BASE_APP_SHA256" | grep -Eq '^[0-9a-fA-F]{64}$'; then
+            echo "base_sha256 is required when base_app is provided" >&2
+            exit 1
+          fi
+          if [ -n "$CANDIDATE_APP_SOURCE" ] && \
+            ! printf '%s' "$CANDIDATE_APP_SHA256" | grep -Eq '^[0-9a-fA-F]{64}$'; then
+            echo "candidate_sha256 is required when candidate_app is provided" >&2
+            exit 1
+          fi
+
+      # ---------- package preparation ----------
+      - name: Resolve packages
+        id: packages
+        run: |
+          host_allowed() {
+            local host
+            host="$(node -e 'try { console.log(new URL(process.argv[1]).hostname) } catch (error) { process.exit(1) }' "$1")" || return 1
+            case "$host" in
+              download.rabby.io|github.com|objects.githubusercontent.com|*.githubusercontent.com) return 0 ;;
+              *) return 1 ;;
+            esac
+          }
+
+          fetch_zip() {
+            # fetch_zip <source> <output zip> <expected sha256>
+            local final_url actual
+            case "$1" in
+              https://*)
+                host_allowed "$1" || {
+                  echo "download host is not allowlisted: $1" >&2
+                  exit 1
+                }
+                final_url="$(curl --fail --location --max-redirs 5 --silent \
+                  --show-error --retry 3 --proto '=https' --proto-redir '=https' \
+                  --tlsv1.2 --write-out '%{url_effective}' \
+                  "$1" --output "$2")"
+                host_allowed "$final_url" || {
+                  echo "redirect host is not allowlisted: $final_url" >&2
+                  exit 1
+                }
+                ;;
+              s3://*)
+                if [ -z "${RABBY_MOBILE_BUILD_BUCKET:-}" ] || \
+                  [ "${1#s3://$RABBY_MOBILE_BUILD_BUCKET/}" = "$1" ]; then
+                  echo "only s3://$RABBY_MOBILE_BUILD_BUCKET/... sources are allowed" >&2
+                  exit 1
+                fi
+                aws s3 cp "$1" "$2" --only-show-errors
+                ;;
+              *)
+                if [ -z "${RABBY_MOBILE_BUILD_BUCKET:-}" ]; then
+                  echo "relative S3 path given but RABBY_MOBILE_BUILD_BUCKET is not configured" >&2
+                  exit 1
+                fi
+                aws s3 cp "s3://$RABBY_MOBILE_BUILD_BUCKET/${1#/}" "$2" --only-show-errors
+                ;;
+            esac
+            test -s "$2"
+            unzip -tq "$2" >/dev/null
+            actual="$(shasum -a 256 "$2" | awk '{print $1}')"
+            if [ "$actual" != "$3" ]; then
+              echo "sha256 mismatch for $1 (expected $3, got $actual)" >&2
+              exit 1
+            fi
+          }
+
+          if [ -n "${BASE_APP_SOURCE}" ]; then
+            fetch_zip "$BASE_APP_SOURCE" "$WORK/base.zip" "$BASE_APP_SHA256"
+            unzip -q "$WORK/base.zip" -d "$WORK/base"
+            base_app=$(find "$WORK/base" -maxdepth 2 -name 'RabbyMobile.app' -type d | head -1)
+            [ -n "$base_app" ] || { echo "base zip does not contain RabbyMobile.app" >&2; exit 1; }
+          else
+            base_app=""
+          fi
+
+          if [ -n "${CANDIDATE_APP_SOURCE}" ]; then
+            fetch_zip "$CANDIDATE_APP_SOURCE" "$WORK/candidate.zip" "$CANDIDATE_APP_SHA256"
+            unzip -q "$WORK/candidate.zip" -d "$WORK/candidate"
+            candidate_app=$(find "$WORK/candidate" -maxdepth 2 -name 'RabbyMobile.app' -type d | head -1)
+            [ -n "$candidate_app" ] || { echo "candidate zip does not contain RabbyMobile.app" >&2; exit 1; }
+          else
+            candidate_app=""
+          fi
+
+          {
+            echo "BASE_APP=$base_app"
+            echo "CANDIDATE_APP=$candidate_app"
+          } >> "$GITHUB_ENV"
+
+      - name: Build baseline app
+        if: ${{ inputs.base_app == '' }}
+        run: |
+          ref="${BASE_REF:-origin/develop}"
+          git checkout -q --detach "$ref"
+          out="$WORK/build-base-$(date +%s)"
+          env -u NODE_ENV bash apps/mobile/scripts/ci/build-ios-simulator.sh --output-dir "$out"
+          echo "BASE_APP=$out/RabbyMobile.app" >> "$GITHUB_ENV"
+          git checkout -q --detach "$GITHUB_SHA"
+
+      - name: Build candidate app
+        if: ${{ inputs.candidate_app == '' }}
+        run: |
+          ref="${CANDIDATE_REF:-$GITHUB_SHA}"
+          git checkout -q --detach "$ref"
+          out="$WORK/build-candidate-$(date +%s)"
+          env -u NODE_ENV bash apps/mobile/scripts/ci/build-ios-simulator.sh --output-dir "$out"
+          echo "CANDIDATE_APP=$out/RabbyMobile.app" >> "$GITHUB_ENV"
+          git checkout -q --detach "$GITHUB_SHA"
+
+      # ---------- measurement ----------
+      - name: Create simulator
+        run: |
+          runtime=$(xcrun simctl list runtimes | grep -F "$SIM_RUNTIME" | head -1 \
+            | sed -E 's/.*(com\.apple\.CoreSimulator\.SimRuntime\.[A-Za-z0-9.-]+).*/\1/')
+          [ -n "$runtime" ] || { echo "runtime not available: $SIM_RUNTIME" >&2; exit 1; }
+          name="rabby-startup-kpi-$(date +%s)"
+          udid=$(xcrun simctl create "$name" "$SIM_DEVICE" "$runtime")
+          echo "Created $name ($udid)"
+          echo "SIM_UDID=$udid" >> "$GITHUB_ENV"
+          xcrun simctl boot "$udid"
+          xcrun simctl bootstatus "$udid" -b
+
+      - name: Read app commits
+        run: |
+          bash apps/mobile/scripts/startup-kpi/apk-info.sh --app "$BASE_APP" --json "$WORK/base-info.json"
+          bash apps/mobile/scripts/startup-kpi/apk-info.sh --app "$CANDIDATE_APP" --json "$WORK/candidate-info.json"
+
+          base_commit=$(node -e 'process.stdout.write(require(process.argv[1]).commit||"")' "$WORK/base-info.json")
+          candidate_commit=$(node -e 'process.stdout.write(require(process.argv[1]).commit||"")' "$WORK/candidate-info.json")
+
+          if [ -n "$base_commit" ]; then
+            bash apps/mobile/scripts/startup-kpi/commit-on-develop.sh --commit "$base_commit" > "$WORK/base-develop.json" || true
+          else
+            echo '{"commit":null,"resolved":null,"onDevelop":null,"reason":"no-build-info"}' > "$WORK/base-develop.json"
+          fi
+          if [ -n "$candidate_commit" ]; then
+            bash apps/mobile/scripts/startup-kpi/commit-on-develop.sh --commit "$candidate_commit" > "$WORK/candidate-develop.json" || true
+          else
+            echo '{"commit":null,"resolved":null,"onDevelop":null,"reason":"no-build-info"}' > "$WORK/candidate-develop.json"
+          fi
+
+          on_develop=$(node -e 'process.stdout.write(String(require(process.argv[1]).onDevelop))' "$WORK/base-develop.json")
+          echo "baseline commit: ${base_commit:-unknown} (on develop: $on_develop)"
+          echo "candidate commit: ${candidate_commit:-unknown}"
+          if [ "$on_develop" = "false" ]; then
+            echo "::warning::the baseline app was built from a commit that is not in develop ($base_commit) - treat it as a feature-branch comparison, not a shipping baseline"
+          elif [ "$on_develop" = "null" ]; then
+            echo "::warning::could not decide whether the baseline commit ($base_commit) is in develop"
+          fi
+
+      - name: Seed simulator
+        run: |
+          accounts_file="${RABBY_KPI_TEST_ACCOUNTS_FILE:-}"
+          if [ -z "$accounts_file" ] && [ -f "$HOME/.rabby-kpi/test-accounts.txt" ]; then
+            accounts_file="$HOME/.rabby-kpi/test-accounts.txt"
+          fi
+          if [ -n "$accounts_file" ] && [ -f "$accounts_file" ]; then
+            echo "test-account list: $accounts_file ($(grep -c . "$accounts_file") entries)"
+          else
+            echo "test-account list: none"
+          fi
+
+          xcrun simctl install "$SIM_UDID" "$BASE_APP"
+          bash apps/mobile/scripts/startup-kpi/seed-device-ios.sh create-address \
+            --device "$SIM_UDID" --bundle "$PACKAGE_NAME"
+          if [ -n "$accounts_file" ] && [ -f "$accounts_file" ]; then
+            bash apps/mobile/scripts/startup-kpi/seed-device-ios.sh import-accounts \
+              --device "$SIM_UDID" --bundle "$PACKAGE_NAME" \
+              --file "$accounts_file" --settle "$SETTLE_SECONDS"
+          else
+            echo "::warning::no test-account list; measuring without imported accounts"
+          fi
+
+      - name: Collect startup KPI
+        id: collect
+        run: |
+          status=0
+          bash apps/mobile/scripts/startup-kpi/collect-ios.sh \
+            --app "$BASE_APP" --label baseline \
+            --app "$CANDIDATE_APP" --label candidate \
+            --device "$SIM_UDID" --bundle "$PACKAGE_NAME" --runs "$RUNS" \
+            --json "$RESULT_FILE" || status=$?
+          echo "collect_exit=$status" >> "$GITHUB_OUTPUT"
+
+          if [ -f "$RESULT_FILE" ]; then
+            WORK="$WORK" node -e '
+              const fs = require("fs");
+              const path = require("path");
+              const work = process.env.WORK;
+              const result = JSON.parse(fs.readFileSync(process.env.RESULT_FILE, "utf8"));
+              const read = name => JSON.parse(fs.readFileSync(path.join(work, name), "utf8"));
+              const info = [read("base-info.json"), read("candidate-info.json")];
+              const dev = [read("base-develop.json"), read("candidate-develop.json")];
+              (result.packages || []).forEach((entry, index) => {
+                entry.commit = info[index]?.commit || null;
+                entry.commitTime = info[index]?.commitTime || null;
+                entry.committer = info[index]?.committer || null;
+                entry.commitOnDevelop = dev[index]?.onDevelop ?? null;
+              });
+              fs.writeFileSync(process.env.RESULT_FILE, JSON.stringify(result, null, 2) + "\n");
+            '
+
+            {
+              echo '### iOS startup KPI'
+              echo '```'
+              node -e '
+                const r = require(process.env.RESULT_FILE);
+                for (const p of r.packages || []) {
+                  const commit = p.commit ? ` commit ${p.commit}${p.commitOnDevelop === false ? " (NOT on develop)" : ""}` : "";
+                  console.log(
+                    p.result === "OK"
+                      ? `${p.label}: ${p.contentMedianMs}ms (${p.contentMinMs}-${p.contentMaxMs}) route ${JSON.stringify(p.routes)}${commit}`
+                      : `${p.label}: INVALID${commit}`,
+                  );
+                }
+              '
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$status"
+
+      - name: Report to Lark
+        if: ${{ always() && inputs.notify_lark }}
+        env:
+          RABBY_STARTUP_KPI_RESULT_FILE: ${{ runner.temp }}/startup-kpi-ios.json
+          RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.RABBY_MOBILE_LARK_CHAT_URL || secrets.LARK_CHAT_URL }}
+          RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.RABBY_MOBILE_LARK_CHAT_SECRET || secrets.LARK_CHAT_SECRET }}
+          GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GIT_REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ ! -f "$RABBY_STARTUP_KPI_RESULT_FILE" ]; then
+            echo "no result file; skipping Lark report"
+            exit 0
+          fi
+          node apps/mobile/scripts/startup-kpi/notify-lark.js
+
+      - name: Delete simulator
+        if: always()
+        run: |
+          if [ -n "${SIM_UDID:-}" ]; then
+            xcrun simctl shutdown "$SIM_UDID" >/dev/null 2>&1 || true
+            xcrun simctl delete "$SIM_UDID" >/dev/null 2>&1 || true
+          fi
+
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: startup-kpi-ios-result
+          path: |
+            ${{ runner.temp }}/startup-kpi-ios.json
+          if-no-files-found: warn

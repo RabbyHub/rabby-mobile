@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect } from 'react';
 import RNFS from '@rabby-wallet/react-native-fs';
-import { Linking } from 'react-native';
+import { Linking, NativeModules } from 'react-native';
 import { StackActions } from '@react-navigation/native';
 import { t } from 'i18next';
 import {
@@ -8,6 +8,7 @@ import {
   isKeyringUnlockedSnapshot,
 } from '@/core/serviceApi/keyring';
 import { urlUtils } from '@rabby-wallet/base-utils';
+import { markAutomation } from '@/core/utils/automationMarker';
 import { browserApis } from './browser/useBrowser';
 import useMount from 'react-use/lib/useMount';
 import { toastWithIcon } from '@/components2024/Toast';
@@ -107,6 +108,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-lending'
     | 'debug-open-target'
     | 'debug-create-address'
+    | 'debug-import-test-accounts'
     | 'debug-set-language'
     | 'regression-scenario';
   target?: RabbyGoTarget;
@@ -146,6 +148,8 @@ type OnParseUrlAndProcessAction = (payload: {
   debugChainStatsLoading?: boolean;
   debugChainStatsLoadingForMs?: number;
   debugChainStatsLoadingOff?: boolean;
+  /** Device path of the test-account list read by the import command. */
+  debugImportAccountsPath?: string;
   regressionScenarioCommand?: RegressionScenarioCommand | null;
   regressionScenarioError?: string;
 }) => void;
@@ -506,6 +510,28 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     return {
       type: 'debug-create-address',
       debugAddress: address,
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: seed the account set the cold-start KPI measures.
+  // The list itself is never in the URL - only the device path of the file
+  // the runner pushed - so private keys stay out of logcat.
+  if (
+    rabbyGoCmd === 'debug-import-test-accounts' ||
+    target === 'debug-import-test-accounts'
+  ) {
+    const path =
+      urlInfo.searchParams.get('path') || urlInfo.searchParams.get('file');
+    if (!path) {
+      console.warn(
+        '[useUniversalLinkOnTop] debug-import-test-accounts requires ?path=<device file>',
+      );
+      return null;
+    }
+
+    return {
+      type: 'debug-import-test-accounts',
+      debugImportAccountsPath: path,
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -881,6 +907,23 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
     case 'debug-db-sync-policy':
       void applyDebugDbSyncPolicyFromLink(payload.debugDbSyncPolicy);
       break;
+    case 'debug-import-test-accounts':
+      if (!isNonPublicProductionEnv || !payload.debugImportAccountsPath) {
+        return;
+      }
+      void import('@/devtools/testAccountsImport')
+        .then(module =>
+          module.runTestAccountsImport({
+            path: payload.debugImportAccountsPath!,
+          }),
+        )
+        .catch(error => {
+          console.error(
+            '[useUniversalLinkOnTop] debug-import-test-accounts failed:',
+            error,
+          );
+        });
+      break;
     case 'debug-lending':
       if (!isNonPublicProductionEnv || !payload.debugLending) {
         return;
@@ -1046,6 +1089,7 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
             enableBiometrics: false,
           } as any);
           await accountStore.fetchAccounts({ force: true });
+          markAutomation('debug-create-address.done', prepared.address || '');
           toast.success(`debug address created: ${prepared.address || ''}`);
           apisHomeTabIndex.setTabIndex(1, true);
         } catch (error) {
@@ -1103,8 +1147,56 @@ const handleAppLink = async (url: string, isInit = false) => {
   }
 };
 
+/**
+ * Non-production automation only.
+ *
+ * A simulator runner cannot open our URL scheme without the iOS "Open in
+ * ...?" system prompt (and `simctl` cannot dismiss it), so the same debug
+ * deeplinks can be passed at launch instead:
+ *
+ *   xcrun simctl launch <udid> <bundle> -rabby-deeplink "<url>"
+ *
+ * Production packages ignore this entirely.
+ */
+function collectLaunchArgumentDeeplinks(): string[] {
+  if (!isNonPublicProductionEnv) {
+    return [];
+  }
+
+  const args = (
+    NativeModules.StartupKpi as { rabbyLaunchArguments?: unknown } | undefined
+  )?.rabbyLaunchArguments;
+
+  if (!Array.isArray(args)) {
+    return [];
+  }
+
+  const urls: string[] = [];
+  for (let index = 0; index < args.length - 1; index += 1) {
+    if (
+      args[index] === '-rabby-deeplink' &&
+      typeof args[index + 1] === 'string'
+    ) {
+      urls.push(args[index + 1] as string);
+    }
+  }
+  return urls;
+}
+
 export function useUniversalLinkOnTop() {
   useMount(() => {
+    // Delayed so navigation and the keyring state are ready, and so several
+    // launch-argument deeplinks run one after another.
+    collectLaunchArgumentDeeplinks().forEach((url, index) => {
+      setTimeout(() => {
+        console.debug(
+          '[useUniversalLinkOnTop] Launch argument link:',
+          sanitizeLinkForLogging(url),
+        );
+        void handleAppLink(url);
+      }, 2000 + index * 2000);
+    });
+
     Linking.getInitialURL().then(url => {
       if (url) {
         console.debug(

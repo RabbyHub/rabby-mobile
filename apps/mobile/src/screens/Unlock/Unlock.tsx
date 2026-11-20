@@ -78,6 +78,7 @@ import {
 import { scheduleAutoUnlockFallback } from './autoUnlockFallback';
 import { setSyncSchedulerCriticalMode } from '@/databases/sync/scheduler';
 import type { RegressionScenarioEventName } from '@/devtools/regressionScenarios/contracts';
+import { markFirstContentFrame } from '@/core/utils/startupKpi';
 
 export type UnlockRegressionScenarioProps = {
   regressionScenario?: {
@@ -404,6 +405,9 @@ function incToReset(isOnMount = false) {
 export default function UnlockScreen({
   regressionScenario,
 }: UnlockRegressionScenarioProps) {
+  React.useEffect(() => {
+    markFirstContentFrame('unlock');
+  }, []);
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
