@@ -29,7 +29,10 @@ jest.mock('@react-navigation/native', () => {
   return {
     useRoute: () => ({ params: {} }),
     createNavigationContainerRef: () => navigationRef,
-    CommonActions: { reset: jest.fn(() => ({})), navigate: jest.fn(() => ({})) },
+    CommonActions: {
+      reset: jest.fn(() => ({})),
+      navigate: jest.fn(() => ({})),
+    },
     StackActions: {
       push: jest.fn(() => ({})),
       pop: jest.fn(() => ({})),
