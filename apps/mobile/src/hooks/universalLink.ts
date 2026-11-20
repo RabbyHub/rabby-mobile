@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect } from 'react';
 import RNFS from '@rabby-wallet/react-native-fs';
 import { Linking } from 'react-native';
-import { executeOnUIRuntimeSync } from 'react-native-reanimated';
 import { StackActions } from '@react-navigation/native';
 import { t } from 'i18next';
 import {
@@ -77,6 +76,7 @@ import {
   forceDebugChainStatsFor,
   toggleDebugChainStatsForced,
 } from '@/screens/Home/debugChainStats';
+import { executeOnUIRuntimeSync } from 'react-native-reanimated';
 import {
   pagerOffsetStrategy,
   type PagerOffsetStrategy,
@@ -119,6 +119,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-set-language'
     | 'toggle-pager-offset-sampling'
     | 'toggle-home-chrome-bridge'
+    | 'debug-import-test-accounts'
     | 'regression-scenario';
   target?: RabbyGoTarget;
   dappUrl?: string;
@@ -161,6 +162,8 @@ type OnParseUrlAndProcessAction = (payload: {
   pagerOffsetStrategy?: PagerOffsetStrategy;
   /** Non-production only: `undefined` toggles the home chrome sample bridge. */
   debugHomeChromeBridge?: HomeChromeBridgeMode;
+  /** Device path of the test-account list read by the import command. */
+  debugImportAccountsPath?: string;
   regressionScenarioCommand?: RegressionScenarioCommand | null;
   regressionScenarioError?: string;
 }) => void;
@@ -176,7 +179,13 @@ type DebugOpenTarget =
   | 'homeAssets'
   | 'approvals'
   | 'importSecret'
-  | 'importMethods';
+  | 'importMethods'
+  | 'importHardware'
+  | 'importWatch'
+  | 'importSafe'
+  | 'selectAddMethod'
+  | 'moreImportMethods'
+  | 'restoreRabbyWallet';
 
 const NON_PRODUCTION_TESTKIT_SCREENS = {
   DevCapabilityFile: RootNames.DevCapabilityFile,
@@ -453,7 +462,13 @@ function parseNonProductionMaintenanceLink(appLink: string) {
       rawTarget === 'homeAssets' ||
       rawTarget === 'approvals' ||
       rawTarget === 'importSecret' ||
-      rawTarget === 'importMethods';
+      rawTarget === 'importMethods' ||
+      rawTarget === 'importHardware' ||
+      rawTarget === 'importWatch' ||
+      rawTarget === 'importSafe' ||
+      rawTarget === 'selectAddMethod' ||
+      rawTarget === 'moreImportMethods' ||
+      rawTarget === 'restoreRabbyWallet';
     if (!isRabbyGoTarget && !isDebugScreenTarget) {
       console.warn(
         '[useUniversalLinkOnTop] Unknown debug-open-target target:',
@@ -572,6 +587,28 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     return {
       type: 'toggle-home-chrome-bridge',
       debugHomeChromeBridge: mode,
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: seed the account set the cold-start KPI measures.
+  // The list itself is never in the URL - only the device path of the file
+  // the runner pushed - so private keys stay out of logcat.
+  if (
+    rabbyGoCmd === 'debug-import-test-accounts' ||
+    target === 'debug-import-test-accounts'
+  ) {
+    const path =
+      urlInfo.searchParams.get('path') || urlInfo.searchParams.get('file');
+    if (!path) {
+      console.warn(
+        '[useUniversalLinkOnTop] debug-import-test-accounts requires ?path=<device file>',
+      );
+      return null;
+    }
+
+    return {
+      type: 'debug-import-test-accounts',
+      debugImportAccountsPath: path,
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -947,6 +984,64 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
     case 'debug-db-sync-policy':
       void applyDebugDbSyncPolicyFromLink(payload.debugDbSyncPolicy);
       break;
+    case 'debug-create-address':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          // Same data mutations as the onboarding UI, in the same order: the
+          // create-seed-phrase page prepares the wallet, then the
+          // set-password / create-address pages submit it (password, keyring,
+          // persisted accounts, backup reminder). No direct keyring shortcut.
+          const { prepareWalletCreation, completeWalletCreation } =
+            await import('@/hooks/address/useSetupWallet');
+          const { REGRESSION_DEFAULT_PASSWORD } = await import(
+            '@/devtools/regressionScenarios/credentials.nonprod'
+          );
+          const { default: accountStore } = await import('@/store/account');
+
+          const prepared = await prepareWalletCreation({ mode: 'create' });
+          // `PasswordFormValues` differs between stacks; pass the fields the
+          // submit path reads and let the call site stay version-agnostic.
+          await completeWalletCreation(prepared, {
+            password: REGRESSION_DEFAULT_PASSWORD,
+            confirmPassword: REGRESSION_DEFAULT_PASSWORD,
+            checked: true,
+            enableBiometrics: false,
+          } as any);
+          await accountStore.fetchAccounts({ force: true });
+          const { toast } = await import('@/components2024/Toast');
+          toast.success(`debug address created: ${prepared.address || ''}`);
+          apisHomeTabIndex.setTabIndex(1, true);
+          // The startup-KPI runner waits for this marker in logcat.
+          console.log(
+            `[debug-create-address] done address=${prepared.address || ''}`,
+          );
+        } catch (error) {
+          console.error('[debug-create-address] failed', error);
+          const { toast } = await import('@/components2024/Toast');
+          toast.show(`create-address failed: ${String(error)}`);
+        }
+      })();
+      break;
+    case 'debug-import-test-accounts':
+      if (!isNonPublicProductionEnv || !payload.debugImportAccountsPath) {
+        return;
+      }
+      void import('@/devtools/testAccountsImport')
+        .then(module =>
+          module.runTestAccountsImport({
+            path: payload.debugImportAccountsPath!,
+          }),
+        )
+        .catch(error => {
+          console.error(
+            '[useUniversalLinkOnTop] debug-import-test-accounts failed:',
+            error,
+          );
+        });
+      break;
     case 'debug-lending':
       if (!isNonPublicProductionEnv || !payload.debugLending) {
         return;
@@ -1065,6 +1160,39 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           } as any);
           return;
         }
+        if (target === 'importHardware') {
+          navigateDeprecated(RootNames.StackAddress, {
+            screen: RootNames.ImportHardwareAddress,
+            params: {},
+          } as any);
+          return;
+        }
+        if (target === 'importWatch') {
+          navigateDeprecated(RootNames.StackAddress, {
+            screen: RootNames.ImportWatchAddress2024,
+            params: {},
+          } as any);
+          return;
+        }
+        if (target === 'importSafe') {
+          navigateDeprecated(RootNames.StackAddress, {
+            screen: RootNames.ImportSafeAddress2024,
+            params: {},
+          } as any);
+          return;
+        }
+        if (target === 'selectAddMethod') {
+          navigateDeprecated(RootNames.SelectAddMethod, {} as any);
+          return;
+        }
+        if (target === 'moreImportMethods') {
+          navigateDeprecated(RootNames.MoreImportMethods, {} as any);
+          return;
+        }
+        if (target === 'restoreRabbyWallet') {
+          navigateDeprecated(RootNames.ImportRabbyWallet, {} as any);
+          return;
+        }
         if (target === 'importMethods') {
           navigateDeprecated(RootNames.StackAddress, {
             screen: RootNames.ImportMethods,
@@ -1131,49 +1259,6 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
         'legacy:',
         debugHomeChromeBridge.legacy,
       );
-      break;
-    case 'debug-create-address':
-      if (!isNonPublicProductionEnv) {
-        return;
-      }
-      void (async () => {
-        try {
-          // Same data mutations as the onboarding UI, in the same order:
-          // the create-seed-phrase page prepares the wallet, then the
-          // set-password / create-address pages submit it (password, keyring,
-          // persisted accounts, backup reminder). No direct keyring shortcut.
-          const { prepareWalletCreation, completeWalletCreation } =
-            await import('@/hooks/address/useSetupWallet');
-          const { REGRESSION_DEFAULT_PASSWORD } = await import(
-            '@/devtools/regressionScenarios/credentials.nonprod'
-          );
-          const { toast } = await import('@/components2024/Toast');
-          const { default: accountStore } = await import('@/store/account');
-
-          const prepared = await prepareWalletCreation({ mode: 'create' });
-          // `PasswordFormValues` differs between stacks (develop still has
-          // `checked`, tmp carries `enableDataAnalysis`); pass the fields the
-          // submit path reads and let the call site stay version-agnostic.
-          await completeWalletCreation(prepared, {
-            password: REGRESSION_DEFAULT_PASSWORD,
-            confirmPassword: REGRESSION_DEFAULT_PASSWORD,
-            checked: true,
-            enableBiometrics: false,
-          } as any);
-          await accountStore.fetchAccounts({ force: true });
-          toast.success(`debug address created: ${prepared.address || ''}`);
-          apisHomeTabIndex.setTabIndex(1, true);
-        } catch (error) {
-          console.warn(
-            '[useUniversalLinkOnTop] debug-create-address failed',
-            error,
-          );
-          const { Alert } = await import('react-native');
-          Alert.alert('debug-create-address failed', String(error));
-          const { toast } = await import('@/components2024/Toast');
-          toast.show(`create-address failed: ${String(error)}`);
-        }
-      })();
       break;
     case 'regression-scenario':
       handleRegressionScenarioCommand(

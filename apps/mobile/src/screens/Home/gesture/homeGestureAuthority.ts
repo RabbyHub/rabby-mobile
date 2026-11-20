@@ -23,12 +23,19 @@ export const HOME_GESTURE_AXIS = {
 export type HomeGestureAxis =
   (typeof HOME_GESTURE_AXIS)[keyof typeof HOME_GESTURE_AXIS];
 
-/** A horizontal lead has to clear this before it owns the drag. */
-export const HOME_GESTURE_HORIZONTAL_SLOP = 12;
+/**
+ * A horizontal lead has to clear this before it owns the drag.
+ *
+ * The two verdicts are deliberately asymmetric: a false "vertical" verdict
+ * switches the pager off for the rest of the gesture (the drag cannot page at
+ * all), while a false "horizontal" one only costs a little list scrolling. So
+ * the horizontal slop is low and the vertical side has to be clearly steeper.
+ */
+export const HOME_GESTURE_HORIZONTAL_SLOP = 8;
 /** A vertical lead has to clear this before it owns the drag. */
-export const HOME_GESTURE_VERTICAL_SLOP = 8;
+export const HOME_GESTURE_VERTICAL_SLOP = 12;
 /** A vertical lead also has to be this much larger than the horizontal one. */
-export const HOME_GESTURE_VERTICAL_RATIO = 1.2;
+export const HOME_GESTURE_VERTICAL_RATIO = 1.5;
 
 export const homeGestureAuthority = {
   axis: makeMutable<HomeGestureAxis>(HOME_GESTURE_AXIS.UNDECIDED),
@@ -57,12 +64,17 @@ export function resolveHomeGestureAxis(x: number, y: number): HomeGestureAxis {
   const dx = Math.abs(x - homeGestureAuthority.startX.value);
   const dy = Math.abs(y - homeGestureAuthority.startY.value);
 
+  // Clearly vertical: steep enough that no horizontal intent can be read into
+  // it. Everything else that moves sideways at all counts as horizontal.
   if (
     dy >= HOME_GESTURE_VERTICAL_SLOP &&
     dy > dx * HOME_GESTURE_VERTICAL_RATIO
   ) {
     homeGestureAuthority.axis.value = HOME_GESTURE_AXIS.VERTICAL;
-  } else if (dx > HOME_GESTURE_HORIZONTAL_SLOP && dx > dy) {
+  } else if (
+    dx >= HOME_GESTURE_HORIZONTAL_SLOP &&
+    dx >= dy * HOME_GESTURE_VERTICAL_RATIO
+  ) {
     homeGestureAuthority.axis.value = HOME_GESTURE_AXIS.HORIZONTAL;
   }
 

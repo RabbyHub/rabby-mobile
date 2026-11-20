@@ -22,13 +22,13 @@ jest.mock('react-native-reanimated', () => {
     // As in Reanimated's Jest mock, interpolation is not simulated. Assertions
     // below cover the overlay's real opacity and pointer gates, not indicator
     // geometry or the asset-label fade interpolation.
-    clamp: (value: number, lower: number, upper: number) =>
-      Math.min(Math.max(value, lower), upper),
     interpolate: jest.fn(),
     Extrapolation: { CLAMP: 'clamp' },
     useAnimatedStyle: (callback: () => object) => callback(),
     useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
     makeMutable: (value: unknown) => ({ value }),
+    clamp: (value: number, lowerBound: number, upperBound: number) =>
+      Math.min(Math.max(value, lowerBound), upperBound),
     withTiming: (value: unknown) => value,
     // The tab bar mirrors the pager through an animated reaction; run it once
     // per render so the assertions see the bridged value.

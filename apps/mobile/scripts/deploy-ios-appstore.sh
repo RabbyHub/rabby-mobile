@@ -6,6 +6,7 @@ project_dir=$(dirname $script_dir)
 . $script_dir/fns.sh --source-only
 . $script_dir/libs/node-runtime.sh
 . $script_dir/turbo-build/_fns.sh --source-only
+. $script_dir/ci/ios-compilation-cache.sh
 
 ensure_mobile_node_runtime
 
@@ -70,6 +71,7 @@ build_appstore() {
   fi
 
   turbo_prepare_cocoapods || return $?
+  export GYM_XCARGS="${GYM_XCARGS:+$GYM_XCARGS }$(rabby_ios_compilation_cache_xcargs)"
   turbo_bundle_exec exec fastlane ios appstore
 }
 

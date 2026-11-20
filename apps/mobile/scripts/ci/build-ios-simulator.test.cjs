@@ -44,11 +44,16 @@ function fixture(t, overrides = {}) {
   write(path.join(repo, 'source-marker.txt'), 'original tracked source\n');
   write(
     path.join(repo, '.gitignore'),
-    'apps/mobile/ios/RabbyMobile/AppConfig.*.local.xcconfig\n',
+    'apps/mobile/ios/RabbyMobile/AppConfig.*.local.xcconfig\n' +
+      'apps/mobile/ios/build/generated/\n',
   );
   write(
     path.join(mobile, 'scripts/libs/node-runtime.sh'),
     'ensure_mobile_node_runtime() { :; }\n',
+  );
+  write(
+    path.join(mobile, 'ios/build/generated/ios/RCTAppDependencyProvider.h'),
+    '#pragma once\n',
   );
   write(
     path.join(mobile, 'scripts/fns.sh'),
@@ -72,6 +77,12 @@ turbo_prepare_ruby_bundle() { echo ruby >> "$TEST_TRACE"; }
 turbo_prepare_cocoapods() {
   echo "pods:$RCT_NEW_ARCH_ENABLED" >> "$TEST_TRACE"
   return "\${TEST_POD_STATUS:-0}"
+}
+turbo_reinstall_cocoapods() {
+  echo "reinstall-pods" >> "$TEST_TRACE"
+  mkdir -p "$TEST_REPO/apps/mobile/ios/build/generated/ios"
+  printf '#pragma once\n' > "$TEST_REPO/apps/mobile/ios/build/generated/ios/RCTAppDependencyProvider.h"
+  return "\${TEST_REINSTALL_POD_STATUS:-0}"
 }
 turbo_compute_ios_derived_data_key() { echo device-base-key; }
 turbo_sha256() { shasum -a 256; }
@@ -351,6 +362,32 @@ macTest('inherits legacy architecture without forcing newArch', t => {
       .reactNativeArchitecture,
     'legacy',
   );
+});
+
+macTest(
+  'regenerates missing ios codegen instead of trusting the Pods cache',
+  t => {
+    const f = fixture(t);
+    fs.rmSync(path.join(f.mobile, 'ios/build/generated'), {
+      recursive: true,
+      force: true,
+    });
+    const result = f.run();
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.match(fs.readFileSync(f.trace, 'utf8'), /pods:1\nreinstall-pods/);
+  },
+);
+
+macTest('fails when the forced codegen pod install fails', t => {
+  const f = fixture(t, { TEST_REINSTALL_POD_STATUS: '42' });
+  fs.rmSync(path.join(f.mobile, 'ios/build/generated'), {
+    recursive: true,
+    force: true,
+  });
+  const result = f.run();
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stdout + result.stderr, /pod install for codegen failed/);
+  assert.equal(fs.existsSync(path.join(f.output, 'metadata.json')), false);
 });
 
 for (const [name, env, status, message] of [

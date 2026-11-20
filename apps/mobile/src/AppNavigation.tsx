@@ -685,6 +685,7 @@ export default function AppNavigation() {
                           title={t(
                             'page.newUserOnboarding.restoreWallet.title',
                           )}
+                          titleKey="page.newUserOnboarding.restoreWallet.title"
                         />
                       ),
                     },
@@ -714,6 +715,7 @@ export default function AppNavigation() {
                           title={t(
                             'screens.addressStackTitle.MoreImportMethods',
                           )}
+                          titleKey="screens.addressStackTitle.MoreImportMethods"
                         />
                       ),
                     },
@@ -734,6 +736,7 @@ export default function AppNavigation() {
                           title={t(
                             'page.nextComponent.addAddress.selectAddMethod',
                           )}
+                          titleKey="page.nextComponent.addAddress.selectAddMethod"
                         />
                       ),
                     },
