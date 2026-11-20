@@ -1,6 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   AutoFitHeaderTitle,
@@ -8,9 +9,7 @@ import {
 } from '@/components/AutoFitHeaderTitle';
 import { resolveHeaderTitleLanguageStyle } from '@/components/headerTitleTypography';
 import { HeaderBackButton } from '@/hooks/navigation';
-import { useCustomHeaderTop } from '@/hooks/useAppLayout';
 import { useTheme2024 } from '@/hooks/theme';
-import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 import { createGetStyles2024 } from '@/utils/styles';
 
 // Native nav-bar content height, matching the other custom headers in this
@@ -43,13 +42,10 @@ export const ImportMethodsHeader = ({
   const { styles, colors2024, windowWidth, language } = useTheme2024({
     getStyle,
   });
-  const headerTop = useCustomHeaderTop();
-  const columnInset = useSystemColumnInset();
+  const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const availableWidth =
     windowWidth -
-    columnInset.left -
-    columnInset.right -
     2 * HEADER_HORIZONTAL_INSET -
     2 * HEADER_SIDE_SLOT_WIDTH -
     2 * TITLE_AREA_HORIZONTAL_MARGIN;
@@ -60,15 +56,8 @@ export const ImportMethodsHeader = ({
   });
 
   return (
-    <View style={[styles.outer, { paddingTop: headerTop }]}>
-      <View
-        style={[
-          styles.row,
-          {
-            paddingLeft: HEADER_HORIZONTAL_INSET + columnInset.left,
-            paddingRight: HEADER_HORIZONTAL_INSET + columnInset.right,
-          },
-        ]}>
+    <View style={[styles.outer, { paddingTop: insets.top }]}>
+      <View style={styles.row}>
         <View style={styles.backSlot}>
           <HeaderBackButton
             style={styles.backButtonTouch}

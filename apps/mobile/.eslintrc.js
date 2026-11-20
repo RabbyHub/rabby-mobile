@@ -23,7 +23,6 @@ module.exports = {
     'no-runtime-service-imports': 'error',
     'no-floating-deferred-service-api-calls': 'error',
     'no-persist-store-direct-mutation': 'error',
-    'no-module-scope-dimensions': 'error',
     'import/no-cycle': [
       'warn',
       {
@@ -56,12 +55,6 @@ module.exports = {
             importNames: ['Modal'],
             message:
               "Please import TrackedModal from '@/components/Modal/TrackedModal' instead of importing Modal directly from react-native",
-          },
-          {
-            name: 'react-native',
-            importNames: ['Dimensions'],
-            message:
-              "Use getDimensionsSnapshot() / useWindowDimensions() from '@/core/dimensions' instead of react-native's Dimensions",
           },
           {
             name: 'react-native-gesture-handler',
@@ -110,20 +103,4 @@ module.exports = {
       typescript: {},
     },
   },
-  overrides: [
-    {
-      // These files are the single owner of the app layout mutable: they must
-      // read react-native's Dimensions (the native, pre-letterbox value) and
-      // seed the shared values before any screen renders.
-      files: [
-        'src/core/dimensions.ts',
-        'src/hooks/useAppLayout.ts',
-        'src/components/SafeWindowFrame/**',
-      ],
-      rules: {
-        'no-restricted-imports': 'off',
-        'no-module-scope-dimensions': 'off',
-      },
-    },
-  ],
 };

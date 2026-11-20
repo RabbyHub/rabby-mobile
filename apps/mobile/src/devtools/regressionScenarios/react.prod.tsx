@@ -11,13 +11,6 @@ import {
 export const withRegressionScenario = ((Component: ComponentType<object>) =>
   Component) as WithRegressionScenario;
 
-/** Production: no boundary, no extra props - identity so it inlines away. */
-export function withScreenErrorBoundary<P extends object>(
-  Component: ComponentType<P>,
-): ComponentType<P> {
-  return Component;
-}
-
 export function useRegressionScenario<
   TScreen extends RegressionScreenId = RegressionScreenId,
 >(): RegressionScenarioContext<TScreen> {

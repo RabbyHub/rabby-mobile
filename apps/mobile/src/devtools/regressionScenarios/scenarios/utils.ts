@@ -1,8 +1,3 @@
-import {
-  openScreenById,
-  SCREEN_REGISTRY,
-  type RegisteredScreenId,
-} from '@/devtools/screenRegistry';
 import { StackActions } from '@react-navigation/native';
 
 import { RootNames } from '@/constant/layout';
@@ -269,13 +264,6 @@ export async function ensureScenarioWalletUnlocked() {
   }
 }
 
-/**
- * Opens a screen inside a nested stack, using the generated screen registry.
- *
- * `stack` is kept for call-site compatibility and as a drift check: the registry
- * derives the route chain from the navigators, so a caller that disagrees with
- * it means the registry is stale. Push semantics are preserved.
- */
 export function pushNestedScreen(
   stack: string,
   screen: string,
@@ -284,15 +272,12 @@ export function pushNestedScreen(
   if (!navigationRef.isReady()) {
     throw new Error('Navigation is not ready');
   }
-  const entry = SCREEN_REGISTRY[screen as RegisteredScreenId];
-  if (entry && entry.chain[0] !== stack) {
-    console.warn(
-      `[screenRegistry] pushNestedScreen(${stack}, ${screen}) disagrees with the registry chain ${entry.chain.join(
-        ' > ',
-      )}; regenerate the registry`,
-    );
-  }
-  openScreenById(screen, params, { push: true });
+  navigationRef.dispatch(
+    StackActions.push(stack, {
+      screen,
+      params,
+    }),
+  );
 }
 
 export function resetToHome() {

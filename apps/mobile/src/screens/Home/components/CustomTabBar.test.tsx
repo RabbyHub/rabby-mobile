@@ -27,21 +27,8 @@ jest.mock('react-native-reanimated', () => {
     useAnimatedStyle: (callback: () => object) => callback(),
     useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
     makeMutable: (value: unknown) => ({ value }),
-    clamp: (value: number, lowerBound: number, upperBound: number) =>
-      Math.min(Math.max(value, lowerBound), upperBound),
     withTiming: (value: unknown) => value,
-    // The tab bar mirrors the pager through an animated reaction; run it once
-    // per render so the assertions see the bridged value.
-    useAnimatedReaction: (
-      prepare: () => unknown,
-      react: (value: unknown) => void,
-    ) => {
-      react(prepare());
-    },
-    // Added when the tab bar started bridging the pager sample stream.
-    useFrameCallback: () => ({ setActive: jest.fn() }),
-    runOnJS: (fn: unknown) => fn,
-    Easing: { linear: (value: number) => value },
+    useAnimatedReaction: () => undefined,
   };
 });
 
@@ -210,11 +197,9 @@ describe('HomeCustomMaterialTabBar presentation contract', () => {
         .filter(node => node.props.hitSlop != null);
       expect(indicatorControls).toHaveLength(2);
       for (const control of indicatorControls) {
-        // The vertical touch area now lives on the indicator container
-        // (`indicatorHitPaddingY`); the pressables must not add upward slop
-        // that could cover the header's eye/add buttons.
-        expect(control.props.hitSlop.top).toBe(0);
-        expect(control.props.hitSlop.bottom).toBe(0);
+        // A 50pt upward expansion used to cover the header's eye/add buttons.
+        // Keep both indicator hit regions close to the visible bar.
+        expect(control.props.hitSlop.top).toBe(4);
       }
     }
   });
@@ -246,7 +231,7 @@ describe('HomeCustomMaterialTabBar presentation contract', () => {
       view.rerender(<HomeCustomMaterialTabBar />);
 
       expect(getAssetsRowStyle().pointerEvents).toBe(
-        index > 0.99 ? 'auto' : 'none',
+        index < 1 ? 'none' : 'auto',
       );
     }
   });

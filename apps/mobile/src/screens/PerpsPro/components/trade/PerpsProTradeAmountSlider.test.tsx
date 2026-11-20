@@ -39,8 +39,8 @@ jest.mock('react-native-reanimated', () => {
   };
 });
 
-jest.mock('@/components/GestureSlider', () => ({
-  GestureSlider: (props: object) => {
+jest.mock('@/components/perps/PerpsGestureSlider', () => ({
+  PerpsGestureSlider: (props: object) => {
     const ReactModule = require('react');
     const { View } = require('react-native');
     return ReactModule.createElement(View, {

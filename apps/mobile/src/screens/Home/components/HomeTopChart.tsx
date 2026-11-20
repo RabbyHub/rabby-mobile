@@ -2,8 +2,7 @@ import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
-import { getDimensionsSnapshot } from '@/core/dimensions';
+import { Dimensions, Pressable, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { type CurvePoint, warmupCurveForAddress } from '@/hooks/useCurve';
 import { E2E_ID } from '@/constant/e2e';
@@ -41,6 +40,8 @@ import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerTe
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
+
+const ScreenWidth = Dimensions.get('screen').width;
 
 const MAX_NETWORTH_FS = 38;
 const MIN_NETWORTH_FS = 24;
@@ -211,7 +212,7 @@ export const HomeTopChart = memo(function Chart({
               !chartData.length ? null : !isLoadingChartData ? (
                 <LineChart
                   height={104}
-                  width={getDimensionsSnapshot('screen').width - 32}
+                  width={ScreenWidth - 32}
                   shape={d3Shape.curveCatmullRom}
                   style={styles.chart}>
                   <LineChart.Path
@@ -517,7 +518,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'column',
     paddingLeft: 8,
     gap: 2,
-    width: getDimensionsSnapshot('screen').width - 32,
+    width: ScreenWidth - 32,
   },
   leftContainer: {
     flexDirection: 'column',
@@ -559,14 +560,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   container: {
-    width: getDimensionsSnapshot('screen').width,
+    width: ScreenWidth,
     overflow: 'hidden',
   },
   chartContainer: {
     paddingLeft: 14,
   },
   loading: {
-    width: getDimensionsSnapshot('screen').width - 32,
+    width: ScreenWidth - 32,
     paddingTop: 20,
     paddingHorizontal: 0,
   },

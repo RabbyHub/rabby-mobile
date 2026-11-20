@@ -5,8 +5,7 @@ import { MEDIA_TYPE, Media } from '@/components/Media';
 import { useTheme2024 } from '@/hooks/theme';
 import { abbreviateNumber } from '@/utils/math';
 import React, { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { getDimensionsSnapshot } from '@/core/dimensions';
+import { StyleSheet, View, Dimensions } from 'react-native';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { createGetStyles2024 } from '@/utils/styles';
 
@@ -14,10 +13,12 @@ type ItemProps = {
   item: NFTItem;
   onPress: () => void;
 };
+const width = Dimensions.get('window').width;
+
+const detailWidth = (width - 88) / 3;
+
 export const Item = ({ item, onPress }: ItemProps) => {
   const { styles } = useTheme2024({ getStyle });
-  const width = getDimensionsSnapshot('window').width;
-  const detailWidth = (width - 88) / 3;
 
   const numberDisplay = useMemo(() => {
     let v = abbreviateNumber(item.amount || 0);

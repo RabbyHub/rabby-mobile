@@ -57,26 +57,6 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-  #if DEBUG
-  // Device automation hook: `simctl launch <udid> <app> -rabby-deeplink <url>`
-  // delivers a cold-start deep link through the same launch-options path as a
-  // real URL open, avoiding the system "Open in app?" confirmation prompt that
-  // `simctl openurl` now shows for custom schemes. Debug builds only; release
-  // builds ignore the argument entirely.
-  NSArray<NSString *> *launchArguments = NSProcessInfo.processInfo.arguments;
-  NSUInteger deeplinkArgumentIndex = [launchArguments indexOfObject:@"-rabby-deeplink"];
-  if (deeplinkArgumentIndex != NSNotFound &&
-      deeplinkArgumentIndex + 1 < launchArguments.count) {
-    NSString *rawDeeplink = launchArguments[deeplinkArgumentIndex + 1];
-    NSURL *deeplinkURL = [NSURL URLWithString:rawDeeplink];
-    if (deeplinkURL) {
-      NSMutableDictionary *launchOptionsWithDeeplink = [(launchOptions ?: @{}) mutableCopy];
-      launchOptionsWithDeeplink[UIApplicationLaunchOptionsURLKey] = deeplinkURL;
-      launchOptions = launchOptionsWithDeeplink;
-    }
-  }
-  #endif
-
   // Rabby currently ships LTR locales only. Set this before React resolves the root layout direction.
   RCTI18nUtil *i18nUtil = [RCTI18nUtil sharedInstance];
   [i18nUtil allowRTL:NO];

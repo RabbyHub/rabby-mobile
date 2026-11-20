@@ -18,7 +18,6 @@ import {
 } from '@/constant/layout';
 import type { Account } from '@/core/startupServices/preference';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 import { useTheme2024 } from '@/hooks/theme';
 import type {
   GetNestedScreenRouteProp,
@@ -52,7 +51,6 @@ const MemeCoinExecuteContent = ({
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
   const { safeOffHeader, safeOffBottom } = useSafeSizes();
-  const columnInset = useSystemColumnInset();
   const {
     store,
     start,
@@ -133,15 +131,7 @@ const MemeCoinExecuteContent = ({
   );
 
   return (
-    <View
-      style={[
-        styles.screen,
-        {
-          paddingTop: safeOffHeader,
-          paddingLeft: columnInset.left,
-          paddingRight: columnInset.right,
-        },
-      ]}>
+    <View style={[styles.screen, { paddingTop: safeOffHeader }]}>
       <GestureDetector gesture={swipeBack}>
         <View style={styles.scroll}>
           <ScrollView

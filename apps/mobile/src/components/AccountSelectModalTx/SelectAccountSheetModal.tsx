@@ -10,8 +10,7 @@ import { useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, Pressable, View } from 'react-native';
-import { useWindowDimensions } from '@/core/dimensions';
+import { Dimensions, Keyboard, Pressable, View } from 'react-native';
 import type {
   SelectAccountSheetModalScreen,
   SelectAccountSheetModalValues,
@@ -59,6 +58,10 @@ function getDefaultScreenStates(): {
     },
   };
 }
+const maxHeight = Dimensions.get('window').height - 120;
+// const SNAPSHOTS = [1, maxHeight];
+const SNAPSHOTS = [__DEV__ ? maxHeight : maxHeight];
+const SHOW_IDX = SNAPSHOTS.length === 1 ? true : SNAPSHOTS.length - 1;
 export function SheetModalSelectAccountSend({
   type,
   // visible = __DEV__ ? type === 'SendTo' : false,
@@ -72,9 +75,6 @@ export function SheetModalSelectAccountSend({
   onSelectAccount?: SelectAccountSheetModalValues['cbOnSelectedAccount'];
 }) {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const { height: windowHeight } = useWindowDimensions();
-  const SNAPSHOTS = useMemo(() => [windowHeight - 120], [windowHeight]);
-  const SHOW_IDX = SNAPSHOTS.length === 1 ? true : SNAPSHOTS.length - 1;
 
   const { sheetModalRef, toggleShowSheetModal } = useSheetModal(null);
   useRegisterBlockingModal(MODAL_GATE_IDS.accountSelectSheet, !!visible);
@@ -97,7 +97,7 @@ export function SheetModalSelectAccountSend({
       Keyboard.dismiss();
       toggleShowSheetModal(false);
     }
-  }, [visible, toggleShowSheetModal, SNAPSHOTS, SHOW_IDX]);
+  }, [visible, toggleShowSheetModal]);
 
   const { t } = useTranslation();
 

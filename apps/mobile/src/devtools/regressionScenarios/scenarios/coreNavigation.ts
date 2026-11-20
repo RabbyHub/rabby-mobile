@@ -3,7 +3,6 @@ import { CHAINS_ENUM } from '@debank/common';
 import BigNumber from 'bignumber.js';
 
 import { RootNames } from '@/constant/layout';
-import { openScreenById } from '@/devtools/screenRegistry';
 import { openapi } from '@/core/request';
 import {
   getLatestStoreActivityScopeDiagnostics,
@@ -1877,14 +1876,12 @@ async function openTokenDetail(
     throw new Error('Ethereum native token metadata is unavailable');
   }
 
-  openScreenById(
-    RootNames.TokenDetail,
-    {
+  navigationRef.dispatch(
+    StackActions.push(RootNames.TokenDetail, {
       token,
       isSingleAddress: true,
       account,
-    },
-    { push: true },
+    }),
   );
   await context.waitForRoute(RootNames.TokenDetail);
   context.report('assertion', {

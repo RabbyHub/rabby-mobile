@@ -49,7 +49,6 @@ jest.mock('react-native-gesture-handler', () => ({
   TextInput: require('react-native').TextInput,
 }));
 jest.mock('react-native-reanimated', () => ({
-  makeMutable: (value: unknown) => ({ value }),
   __esModule: true,
   default: { createAnimatedComponent: (component: unknown) => component },
 }));

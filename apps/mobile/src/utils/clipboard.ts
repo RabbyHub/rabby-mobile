@@ -2,8 +2,7 @@ import { toast } from '@/components2024/Toast';
 import { storeApiExpSettingData } from '@/hooks/appSettings';
 import Clipboard from '@react-native-clipboard/clipboard';
 import i18next from 'i18next';
-import { getDimensionsSnapshot } from '@/core/dimensions';
-
+import { Dimensions } from 'react-native';
 import { ToastOptions } from 'react-native-root-toast';
 
 function clearClipboard() {
@@ -19,11 +18,10 @@ export function onPastedSensitiveData({
 }) {
   if (
     storeApiExpSettingData.getTimeTipAboutSeedPhraseAndPrivateKey() !== 'pasted'
-  ) {
+  )
     return;
-  }
 
-  const winLayout = getDimensionsSnapshot('window');
+  const winLayout = Dimensions.get('window');
   switch (type) {
     case 'seedPhrase':
     case 'privateKey': {

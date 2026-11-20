@@ -20,10 +20,7 @@ import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import CustomLabel from '@/screens/TokenDetail/components/CustomLabel';
 import type { NativeGesture } from 'react-native-gesture-handler';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  runOnJS,
-  useAnimatedReaction,
-} from 'react-native-reanimated';
+import type Animated from 'react-native-reanimated';
 import type { SCROLLABLE_STATUS } from '../../hooks/useHomeDrawerAnimate';
 import { homeDrawerAnimateMutable } from '../../hooks/useHomeDrawerAnimate';
 
@@ -191,6 +188,8 @@ export const HomeDappDrawerContent: React.FC<{
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { isExpanded } = homeDrawerAnimateMutable;
+  const isDrawerExpanded = useValueFromSharedValue(isExpanded);
+  const previousIsDrawerExpandedRef = useRef(isDrawerExpanded);
   const { t } = useTranslation();
   const { bookmarkList, bookmarkStore, removeBookmark } = useBrowserBookmark();
   const { activeTab, setActiveTab, tabs } = useDappTab({
@@ -315,18 +314,13 @@ export const HomeDappDrawerContent: React.FC<{
     setRemovedItems([]);
   }, []);
 
-  // Subscribe on the UI thread instead of mirroring `isExpanded` into React
-  // state: a React mirror re-rendered this whole dapp list on every
-  // open/close transition (~150ms hitch on Android), only to reset an editing
-  // flag that is usually already clear.
-  useAnimatedReaction(
-    () => isExpanded.value,
-    (expanded, previousExpanded) => {
-      if (previousExpanded === true && expanded === false) {
-        runOnJS(resetEditing)();
-      }
-    },
-  );
+  useEffect(() => {
+    if (previousIsDrawerExpandedRef.current && !isDrawerExpanded) {
+      resetEditing();
+    }
+
+    previousIsDrawerExpandedRef.current = isDrawerExpanded;
+  }, [isDrawerExpanded, resetEditing]);
 
   const completeEditing = useCallback(() => {
     setIsEditing(false);

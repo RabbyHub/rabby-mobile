@@ -6,8 +6,14 @@ import React, {
   useImperativeHandle,
 } from 'react';
 import type { Ref } from 'react';
-import { StyleSheet, View, StyleProp, ViewStyle, Platform } from 'react-native';
-import { getDimensionsSnapshot } from '@/core/dimensions';
+import {
+  StyleSheet,
+  View,
+  Dimensions,
+  StyleProp,
+  ViewStyle,
+  Platform,
+} from 'react-native';
 import WebView from 'react-native-webview';
 
 import {
@@ -331,7 +337,7 @@ const DappWebViewControl = ({
 
   const { cutOffSizes } = useSafeAndroidBottomSizes({
     webviewNodeContainerMaxH:
-      getDimensionsSnapshot('window').height -
+      Dimensions.get('window').height -
       ScreenLayouts.dappWebViewControlHeaderHeight,
   });
 
@@ -472,7 +478,7 @@ const getStyles = createGetStyles(colors =>
       justifyContent: 'space-between',
       alignItems: 'flex-start',
       width: '100%',
-      maxWidth: getDimensionsSnapshot('window').width,
+      maxWidth: Dimensions.get('window').width,
       minHeight: ScreenLayouts.dappWebViewControlHeaderHeight,
       paddingHorizontal: 20,
       paddingVertical: 0,

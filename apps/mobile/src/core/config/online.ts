@@ -14,14 +14,6 @@ export const ONLINE_SWITCH_ENABLE_WORKER_THREAD =
   '20251226.enable_worker_thread' as const;
 export const ONLINE_SWITCH_DISABLE_DB_PREPARED_UPSERT_V2 =
   '20260903.disable_db_prepared_upsert_v2' as const;
-/**
- * String-valued strategy for how the home chrome consumes the pager offset
- * (QA 1396/1421). The native display-rate sampler is Android-only, so iOS
- * resolves to `off` regardless.
- */
-export type PagerOffsetStrategy = 'off' | 'pull' | 'push';
-export const ONLINE_STRATEGY_PAGER_OFFSET =
-  '20261119.pager_offset_strategy' as const;
 const ONLINE_CONFIG_CACHE_KEY = '@OnlineConfigCacheV1';
 const ONLINE_CONFIG_CACHE_MAX_AGE_MS = 3 * 24 * 60 * 60 * 1000;
 
@@ -37,10 +29,6 @@ type OnlineConfig = {
     ['20260122.enable_db_prepared_upsert']?: boolean;
     [ONLINE_SWITCH_DISABLE_DB_PREPARED_UPSERT_V2]?: boolean;
     [APP_FILE_LOGGING_ONLINE_SWITCH]?: boolean;
-  };
-  /** Dated string-valued strategies (not booleans). */
-  ['strategies']?: {
-    [ONLINE_STRATEGY_PAGER_OFFSET]?: PagerOffsetStrategy;
   };
 };
 
@@ -61,12 +49,6 @@ function getDefaultOnlineConfig(): OnlineConfig {
       '20260122.enable_db_prepared_upsert': false,
       [ONLINE_SWITCH_DISABLE_DB_PREPARED_UPSERT_V2]: false,
       [APP_FILE_LOGGING_ONLINE_SWITCH]: false,
-    },
-    strategies: {
-      // Fallback pull: the native sampler tracks the pager best on device. If it
-      // ever proves risky, set this to "off" in the remote config to fall back
-      // to the JS-bridged sample stream without shipping a new build.
-      [ONLINE_STRATEGY_PAGER_OFFSET]: 'pull',
     },
   };
 }

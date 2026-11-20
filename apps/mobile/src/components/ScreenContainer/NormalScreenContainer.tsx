@@ -5,7 +5,6 @@ import {
 } from '@/hooks/common/useReactNativeViews';
 import { useThemeColors } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 import React, { useMemo } from 'react';
 
 import { StyleSheet, View } from 'react-native';
@@ -30,7 +29,6 @@ export default function NormalScreenContainer<
   } & React.ComponentProps<ReactNativeViewAsMap[T]>
 >) {
   const { safeOffHeader, safeTop } = useSafeSizes();
-  const columnInset = useSystemColumnInset();
   const colors = useThemeColors();
 
   const ViewComp = useMemo(() => getViewComponentByAs(as), [as]);
@@ -47,8 +45,6 @@ export default function NormalScreenContainer<
           height: '100%',
           backgroundColor: colors['neutral-bg-2'],
         },
-        columnInset.left > 0 && { paddingLeft: columnInset.left },
-        columnInset.right > 0 && { paddingRight: columnInset.right },
         overwriteStyle,
       ])}>
       {children}

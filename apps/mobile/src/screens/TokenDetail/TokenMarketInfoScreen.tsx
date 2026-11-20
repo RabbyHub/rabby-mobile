@@ -29,9 +29,9 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  Dimensions,
   RefreshControl,
 } from 'react-native';
-import { useWindowDimensions } from '@/core/dimensions';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
 import type { TokenChartRef } from './components/TokenPriceChart';
 import { TokenPriceChart } from './components/TokenPriceChart';
@@ -94,6 +94,8 @@ export type RelatedDeFiType = AbstractProject & {
   address: string;
 };
 
+const { width: screenWidth } = Dimensions.get('window');
+
 export const RiskTokenTips = ({ isDanger }: { isDanger?: boolean }) => {
   const { styles, colors2024 } = useTheme2024({
     getStyle,
@@ -129,7 +131,6 @@ export const RiskTokenTips = ({ isDanger }: { isDanger?: boolean }) => {
 };
 
 export const TokenMarketInfoScreen = () => {
-  const { width: screenWidth } = useWindowDimensions();
   const route =
     useRoute<GetRootScreenNavigationProps<'TokenMarketInfo'>['route']>();
   const { token, account, tokenSelectType } = route.params || {};
@@ -325,7 +326,7 @@ export const TokenMarketInfoScreen = () => {
         }}
       />
     );
-  }, [colors2024, isLight, isLoss, screenWidth]);
+  }, [colors2024, isLight, isLoss]);
 
   const renderTabBar = React.useCallback(
     (props: any) => (

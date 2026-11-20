@@ -34,13 +34,6 @@ type Props = {
    * re-render.
    */
   progressValue?: SharedValue<number>;
-  /**
-   * Keep the native touch surface mounted. Set this to `false` while the host
-   * screen is not the active scene: the track/thumb stay visible (so the slider
-   * is already on screen when a pager reveals the page), but no native gesture
-   * recogniser is created for a hidden scene.
-   */
-  interactive?: boolean;
   step?: number;
   style?: StyleProp<ViewStyle>;
   thumbStyle?: StyleProp<ViewStyle>;
@@ -55,7 +48,7 @@ const clamp = (value: number, min: number, max: number) => {
 };
 
 // Match the existing RNEUI rail and minimum-relative step calculation.
-export const gestureSliderValueAt = (
+export const perpsSliderValueAt = (
   left: number,
   travel: number,
   min: number,
@@ -72,10 +65,9 @@ export const gestureSliderValueAt = (
 };
 
 /** Perps sheet input: native ownership, with the existing horizontal slider geometry. */
-export const GestureSlider = ({
+export const PerpsGestureSlider = ({
   allowTouchTrack = false,
   disabled = false,
-  interactive = true,
   maximumValue = 100,
   minimumValue = 0,
   maximumTrackTintColor,
@@ -115,10 +107,6 @@ export const GestureSlider = ({
   const configuration = useMemo(
     () => ({
       enabled,
-      // Flipping `interactive` detaches/attaches the native surface; the
-      // release effect below must run then too, so an in-flight drag still
-      // completes when the scene deactivates mid-gesture.
-      interactive,
       minimumValue,
       maximumValue,
       step,
@@ -128,7 +116,6 @@ export const GestureSlider = ({
     }),
     [
       enabled,
-      interactive,
       minimumValue,
       maximumValue,
       step,
@@ -237,7 +224,7 @@ export const GestureSlider = ({
   const gesture = useMemo(
     () =>
       Gesture.Manual()
-        .enabled(enabled && interactive)
+        .enabled(enabled)
         .shouldCancelWhenOutside(false)
         // Claim DOWN on the UI thread, before either the sheet Pan or its native
         // ScrollView can activate. No simultaneous relationship: the slider owns
@@ -271,7 +258,7 @@ export const GestureSlider = ({
           const initial = position.value;
           active.value = true;
           session.value += 1;
-          position.value = gestureSliderValueAt(
+          position.value = perpsSliderValueAt(
             startLeft.value,
             travel,
             minimumValue,
@@ -299,7 +286,7 @@ export const GestureSlider = ({
           if (!touch) {
             return;
           }
-          const next = gestureSliderValueAt(
+          const next = perpsSliderValueAt(
             startLeft.value + touch.absoluteX - startX.value,
             travel,
             minimumValue,
@@ -343,7 +330,6 @@ export const GestureSlider = ({
         }),
     [
       enabled,
-      interactive,
       allowTouchTrack,
       minimumValue,
       maximumValue,
@@ -422,22 +408,20 @@ export const GestureSlider = ({
         style={[styles.thumb, thumbStyle, thumbAnimation]}>
         {thumbProps?.children}
       </Animated.View>
-      {interactive ? (
-        <GestureDetector gesture={gesture}>
-          <Animated.View
-            collapsable={false}
-            style={[
-              StyleSheet.absoluteFillObject,
-              {
-                left: -horizontalOverflow,
-                right: -horizontalOverflow,
-                top: -verticalOverflow,
-                bottom: -verticalOverflow,
-              },
-            ]}
-          />
-        </GestureDetector>
-      ) : null}
+      <GestureDetector gesture={gesture}>
+        <Animated.View
+          collapsable={false}
+          style={[
+            StyleSheet.absoluteFillObject,
+            {
+              left: -horizontalOverflow,
+              right: -horizontalOverflow,
+              top: -verticalOverflow,
+              bottom: -verticalOverflow,
+            },
+          ]}
+        />
+      </GestureDetector>
     </View>
   );
 };

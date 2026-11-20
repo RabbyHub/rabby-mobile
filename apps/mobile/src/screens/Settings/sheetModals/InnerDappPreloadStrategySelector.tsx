@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { ScrollView, View } from 'react-native';
-import { getDimensionsSnapshot } from '@/core/dimensions';
+import { Dimensions, ScrollView, View } from 'react-native';
 import { atom, useAtom } from 'jotai';
 
 import { RcIconCheckmarkCC } from '@/assets/icons/common';
@@ -189,9 +188,7 @@ const SIZES = {
   sectionSpacer: 12,
   HANDLE_HEIGHT: 8,
   containerPb: 42,
-  get MAX_SHEET_HEIGHT() {
-    return Math.round(getDimensionsSnapshot('window').height * 0.8);
-  },
+  MAX_SHEET_HEIGHT: Math.round(Dimensions.get('window').height * 0.8),
   get FULL_HEIGHT() {
     return (
       SIZES.HANDLE_HEIGHT +

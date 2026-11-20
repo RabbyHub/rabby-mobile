@@ -1,10 +1,10 @@
 import {
+  Dimensions,
   Keyboard,
   KeyboardAvoidingView,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { getDimensionsSnapshot } from '@/core/dimensions';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -262,7 +262,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => {
       paddingHorizontal: MODAL_H_PADDING,
     },
     modal: {
-      maxWidth: getDimensionsSnapshot('window').width - MODAL_H_PADDING * 2,
+      maxWidth: Dimensions.get('window').width - MODAL_H_PADDING * 2,
       width: '100%',
       paddingTop: 21,
       paddingBottom: 13,

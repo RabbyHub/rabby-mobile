@@ -16,11 +16,7 @@ import {
 } from '@rabby-wallet/rabby-action';
 import { findChain, isTestnetChainId } from '@/utils/chain';
 import type { Account } from '@/core/startupServices/preference';
-import { INTERNAL_REQUEST_ORIGIN, isNonPublicProductionEnv } from '@/constant';
-import {
-  getApprovalParseOverride,
-  maybeCaptureApprovalParse,
-} from '@/devtools/screenRegistry/approvalParseOverride';
+import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { useApproval } from '@/hooks/useApproval';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -303,24 +299,12 @@ export const SignTypedData = ({
       signTypedData &&
       !isTestnetChainId(signTypedData.domain?.chainId)
     ) {
-      if (isNonPublicProductionEnv) {
-        const overridden = getApprovalParseOverride(signTypedData);
-        if (overridden) {
-          console.log('[approval-parse] using fixture override');
-          return { requestKey, response: overridden };
-        }
-      }
       const response = await openapi.parseCommon({
         typed_data: signTypedData,
         user_addr: currentAccount.address,
         origin: session.origin,
       });
       if (!response) throw new Error('Missing typed-data parse response');
-      if (isNonPublicProductionEnv) {
-        await maybeCaptureApprovalParse(signTypedData, response).catch(
-          () => {},
-        );
-      }
       return { requestKey, response };
     }
     return { requestKey, response: null };

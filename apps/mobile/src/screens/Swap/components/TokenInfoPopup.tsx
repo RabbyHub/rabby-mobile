@@ -1,8 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
-import { View, TouchableOpacity } from 'react-native';
-import { getDimensionsSnapshot } from '@/core/dimensions';
+import { View, Dimensions, TouchableOpacity } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 import { AssetAvatar } from '@/components';
 import { useLongPressTokenAtom } from '../hooks';
@@ -24,8 +23,8 @@ import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { colord } from 'colord';
 
 export const TokenInfoPopup = () => {
-  const windowWidth = getDimensionsSnapshot('window').width;
-  const windowHeight = getDimensionsSnapshot('window').height;
+  const windowWidth = Dimensions.get('window').width;
+  const windowHeight = Dimensions.get('window').height;
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
   const [longPressToken, setLongPressToken] = useLongPressTokenAtom();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({

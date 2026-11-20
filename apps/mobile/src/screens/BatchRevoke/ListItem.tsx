@@ -6,7 +6,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { ListItemSpender } from './ListItemSpender';
 import { ListItemStatus } from './ListItemStatus';
 import React from 'react';
-import { getCellWidths } from './Cell';
+import { CELL_WIDTH } from './Cell';
 
 export const ListItem: React.FC<{
   item: AssetApprovalSpenderWithStatus;
@@ -36,32 +36,28 @@ export const ListItem: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => {
-  const CELL_WIDTH = getCellWidths();
-
-  return {
-    root: {
-      marginHorizontal: 12,
-      paddingHorizontal: 12,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-    },
-    asset: {
-      width: CELL_WIDTH.ASSET,
-    },
-    revokeFrom: {
-      width: CELL_WIDTH.REVOKE_FROM,
-    },
-    gasFee: {
-      width: CELL_WIDTH.GAS_FEE,
-    },
-    headerText: {
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      fontWeight: '400',
-      lineHeight: 18,
-      color: colors2024['neutral-secondary'],
-    },
-  };
-});
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  root: {
+    marginHorizontal: 12,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  asset: {
+    width: CELL_WIDTH.ASSET,
+  },
+  revokeFrom: {
+    width: CELL_WIDTH.REVOKE_FROM,
+  },
+  gasFee: {
+    width: CELL_WIDTH.GAS_FEE,
+  },
+  headerText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 18,
+    color: colors2024['neutral-secondary'],
+  },
+}));

@@ -33,8 +33,12 @@ import {
 } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { ScrollView, ViewProps } from 'react-native';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
-import { svsLayout } from '@/hooks/useAppLayout';
+import {
+  Dimensions,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -88,11 +92,6 @@ import {
   ITEM_GRID_GAP,
   ITEM_LAYOUT_PADDING_HORIZONTAL,
 } from '@/constant/home';
-import {
-  HOME_GESTURE_AXIS,
-  beginHomeGesture,
-  resolveHomeGestureAxis,
-} from '@/screens/Home/gesture/homeGestureAuthority';
 import { perfEvents } from '@/core/utils/perf';
 import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
 import {
@@ -152,6 +151,7 @@ import {
 import type { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
 import { triggerImpact } from '@/utils/common';
 import type { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
+import { IS_ANDROID } from '@/core/native/utils';
 import {
   HOME_TOP_HEADER_SIZES,
   SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
@@ -253,12 +253,10 @@ function getIsAtBottom(scrollY: number) {
   return restScrollOffset <= OFFSETS.atBottomThreshold;
 }
 
+const scrHeight = Dimensions.get('screen').height;
 function hasOverThreshold() {
   'worklet';
-  return (
-    translateY.value <
-    getPullThreshold(svsLayout.screenLayout.value.height) * -1
-  );
+  return translateY.value < getPullThreshold(scrHeight) * -1;
 }
 
 const tabsScrollHandlers = {
@@ -276,16 +274,12 @@ const swipeUpViewHandlers = {
   }) as ViewProps['onLayout'] & object,
 };
 
-function getHomeGestureConfs() {
-  return {
-    activeY: Math.min(
-      8,
-      Math.round(
-        Math.floor(getPullThreshold(svsLayout.screenLayout.value.height) * 0.1),
-      ),
-    ),
-  };
-}
+const homeGestureConfs = {
+  activeY: Math.min(
+    8,
+    Math.round(Math.floor(getPullThreshold(scrHeight) * 0.1)),
+  ),
+};
 
 const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
   onJsPulldownRefresh: prop_onJsPulldownRefresh,
@@ -349,8 +343,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
   useAnimatedReaction(
     () => translateY.value,
     translateYValue => {
-      pullPercent.value =
-        (translateYValue / svsLayout.screenLayout.value.height) * 100;
+      pullPercent.value = (translateYValue / scrHeight) * 100;
       const percentValue = pullPercent.value;
       if (percentValue === -100) {
         isExpanded.value = true;
@@ -413,64 +406,17 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
   const panGestureRef = useRef(
     Gesture.Pan()
       .shouldCancelWhenOutside(false)
-      .activeOffsetY([
-        -getHomeGestureConfs().activeY,
-        getHomeGestureConfs().activeY,
-      ])
+      .activeOffsetY([-homeGestureConfs.activeY, homeGestureConfs.activeY])
       .maxPointers(1)
-      // Share the Home-wide verdict: a horizontal drag belongs to the pager,
-      // never to the pull-to-refresh / drawer-pull pan.
-      .onTouchesDown(event => {
-        'worklet';
-        const touch = event.allTouches[0];
-        if (touch) {
-          beginHomeGesture(touch.absoluteX, touch.absoluteY);
-        }
-      })
-      .onTouchesMove((event, stateManager) => {
-        'worklet';
-        const touch = event.allTouches[0];
-        if (!touch) {
-          stateManager.fail();
-          return;
-        }
-        if (
-          resolveHomeGestureAxis(touch.absoluteX, touch.absoluteY) ===
-          HOME_GESTURE_AXIS.HORIZONTAL
-        ) {
-          stateManager.fail();
-        }
-      })
       .onStart(() => {
         startValues.value.startedAtBottom = getIsAtBottom(scrollY.value);
         startValues.value.startedAtTop = scrollY.value <= 5;
-        // Pin the first floor to its very end once, before the drawer starts
-        // moving, so the content that stays visible above the drawer is always
-        // the true end of the list. This used to be re-issued on every
-        // `onUpdate` frame (animated, Android only), which kept a native
-        // smooth scroll running on its own timeline next to the finger-driven
-        // translate: the list kept gliding while dragging back, then snapped
-        // in line once the finger stopped.
-        if (startValues.value.startedAtBottom) {
-          scrollToEnd(true, false);
-        }
       })
       .onUpdate(event => {
         panUp: {
           if (startValues.value.startedAtBottom && event.translationY < 0) {
             translateY.value = event.translationY;
             scrollableStatus.value = SCROLLABLE_STATUS.LOCKED;
-            // Keep the first floor frozen at its end while the drawer owns the
-            // drag. If the native scroll view manages to move the offset (an
-            // edge effect, a leftover fling, the few px before this pan
-            // activates), the content would slide under the drawer-anchored
-            // overlay while the finger keeps translating the drawer, so the
-            // two layers drift by a random amount. Snap back instantly and
-            // only when it actually drifted: no animation is started, nothing
-            // runs when the offset is already stable.
-            if (!getIsAtBottom(scrollY.value)) {
-              scrollToEnd(true, false);
-            }
           } else {
             translateY.value = 0;
             scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
@@ -481,6 +427,9 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
             hasOverThreshold() &&
             event.translationY < 0
           ) {
+            if (IS_ANDROID) {
+              scrollToEnd(true, true);
+            }
             !startValues.value.hasImpactOnPandown && runOnJS(triggerImpact)();
             startValues.value.hasImpactOnPandown = true;
           }
@@ -506,13 +455,9 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
           const hasImpactOnPandown = startValues.value.hasImpactOnPandown;
 
           if (startValues.value.startedAtBottom && hasOverThreshold()) {
-            translateY.value = withTiming(
-              -svsLayout.screenLayout.value.height,
-              undefined,
-              () => {
-                scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
-              },
-            );
+            translateY.value = withTiming(-scrHeight, undefined, () => {
+              scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+            });
             !hasImpactOnPandown && runOnJS(triggerImpact)();
           } else {
             translateY.value = withTiming(0, undefined, () => {
