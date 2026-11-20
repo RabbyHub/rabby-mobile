@@ -202,19 +202,16 @@ export function MultiAddressHomeHeader(
             // loading && styles.curveBoxLoading,
             {},
           ]}>
-          {/* Keep the border on one Fabric view: the legacy gradient forwards
-              border props to both its interop wrapper and its inset Paper view. */}
+          {/* Keep border props on the native view, not the legacy gradient. */}
           <View pointerEvents="none" style={styles.curveCardGradientBg}>
-            <RNLinearGradient
-              colors={
-                isLight
-                  ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, .54)']
-                  : ['rgba(0, 0, 0, 0.10)', '#232428']
-              }
-              start={isLight ? { x: 0.25, y: 0.5 } : { x: 1.07, y: 0.42 }}
-              end={isLight ? { x: 0.75, y: 0.5 } : { x: -0.14, y: 0.59 }}
-              style={StyleSheet.absoluteFill}
-            />
+            {isLight && (
+              <RNLinearGradient
+                colors={['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, .54)']}
+                start={{ x: 0.25, y: 0.5 }}
+                end={{ x: 0.75, y: 0.5 }}
+                style={StyleSheet.absoluteFill}
+              />
+            )}
           </View>
           <View
             style={[
@@ -330,9 +327,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       left: 0,
       right: 0,
       borderRadius: SIZES.cardContentRadius,
-      overflow: 'hidden',
-      borderWidth: 1,
-      borderColor: isLight ? 'rgba(255, 255, 255, 1)' : 'rgba(35, 36, 40, 1)',
+      overflow: isLight ? 'hidden' : 'visible',
+      backgroundColor: isLight ? 'transparent' : colors2024['neutral-bg-2'],
+      borderWidth: curveCardBorderWidth,
+      borderColor: isLight
+        ? 'rgba(255, 255, 255, 1)'
+        : colors2024['neutral-bg-5'],
     },
     shadowView: {
       ...Platform.select({
