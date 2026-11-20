@@ -12,8 +12,54 @@ let mockAccount: { address: string; type: string };
 let mockSceneAccountKey: string;
 let mockOnHistorySynced: (ctx: { taskFor: string }) => void;
 
-jest.mock('@react-navigation/native', () => ({
-  useRoute: () => ({ params: {} }),
+jest.mock('@react-navigation/native', () => {
+  // `@/utils/navigation` (pulled in through `@/hooks/navigation`) builds its
+  // container ref at module scope, so the mock has to provide the navigation
+  // helpers as well as the route hook this screen reads.
+  const navigationRef = {
+    current: null,
+    isReady: () => false,
+    navigate: jest.fn(),
+    navigateDeprecated: jest.fn(),
+    dispatch: jest.fn(),
+    resetRoot: jest.fn(),
+    getCurrentRoute: () => undefined,
+    getRootState: () => undefined,
+  };
+  return {
+    useRoute: () => ({ params: {} }),
+    createNavigationContainerRef: () => navigationRef,
+    CommonActions: { reset: jest.fn(() => ({})), navigate: jest.fn(() => ({})) },
+    StackActions: {
+      push: jest.fn(() => ({})),
+      pop: jest.fn(() => ({})),
+      replace: jest.fn(() => ({})),
+    },
+  };
+});
+jest.mock('react-native-gesture-handler', () => {
+  // The screen now reaches this module through `@/hooks/navigation` ->
+  // `CustomTouchableOpacity`; the native handler is not available under Jest.
+  const RN = require('react-native');
+  return {
+    TouchableOpacity: RN.TouchableOpacity,
+    Pressable: RN.Pressable,
+    ScrollView: RN.ScrollView,
+    RefreshControl: RN.RefreshControl,
+  };
+});
+jest.mock('react-native-safe-area-context', () => {
+  const insets = { top: 0, bottom: 0, left: 0, right: 0 };
+  return {
+    useSafeAreaInsets: () => insets,
+    useSafeAreaFrame: () => ({ x: 0, y: 0, width: 390, height: 844 }),
+    SafeAreaProvider: ({ children }: { children: React.ReactNode }) => children,
+  };
+});
+jest.mock('@/hooks/navigation', () => ({
+  // The screen only needs the header back button; importing the real module
+  // pulls the whole navigator/touchable/DB graph into this contract test.
+  HeaderBackButton: () => null,
 }));
 jest.mock('@/databases/sync/_event', () => ({
   useAppOrmSyncEvents: (options: {
@@ -33,6 +79,8 @@ jest.mock('@/utils/styles', () => ({
 }));
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
+  // `@/utils/i18n` registers the plugin at module scope.
+  initReactI18next: { type: '3rdParty', init: () => undefined },
 }));
 jest.mock('@/hooks/accountsSwitcher', () => ({
   useSceneAccountInfo: () => ({
