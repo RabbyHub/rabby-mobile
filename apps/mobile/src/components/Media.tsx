@@ -249,9 +249,12 @@ export const Media = ({
   }, [loadingFail, reportError, turnOff]);
 
   const changePlay = useCallback(() => {
+    // End of playback: seek back to the first frame and pause explicitly.
+    // Toggling would restart the clip when the native player started it (the
+    // custom button was never pressed, so `pause` could still be true).
     ref?.current?.seek(0);
-    toggle();
-  }, [toggle]);
+    pauseTurnOn();
+  }, [pauseTurnOn]);
 
   // Keep the custom overlay in sync with the native player's own play/pause
   // (e.g. the AVPlayer/ExoPlayer control bar), so the pause overlay does not
@@ -260,7 +263,12 @@ export const Media = ({
     (e: { isPlaying?: boolean }) => {
       if (e?.isPlaying) {
         pauseTurnOff();
-      } else {
+        return;
+      }
+      // Android's ExoPlayer also reports `isPlaying: false` while it buffers or
+      // seeks, so only take the pause transition from iOS: turning `pause` on
+      // there would hide the native controls mid-playback.
+      if (Platform.OS === 'ios') {
         pauseTurnOn();
       }
     },
