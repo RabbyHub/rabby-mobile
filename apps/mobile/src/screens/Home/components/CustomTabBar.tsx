@@ -116,7 +116,14 @@ const Indicator = ({
   // left plate slides out to the right while the right plate slides in from the
   // left, so the black fill is only ever visible inside a slot - the 12pt gap
   // between them never shows the indicator travelling across it.
-  const slotWidth = itemsLayout[0]?.width ?? 0;
+  // The plate/clip and the pressables all use this width, so keep one value
+  // and never let the memoized style factory decide it: an invalid/zero width
+  // there silently hides the active plate (seen on Android).
+  const measuredSlotWidth = itemsLayout[0]?.width ?? 0;
+  const slotWidth =
+    measuredSlotWidth > 0
+      ? measuredSlotWidth
+      : getHomeTabIndicatorWidth(getDimensionsSnapshot('window').width);
   const snapPixels = (value: number) => {
     'worklet';
     return Math.round(value * STRIP_PIXEL) / STRIP_PIXEL;
@@ -144,10 +151,12 @@ const Indicator = ({
 
   return (
     <Animated.View style={[styles.indicatorContainer, animatedStyle]}>
-      <View style={[styles.slotClip, styles.slotClipLeft]}>
+      <View
+        style={[styles.slotClip, styles.slotClipLeft, { width: slotWidth }]}>
         <Animated.View style={[styles.slotPlate, leftPlateStyle]} />
       </View>
-      <View style={[styles.slotClip, styles.slotClipRight]}>
+      <View
+        style={[styles.slotClip, styles.slotClipRight, { width: slotWidth }]}>
         <Animated.View style={[styles.slotPlate, rightPlateStyle]} />
       </View>
       <Animated.View
@@ -155,7 +164,7 @@ const Indicator = ({
       />
       <Pressable
         onPress={onLeftPress}
-        style={styles.leftPressable}
+        style={[styles.leftPressable, { width: slotWidth }]}
         hitSlop={leftHitSlop}
       />
       <Animated.View
@@ -163,7 +172,7 @@ const Indicator = ({
       />
       <Pressable
         ref={secondaryIndicatorViewRef}
-        style={styles.rightPressable}
+        style={[styles.rightPressable, { width: slotWidth }]}
         onPress={onRightPress}
         hitSlop={rightHitSlop}
         onLayout={() => {
