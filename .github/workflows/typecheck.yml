@@ -18,8 +18,58 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  prepare:
+    name: prepare workspace
+    permissions:
+      actions: read
+      contents: read
+    runs-on:
+      - ubuntu-latest
+    env:
+      NODE_OPTIONS: '--max_old_space_size=4096'
+      YARN_ENABLE_HARDENED_MODE: '0'
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            .yarn/install-state.gz
+          key: nm2-${{ runner.os }}-${{ hashFiles('yarn.lock', '.yarnrc.yml', '.yarn/patches/**') }}
+          restore-keys: |
+            nm2-${{ runner.os }}-
+
+      - name: Cache workspace build output
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/*/dist
+            packages/*/*.tsbuildinfo
+          key: pkgdist-${{ runner.os }}-${{ hashFiles('packages/**/src/**', 'packages/*/tsconfig*.json', 'tsconfig*.json', 'yarn.lock') }}
+
+      - name: Install dependencies
+        run: yarn install --immutable --mode=skip-build
+
+      - name: Build workspace packages
+        run: yarn build
+
   type_check:
     name: apps/mobile typecheck
+    needs: prepare
     permissions:
       actions: read
       contents: read
@@ -49,9 +99,7 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
 
-      # Restoring the linked tree turns `yarn install --immutable` from a full
-      # 1.3GB link (~4-5 min on ubuntu-latest) into a state check (~5-20s).
-      # The install step stays: it repairs any drift a restored key may carry.
+      # Restored from the `prepare` job; no install runs in this job.
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
@@ -79,15 +127,6 @@ jobs:
       # re-link and rebuild everything (`yarn build` + the mobile postinstall),
       # which is what made a cache hit still take ~4 minutes. The build outputs
       # come from the cache and are repaired by the explicit build below.
-      - name: Install dependencies
-        run: yarn install --immutable --mode=skip-build
-
-      # Repair the workspace declarations in case the restored `packages/*/dist`
-      # is older than the checkout (lockfile-only changes do not invalidate it).
-      # The incremental tsc build takes seconds.
-      - name: Build workspace packages
-        run: yarn build
-
       - name: Check workspace dependency constraints
         run: yarn constraints
 
@@ -99,6 +138,7 @@ jobs:
 
   mobile_jest:
     name: apps/mobile jest
+    needs: prepare
     permissions:
       actions: read
       contents: read
@@ -123,9 +163,7 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
 
-      # Restoring the linked tree turns `yarn install --immutable` from a full
-      # 1.3GB link (~4-5 min on ubuntu-latest) into a state check (~5-20s).
-      # The install step stays: it repairs any drift a restored key may carry.
+      # Restored from the `prepare` job; no install runs in this job.
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
@@ -149,26 +187,13 @@ jobs:
             packages/*/*.tsbuildinfo
           key: pkgdist-${{ runner.os }}-${{ hashFiles('packages/**/src/**', 'packages/*/tsconfig*.json', 'tsconfig*.json', 'yarn.lock') }}
 
-      # `--mode=skip-build` keeps the cached tree usable: postinstall would
-      # re-link and rebuild everything (`yarn build` + the mobile postinstall),
-      # which is what made a cache hit still take ~4 minutes. The build outputs
-      # come from the cache and are repaired by the explicit build below.
-      - name: Install dependencies
-        run: yarn install --immutable --mode=skip-build
-
-      # A node_modules cache hit turns `yarn install` into a no-op, so the root
-      # postinstall that compiles `packages/*/dist` does not run and every
-      # workspace import resolves to missing declarations. Rebuild explicitly;
-      # tsc incremental rebuild is a few seconds, the link step it replaces is
-      # minutes.
-      - name: Build workspace packages
-        run: yarn build
 
       - name: Run apps/mobile Jest
         run: time yarn workspace rabby-mobile test --runInBand
 
   mobile_import_cycles:
     name: apps/mobile import cycles
+    needs: prepare
     permissions:
       actions: read
       contents: read
@@ -193,9 +218,7 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
 
-      # Restoring the linked tree turns `yarn install --immutable` from a full
-      # 1.3GB link (~4-5 min on ubuntu-latest) into a state check (~5-20s).
-      # The install step stays: it repairs any drift a restored key may carry.
+      # Restored from the `prepare` job; no install runs in this job.
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
@@ -219,20 +242,6 @@ jobs:
             packages/*/*.tsbuildinfo
           key: pkgdist-${{ runner.os }}-${{ hashFiles('packages/**/src/**', 'packages/*/tsconfig*.json', 'tsconfig*.json', 'yarn.lock') }}
 
-      # `--mode=skip-build` keeps the cached tree usable: postinstall would
-      # re-link and rebuild everything (`yarn build` + the mobile postinstall),
-      # which is what made a cache hit still take ~4 minutes. The build outputs
-      # come from the cache and are repaired by the explicit build below.
-      - name: Install dependencies
-        run: yarn install --immutable --mode=skip-build
-
-      # A node_modules cache hit turns `yarn install` into a no-op, so the root
-      # postinstall that compiles `packages/*/dist` does not run and every
-      # workspace import resolves to missing declarations. Rebuild explicitly;
-      # tsc incremental rebuild is a few seconds, the link step it replaces is
-      # minutes.
-      - name: Build workspace packages
-        run: yarn build
 
       - name: Run apps/mobile Madge Import Cycle Check
         run: time yarn workspace rabby-mobile lint:cycles
