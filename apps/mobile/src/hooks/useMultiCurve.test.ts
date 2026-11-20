@@ -1,10 +1,10 @@
 describe('hooks/useMultiCurve', () => {
-  const mockGetCurveCache = jest.fn();
   const mockGetNetCurve = jest.fn();
   const mockComputeTotalBalance = jest.fn();
   const mockGetBalanceCacheAccounts = jest.fn();
   const mockGetTop10MyAccounts = jest.fn();
   const mockFormChartData = jest.fn();
+  let mockSelectedAddresses: string[];
   let mockBalanceValueMap: Record<
     string,
     {
@@ -14,10 +14,14 @@ describe('hooks/useMultiCurve', () => {
   >;
 
   let multiCurveModule: typeof import('./useMultiCurve');
+  let curveStoreModule: typeof import('@/store/curve24h');
+  let curveCache: typeof import('@/utils/24balanceCurveCache');
 
   beforeEach(() => {
+    jest.useFakeTimers();
     jest.resetModules();
     jest.clearAllMocks();
+    mockSelectedAddresses = ['0xabc'];
     mockBalanceValueMap = {
       '0xabc': {
         evmBalance: 100,
@@ -27,17 +31,6 @@ describe('hooks/useMultiCurve', () => {
 
     jest.doMock('react-native-haptic-feedback', () => ({
       trigger: jest.fn(),
-    }));
-    jest.doMock('p-queue', () => {
-      return jest.fn().mockImplementation(() => ({
-        add: (fn: () => Promise<unknown>) => fn(),
-        clear: jest.fn(),
-        onIdle: jest.fn(() => Promise.resolve()),
-      }));
-    });
-    jest.doMock('@/utils/24balanceCurveCache', () => ({
-      getCurveCache: mockGetCurveCache,
-      getNetCurve: mockGetNetCurve,
     }));
     jest.doMock('@/core/request', () => ({
       openapi: {
@@ -77,7 +70,7 @@ describe('hooks/useMultiCurve', () => {
         {
           getState: jest.fn(() => ({
             balance: mockGetBalanceCacheAccounts(),
-            selectedAddresses: [],
+            selectedAddresses: mockSelectedAddresses,
           })),
         },
       ),
@@ -102,7 +95,6 @@ describe('hooks/useMultiCurve', () => {
       keyringService: {},
     }));
 
-    mockGetCurveCache.mockReturnValue(null);
     mockGetNetCurve.mockResolvedValue([
       {
         timestamp: 1,
@@ -124,6 +116,14 @@ describe('hooks/useMultiCurve', () => {
     }));
 
     multiCurveModule = require('./useMultiCurve');
+    curveStoreModule = require('@/store/curve24h');
+    curveCache = require('@/utils/24balanceCurveCache');
+    require('@/core/storage/mmkvInstances').dayCurveMMKV.clearAll();
+  });
+
+  afterEach(async () => {
+    await jest.runOnlyPendingTimersAsync();
+    jest.useRealTimers();
   });
 
   it('prefers addresses from balanceAccounts when refreshing day curve', async () => {
@@ -147,12 +147,130 @@ describe('hooks/useMultiCurve', () => {
       totalEvm: 100,
     });
 
+    curveStoreModule.sceneCurve24hStore.setHomeCurveExpanded(true);
     await multiCurveModule.refreshDayCurve({
       balanceAccounts: staleBalanceAccounts as any,
       reason: 'manual_refresh',
     });
 
     expect(mockGetTop10MyAccounts).not.toHaveBeenCalled();
+    expect(mockGetNetCurve).toHaveBeenCalledWith('0xabc', 1);
+  });
+
+  it.each([
+    { force: false, reason: 'manual_refresh' as const },
+    { force: true, reason: 'manual_refresh' as const },
+    { force: false, reason: 'selection_changed' as const },
+  ])('skips a folded Home refresh: %j', async input => {
+    await multiCurveModule.refreshDayCurve({ addresses: ['0xabc'], ...input });
+
+    expect(mockGetNetCurve).not.toHaveBeenCalled();
+    expect(
+      curveStoreModule.sceneCurve24hStore.getState().sceneLoading.Home,
+    ).toBe(false);
+    expect(
+      curveStoreModule.addressCurve24hStore.getAddressCurve('0xabc'),
+    ).toBeUndefined();
+  });
+
+  it.each(['missing', 'valid', 'expired'] as const)(
+    'uses the existing cache policy when expanded with %s cache',
+    async cacheState => {
+      if (cacheState !== 'missing') {
+        curveCache.setCurveCache('0xabc', {
+          data: [{ timestamp: 1, usd_value: 2 }],
+          updateTime:
+            Date.now() - (cacheState === 'expired' ? 11 * 60 * 1000 : 0),
+        });
+      }
+
+      curveStoreModule.sceneCurve24hStore.setHomeCurveExpanded(true);
+      await multiCurveModule.refreshDayCurve();
+
+      expect(mockGetNetCurve).toHaveBeenCalledTimes(
+        cacheState === 'valid' ? 0 : 1,
+      );
+      expect(
+        curveStoreModule.addressCurve24hStore.getAddressCurve('0xabc')?.length,
+      ).toBeGreaterThan(0);
+      expect(
+        curveStoreModule.sceneCurve24hStore.getState().sceneLoading.Home,
+      ).toBe(false);
+    },
+  );
+
+  it('still forces a manual refresh while expanded', async () => {
+    curveCache.setCurveCache('0xabc', {
+      data: [{ timestamp: 1, usd_value: 2 }],
+      updateTime: Date.now(),
+    });
+    curveStoreModule.sceneCurve24hStore.setHomeCurveExpanded(true);
+
+    await multiCurveModule.refreshDayCurve({ force: true });
+
+    expect(mockGetNetCurve).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the latest selection when opened after a folded selection change', async () => {
+    mockSelectedAddresses = ['0xdef'];
+    await multiCurveModule.refreshDayCurve({
+      addresses: mockSelectedAddresses,
+      reason: 'selection_changed',
+    });
+    expect(mockGetNetCurve).not.toHaveBeenCalled();
+
+    curveStoreModule.sceneCurve24hStore.setHomeCurveExpanded(true);
+    await multiCurveModule.refreshDayCurve();
+
+    expect(mockGetNetCurve).toHaveBeenCalledTimes(1);
+    expect(mockGetNetCurve).toHaveBeenCalledWith('0xdef', 1);
+    expect(
+      curveStoreModule.sceneCurve24hStore.getState().addresses.Home,
+    ).toEqual(['0xdef']);
+  });
+
+  it('does not let a folded no-op swallow an immediate open, and deduplicates open refreshes', async () => {
+    const skipped = multiCurveModule.refreshDayCurve();
+    curveStoreModule.sceneCurve24hStore.setHomeCurveExpanded(true);
+
+    await Promise.all([
+      skipped,
+      multiCurveModule.refreshDayCurve(),
+      multiCurveModule.refreshDayCurve(),
+    ]);
+
+    expect(mockGetNetCurve).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows an in-flight curve to finish and cache after folding', async () => {
+    const data = [{ timestamp: 1, usd_value: 20 }];
+    let resolveRequest!: (value: typeof data) => void;
+    mockGetNetCurve.mockReturnValueOnce(
+      new Promise(resolve => {
+        resolveRequest = resolve;
+      }),
+    );
+    curveStoreModule.sceneCurve24hStore.setHomeCurveExpanded(true);
+    const refresh = multiCurveModule.refreshDayCurve();
+    expect(mockGetNetCurve).toHaveBeenCalledTimes(1);
+
+    curveStoreModule.sceneCurve24hStore.setHomeCurveExpanded(false);
+    await multiCurveModule.refreshDayCurve({ force: true });
+    resolveRequest(data);
+    await refresh;
+
+    expect(curveCache.getCurveCache('0xabc')?.data).toEqual(data);
+    expect(
+      curveStoreModule.sceneCurve24hStore.getState().sceneLoading.Home,
+    ).toBe(false);
+    curveStoreModule.sceneCurve24hStore.setHomeCurveExpanded(true);
+    await multiCurveModule.refreshDayCurve();
+    expect(mockGetNetCurve).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not gate single-address curve requests on the Home fold state', async () => {
+    await curveStoreModule.addressCurve24hStore.warmupAddressCurve('0xabc');
+
     expect(mockGetNetCurve).toHaveBeenCalledWith('0xabc', 1);
   });
 });

@@ -2093,7 +2093,6 @@
       "dataAnalysis": "Rabby verbessern helfen",
       "dataAnalysisDesc": "Teilen Sie anonyme Nutzungsdaten, um Rabby zu verbessern. Die erfassten Daten werden weder mit Ihnen noch mit Ihrem Konto verknüpft.",
       "bugReportChat": "Feedback per Chat teilen",
-      "features": "Funktionen",
       "manageWallets": "Wallets verwalten"
     },
     "settings": {
@@ -3707,7 +3706,7 @@
       "title": "Kleinstbeträge umwandeln"
     },
     "walletConnect": {
-      "screenTitle": "Wallet verbinden",
+      "screenTitle": "Zum Verbinden scannen",
       "connectingToRabby": "Verbindung zu Rabby wird hergestellt",
       "pairingFailed": "WalletConnect-Kopplung fehlgeschlagen.",
       "proposalNotReceived": "Der WalletConnect-QR-Code ist möglicherweise abgelaufen. Bitte aktualisiere ihn und versuche es erneut.",

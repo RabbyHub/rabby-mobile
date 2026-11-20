@@ -494,14 +494,31 @@ export const apisHomeTabIndex = {
   isHomeAtFirstTab() {
     return tabIndexSvs.svIndexDecimal.value === 0;
   },
-  setTabIndex(val: number, processJump = false) {
+  /**
+   * Command a tab change. The pager owns the visible index: `svIndexDecimal`
+   * must only be written by the pager's own UI-thread index callback, because a
+   * JS write that lands one frame late is exactly what makes the highlight
+   * flash back to the previous tab right after a settle.
+   */
+  setTabIndex(val: number, _processJump = false) {
     'worklet';
-    if (processJump) {
-      homeTabScrollerRef.current?.setIndex(val);
-    } else {
-      tabIndexSvs.svIndexDecimal.value = val;
-      tabIndexSvs.current = val;
-      runOnJS(() => tabIndexStore.setState({ tabIndex: val }))();
+    tabIndexSvs.current = val;
+    runOnJS(() => {
+      if (tabIndexStore.getState().tabIndex !== val) {
+        tabIndexStore.setState({ tabIndex: val });
+      }
+    })();
+    homeTabScrollerRef.current?.setIndex(val);
+  },
+  /**
+   * Report a page the pager already settled on. This must never command the
+   * pager: calling `setIndex` from the pager's own commit callback re-enters the
+   * gesture and can overwrite an in-flight settle.
+   */
+  publishSettledIndex(val: number) {
+    tabIndexSvs.current = val;
+    if (tabIndexStore.getState().tabIndex !== val) {
+      tabIndexStore.setState({ tabIndex: val });
     }
   },
 };

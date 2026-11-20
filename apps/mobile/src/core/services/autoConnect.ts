@@ -76,7 +76,7 @@ export class AutoConnectService {
         return;
       }
       const site = this.dappService.getDapp(origin);
-      if (site?.isConnected) {
+      if (site?.isConnected !== undefined) {
         return;
       }
 
@@ -134,7 +134,7 @@ export class AutoConnectService {
         return;
       }
       const site = this.dappService.getDapp(origin);
-      if (site?.isConnected) {
+      if (site?.isConnected !== undefined) {
         return;
       }
 

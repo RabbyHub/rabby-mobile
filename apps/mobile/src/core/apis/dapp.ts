@@ -27,6 +27,7 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { sortAccountList } from '@/utils/sortAccountList';
 import { findChain } from '@/utils/chain';
 import { createDappBySession } from '@/core/utils/createDappBySession';
+import { ethErrors } from 'eth-rpc-errors';
 
 export { createDappBySession };
 
@@ -54,16 +55,21 @@ export const connect = async ({
   info,
   chainId,
   currentAccount,
+  isAutoConnect = false,
 }: {
   origin: string;
   chainId: CHAINS_ENUM;
   session?: SessionProp;
   info?: BasicDappInfo;
   currentAccount?: DappInfo['currentAccount'];
+  isAutoConnect?: boolean;
 }) => {
   await ensureDappServiceReady();
-  const dapp = getDappSnapshot(origin);
   const allAccounts = await getAllAccountsToDisplay();
+  const dapp = getDappSnapshot(origin);
+  if (isAutoConnect && dapp?.isConnected === false) {
+    throw ethErrors.provider.unauthorized();
+  }
   const pinAddresses = getPinnedAddressSnapshot();
   const accounts = sortAccountList(allAccounts, {
     highlightedAddresses: pinAddresses,

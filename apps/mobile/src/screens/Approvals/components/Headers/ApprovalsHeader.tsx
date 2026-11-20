@@ -6,6 +6,7 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { HeaderBackButton } from '@/hooks/navigation';
 import { Text } from '@/components/Typography';
 import { ellipsisAddress } from '@/utils/address';
@@ -151,9 +152,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   titleText: {
     color: colors2024['neutral-title-1'],
-    fontWeight: '900',
+    ...RoundedFontStyles.heavy,
     fontSize: 20,
-    fontFamily: 'SF Pro Rounded',
     lineHeight: 24,
     textAlign: 'center',
     flexShrink: 1,

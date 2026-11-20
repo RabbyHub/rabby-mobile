@@ -125,6 +125,8 @@ function ReceiveScreen(): JSX.Element {
         )}
         <CustomTouchableOpacity
           as="RNGHTouchableOpacity"
+          style={styles.eyeButton}
+          hitSlop={{ left: 14, right: 14 }}
           onPress={() => setShowName(e => !e)}>
           {showName ? (
             <RcIconEyeCC
@@ -146,6 +148,7 @@ function ReceiveScreen(): JSX.Element {
       styles.headerTitle,
       styles.walletIcon,
       styles.titleText,
+      styles.eyeButton,
       showName,
       account?.type,
       account?.address,
@@ -435,6 +438,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 24,
     height: 24,
     borderRadius: 7,
+  },
+  // Inline-header button target: fill the header row vertically, comfortable
+  // width. The 16pt eye hugs the title text (left-aligned) and the extra width
+  // becomes a ~44x56 tap area on its right, so no negative-margin compensation
+  // is needed.
+  eyeButton: {
+    // Keep the layout width at the 16pt glyph so the centred title row is not
+    // pushed left (QA 1424); the extra ~44x44 tap area comes from hitSlop on
+    // the touchable instead of a wider layout box. Height matches the native
+    // stack bar content (44pt) so the row does not overflow vertically (QA 1423).
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 }));
 

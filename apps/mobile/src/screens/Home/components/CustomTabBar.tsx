@@ -1,5 +1,6 @@
 import {
   Dimensions,
+  PixelRatio,
   useWindowDimensions,
   View,
   Pressable,
@@ -9,6 +10,7 @@ import { MaterialTabBar } from 'react-native-collapsible-tab-view';
 
 import React, { useCallback, useRef } from 'react';
 import Animated, {
+  clamp,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -423,34 +425,37 @@ const AssetsTabLabels = [
   TabbarLabels[HomeTabName.nft],
 ];
 
+// Snap the strip to whole device pixels: a sub-pixel translate makes the whole
+// row shimmer while it rides in.
+const STRIP_PIXEL = PixelRatio.get();
+
 function AssetsTabBar() {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const indexDecimal = apisHomeTabIndex.svTabIndexDecimal;
+  const { width: winWidth } = useWindowDimensions();
 
+  // The strip belongs to the assets pages: it rides in from the right at the
+  // same rate as the pages, so the tab row and the list below look like one
+  // sheet instead of the labels fading in over the overview.
   const stylez = useAnimatedStyle(() => {
+    const progress = clamp(indexDecimal.value, 0, 1);
     return {
-      opacity: interpolate(
-        indexDecimal.value,
-        [0, 0.9, 0.99, 1],
-        [0, 0.1, 0.5, 1],
-        Extrapolation.CLAMP,
-      ),
-      translateY: interpolate(
-        indexDecimal.value,
-        [0, 0.5, 1],
-        [
-          -HOME_TOP_HEADER_SIZES.tabItemLineHeight,
-          -HOME_TOP_HEADER_SIZES.tabItemLineHeight / 2,
-          0,
-        ],
-        Extrapolation.CLAMP,
-      ),
+      transform: [
+        {
+          translateX:
+            Math.round((1 - progress) * winWidth * STRIP_PIXEL) / STRIP_PIXEL,
+        },
+      ],
+      // Soften the leading edge: the row rides in slightly translucent and is
+      // fully opaque after the first stretch of the swipe.
+      opacity: interpolate(progress, [0, 0.15], [0.7, 1], Extrapolation.CLAMP),
     };
-  });
+  }, [winWidth]);
 
   const tabbarContainerStyle = useAnimatedStyle(() => {
+    const progress = clamp(indexDecimal.value, 0, 1);
     return {
-      pointerEvents: indexDecimal.value < 1 ? 'none' : 'auto',
+      pointerEvents: progress > 0.99 ? 'auto' : 'none',
     };
   });
 

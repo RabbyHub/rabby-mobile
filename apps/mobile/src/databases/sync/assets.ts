@@ -137,7 +137,7 @@ function scheduleBalanceSyncFlush() {
 
   pendingBalanceFlushTimer = setTimeout(() => {
     pendingBalanceFlushTimer = null;
-    void flushPendingBalanceSyncs();
+    flushPendingBalanceSyncs();
   }, BALANCE_SYNC_FLUSH_DELAY_MS);
 }
 
@@ -292,7 +292,7 @@ function scheduleTokenSyncFlush() {
 
   pendingTokenFlushTimer = setTimeout(() => {
     pendingTokenFlushTimer = null;
-    void flushPendingTokenSyncs();
+    flushPendingTokenSyncs();
   }, TOKEN_SYNC_FLUSH_DELAY_MS);
 }
 
@@ -330,16 +330,20 @@ async function persistPendingTokenSyncs(
     const entityBuildStartedAt = Date.now();
     let rawCount = 0;
 
-    pendingEntries.forEach(([address, item]) => {
+    for (const [address, item] of pendingEntries) {
+      // A single-chain snapshot must keep the full-address cache's expiry.
+      const updatedAt = item.cleanupStale
+        ? syncTimestamp
+        : await TokenItemEntity.getOldestUpdatedAt(address);
       const { tokens, tokenItems } = buildTokenEntities(
         address,
         item.tokens,
-        syncTimestamp,
+        updatedAt,
       );
       rawCount += tokens.length;
       tokenItemsByAddress.set(address, tokenItems);
       allTokenItems.push(...tokenItems);
-    });
+    }
 
     traceEntityBuild(
       'token',

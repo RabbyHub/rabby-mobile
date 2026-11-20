@@ -2,7 +2,9 @@ import React, { useMemo } from 'react';
 import {
   ColorSchemeName,
   Appearance,
+  Dimensions,
   useColorScheme,
+  useWindowDimensions,
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,6 +32,7 @@ import { useCreationWithShallowCompare } from './common/useMemozied';
 import { isWorkletFunction, useAnimatedStyle } from 'react-native-reanimated';
 import { svsLayout } from './useAppLayout';
 import { applyAppAppearanceWhenReady } from '@/core/utils/appAppearanceHandoff';
+import { getAppLanguage, useAppLanguage } from './lang';
 
 export const SHOULD_SUPPORT_DARK_MODE = true;
 
@@ -289,6 +292,13 @@ export function useTheme2024<
 >(opts?: { getStyle?: T; isLight?: boolean }) {
   const appThemeMode = useGetBinaryMode();
   const { safeAreaInsets } = useStyleSafeAreaInsets();
+  /**
+   * Layout and language are passed into style factories so they stay reactive:
+   * a fold, a rotation or a language switch must rebuild the styles. Reading
+   * them inside a factory would only capture the value at call time.
+   */
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const { currentLanguage: language } = useAppLanguage();
   const { getStyle: makeStyles = DefaultMakeStyles2024 } = opts || {};
   const getStyles = useMemoizedFn(
     makeStyles.getStyles || DefaultMakeStyles2024.getStyles,
@@ -312,9 +322,21 @@ export function useTheme2024<
         classicalColors,
         isLight,
         safeAreaInsets,
+        windowWidth,
+        windowHeight,
+        language,
       }) as T extends void ? void : ReturnType<T['getStyles']>,
     };
-  }, [colors2024, classicalColors, getStyles, isLight, safeAreaInsets]);
+  }, [
+    colors2024,
+    classicalColors,
+    getStyles,
+    isLight,
+    safeAreaInsets,
+    windowHeight,
+    language,
+    windowWidth,
+  ]);
 
   const reanimatedStyles = React.useMemo(() => {
     type Fns = T['getReanimatedStyles'] & object;
@@ -348,6 +370,9 @@ export function useTheme2024<
     colors2024,
     appThemeMode,
     isLight,
+    windowWidth,
+    windowHeight,
+    language,
   };
 }
 
@@ -356,6 +381,8 @@ export function getTheme2024<
 >(opts?: { getStyle?: T; isLight?: boolean }) {
   const appThemeMode = getBinaryMode();
   const safeAreaInsets = svsLayout.insets.value;
+  const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
+  const language = getAppLanguage();
   const { getStyle: makeStyles = DefaultMakeStyles2024 } = opts || {};
   const getStyles = makeStyles.getStyles || DefaultMakeStyles2024.getStyles;
 
@@ -373,6 +400,9 @@ export function getTheme2024<
     classicalColors,
     isLight,
     safeAreaInsets,
+    windowWidth,
+    windowHeight,
+    language,
   }) as T extends void ? void : ReturnType<T['getStyles']>;
 
   return {
@@ -382,5 +412,8 @@ export function getTheme2024<
     colors2024,
     appThemeMode,
     isLight,
+    windowWidth,
+    windowHeight,
+    language,
   };
 }
