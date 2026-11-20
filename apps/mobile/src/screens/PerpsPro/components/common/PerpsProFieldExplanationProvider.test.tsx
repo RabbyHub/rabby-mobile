@@ -49,4 +49,27 @@ describe('PerpsProFieldExplanationProvider', () => {
     fireEvent.press(screen.getByTestId('dismiss-explanation'));
     expect(screen.queryByTestId('field-explanation-sheet')).toBeNull();
   });
+
+  it('drops an open explanation without unmounting its retained children', () => {
+    const view = render(
+      <PerpsProFieldExplanationProvider>
+        <Trigger />
+      </PerpsProFieldExplanationProvider>,
+    );
+    fireEvent.press(view.getByTestId('open-explanation'));
+    expect(view.getByTestId('field-explanation-sheet')).toBeTruthy();
+    view.rerender(
+      <PerpsProFieldExplanationProvider sceneActive={false}>
+        <Trigger />
+      </PerpsProFieldExplanationProvider>,
+    );
+    expect(view.getByTestId('open-explanation')).toBeTruthy();
+    expect(view.queryByTestId('field-explanation-sheet')).toBeNull();
+    view.rerender(
+      <PerpsProFieldExplanationProvider>
+        <Trigger />
+      </PerpsProFieldExplanationProvider>,
+    );
+    expect(view.queryByTestId('field-explanation-sheet')).toBeNull();
+  });
 });

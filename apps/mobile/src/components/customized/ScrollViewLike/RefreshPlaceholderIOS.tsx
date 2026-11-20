@@ -31,6 +31,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Gesture } from 'react-native-gesture-handler';
 import { triggerImpact } from '@/utils/common';
 import { useMemoizedFn } from 'ahooks';
+import { usePullRefreshProbe } from '@/devtools/pullRefreshProbe/usePullRefreshProbe';
+import type { PullRefreshProbeScope } from '@/devtools/pullRefreshProbe/controller.prod';
 
 export const pulldownRefreshSizes = {
   homeHeaderHeight: Math.min(HOME_TOP_HEADER_SIZES.scrollableListTopOffset, 56),
@@ -101,17 +103,37 @@ export const usePulldownRefreshGesture = <
 >({
   scrollViewYValue,
   onJsPulldownRefresh: prop_onJsPulldownRefresh,
+  probeScope,
+  probeLoading,
 }: {
   scrollViewYValue: SharedValue<number>;
   onJsPulldownRefresh?: OnRefreshOnJs;
+  probeScope?: PullRefreshProbeScope;
+  probeLoading?: boolean;
 }) => {
   const { pullDistance, svIsRefreshing, svIsManualRefreshing } =
     useIOSPulldownRefreshStates();
+  const {
+    mark: markProbe,
+    markFromJS: markProbeFromJS,
+    listTestID: probeListTestID,
+  } = usePullRefreshProbe({
+    scope: probeScope,
+    loading: probeLoading,
+    maxPlaceholderHeight:
+      scrHeight * 0.5 - HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset,
+    pullDistance,
+    scrollViewYValue,
+    svIsRefreshing,
+    svIsManualRefreshing,
+  });
 
   const onJsPulldownRefresh = useMemoizedFn(async () => {
+    markProbeFromJS('request-start');
     try {
       await prop_onJsPulldownRefresh?.({ svIsManualRefreshing });
     } finally {
+      markProbeFromJS('request-finish');
       // Completing the gesture's request must not depend on a consumer
       // observing a separate loading-state transition.
       setPulldownRefreshStage({
@@ -137,6 +159,7 @@ export const usePulldownRefreshGesture = <
       .maxPointers(1)
       .onStart(event => {
         startValues.value.startedAtTop = scrollViewYValue.value <= 5;
+        markProbe('gesture-start');
       })
       .onUpdate(event => {
         pullRefresh: {
@@ -155,6 +178,7 @@ export const usePulldownRefreshGesture = <
         }
       })
       .onEnd((_event, success) => {
+        markProbe('gesture-end', success);
         // An ACTIVE gesture cancelled by navigation or another handler still
         // reaches onEnd. Only a completed pull should start a refresh.
         if (!success) return;
@@ -191,6 +215,7 @@ export const usePulldownRefreshGesture = <
         }
       })
       .onFinalize(() => {
+        markProbe('gesture-finalize');
         // Reset failed/cancelled pulls, including those that never activated,
         // without interrupting an already pending refresh.
         if (!svIsRefreshing.value) {
@@ -211,6 +236,7 @@ export const usePulldownRefreshGesture = <
 
   return {
     panGestureRef,
+    probeListTestID,
     isManualRefreshing: isManualRefreshing,
     isRefreshing: !!isRefreshingOrig,
     svs: {

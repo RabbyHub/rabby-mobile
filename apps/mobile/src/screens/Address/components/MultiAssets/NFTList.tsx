@@ -492,10 +492,13 @@ const NFTListInner = () => {
   const scrollY = useCurrentTabScrollY();
   const {
     panGestureRef,
+    probeListTestID,
     isRefreshing,
     svs: { pullDistance, svIsRefreshing, svIsManualRefreshing },
   } = usePulldownRefreshGesture({
     scrollViewYValue: scrollY,
+    probeScope: 'home-nft-list',
+    probeLoading: isLoading,
     onJsPulldownRefresh: ctx => {
       ctx.svIsManualRefreshing.value = true;
       return onRefresh();
@@ -530,6 +533,7 @@ const NFTListInner = () => {
   return (
     <GestureDetector gesture={panGestureRef.current}>
       <TabsFlatList
+        testID={probeListTestID}
         keyExtractor={getNftListItemId}
         data={
           hasNotAssets

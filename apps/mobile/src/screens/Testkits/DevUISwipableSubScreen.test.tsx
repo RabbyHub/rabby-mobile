@@ -1,0 +1,844 @@
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react-native';
+import React from 'react';
+import { FlatList, type ListRenderItem, StyleSheet, View } from 'react-native';
+
+const mockGesture = { handlers: {} as Record<string, jest.Mock> };
+const mockAnimations: Array<{
+  target: number;
+  complete?: (finished?: boolean) => void;
+}> = [];
+const mockJSQueue: Array<() => unknown> = [];
+let mockDeferJS = false;
+
+jest.mock('react-native-gesture-handler', () => {
+  return {
+    Pressable: require('react-native').Pressable,
+    Text: require('react-native').Text,
+    TextInput: require('react-native').TextInput,
+    Gesture: {
+      Pan: () => {
+        const handlers: Record<string, jest.Mock> = {};
+        const builder: Record<string, unknown> = { handlers };
+        for (const method of [
+          'activeOffsetX',
+          'failOffsetY',
+          'maxPointers',
+          'withTestId',
+        ]) {
+          builder[method] = () => builder;
+        }
+        for (const method of [
+          'onBegin',
+          'onEnd',
+          'onFinalize',
+          'onStart',
+          'onTouchesDown',
+          'onUpdate',
+        ]) {
+          builder[method] = (callback: (...args: unknown[]) => unknown) => {
+            handlers[method] = jest.fn(callback);
+            return builder;
+          };
+        }
+        return builder;
+      },
+    },
+    GestureDetector: ({
+      children,
+      gesture,
+    }: {
+      children: React.ReactNode;
+      gesture: typeof mockGesture;
+    }) => {
+      mockGesture.handlers = gesture.handlers;
+      return children;
+    },
+  };
+});
+
+jest.mock('react-native-animateable-text', () => require('react-native').Text);
+jest.mock('@rneui/base', () => ({ Text: require('react-native').Text }));
+
+jest.mock('react-native-reanimated', () => {
+  const ReactModule = require('react') as typeof React;
+  const ReactNative = require('react-native');
+  return {
+    __esModule: true,
+    default: {
+      createAnimatedComponent: (component: unknown) => component,
+      ScrollView: ReactNative.ScrollView,
+      Text: ReactNative.Text,
+      View: ReactNative.View,
+    },
+    cancelAnimation: jest.fn(),
+    runOnJS:
+      (callback: (...args: unknown[]) => unknown) =>
+      (...args: unknown[]) => {
+        if (mockDeferJS) {
+          mockJSQueue.push(() => callback(...args));
+        } else {
+          callback(...args);
+        }
+      },
+    runOnUI: (callback: (...args: unknown[]) => unknown) => callback,
+    scrollTo: jest.fn(),
+    useAnimatedReaction: () => undefined,
+    useAnimatedRef: () =>
+      ReactModule.useMemo(() => {
+        const ref = (component?: unknown) => {
+          ref.current = component ?? null;
+        };
+        ref.current = null as unknown;
+        return ref;
+      }, []),
+    useAnimatedScrollHandler: () => jest.fn(),
+    useAnimatedStyle: (factory: () => object) => factory(),
+    useDerivedValue: (factory: () => unknown) => {
+      const derived = ReactModule.useRef({ value: factory() }).current;
+      derived.value = factory();
+      return derived;
+    },
+    useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
+    withDecay: (config: { velocity: number }) => config.velocity,
+    withTiming: (
+      target: number,
+      _config: unknown,
+      complete?: (finished?: boolean) => void,
+    ) => {
+      mockAnimations.push({ target, complete });
+      return target;
+    },
+  };
+});
+
+import {
+  CollapsibleSceneProvider,
+  ScenePagerList,
+  type ScenePagerListProps,
+  useCollapsibleSceneController,
+} from '@rabby-wallet/rn-collapsible-scene-view';
+import DevUISwipableSubScreen from './DevUISwipableSubScreen';
+
+const keys = ['a', 'b', 'c'];
+const fixtureRows = Object.fromEntries(
+  keys.map(key => [
+    key,
+    Array.from({ length: 15 }, (_, index) => ({ key: `${key}-${index}` })),
+  ]),
+);
+const fixtureHeader = (
+  <View style={{ height: 100 }} testID="fixture-header">
+    <View testID="fixture-trade" />
+  </View>
+);
+const renderFixtureRow: ListRenderItem<{ key: string }> = ({ item }) => (
+  <View testID={`fixture-row-${item.key}`} />
+);
+const fixtureKeyExtractor = (item: { key: string }) => item.key;
+const ControlledPager = ({
+  activeKey = 'b',
+  dataByKey = fixtureRows,
+  listHeader = fixtureHeader,
+  onIndexChange,
+  renderItem = renderFixtureRow,
+  renderItemByKey,
+  previewGeometryByKey,
+  scrollOffset = 0,
+}: {
+  activeKey?: string;
+  dataByKey?: ScenePagerListProps<{ key: string }>['dataByKey'];
+  listHeader?: React.ComponentType | React.ReactElement;
+  onIndexChange: (key: string) => void;
+  renderItem?: ListRenderItem<{ key: string }>;
+  renderItemByKey?: ScenePagerListProps<{ key: string }>['renderItemByKey'];
+  previewGeometryByKey?: ScenePagerListProps<{
+    key: string;
+  }>['previewGeometryByKey'];
+  scrollOffset?: number;
+}) => {
+  const controller = useCollapsibleSceneController();
+  controller.scrollY.value = scrollOffset;
+  return (
+    <CollapsibleSceneProvider
+      activeTab={activeKey}
+      controller={controller}
+      headerHeight={0}
+      syncOffsetOnActivate={false}
+      tabs={keys}>
+      <ScenePagerList
+        ListHeaderComponent={listHeader}
+        contentInsetTop={0}
+        dataByKey={dataByKey}
+        previewGeometryByKey={previewGeometryByKey}
+        keys={keys}
+        keyExtractor={fixtureKeyExtractor}
+        onIndexChange={onIndexChange}
+        renderItem={renderItem}
+        renderItemByKey={renderItemByKey}
+        rowStartOffset={100}
+        scrollOffset={controller.scrollY}
+        tabKey={activeKey}
+        testID="fixture-list"
+      />
+    </CollapsibleSceneProvider>
+  );
+};
+
+const layoutPager = (testID = 'fixture-list-pager', width = 400) => {
+  fireEvent(screen.getByTestId(testID), 'layout', {
+    nativeEvent: { layout: { height: 800, width, x: 0, y: 0 } },
+  });
+};
+const beginDrag = () =>
+  act(() => {
+    mockGesture.handlers.onBegin();
+    mockGesture.handlers.onStart();
+  });
+const moveDrag = (translationX: number) =>
+  act(() => mockGesture.handlers.onUpdate({ translationX, velocityX: 0 }));
+const releaseDrag = (translationX: number, success = true, velocityX = 0) =>
+  act(() => {
+    mockGesture.handlers.onEnd({ translationX, velocityX }, success);
+    mockGesture.handlers.onFinalize();
+  });
+const completeAnimation = (finished = true) => {
+  const animation = mockAnimations.shift();
+  expect(animation).toBeDefined();
+  act(() => animation?.complete?.(finished));
+};
+const flushJSQueue = () =>
+  act(() => {
+    while (mockJSQueue.length) {
+      mockJSQueue.shift()?.();
+    }
+  });
+const preview = () =>
+  screen.getByTestId('scene-pager-preview', { includeHiddenElements: true });
+const queryPreview = () =>
+  screen.queryByTestId('scene-pager-preview', { includeHiddenElements: true });
+
+beforeEach(() => {
+  mockAnimations.length = 0;
+  mockJSQueue.length = 0;
+  mockDeferJS = false;
+  mockGesture.handlers = {};
+  jest.clearAllMocks();
+});
+
+describe('Swipable SubScreen harness', () => {
+  it('swaps data without recreating the single native list when a tab is pressed', () => {
+    render(<DevUISwipableSubScreen />);
+    const list = screen.UNSAFE_getByType(FlatList);
+
+    expect(screen.getByTestId('dev-perps-pager-row-a-0')).toBeTruthy();
+    expect(screen.getByTestId('dev-perps-pager-active')).toHaveTextContent(
+      'active=a rows=40',
+    );
+
+    fireEvent.press(screen.getByTestId('dev-perps-pager-tab-b'));
+
+    expect(screen.getByTestId('dev-perps-pager-row-b-0')).toBeTruthy();
+    expect(screen.queryByTestId('dev-perps-pager-row-a-0')).toBeNull();
+    expect(screen.getByTestId('dev-perps-pager-active')).toHaveTextContent(
+      'active=b rows=24',
+    );
+    expect(screen.UNSAFE_getAllByType(FlatList)).toEqual([list]);
+    expect(list.props.data.map((row: { key: string }) => row.key)).toEqual(
+      Array.from({ length: 24 }, (_, index) => `b-${index}`),
+    );
+  });
+
+  it('invalidates a queued settled commit after an external Tab press', () => {
+    render(<DevUISwipableSubScreen />);
+    const list = screen.UNSAFE_getByType(FlatList);
+    layoutPager('dev-perps-pager-scroll-pager');
+    beginDrag();
+    moveDrag(-140);
+    releaseDrag(-140);
+    mockDeferJS = true;
+    completeAnimation();
+    expect(mockJSQueue).toHaveLength(1);
+
+    fireEvent.press(screen.getByTestId('dev-perps-pager-tab-c'));
+    flushJSQueue();
+
+    expect(screen.getByTestId('dev-perps-pager-active')).toHaveTextContent(
+      'active=c rows=5',
+    );
+    expect(screen.UNSAFE_getByType(FlatList)).toBe(list);
+    expect(queryPreview()).toBeNull();
+  });
+});
+
+describe('ScenePagerList native-boundary component contracts', () => {
+  it.each(['component', 'element'])(
+    'isolates inactive data and renderer changes from active rows and the %s header',
+    headerKind => {
+      const Header = jest.fn(() => fixtureHeader);
+      const activeRenderer = jest.fn(renderFixtureRow);
+      const inactiveRenderer = jest.fn(renderFixtureRow);
+      const props = {
+        listHeader: headerKind === 'component' ? Header : <Header />,
+        onIndexChange: jest.fn(),
+      };
+      const view = render(
+        <ControlledPager
+          {...props}
+          renderItemByKey={{ a: inactiveRenderer, b: activeRenderer }}
+        />,
+      );
+      layoutPager();
+      const list = screen.UNSAFE_getByType(FlatList);
+      const listProps = list.props;
+      const headerRenders = Header.mock.calls.length;
+      const activeRenders = activeRenderer.mock.calls.length;
+      expect(activeRenders).toBeGreaterThan(0);
+
+      view.rerender(
+        <ControlledPager
+          {...props}
+          dataByKey={{
+            ...fixtureRows,
+            a: [{ key: 'a-new' }],
+          }}
+          renderItem={jest.fn(renderFixtureRow)}
+          renderItemByKey={{ a: jest.fn(renderFixtureRow), b: activeRenderer }}
+        />,
+      );
+
+      expect(activeRenderer).toHaveBeenCalledTimes(activeRenders);
+      expect(inactiveRenderer).not.toHaveBeenCalled();
+      expect(Header).toHaveBeenCalledTimes(headerRenders);
+      expect(screen.UNSAFE_getAllByType(FlatList)).toEqual([list]);
+      expect(list.props).toBe(listProps);
+      expect(list.props.data).toBe(fixtureRows.b);
+      expect(queryPreview()).toBeNull();
+    },
+  );
+
+  it('publishes current neighbour rows, renderer and measured geometry only to an open preview', () => {
+    const Header = jest.fn(() => fixtureHeader);
+    const activeRenderer = jest.fn(renderFixtureRow);
+    const initialPreviewRenderer = jest.fn(renderFixtureRow);
+    const nextPreviewRenderer = jest.fn(
+      ({ item }: { item: { key: string } }) => (
+        <View testID={`updated-${item.key}`} />
+      ),
+    );
+    const props = {
+      listHeader: Header,
+      onIndexChange: jest.fn(),
+      scrollOffset: 300,
+    };
+    const view = render(
+      <ControlledPager
+        {...props}
+        previewGeometryByKey={{ a: { rowHeights: Array(15).fill(100) } }}
+        renderItemByKey={{ a: initialPreviewRenderer, b: activeRenderer }}
+      />,
+    );
+    layoutPager();
+    const list = screen.UNSAFE_getByType(FlatList);
+    fireEvent(list, 'layout', {
+      nativeEvent: { layout: { height: 200, width: 400, x: 0, y: 0 } },
+    });
+    const listProps = list.props;
+    const headerRenders = Header.mock.calls.length;
+    const activeRenders = activeRenderer.mock.calls.length;
+    beginDrag();
+    moveDrag(80);
+    expect(
+      within(preview()).getByTestId('fixture-row-a-2', {
+        includeHiddenElements: true,
+      }),
+    ).toBeTruthy();
+    const nextRows = Array.from({ length: 12 }, (_, index) => ({
+      key: `next-a-${index}`,
+    }));
+    view.rerender(
+      <ControlledPager
+        {...props}
+        dataByKey={{ ...fixtureRows, a: nextRows }}
+        previewGeometryByKey={{ a: { rowHeights: Array(12).fill(60) } }}
+        renderItemByKey={{ a: nextPreviewRenderer, b: activeRenderer }}
+      />,
+    );
+
+    expect(
+      within(preview())
+        .getAllByTestId(/^updated-next-a-/, { includeHiddenElements: true })
+        .map(row => row.props.testID),
+    ).toEqual([
+      'updated-next-a-3',
+      'updated-next-a-4',
+      'updated-next-a-5',
+      'updated-next-a-6',
+    ]);
+    expect(StyleSheet.flatten(preview().props.style).marginTop).toBe(180);
+    expect(activeRenderer).toHaveBeenCalledTimes(activeRenders);
+    expect(Header).toHaveBeenCalledTimes(headerRenders);
+    expect(screen.UNSAFE_getAllByType(FlatList)).toEqual([list]);
+    expect(list.props).toBe(listProps);
+    expect(list.props.data).toBe(fixtureRows.b);
+  });
+
+  it('commits current data and the selected renderer without remounting the list', () => {
+    const activeRenderer = jest.fn(renderFixtureRow);
+    const nextRenderer = jest.fn(({ item }: { item: { key: string } }) => (
+      <View testID={`selected-${item.key}`} />
+    ));
+    const onIndexChange = jest.fn();
+    const SynchronousOwner = ({
+      dataByKey,
+      renderItemByKey,
+    }: Pick<
+      ScenePagerListProps<{ key: string }>,
+      'dataByKey' | 'renderItemByKey'
+    >) => {
+      const [activeKey, setActiveKey] = React.useState('b');
+      return (
+        <ControlledPager
+          activeKey={activeKey}
+          dataByKey={dataByKey}
+          renderItemByKey={renderItemByKey}
+          onIndexChange={key => {
+            onIndexChange(key);
+            setActiveKey(key);
+          }}
+        />
+      );
+    };
+    const view = render(
+      <SynchronousOwner
+        dataByKey={fixtureRows}
+        renderItemByKey={{ b: activeRenderer }}
+      />,
+    );
+    const list = screen.UNSAFE_getByType(FlatList);
+    layoutPager();
+    beginDrag();
+    moveDrag(140);
+    expect(
+      within(preview()).getByTestId('fixture-row-a-0', {
+        includeHiddenElements: true,
+      }),
+    ).toBeTruthy();
+    releaseDrag(140);
+    const nextRows = [{ key: 'new-a-0' }, { key: 'new-a-1' }];
+    view.rerender(
+      <SynchronousOwner
+        dataByKey={{ ...fixtureRows, a: nextRows }}
+        renderItemByKey={{ a: nextRenderer, b: activeRenderer }}
+      />,
+    );
+    expect(list.props.data).toBe(fixtureRows.b);
+    expect(onIndexChange).not.toHaveBeenCalled();
+    expect(
+      within(preview()).getByTestId('selected-new-a-0', {
+        includeHiddenElements: true,
+      }),
+    ).toBeTruthy();
+    completeAnimation();
+
+    expect(onIndexChange).toHaveBeenCalledWith('a');
+    expect(queryPreview()).toBeNull();
+    expect(screen.getByTestId('selected-new-a-0')).toBeTruthy();
+    expect(screen.getByTestId('selected-new-a-1')).toBeTruthy();
+    expect(screen.UNSAFE_getAllByType(FlatList)).toEqual([list]);
+    expect(list.props.data).toBe(nextRows);
+  });
+
+  it('uses the default renderer for unmapped active and preview keys', () => {
+    const defaultRenderer = jest.fn(renderFixtureRow);
+    const overrideRenderer = jest.fn(({ item }: { item: { key: string } }) => (
+      <View testID={`override-${item.key}`} />
+    ));
+    render(
+      <ControlledPager
+        onIndexChange={jest.fn()}
+        renderItem={defaultRenderer}
+        renderItemByKey={{ a: overrideRenderer }}
+      />,
+    );
+    layoutPager();
+    expect(screen.getByTestId('fixture-row-b-0')).toBeTruthy();
+    expect(defaultRenderer).toHaveBeenCalled();
+    expect(overrideRenderer).not.toHaveBeenCalled();
+    defaultRenderer.mockClear();
+    beginDrag();
+    moveDrag(80);
+    expect(
+      within(preview()).getByTestId('override-a-0', {
+        includeHiddenElements: true,
+      }),
+    ).toBeTruthy();
+    expect(defaultRenderer).not.toHaveBeenCalled();
+    overrideRenderer.mockClear();
+    moveDrag(-80);
+    expect(
+      within(preview()).getByTestId('fixture-row-c-0', {
+        includeHiddenElements: true,
+      }),
+    ).toBeTruthy();
+    expect(defaultRenderer.mock.calls.map(([{ item }]) => item.key)).toEqual(
+      Array.from({ length: 10 }, (_, index) => `c-${index}`),
+    );
+    expect(overrideRenderer).not.toHaveBeenCalled();
+  });
+
+  it('previews the measured deep window without recreating the list or moving its header', () => {
+    render(
+      <ControlledPager
+        onIndexChange={jest.fn()}
+        scrollOffset={1200}
+        previewGeometryByKey={{ a: { rowHeights: Array(15).fill(100) } }}
+      />,
+    );
+    const list = screen.UNSAFE_getByType(FlatList);
+    layoutPager();
+    fireEvent(list, 'layout', {
+      nativeEvent: { layout: { height: 400, width: 400, x: 0, y: 0 } },
+    });
+    const header = list.props.ListHeaderComponent;
+    beginDrag();
+    moveDrag(80);
+    expect(StyleSheet.flatten(preview().props.style).marginTop).toBe(1100);
+    expect(
+      within(preview())
+        .getAllByTestId(/^fixture-row-a-/, { includeHiddenElements: true })
+        .map(row => row.props.testID),
+    ).toEqual([
+      'fixture-row-a-11',
+      'fixture-row-a-12',
+      'fixture-row-a-13',
+      'fixture-row-a-14',
+    ]);
+    expect(list.props.ListHeaderComponent).toBe(header);
+    expect(screen.UNSAFE_getAllByType(FlatList)).toEqual([list]);
+  });
+
+  it('places a short target at its clamped settled offset using that target padding', () => {
+    render(
+      <ControlledPager
+        onIndexChange={jest.fn()}
+        scrollOffset={1200}
+        previewGeometryByKey={{
+          c: { rowHeights: Array(15).fill(20), paddingBottom: 200 },
+        }}
+      />,
+    );
+    layoutPager();
+    fireEvent(screen.UNSAFE_getByType(FlatList), 'layout', {
+      nativeEvent: { layout: { height: 400, width: 400, x: 0, y: 0 } },
+    });
+    beginDrag();
+    moveDrag(-80);
+    expect(StyleSheet.flatten(preview().props.style).marginTop).toBe(1100);
+    expect(
+      within(preview())
+        .getAllByTestId(/^fixture-row-c-/, { includeHiddenElements: true })
+        .map(row => row.props.testID),
+    ).toEqual(
+      Array.from({ length: 10 }, (_, index) => `fixture-row-c-${index + 5}`),
+    );
+  });
+
+  it('does not substitute first rows for an explicitly unmeasured deep prefix', () => {
+    render(
+      <ControlledPager
+        onIndexChange={jest.fn()}
+        scrollOffset={1200}
+        previewGeometryByKey={{ a: { rowHeights: Array(15).fill(null) } }}
+      />,
+    );
+    layoutPager();
+    fireEvent(screen.UNSAFE_getByType(FlatList), 'layout', {
+      nativeEvent: { layout: { height: 400, width: 400, x: 0, y: 0 } },
+    });
+    beginDrag();
+    moveDrag(80);
+    expect(queryPreview()).toBeNull();
+    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(1);
+  });
+
+  it.each(['component', 'element'])(
+    'prepares, reverses and clears previews without rerendering active rows or the %s header',
+    headerKind => {
+      const Header = jest.fn(() => fixtureHeader);
+      const renderItem = jest.fn(renderFixtureRow);
+      render(
+        <ControlledPager
+          listHeader={headerKind === 'component' ? Header : <Header />}
+          onIndexChange={jest.fn()}
+          renderItem={renderItem}
+        />,
+      );
+      layoutPager();
+      const list = screen.UNSAFE_getByType(FlatList);
+      const initialRenderItem = list.props.renderItem;
+      const initialGestureHandlers = mockGesture.handlers;
+      const headerRenders = Header.mock.calls.length;
+      renderItem.mockClear();
+
+      beginDrag();
+      moveDrag(80);
+      expect(renderItem.mock.calls.map(([{ item }]) => item.key)).toEqual(
+        Array.from({ length: 10 }, (_, index) => `a-${index}`),
+      );
+      expect(Header).toHaveBeenCalledTimes(headerRenders);
+      expect(list.props.renderItem).toBe(initialRenderItem);
+      expect(mockGesture.handlers).toBe(initialGestureHandlers);
+      renderItem.mockClear();
+
+      moveDrag(-80);
+      expect(renderItem.mock.calls.map(([{ item }]) => item.key)).toEqual(
+        Array.from({ length: 10 }, (_, index) => `c-${index}`),
+      );
+      expect(Header).toHaveBeenCalledTimes(headerRenders);
+      expect(list.props.renderItem).toBe(initialRenderItem);
+      expect(mockGesture.handlers).toBe(initialGestureHandlers);
+      renderItem.mockClear();
+
+      releaseDrag(-80, false);
+      completeAnimation();
+      expect(queryPreview()).toBeNull();
+      expect(renderItem).not.toHaveBeenCalled();
+      expect(Header).toHaveBeenCalledTimes(headerRenders);
+      expect(screen.UNSAFE_getAllByType(FlatList)).toEqual([list]);
+      expect(list.props.renderItem).toBe(initialRenderItem);
+      expect(mockGesture.handlers).toBe(initialGestureHandlers);
+    },
+  );
+
+  it('mounts only ten non-interactive neighbour rows during a drag and leaves the header stationary', () => {
+    render(<ControlledPager onIndexChange={jest.fn()} />);
+    const list = screen.UNSAFE_getByType(FlatList);
+    layoutPager();
+    expect(queryPreview()).toBeNull();
+    beginDrag();
+    moveDrag(80);
+
+    expect(preview().props).toMatchObject({
+      accessibilityElementsHidden: true,
+      importantForAccessibility: 'no-hide-descendants',
+      pointerEvents: 'none',
+    });
+    expect(
+      within(preview()).getAllByTestId(/^fixture-row-a-/, {
+        includeHiddenElements: true,
+      }),
+    ).toHaveLength(10);
+    expect(
+      within(preview()).queryByTestId('fixture-row-a-10', {
+        includeHiddenElements: true,
+      }),
+    ).toBeNull();
+    let headerParent = screen.getByTestId('fixture-trade').parent;
+    while (headerParent && headerParent !== list) {
+      const transforms = StyleSheet.flatten(
+        headerParent.props.style,
+      )?.transform;
+      expect(transforms?.some(transform => 'translateX' in transform)).not.toBe(
+        true,
+      );
+      headerParent = headerParent.parent;
+    }
+    expect(screen.UNSAFE_getAllByType(FlatList)).toEqual([list]);
+
+    moveDrag(-80);
+    expect(
+      within(preview()).queryByTestId('fixture-row-a-0', {
+        includeHiddenElements: true,
+      }),
+    ).toBeNull();
+    expect(
+      within(preview()).getAllByTestId(/^fixture-row-c-/, {
+        includeHiddenElements: true,
+      }),
+    ).toHaveLength(10);
+  });
+
+  it('commits only after settling and retains preview until the new active key is acknowledged', () => {
+    const onIndexChange = jest.fn();
+    const SynchronousOwner = () => {
+      const [activeKey, setActiveKey] = React.useState('b');
+      return (
+        <ControlledPager
+          activeKey={activeKey}
+          onIndexChange={key => {
+            onIndexChange(key);
+            setActiveKey(key);
+          }}
+        />
+      );
+    };
+    render(<SynchronousOwner />);
+    const list = screen.UNSAFE_getByType(FlatList);
+    layoutPager();
+    beginDrag();
+    moveDrag(-140);
+    expect(onIndexChange).not.toHaveBeenCalled();
+    releaseDrag(-140);
+    expect(mockAnimations.map(animation => animation.target)).toEqual([2]);
+    expect(onIndexChange).not.toHaveBeenCalled();
+    expect(preview()).toBeTruthy();
+    mockDeferJS = true;
+    completeAnimation();
+
+    expect(onIndexChange).not.toHaveBeenCalled();
+    expect(preview()).toBeTruthy();
+    expect(list.props.data).toBe(fixtureRows.b);
+    flushJSQueue();
+    expect(onIndexChange).toHaveBeenCalledTimes(1);
+    expect(onIndexChange).toHaveBeenCalledWith('c');
+    expect(queryPreview()).toBeNull();
+    expect(screen.UNSAFE_getByType(FlatList)).toBe(list);
+    expect(list.props.data).toBe(fixtureRows.c);
+  });
+
+  it.each(['rejected', 'batched rollback'])(
+    'releases preview and the next gesture after a %s controlled request',
+    outcome => {
+      const onIndexChange = jest.fn();
+      const RejectingOwner = () => {
+        const [activeKey, setActiveKey] = React.useState('b');
+        return (
+          <ControlledPager
+            activeKey={activeKey}
+            onIndexChange={key => {
+              onIndexChange(key);
+              if (outcome === 'batched rollback') {
+                setActiveKey(key);
+                setActiveKey('b');
+              }
+            }}
+          />
+        );
+      };
+      render(<RejectingOwner />);
+      layoutPager();
+      beginDrag();
+      moveDrag(-140);
+      releaseDrag(-140);
+      completeAnimation();
+      expect(onIndexChange).toHaveBeenCalledWith('c');
+      expect(queryPreview()).toBeNull();
+      expect(screen.UNSAFE_getByType(FlatList).props.data).toBe(fixtureRows.b);
+
+      const fail = jest.fn();
+      act(() =>
+        mockGesture.handlers.onTouchesDown(
+          { allTouches: [{ y: 200 }], numberOfTouches: 1 },
+          { fail },
+        ),
+      );
+      expect(fail).not.toHaveBeenCalled();
+      beginDrag();
+      moveDrag(140);
+      releaseDrag(140);
+      completeAnimation();
+      expect(onIndexChange.mock.calls).toEqual([['c'], ['a']]);
+    },
+  );
+
+  it('does not commit an earlier drag direction when the gesture reverses below the release threshold', () => {
+    const onIndexChange = jest.fn();
+    render(<ControlledPager onIndexChange={onIndexChange} />);
+    layoutPager();
+    beginDrag();
+    moveDrag(-160);
+    moveDrag(40);
+    releaseDrag(40);
+    expect(mockAnimations.map(animation => animation.target)).toEqual([1]);
+    completeAnimation();
+    expect(onIndexChange).not.toHaveBeenCalled();
+    expect(queryPreview()).toBeNull();
+    expect(screen.UNSAFE_getByType(FlatList).props.data).toBe(fixtureRows.b);
+  });
+
+  it.each(['cancelled', 'failed'])('does not commit a %s drag', state => {
+    const onIndexChange = jest.fn();
+    render(<ControlledPager onIndexChange={onIndexChange} />);
+    layoutPager();
+    beginDrag();
+    moveDrag(-180);
+    if (state === 'cancelled') {
+      releaseDrag(-180, false);
+    } else {
+      act(() => mockGesture.handlers.onFinalize());
+    }
+    expect(mockAnimations.map(animation => animation.target)).toEqual([1]);
+    completeAnimation();
+    expect(onIndexChange).not.toHaveBeenCalled();
+    expect(queryPreview()).toBeNull();
+  });
+
+  it('ignores an interrupted settle animation', () => {
+    const onIndexChange = jest.fn();
+    render(<ControlledPager onIndexChange={onIndexChange} />);
+    layoutPager();
+    beginDrag();
+    moveDrag(-180);
+    releaseDrag(-180);
+    completeAnimation(false);
+    expect(onIndexChange).not.toHaveBeenCalled();
+  });
+
+  it('invalidates a queued settled commit after the measured width changes', () => {
+    const onIndexChange = jest.fn();
+    render(<ControlledPager onIndexChange={onIndexChange} />);
+    layoutPager();
+    beginDrag();
+    moveDrag(-140);
+    releaseDrag(-140);
+    mockDeferJS = true;
+    completeAnimation();
+    expect(mockJSQueue).toHaveLength(1);
+    layoutPager('fixture-list-pager', 500);
+    flushJSQueue();
+    expect(onIndexChange).not.toHaveBeenCalled();
+    expect(queryPreview()).toBeNull();
+    expect(screen.UNSAFE_getByType(FlatList).props.data).toBe(fixtureRows.b);
+  });
+
+  it('keeps header touches and multi-touch outside the row pager gesture', () => {
+    render(<ControlledPager onIndexChange={jest.fn()} />);
+    const fail = jest.fn();
+    act(() => {
+      mockGesture.handlers.onTouchesDown(
+        { allTouches: [{ y: 99 }], numberOfTouches: 1 },
+        { fail },
+      );
+      mockGesture.handlers.onTouchesDown(
+        { allTouches: [{ y: 200 }], numberOfTouches: 2 },
+        { fail },
+      );
+    });
+    expect(fail).toHaveBeenCalledTimes(2);
+    act(() =>
+      mockGesture.handlers.onTouchesDown(
+        { allTouches: [{ y: 200 }], numberOfTouches: 1 },
+        { fail },
+      ),
+    );
+    expect(fail).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not start a horizontal rebound for a vertical gesture that never activates', () => {
+    const onIndexChange = jest.fn();
+    render(<ControlledPager onIndexChange={onIndexChange} />);
+    act(() => {
+      mockGesture.handlers.onBegin();
+      mockGesture.handlers.onFinalize();
+    });
+    expect(mockAnimations).toHaveLength(0);
+    expect(onIndexChange).not.toHaveBeenCalled();
+    expect(queryPreview()).toBeNull();
+  });
+});

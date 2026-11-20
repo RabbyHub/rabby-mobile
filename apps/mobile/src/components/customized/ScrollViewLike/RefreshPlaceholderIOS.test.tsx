@@ -73,6 +73,15 @@ jest.mock('@/hooks/reanimated', () => ({
   useValueFromSharedValue: (sv: { value: unknown }) => sv.value,
 }));
 jest.mock('@/utils/common', () => ({ triggerImpact: jest.fn() }));
+// The observer is outside these gesture-semantic unit tests. Native/UI-runtime
+// sampling needs its own device evidence, not a mocked Reanimated assertion.
+jest.mock('@/devtools/pullRefreshProbe/usePullRefreshProbe', () => ({
+  usePullRefreshProbe: () => ({
+    listTestID: undefined,
+    mark: () => {},
+    markFromJS: () => {},
+  }),
+}));
 jest.mock('@/constant/home', () => ({
   HOME_TOP_HEADER_SIZES: {
     scrollableListTopOffset: 48,

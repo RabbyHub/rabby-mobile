@@ -1,10 +1,14 @@
-import { useMemo } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 import { sortBy } from 'lodash';
 import { useShallow } from 'zustand/react/shallow';
 import { OpenOrder, Leverage } from '@rabby-wallet/hyperliquid-sdk';
 import { perpsStore, PositionAndOpenOrder } from '@/hooks/perps/usePerpsStore';
 import { useActiveAssetDataMap } from '@/hooks/perps/useActiveAssetDataCache';
 import { isLimitOrder, computeMarginUsage } from '@/utils/perps';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { useStoreActivityScope } from '@/hooks/storeActivity/StoreActivityProvider';
+
+const NO_COINS: string[] = [];
 
 export type LimitOrderRow = {
   order: OpenOrder;
@@ -16,9 +20,16 @@ export type LimitOrderRow = {
 export const useHomeLimitOrders = (
   positionAndOpenOrders?: PositionAndOpenOrder[],
 ): LimitOrderRow[] => {
+  const activityScope = useStoreActivityScope();
+  const active = useSyncExternalStore(
+    activityScope.subscribe,
+    activityScope.getActive,
+    activityScope.getActive,
+  );
   // Filter inside the selector + shallow-eq the result so non-limit-order
   // updates (e.g. market-order fills) don't propagate to consumers.
-  const limits = perpsStore(
+  const limits = useActivityStore(
+    perpsStore,
     useShallow(s => (s.openOrders || []).filter(isLimitOrder)),
   );
 
@@ -40,7 +51,9 @@ export const useHomeLimitOrders = (
     return Array.from(set);
   }, [limits, positionLevByCoin]);
 
-  const fetchedMap = useActiveAssetDataMap(coinsNeedFetch);
+  // Identity invalidation in the cache hook remains live, but an inactive
+  // retained display must not issue leverage reads for its frozen rows.
+  const fetchedMap = useActiveAssetDataMap(active ? coinsNeedFetch : NO_COINS);
 
   return useMemo<LimitOrderRow[]>(() => {
     const list = limits.map(order => {

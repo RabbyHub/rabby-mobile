@@ -1,6 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -17,6 +17,7 @@ import { PerpsProTpSlTooltip } from './PerpsProTpSlTooltip';
 import { PerpsProTradeCheckbox } from './PerpsProTradePrimitives';
 
 type PerpsProTpSlFieldsProps = {
+  sceneActive?: boolean;
   controller: PerpsProTpSlController;
   draft: PerpsProAttachedTpSlDraft;
   pxDecimals: number;
@@ -28,6 +29,7 @@ type PerpsProTpSlFieldsProps = {
 
 const PerpsProTpSlFieldsComponent = (props: PerpsProTpSlFieldsProps) => {
   const {
+    sceneActive = true,
     controller,
     draft,
     pxDecimals,
@@ -38,8 +40,13 @@ const PerpsProTpSlFieldsComponent = (props: PerpsProTpSlFieldsProps) => {
   } = props;
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const dismissKeyboardThen = usePerpsProDismissKeyboard();
+  const dismissKeyboardThen = usePerpsProDismissKeyboard(sceneActive);
   const [modeSheet, setModeSheet] = useState<PerpsProTpSlLegKind | null>(null);
+  useEffect(() => {
+    if (!sceneActive) {
+      setModeSheet(null);
+    }
+  }, [sceneActive]);
   const focused = controller.focusedLeg;
   const focusedMode = focused ? draft[focused].mode : null;
   const buyPreview = focused ? controller.previews.buy[focused] : null;
@@ -131,16 +138,18 @@ const PerpsProTpSlFieldsComponent = (props: PerpsProTpSlFieldsProps) => {
           </View>
         </View>
       ) : null}
-      <PerpsProTpSlModeSheet
-        onClose={() => setModeSheet(null)}
-        onSelect={mode => {
-          if (modeSheet) {
-            controller.setMode(modeSheet, mode);
-          }
-        }}
-        selected={modeSheet ? draft[modeSheet].mode : 'price'}
-        visible={modeSheet != null}
-      />
+      {sceneActive ? (
+        <PerpsProTpSlModeSheet
+          onClose={() => setModeSheet(null)}
+          onSelect={mode => {
+            if (modeSheet) {
+              controller.setMode(modeSheet, mode);
+            }
+          }}
+          selected={modeSheet ? draft[modeSheet].mode : 'price'}
+          visible={modeSheet != null}
+        />
+      ) : null}
     </View>
   );
 };

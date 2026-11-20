@@ -289,7 +289,9 @@ PerpsProKlineToolbar.displayName = 'PerpsProKlineToolbar';
 // Figma 86356:121791: 12/16 Medium secondary, selected Bold title-1.
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
+    alignSelf: 'stretch',
     backgroundColor: colors2024['neutral-bg-1'],
+    flex: 1,
     flexDirection: 'row',
     height: PERPS_PRO_KLINE_TOOLBAR_HEIGHT,
   },

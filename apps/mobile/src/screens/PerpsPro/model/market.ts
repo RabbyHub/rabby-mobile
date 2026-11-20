@@ -119,7 +119,9 @@ export const normalizePerpsProMarketSourceTag = (
   sourceTag: string | null | undefined,
 ) => sourceTag?.trim().toLocaleLowerCase() || null;
 
-export const calculatePerpsProChange24h = (marketData: MarketData) => {
+export const calculatePerpsProChange24h = (
+  marketData: Pick<MarketData, 'markPx' | 'prevDayPx'>,
+) => {
   const markPrice = new PerpsMarketBigNumber(marketData.markPx || Number.NaN);
   const previousPrice = new PerpsMarketBigNumber(
     marketData.prevDayPx || Number.NaN,

@@ -18,6 +18,7 @@ import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { formatPerpsDisplayName, computeFilledPct } from '@/utils/perps';
 import BigNumber from 'bignumber.js';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
@@ -69,7 +70,7 @@ export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
   const { bottom } = useSafeAreaInsets();
   const [cancelLoading, setCancelLoading] = useState(false);
   const coin = order?.coin;
-  const marketData = perpsStore(s =>
+  const marketData = useActivityStore(perpsStore, s =>
     coin ? s.marketDataMap[coin] : undefined,
   );
 

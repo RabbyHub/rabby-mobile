@@ -1,11 +1,13 @@
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
-import { useShallow } from 'zustand/react/shallow';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { shallow } from 'zustand/shallow';
 
 import { resolvePerpsProMarketPresentation } from '../model/market';
 
 export const usePerpsProMarketIdentity = (coin: string) =>
-  perpsStore(
-    useShallow(state => {
+  useActivityStore(
+    perpsStore,
+    state => {
       const market = state.marketDataMap[coin];
       const presentation = resolvePerpsProMarketPresentation(coin, market);
       return {
@@ -13,5 +15,6 @@ export const usePerpsProMarketIdentity = (coin: string) =>
         pxDecimals: market?.pxDecimals,
         szDecimals: market?.szDecimals,
       };
-    }),
+    },
+    shallow,
   );

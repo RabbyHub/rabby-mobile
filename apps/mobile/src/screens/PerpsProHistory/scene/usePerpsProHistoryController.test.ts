@@ -700,6 +700,97 @@ describe('usePerpsProHistoryController', () => {
     );
   });
 
+  it.each([
+    [new Error('initial offline'), 'initial offline'],
+    ['initial rejection', 'initial rejection'],
+  ])('retains the initial failure message for %p', async (error, message) => {
+    mockFetchLatestTrades.mockRejectedValueOnce(error);
+    const hook = renderHook(() => usePerpsProHistoryController('trade'));
+
+    await waitFor(() =>
+      expect(hook.result.current.tabState).toMatchObject({
+        error: message,
+        rows: [],
+        status: 'error',
+      }),
+    );
+    expect(mockShowToast).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [new Error('refresh offline'), 'refresh offline'],
+    ['refresh rejection', 'refresh rejection'],
+  ])(
+    'retains rows and the refresh failure message for %p',
+    async (error, message) => {
+      mockFetchLatestTrades
+        .mockResolvedValueOnce([makeFill({ time: 100 })])
+        .mockRejectedValueOnce(error);
+      const hook = renderHook(() => usePerpsProHistoryController('trade'));
+      await waitFor(() =>
+        expect(hook.result.current.tabState.status).toBe('ready'),
+      );
+
+      await act(async () => hook.result.current.refresh());
+
+      expect(hook.result.current.tabState).toMatchObject({
+        refreshError: message,
+        refreshing: false,
+        rows: [expect.objectContaining({ time: 100 })],
+        status: 'ready',
+      });
+      expect(mockShowToast).toHaveBeenCalledWith(
+        'page.perps.pro.history.refreshFailed',
+        'error',
+      );
+    },
+  );
+
+  it.each([
+    [new Error('earlier offline'), 'earlier offline'],
+    ['earlier rejection', 'earlier rejection'],
+  ])(
+    'retains the pagination baseline and failure message for %p',
+    async (error, message) => {
+      const now = 6_000_000_000;
+      const firstWindow = { endTime: now, startTime: now - 1000 };
+      jest.spyOn(Date, 'now').mockReturnValue(now);
+      mockFetchTransactionsWindow
+        .mockResolvedValueOnce({
+          completed: true,
+          items: [
+            {
+              delta: { type: 'deposit', usdc: '1' },
+              hash: '0xdeposit',
+              time: now - 1,
+            },
+          ],
+          stalled: false,
+          truncated: false,
+          window: firstWindow,
+        })
+        .mockRejectedValueOnce(error);
+      const hook = renderHook(() =>
+        usePerpsProHistoryController('transaction'),
+      );
+      await waitFor(() =>
+        expect(hook.result.current.tabState.hasEarlier).toBe(true),
+      );
+
+      await act(async () => hook.result.current.loadEarlier());
+
+      expect(hook.result.current.tabState).toMatchObject({
+        coveredWindow: firstWindow,
+        hasEarlier: true,
+        loadEarlierError: message,
+        loadingEarlier: false,
+        rows: [expect.objectContaining({ kind: 'transaction' })],
+        status: 'ready',
+      });
+      expect(mockShowToast).not.toHaveBeenCalled();
+    },
+  );
+
   it('keeps successful empty results silent across tab changes', async () => {
     const hook = renderHook(() => usePerpsProHistoryController());
     await waitFor(() =>

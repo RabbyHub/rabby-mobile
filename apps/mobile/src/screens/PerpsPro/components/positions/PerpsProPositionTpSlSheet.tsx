@@ -581,6 +581,17 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       keyboardPageRef.current = null;
       scrollViewRef.current?.scrollTo({ y: 0, animated: false });
     }, [pageKey, cancelKeyboardRestore, cancelMeasurement]);
+    // Returning from the add/modify subpage keeps the same page key, so the
+    // order list would otherwise stay scrolled where the form left it and the
+    // newly added TP/SL would sit above the fold.
+    const wasSubpageRef = useRef(isSubpage);
+    useLayoutEffect(() => {
+      const wasSubpage = wasSubpageRef.current;
+      wasSubpageRef.current = isSubpage;
+      if (wasSubpage && !isSubpage) {
+        scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+      }
+    }, [isSubpage]);
     useLayoutEffect(() => {
       if (interactionLocked || !visible) cancelKeyboardRestore();
       else revealFormBottom();

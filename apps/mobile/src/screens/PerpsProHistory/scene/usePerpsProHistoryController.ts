@@ -528,9 +528,12 @@ export const usePerpsProHistoryController = (
         if (!isRequestCurrent(token)) {
           return;
         }
+        // React may defer the updater past the catch scope on Hermes.
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         updateTabState(tab, previous => ({
           ...previous,
-          error: error instanceof Error ? error.message : String(error),
+          error: errorMessage,
           status: 'error',
         }));
       } finally {
@@ -625,9 +628,11 @@ export const usePerpsProHistoryController = (
         if (!isRequestCurrent(token)) {
           return;
         }
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         updateTabState(tab, previous => ({
           ...previous,
-          refreshError: error instanceof Error ? error.message : String(error),
+          refreshError: errorMessage,
           refreshing: false,
         }));
         const guard = guardRef.current;
@@ -736,10 +741,11 @@ export const usePerpsProHistoryController = (
         if (!isRequestCurrent(token)) {
           return;
         }
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         updateTabState(tab, previous => ({
           ...previous,
-          loadEarlierError:
-            error instanceof Error ? error.message : String(error),
+          loadEarlierError: errorMessage,
           loadingEarlier: false,
         }));
       } finally {

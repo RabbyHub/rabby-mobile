@@ -21,10 +21,15 @@ jest.mock('@/components/perps/PerpsGestureSlider', () => ({
       mockSliderMounts += 1;
       return () => {
         mockSliderUnmounts += 1;
-        // The real slider completes an interrupted drag during unmount.
-        current.current.onSlidingComplete?.(current.current.value);
       };
     }, []);
+    ReactModule.useLayoutEffect(() => {
+      if (!props.interactive) {
+        // The real slider releases an interrupted drag when its native surface
+        // detaches as the scene deactivates.
+        current.current.onSlidingComplete?.(current.current.value);
+      }
+    }, [props.interactive]);
     return null;
   },
 }));
@@ -72,7 +77,7 @@ beforeEach(() => {
 });
 
 it.each(['swap', 'bridge'] as const)(
-  '%s releases its slider on deactivation and restores the controlled value',
+  '%s keeps its slider on screen and only releases the drag on deactivation',
   scene => {
     const onChangeSlider = jest.fn();
     const onScrollEnabledChange = jest.fn();
@@ -113,16 +118,24 @@ it.each(['swap', 'bridge'] as const)(
       }
 
       ui.rerender(element(false));
-      expect(ui.UNSAFE_queryByType(PerpsGestureSlider)).toBeNull();
-      expect(ui.UNSAFE_queryByType(SliderBubblePortal)).toBeNull();
-      expect(mockSliderUnmounts).toBe(cycle + 1);
+      // The track stays visible for the whole pager transition; only the
+      // native gesture surface detaches while the scene is inactive.
+      expect(ui.UNSAFE_getByType(PerpsGestureSlider).props.interactive).toBe(
+        false,
+      );
+      expect(ui.UNSAFE_getByType(SliderBubblePortal).props.visible).toBe(false);
+      expect(mockSliderUnmounts).toBe(0);
+      expect(mockSliderMounts).toBe(1);
       expect(onChangeSlider).toHaveBeenLastCalledWith(37, true);
       if (scene === 'bridge') {
         expect(onScrollEnabledChange).toHaveBeenLastCalledWith(true);
       }
 
       ui.rerender(element(true));
-      expect(mockSliderMounts).toBe(cycle + 2);
+      expect(mockSliderMounts).toBe(1);
+      expect(ui.UNSAFE_getByType(PerpsGestureSlider).props.interactive).toBe(
+        true,
+      );
       expect(ui.UNSAFE_getByType(PerpsGestureSlider).props.value).toBe(37);
       expect(ui.UNSAFE_getByType(SliderBubblePortal).props.visible).toBe(false);
       expect(ui.UNSAFE_getByType(AutoShrinkAmountTextInput)).toBe(input);
