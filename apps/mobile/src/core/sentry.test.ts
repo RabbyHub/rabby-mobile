@@ -1,3 +1,5 @@
+import { APP_STORE_NAMES } from './storage/storeConstant';
+
 type SentryModule = typeof import('./sentry');
 type SentryEvent = Parameters<SentryModule['shouldDropSentryEvent']>[0];
 type SentryEventHint = NonNullable<
@@ -133,6 +135,43 @@ describe('core/sentry', () => {
     const options = (sentry.init as jest.Mock).mock.calls[0][0];
 
     expect(options.beforeSend(makeEvent('Network Error'))).toBeNull();
+  });
+
+  it('reports secure preference issues using a fixed event name and tags', () => {
+    const { sentry, sentryModule } = loadSentryModule({
+      userBehaviorTrackingOptOut: false,
+    });
+    sentryModule.initSentry();
+    sentryModule.reportSecurePreferenceIssue({
+      kind: 'unavailable',
+      name: APP_STORE_NAMES.contactBook,
+      stage: 'key-open',
+    });
+
+    expect(sentry.captureEvent).toHaveBeenCalledWith({
+      message: 'sec-setting-unavailable',
+      level: 'warning',
+      fingerprint: ['sec-setting-unavailable', 'contactBook', 'key-open'],
+      tags: {
+        setting: 'contactBook',
+        stage: 'key-open',
+        os: expect.stringMatching(/^(ios|android)$/),
+      },
+    });
+  });
+
+  it('honors tracking opt-out when reporting a secure preference issue', () => {
+    const { sentry, sentryModule } = loadSentryModule({
+      userBehaviorTrackingOptOut: true,
+    });
+    sentryModule.initSentry();
+    sentryModule.reportSecurePreferenceIssue({
+      kind: 'damaged',
+      name: APP_STORE_NAMES.whitelist,
+      stage: 'record-verify',
+    });
+
+    expect(sentry.captureEvent).not.toHaveBeenCalled();
   });
 
   it('initializes on sync when tracking becomes allowed', () => {
@@ -408,6 +447,46 @@ describe('sentry scrubbing', () => {
       sentryModule,
     };
   }
+
+  it('removes inherited context and attachments from secure preference events', () => {
+    const { options } = loadInitOptions();
+    const event = {
+      event_id: 'event-id',
+      timestamp: 1000,
+      message: 'sec-setting-damaged',
+      fingerprint: ['sec-setting-damaged', 'contactBook', 'record-verify'],
+      tags: {
+        setting: 'contactBook',
+        stage: 'record-verify',
+        os: 'ios',
+        account: ADDRESS,
+      },
+      user: { id: ADDRESS },
+      extra: { alias: 'private contact note' },
+      breadcrumbs: [{ message: 'private breadcrumb' }],
+      request: { url: 'https://example.test/?value=private' },
+      contexts: { device: { name: 'private device name' } },
+      exception: { values: [{ value: 'original storage error' }] },
+      sdkProcessingMetadata: { dynamicSamplingContext: { user_id: ADDRESS } },
+    };
+    const hint = {
+      attachments: [{ filename: 'private.txt', data: 'private data' }],
+    };
+
+    expect(options.beforeSend(event, hint)).toEqual({
+      event_id: 'event-id',
+      timestamp: 1000,
+      message: 'sec-setting-damaged',
+      level: 'warning',
+      release: '1.0.0-test',
+      environment: 'test',
+      tags: { setting: 'contactBook', stage: 'record-verify', os: 'ios' },
+    });
+    expect(hint.attachments).toEqual([]);
+    expect(
+      options.beforeSend({ ...event, tags: { ...event.tags, stage: ADDRESS } }),
+    ).toBeNull();
+  });
 
   it('strips query strings from XHR breadcrumbs without mutating the input', () => {
     const { options, sentryModule } = loadInitOptions();
