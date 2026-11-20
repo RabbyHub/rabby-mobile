@@ -27,6 +27,7 @@ export const getPerpsProMetadataTagContainerStyle = (
 ): ViewStyle => ({
   backgroundColor: colors2024['neutral-bg-5'],
   borderRadius: 4,
+  borderCurve: 'continuous',
   paddingHorizontal: 4,
   paddingVertical: 1,
 });
@@ -46,6 +47,7 @@ export const getPerpsProTintedTagContainerStyle = (
 ): ViewStyle => ({
   backgroundColor: resolveToneColors(colors2024, tone).backgroundColor,
   borderRadius: 4,
+  borderCurve: 'continuous',
   paddingHorizontal: 4,
   paddingVertical: 1,
 });
@@ -67,6 +69,7 @@ export const getPerpsProSolidSideTagContainerStyle = (
   alignItems: 'center',
   backgroundColor: resolveToneColors(colors2024, tone).textColor,
   borderRadius: 4,
+  borderCurve: 'continuous',
   height: 16,
   justifyContent: 'center',
   paddingHorizontal: 4,

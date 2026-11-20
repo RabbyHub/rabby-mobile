@@ -86,6 +86,7 @@ function TpSlEditorModal({
   position,
   children,
   onCloseStart,
+  inputFocused,
   ...props
 }: React.PropsWithChildren<{
   position: boolean;
@@ -94,12 +95,14 @@ function TpSlEditorModal({
   onShow?: () => void;
   onDismiss?: () => void;
   onCloseStart?: () => void;
+  inputFocused: boolean;
 }>) {
   if (position) {
     return (
       <SimplePositionTpSlModal
         modalId={MODAL_GATE_IDS.perpsEditTpSlPrice}
         onCloseStart={onCloseStart}
+        inputFocused={inputFocused}
         {...props}>
         {children}
       </SimplePositionTpSlModal>
@@ -167,6 +170,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
   handleCancelAutoClose,
 }) => {
   const [modalVisible, setModalVisible] = React.useState(false);
+  const [inputFocused, setInputFocused] = React.useState(false);
   const pressInFlight = React.useRef(false);
   const mounted = React.useRef(true);
   useEffect(() => {
@@ -499,6 +503,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
       <TpSlEditorModal
         position={variant === 'position'}
         visible={modalVisible}
+        inputFocused={inputFocused}
         onShow={
           variant === 'position'
             ? () => {
@@ -626,6 +631,16 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                       placeholder="$0"
                       value={displayedAutoClosePrice}
                       onChangeText={handlePriceChange}
+                      onFocus={
+                        constrainPosition
+                          ? () => setInputFocused(true)
+                          : undefined
+                      }
+                      onBlur={
+                        constrainPosition
+                          ? () => setInputFocused(false)
+                          : undefined
+                      }
                       ref={autoCloseInputRef}
                     />
                   </View>
@@ -725,7 +740,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     minHeight: 20,
     flexShrink: 1,
   },
-  positionSetTag: { borderRadius: 10, paddingVertical: 2, minHeight: 40 },
+  positionSetTag: {
+    borderRadius: 10,
+    borderCurve: 'continuous',
+    paddingVertical: 2,
+    minHeight: 40,
+  },
   positionContent: { alignItems: 'flex-end', gap: 2, flexShrink: 1 },
   positionPrice: {
     fontFamily: 'SF Pro Rounded',
@@ -748,6 +768,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   positionRed: { color: colors2024['red-default'] },
   tagContainer: {
     borderRadius: 100,
+    borderCurve: 'continuous',
     backgroundColor: 'rgba(80, 210, 193, 0.12)',
     paddingVertical: 4,
     paddingLeft: 12,
@@ -773,6 +794,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
     backgroundColor: colors2024['neutral-bg-0'],
     borderRadius: 24,
+    borderCurve: 'continuous',
   },
 
   inner: {
@@ -805,7 +827,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '900',
+    fontWeight: '800',
     color: colors2024['neutral-title-1'],
     marginBottom: 8,
     textAlign: 'center',
@@ -859,6 +881,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     height: 40,
     justifyContent: 'center',
     borderRadius: 6,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-5'],
     borderWidth: 1,
     borderColor: 'transparent',
@@ -882,6 +905,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 12,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-5'],
     display: 'flex',
     flexDirection: 'column',
@@ -919,6 +943,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     borderRadius: 16,
+    borderCurve: 'continuous',
     // marginTop: 12,
     gap: 16,
     padding: 16,
@@ -943,14 +968,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 17,
     lineHeight: 22,
-    fontWeight: '900',
+    fontWeight: '800',
   },
 
   infoText: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 17,
     lineHeight: 22,
-    fontWeight: '900',
+    fontWeight: '800',
     color: colors2024['neutral-info'],
   },
 

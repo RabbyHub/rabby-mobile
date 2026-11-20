@@ -116,6 +116,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   newBadge: {
     backgroundColor: colors2024['red-light-1'],
     borderRadius: 4,
+    borderCurve: 'continuous',
     // Keep the overlap in the content row; legacy Yoga percentage insets use
     // the expanded press target's available width instead of the label width.
     flexShrink: 0,
@@ -134,7 +135,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   activeText: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: '800',
     includeFontPadding: false,
     lineHeight: 24,
     color: colors2024['neutral-title-1'],

@@ -159,6 +159,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       padding: 4,
       gap: 6,
       borderRadius: 100,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-line'],
     },
     arrowBox: {
@@ -207,6 +208,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     tooltipContent: {
       padding: 0,
       borderRadius: 12,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-bg-1'],
       elevation: 12,
     },
@@ -215,6 +217,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       padding: 12,
       gap: 6,
       borderRadius: 12,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-bg-1'],
     },
     menuWithBalance: {

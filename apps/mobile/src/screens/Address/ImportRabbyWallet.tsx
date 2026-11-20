@@ -203,6 +203,7 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingHorizontal: 20,
     paddingVertical: 20,
     borderRadius: 20,
+    borderCurve: 'continuous',
     marginBottom: 12,
     backgroundColor: ctx.colors2024['neutral-card-1'],
     borderWidth: 0,
@@ -222,6 +223,7 @@ const getStyles = createGetStyles2024(ctx => ({
     width: 40,
     height: 40,
     borderRadius: 14,
+    borderCurve: 'continuous',
     backgroundColor: ctx.colors2024['neutral-bg-2'],
     alignItems: 'center',
     justifyContent: 'center',
@@ -231,6 +233,7 @@ const getStyles = createGetStyles2024(ctx => ({
     width: 40,
     height: 40,
     borderRadius: 14,
+    borderCurve: 'continuous',
   },
   itemTitle: {
     fontFamily: 'SF Pro Rounded',

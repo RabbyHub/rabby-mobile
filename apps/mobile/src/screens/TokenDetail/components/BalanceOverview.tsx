@@ -65,6 +65,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   skeleton: {
     borderRadius: 4,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-5'],
   },
   amount: {

@@ -38,6 +38,7 @@ import {
 } from './SignTypedDataExplain/parseSignTypedDataMessage';
 import { getDappSnapshot } from '@/core/serviceApi/dapp';
 import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { createSigningOperationId } from '@/core/utils/signingOperation';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
 import { openapi, testOpenapi } from '@/core/request';
@@ -663,6 +664,7 @@ export const SignTypedData = ({
     });
 
     if (WaitingSignComponent[account.type]) {
+      const signingOperationId = createSigningOperationId();
       apisKeyring.signTypedDataWithUI(
         account.type,
         account.address,
@@ -670,11 +672,13 @@ export const SignTypedData = ({
         {
           brandName: account.brandName,
           version: 'V4',
+          signingOperationId,
         },
       );
 
       resolveApproval({
         uiRequestComponent: WaitingSignComponent[account.type],
+        signingOperationId,
         type: account.type,
         address: account.address,
         data: [account.address, JSON.stringify(typedData)],

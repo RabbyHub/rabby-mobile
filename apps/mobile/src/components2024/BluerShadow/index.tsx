@@ -84,5 +84,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: 'transparent',
     borderRadius: 20,
+    borderCurve: 'continuous',
   },
 });

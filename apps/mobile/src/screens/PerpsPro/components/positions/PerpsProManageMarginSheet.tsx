@@ -371,6 +371,7 @@ const getStyle = createGetStyles2024(
     infoCard: {
       backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
       borderRadius: 12,
+      borderCurve: 'continuous',
       paddingBottom: 8,
       paddingHorizontal: 12,
       paddingTop: 12,
@@ -456,6 +457,7 @@ const getStyle = createGetStyles2024(
     amountCard: {
       backgroundColor: colors2024['neutral-bg-5'],
       borderRadius: 12,
+      borderCurve: 'continuous',
       height: 162,
       left: 16,
       position: 'absolute',
@@ -506,6 +508,7 @@ const getStyle = createGetStyles2024(
     riskGroup: {
       backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
       borderRadius: 12,
+      borderCurve: 'continuous',
       paddingHorizontal: 12,
       paddingVertical: 8,
       height: 76,

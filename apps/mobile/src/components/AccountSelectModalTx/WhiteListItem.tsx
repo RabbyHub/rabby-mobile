@@ -368,6 +368,7 @@ export const WhiteListItemInSheetModal = ({
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   root: {
     borderRadius: SIZES.itemBorderRadius,
+    borderCurve: 'continuous',
     overflow: 'hidden',
     ...(IS_IOS
       ? {
@@ -401,6 +402,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   shadowView: {
     borderRadius: SIZES.itemBorderRadius,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
@@ -414,6 +416,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     borderWidth: 0,
     // borderColor: colors2024['neutral-line'],
     borderRadius: SIZES.itemBorderRadius,
+    borderCurve: 'continuous',
     flex: 1,
     flexGrow: 1,
     backgroundColor: IS_IOS
@@ -499,6 +502,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   walletIcon: {
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   modalNextButtonText: {
     fontFamily: 'SF Pro Rounded',

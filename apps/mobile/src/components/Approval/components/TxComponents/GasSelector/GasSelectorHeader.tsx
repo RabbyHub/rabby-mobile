@@ -1078,6 +1078,7 @@ export const GasSelectorHeader = ({
                 flexDirection: 'row',
                 padding: 2,
                 borderRadius: 6,
+                borderCurve: 'continuous',
                 borderWidth: 0.5,
                 borderStyle: 'solid',
                 borderColor: colors['neutral-line'],
@@ -1375,13 +1376,19 @@ export const GasSelectorHeader = ({
                       }}
                       width={16}
                       height={16}
-                      style={StyleSheet.flatten({ borderRadius: 16 })}
+                      style={StyleSheet.flatten({
+                        borderRadius: 16,
+                        borderCurve: 'continuous',
+                      })}
                     />
                   ) : (
                     <RcIconUnknown
                       width={16}
                       height={16}
-                      style={StyleSheet.flatten({ borderRadius: 16 })}
+                      style={StyleSheet.flatten({
+                        borderRadius: 16,
+                        borderCurve: 'continuous',
+                      })}
                     />
                   )}
                   <Text style={styles.gasSelectorModalUsd}>
@@ -1586,6 +1593,7 @@ const GasMethod = (props: {
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 4,
+        borderCurve: 'continuous',
         backgroundColor: active ? colors['blue-light-1'] : 'transparent',
       }}
       onPress={onChange}>

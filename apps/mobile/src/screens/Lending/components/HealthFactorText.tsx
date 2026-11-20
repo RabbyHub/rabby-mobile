@@ -48,6 +48,7 @@ const getStyles = createGetStyles2024(() => ({
     paddingHorizontal: 4,
     paddingVertical: 1,
     borderRadius: 4,
+    borderCurve: 'continuous',
     overflow: 'hidden',
     alignSelf: 'flex-start',
   },

@@ -241,6 +241,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     backgroundColor: resolvePerpsProDialogFieldBackground(colors2024, isLight),
     borderRadius: 6,
+    borderCurve: 'continuous',
     borderColor: 'transparent',
     borderWidth: 1,
     flex: 1,

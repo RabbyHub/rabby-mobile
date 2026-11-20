@@ -139,6 +139,7 @@ const getStyles = createGetStyles(colors => {
     },
     tooltipContentStyle: {
       borderRadius: 2,
+      borderCurve: 'continuous',
       height: 33,
     },
     tooltipInnerStyle: {

@@ -96,6 +96,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   compactTrigger: {
     backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 6,
+    borderCurve: 'continuous',
     gap: 2,
     height: 26,
     maxWidth: 108,
@@ -104,6 +105,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   walletTrigger: {
     backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: 8,
+    borderCurve: 'continuous',
     flexShrink: 1,
     gap: 4,
     height: 32,

@@ -128,6 +128,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
     gap: 12,
     borderRadius: 16,
+    borderCurve: 'continuous',
     marginBottom: 120,
     marginTop: 12,
     //backgroundColor: colors2024['neutral-bg-1'],
@@ -138,6 +139,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingBottom: 4,
     backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 14,
+    borderCurve: 'continuous',
   },
   listHeader: {
     flexDirection: 'row',

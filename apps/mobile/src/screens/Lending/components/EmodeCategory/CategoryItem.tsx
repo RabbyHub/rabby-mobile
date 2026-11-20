@@ -80,6 +80,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingRight: 12,
     marginBottom: 8,
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   isSelected: {
     backgroundColor: colors2024['brand-light-1'],

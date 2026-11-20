@@ -54,6 +54,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       alignItems: 'center',
       borderTopRightRadius: 16,
       borderBottomLeftRadius: 16,
+      borderCurve: 'continuous',
     },
   };
 });

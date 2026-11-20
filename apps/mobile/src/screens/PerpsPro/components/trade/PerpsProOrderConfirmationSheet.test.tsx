@@ -295,6 +295,7 @@ describe.each(['light', 'dark'] as const)(
           expect(tag.props.adjustsFontSizeToFit).toBeUndefined();
           expect(style).toEqual({
             backgroundColor: colors['neutral-bg-5'],
+            borderCurve: 'continuous',
             borderRadius: 4,
             color: colors['neutral-foot'],
             ...RoundedFontStyles.medium,

@@ -134,11 +134,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 46,
     height: 46,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   media: {
     width: 46,
     height: 46,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   fromTokenBox: {
     position: 'absolute',
@@ -183,6 +185,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
     borderRadius: 1000,
+    borderCurve: 'continuous',
   },
   tokenChainIconInDetail: {
     borderColor: makeHistoryDetailColors({ isLight, colors2024 }).card,

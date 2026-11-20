@@ -203,6 +203,7 @@ const styles = StyleSheet.create({
   },
   item: {
     borderRadius: SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS,
+    borderCurve: 'continuous',
     width: '100%',
   },
 });

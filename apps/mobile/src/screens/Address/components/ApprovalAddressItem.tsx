@@ -18,6 +18,7 @@ import { Text } from '@/components/Typography';
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
     borderRadius: 16,
+    borderCurve: 'continuous',
     overflow: 'hidden',
     backgroundColor: colors2024['neutral-bg-3'],
   },
@@ -90,6 +91,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 26,
     height: 26,
     borderRadius: 30,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -107,6 +109,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   walletIcon: {
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
 }));
 

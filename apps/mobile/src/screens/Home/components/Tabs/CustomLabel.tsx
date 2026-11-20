@@ -172,6 +172,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingLeft: 8,
     paddingRight: 8,
     borderRadius: 8,
+    borderCurve: 'continuous',
     overflow: 'hidden',
   },
   // Same box as the label, free to slide; clips both the plate and the text.
@@ -185,11 +186,13 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 8,
+    borderCurve: 'continuous',
     overflow: 'hidden',
   },
   plate: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: 8,
+    borderCurve: 'continuous',
     // Match the pre-plate implementation: the active chip is near-black in
     // light mode and plain white in dark mode, with the dark active label on
     // top of it. Using the themed `neutral-bg-1` here made the dark-mode chip

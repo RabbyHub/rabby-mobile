@@ -537,7 +537,10 @@ export function AccountsPanelInSheetModal({
                               <View
                                 key={`${account.address}-${account.type}-${account.brandName}-${index}`}
                                 style={[
-                                  { borderRadius: 16 },
+                                  {
+                                    borderRadius: 16,
+                                    borderCurve: 'continuous',
+                                  },
                                   index > 0 && styles.addressItemTopGap,
                                 ]}>
                                 <AddressItemInSheetModal
@@ -620,6 +623,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
       position: 'relative',
       backgroundColor: colors2024['neutral-bg-2'],
       borderRadius: 16,
+      borderCurve: 'continuous',
       display: 'flex',
       justifyContent: 'space-between',
       flexDirection: 'row',
@@ -702,6 +706,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
       paddingHorizontal: 10,
       paddingVertical: 16,
       borderRadius: 20,
+      borderCurve: 'continuous',
       borderWidth: 1,
       borderColor: colors2024['neutral-line'],
       backgroundColor: ctx.isLight
@@ -719,6 +724,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
       backgroundColor: colors2024['green-light-1'],
       borderRadius: 12,
+      borderCurve: 'continuous',
     },
     addWhitelistHintContent: {
       width: '100%',
@@ -763,6 +769,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
       height: 6,
       width: 50,
       borderRadius: 104,
+      borderCurve: 'continuous',
     },
   };
 });

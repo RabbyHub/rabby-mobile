@@ -16,6 +16,7 @@ const getStyles = (colors: AppColorsVariants) =>
       borderWidth: 1,
       borderColor: 'transparent',
       borderRadius: 8,
+      borderCurve: 'continuous',
       paddingHorizontal: 15,
       paddingVertical: 17,
       backgroundColor: colors['neutral-card-1'],

@@ -66,6 +66,7 @@ const defaultTradePreferences = {
     conditional: false,
     limit: false,
     market: false,
+    twap: false,
   },
   tradeAmountUnit: 'quote' as const,
   tradeOrderType: 'market' as const,

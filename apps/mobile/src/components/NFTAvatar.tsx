@@ -48,6 +48,7 @@ const getStyle = createGetStyles(colors => {
   return {
     imagesView: {
       borderRadius: 4,
+      borderCurve: 'continuous',
       justifyContent: 'center',
       alignItems: 'center',
       position: 'relative',
@@ -58,6 +59,7 @@ const getStyle = createGetStyles(colors => {
       width: '100%',
       height: '100%',
       borderRadius: 4,
+      borderCurve: 'continuous',
     },
   };
 });

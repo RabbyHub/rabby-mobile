@@ -57,7 +57,16 @@ export type PerpsProInfoTabPreference = {
   hasUserSelectedInfoTab: boolean;
 };
 export type PerpsProTradeAmountUnit = 'base' | 'quote';
-export type PerpsProTradeOrderType = 'conditional' | 'limit' | 'market';
+export type PerpsProTradeOrderType =
+  | 'conditional'
+  | 'limit'
+  | 'market'
+  | 'scale'
+  | 'twap';
+export type PerpsProSkippableTradeOrderType = Exclude<
+  PerpsProTradeOrderType,
+  'scale'
+>;
 export type PerpsProOpenOrderEditCategory = 'basic' | 'conditional';
 export type PerpsProOpeningTpSlMode = 'pnl' | 'price' | 'roi';
 export type PerpsProPositionTpSlMode = 'pnl' | 'roi';
@@ -93,7 +102,10 @@ export type PerpsProPreferences = {
   >;
   tradeAmountUnit: PerpsProTradeAmountUnit;
   tradeOrderType: PerpsProTradeOrderType;
-  skipTradeConfirmationByOrderType: Record<PerpsProTradeOrderType, boolean>;
+  skipTradeConfirmationByOrderType: Record<
+    PerpsProSkippableTradeOrderType,
+    boolean
+  >;
   tpSlModePreferences: PerpsProTpSlModePreferences;
   [key: string]: unknown;
 };
@@ -124,6 +136,7 @@ const DEFAULT_PERPS_PRO_PREFERENCES: PerpsProPreferences = {
     conditional: false,
     limit: false,
     market: false,
+    twap: false,
   },
   tpSlModePreferences: DEFAULT_PERPS_PRO_TP_SL_MODE_PREFERENCES,
 };
@@ -217,13 +230,15 @@ const normalizePerpsProTradeOrderType = (
   hasReadableProPreferences(value) &&
   (value.tradeOrderType === 'market' ||
     value.tradeOrderType === 'limit' ||
-    value.tradeOrderType === 'conditional')
+    value.tradeOrderType === 'conditional' ||
+    value.tradeOrderType === 'twap' ||
+    value.tradeOrderType === 'scale')
     ? value.tradeOrderType
     : 'market';
 
 const normalizeSkipTradeConfirmationByOrderType = (
   value: unknown,
-): Record<PerpsProTradeOrderType, boolean> => {
+): Record<PerpsProSkippableTradeOrderType, boolean> => {
   const source =
     hasReadableProPreferences(value) &&
     isRecord(value.skipTradeConfirmationByOrderType)
@@ -233,6 +248,7 @@ const normalizeSkipTradeConfirmationByOrderType = (
     conditional: source.conditional === true,
     limit: source.limit === true,
     market: source.market === true,
+    twap: source.twap === true,
   };
 };
 
@@ -1103,7 +1119,13 @@ export class PerpsService extends StoreServiceBase<
   };
 
   setPerpsProTradeOrderType = async (value: PerpsProTradeOrderType) => {
-    if (value !== 'market' && value !== 'limit' && value !== 'conditional') {
+    if (
+      value !== 'market' &&
+      value !== 'limit' &&
+      value !== 'conditional' &&
+      value !== 'twap' &&
+      value !== 'scale'
+    ) {
       throw new Error('Invalid Perps Pro trade order type');
     }
     const currentPreferences: unknown = this.store.proPreferences;
@@ -1116,7 +1138,7 @@ export class PerpsService extends StoreServiceBase<
   };
 
   getSkipPerpsProTradeConfirmation = async (
-    orderType: PerpsProTradeOrderType,
+    orderType: PerpsProSkippableTradeOrderType,
   ) => {
     if (!this.store) {
       throw new Error('PerpsService not initialized');
@@ -1127,7 +1149,7 @@ export class PerpsService extends StoreServiceBase<
   };
 
   setSkipPerpsProTradeConfirmation = async (
-    orderType: PerpsProTradeOrderType,
+    orderType: PerpsProSkippableTradeOrderType,
     value: boolean,
   ) => {
     const current = getWritableProPreferences(this.store.proPreferences);

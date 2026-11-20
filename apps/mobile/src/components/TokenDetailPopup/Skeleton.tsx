@@ -99,6 +99,7 @@ const getHeaderSkeletonStyles = createGetStyles(colors => {
       width: SIZES.headerTokenLogo,
       height: SIZES.headerTokenLogo,
       borderRadius: SIZES.headerTokenLogo,
+      borderCurve: 'continuous',
       marginRight: 8,
     },
     tokenSymbolPlaceholder: {
@@ -110,6 +111,7 @@ const getHeaderSkeletonStyles = createGetStyles(colors => {
       paddingVertical: 4,
       paddingHorizontal: 8,
       borderRadius: 4,
+      borderCurve: 'continuous',
       height: 20,
 
       flexDirection: 'row',

@@ -64,6 +64,7 @@ const getStyles = createGetStyles(colors => {
       top: -4,
       right: -4,
       borderRadius: 1000,
+      borderCurve: 'continuous',
       width: 12,
       height: 12,
       backgroundColor: colors['green-default'],

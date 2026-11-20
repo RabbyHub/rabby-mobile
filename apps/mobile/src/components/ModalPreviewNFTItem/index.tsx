@@ -26,6 +26,7 @@ const getStyles = (colors: AppColorsVariants) =>
       paddingHorizontal: 4,
       paddingVertical: 1,
       borderRadius: 2,
+      borderCurve: 'continuous',
       alignItems: 'center',
       opacity: 0.8,
     },
@@ -43,11 +44,13 @@ const getStyles = (colors: AppColorsVariants) =>
       width: '100%',
       height: '100%',
       borderRadius: 8,
+      borderCurve: 'continuous',
     },
     nftAvatar: {
       width: '100%',
       height: 300,
       borderRadius: 6,
+      borderCurve: 'continuous',
       backgroundColor: colors['neutral-bg-1'],
     },
     nftTitle: {

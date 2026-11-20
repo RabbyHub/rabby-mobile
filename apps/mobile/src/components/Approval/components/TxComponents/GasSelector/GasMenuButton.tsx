@@ -185,6 +185,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   menuButton: {
     alignItems: 'center',
     borderRadius: 100,
+    borderCurve: 'continuous',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderWidth: 0.5,
@@ -210,6 +211,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     width: 2,
     height: 2,
     borderRadius: 2,
+    borderCurve: 'continuous',
     backgroundColor: colors['neutral-foot'],
     marginHorizontal: 4,
   },

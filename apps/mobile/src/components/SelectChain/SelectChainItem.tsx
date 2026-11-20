@@ -52,6 +52,7 @@ const getStyles = (colors: AppColorsVariants) =>
       width: 32,
       height: 32,
       borderRadius: 16,
+      borderCurve: 'continuous',
     },
     content: {
       flex: 1,

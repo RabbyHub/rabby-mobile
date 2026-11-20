@@ -43,6 +43,8 @@ export const loadLatestPerpsProHistoryBatch = async ({
   repository?: PerpsProHistoryRepository;
   tab: PerpsProHistoryTab;
 }): Promise<PerpsProHistoryBatch> => {
+  if (tab === 'twap')
+    throw new Error('TWAP history must use its account-scoped repository');
   if (tab === 'orders') {
     const [rawItems, orderFills] = await Promise.all([
       repository.fetchOrders(accountAddress),
@@ -104,7 +106,7 @@ export const loadEarlierPerpsProHistoryBatch = async ({
   accountAddress: string;
   limit: number;
   repository?: PerpsProHistoryRepository;
-  tab: Exclude<PerpsProHistoryTab, 'orders'>;
+  tab: Exclude<PerpsProHistoryTab, 'orders' | 'twap'>;
   window: PerpsProHistoryWindow;
 }) => {
   const result =

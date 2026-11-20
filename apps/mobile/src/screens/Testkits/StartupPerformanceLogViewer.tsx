@@ -258,6 +258,7 @@ const getStyles = createGetStyles2024(ctx => ({
   section: {
     padding: 16,
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: ctx.colors2024['neutral-card-1'],
     borderWidth: 1,
     borderColor: ctx.colors2024['neutral-line'],

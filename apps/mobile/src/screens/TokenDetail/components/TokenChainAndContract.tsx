@@ -222,6 +222,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     borderRadius: 16,
+    borderCurve: 'continuous',
     // borderColor: ctx.colors2024['neutral-line'],
     // borderWidth: 1,
     paddingHorizontal: 16,
@@ -238,7 +239,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     lineHeight: 22,
-    fontWeight: '900',
+    fontWeight: '800',
   },
 
   header: {
@@ -299,6 +300,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
     borderRadius: 8,
+    borderCurve: 'continuous',
     paddingHorizontal: 10,
     paddingVertical: 8,
     gap: 4,

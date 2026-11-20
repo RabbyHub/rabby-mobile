@@ -113,6 +113,7 @@ const getStyles = createGetStyles(colors => ({
   },
   button: {
     borderRadius: 2,
+    borderCurve: 'continuous',
     width: 60,
     height: 26,
   },

@@ -34,6 +34,13 @@ type Props = {
    * re-render.
    */
   progressValue?: SharedValue<number>;
+  /**
+   * Keep the native touch surface mounted. Set this to `false` while the host
+   * screen is not the active scene: the track/thumb stay visible (so the slider
+   * is already on screen when a pager reveals the page), but no native gesture
+   * recogniser is created for a hidden scene.
+   */
+  interactive?: boolean;
   step?: number;
   style?: StyleProp<ViewStyle>;
   thumbStyle?: StyleProp<ViewStyle>;
@@ -48,7 +55,7 @@ const clamp = (value: number, min: number, max: number) => {
 };
 
 // Match the existing RNEUI rail and minimum-relative step calculation.
-export const perpsSliderValueAt = (
+export const gestureSliderValueAt = (
   left: number,
   travel: number,
   min: number,
@@ -65,9 +72,10 @@ export const perpsSliderValueAt = (
 };
 
 /** Perps sheet input: native ownership, with the existing horizontal slider geometry. */
-export const PerpsGestureSlider = ({
+export const GestureSlider = ({
   allowTouchTrack = false,
   disabled = false,
+  interactive = true,
   maximumValue = 100,
   minimumValue = 0,
   maximumTrackTintColor,
@@ -107,6 +115,10 @@ export const PerpsGestureSlider = ({
   const configuration = useMemo(
     () => ({
       enabled,
+      // Flipping `interactive` detaches/attaches the native surface; the
+      // release effect below must run then too, so an in-flight drag still
+      // completes when the scene deactivates mid-gesture.
+      interactive,
       minimumValue,
       maximumValue,
       step,
@@ -116,6 +128,7 @@ export const PerpsGestureSlider = ({
     }),
     [
       enabled,
+      interactive,
       minimumValue,
       maximumValue,
       step,
@@ -224,7 +237,7 @@ export const PerpsGestureSlider = ({
   const gesture = useMemo(
     () =>
       Gesture.Manual()
-        .enabled(enabled)
+        .enabled(enabled && interactive)
         .shouldCancelWhenOutside(false)
         // Claim DOWN on the UI thread, before either the sheet Pan or its native
         // ScrollView can activate. No simultaneous relationship: the slider owns
@@ -258,7 +271,7 @@ export const PerpsGestureSlider = ({
           const initial = position.value;
           active.value = true;
           session.value += 1;
-          position.value = perpsSliderValueAt(
+          position.value = gestureSliderValueAt(
             startLeft.value,
             travel,
             minimumValue,
@@ -286,7 +299,7 @@ export const PerpsGestureSlider = ({
           if (!touch) {
             return;
           }
-          const next = perpsSliderValueAt(
+          const next = gestureSliderValueAt(
             startLeft.value + touch.absoluteX - startX.value,
             travel,
             minimumValue,
@@ -330,6 +343,7 @@ export const PerpsGestureSlider = ({
         }),
     [
       enabled,
+      interactive,
       allowTouchTrack,
       minimumValue,
       maximumValue,
@@ -408,27 +422,29 @@ export const PerpsGestureSlider = ({
         style={[styles.thumb, thumbStyle, thumbAnimation]}>
         {thumbProps?.children}
       </Animated.View>
-      <GestureDetector gesture={gesture}>
-        <Animated.View
-          collapsable={false}
-          style={[
-            StyleSheet.absoluteFillObject,
-            {
-              left: -horizontalOverflow,
-              right: -horizontalOverflow,
-              top: -verticalOverflow,
-              bottom: -verticalOverflow,
-            },
-          ]}
-        />
-      </GestureDetector>
+      {interactive ? (
+        <GestureDetector gesture={gesture}>
+          <Animated.View
+            collapsable={false}
+            style={[
+              StyleSheet.absoluteFillObject,
+              {
+                left: -horizontalOverflow,
+                right: -horizontalOverflow,
+                top: -verticalOverflow,
+                bottom: -verticalOverflow,
+              },
+            ]}
+          />
+        </GestureDetector>
+      ) : null}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: { height: 40, justifyContent: 'center' },
-  track: { height: 4, borderRadius: 2 },
+  track: { height: 4, borderRadius: 2, borderCurve: 'continuous' },
   absolute: { position: 'absolute', left: 0 },
   thumb: {
     position: 'absolute',
@@ -436,5 +452,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
+    borderCurve: 'continuous',
   },
 });

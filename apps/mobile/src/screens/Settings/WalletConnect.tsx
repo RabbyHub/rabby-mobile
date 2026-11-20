@@ -123,10 +123,12 @@ const getStyles = createGetStyles2024(ctx => ({
     borderWidth: 0,
     padding: 0,
     borderRadius: 16,
+    borderCurve: 'continuous',
     overflow: 'hidden',
   },
   cameraWrap: {
     borderRadius: 16,
+    borderCurve: 'continuous',
   },
   permissionTip: {
     textAlign: 'center',
@@ -143,6 +145,7 @@ const getStyles = createGetStyles2024(ctx => ({
     borderTopWidth: 3,
     borderLeftWidth: 3,
     borderTopLeftRadius: 24,
+    borderCurve: 'continuous',
   },
   cornerTopRight: {
     top: 0,
@@ -150,6 +153,7 @@ const getStyles = createGetStyles2024(ctx => ({
     borderTopWidth: 3,
     borderRightWidth: 3,
     borderTopRightRadius: 24,
+    borderCurve: 'continuous',
   },
   cornerBottomLeft: {
     bottom: 0,
@@ -157,6 +161,7 @@ const getStyles = createGetStyles2024(ctx => ({
     borderBottomWidth: 3,
     borderLeftWidth: 3,
     borderBottomLeftRadius: 24,
+    borderCurve: 'continuous',
   },
   cornerBottomRight: {
     bottom: 0,
@@ -164,6 +169,7 @@ const getStyles = createGetStyles2024(ctx => ({
     borderBottomWidth: 3,
     borderRightWidth: 3,
     borderBottomRightRadius: 24,
+    borderCurve: 'continuous',
   },
   target: {
     marginTop: 32,

@@ -48,6 +48,7 @@ const getStyle = createGetStyles2024(ctx => ({
     height: ASSETS_ITEM_HEIGHT_NEW,
     alignItems: 'center',
     borderRadius: 16,
+    borderCurve: 'continuous',
     flexDirection: 'row',
     paddingHorizontal: 12,
     paddingVertical: 15,
@@ -65,6 +66,7 @@ const getStyle = createGetStyles2024(ctx => ({
   loading: {
     backgroundColor: ctx.colors2024['neutral-bg-4'],
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   defiLoaderGroup: {
     height: DEFI_ITEM_HEIGHT,
@@ -89,6 +91,7 @@ const getStyle = createGetStyles2024(ctx => ({
       ? ctx.colors2024['neutral-bg-1']
       : ctx.colors2024['neutral-bg-2'],
     borderRadius: 16,
+    borderCurve: 'continuous',
     paddingLeft: 12,
     paddingRight: 16,
     paddingVertical: 14,
@@ -97,6 +100,7 @@ const getStyle = createGetStyles2024(ctx => ({
   defiLogo: {
     backgroundColor: ctx.colors2024['neutral-bg-4'],
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   defiLoaderList: {
     flexDirection: 'column',

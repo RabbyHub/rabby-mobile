@@ -908,6 +908,7 @@ const GasMethodShortcut = ({
         flexDirection: 'row',
         padding: 2,
         borderRadius: 6,
+        borderCurve: 'continuous',
         borderWidth: 0.5,
         borderStyle: 'solid',
         borderColor: colors['neutral-line'],
@@ -950,6 +951,7 @@ const GasMethod = (props: {
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 4,
+        borderCurve: 'continuous',
         backgroundColor: active ? colors['blue-light-1'] : 'transparent',
       }}
       onPress={event => {

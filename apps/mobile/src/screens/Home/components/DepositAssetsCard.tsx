@@ -75,6 +75,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     card: {
       width: '100%',
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: isLight
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
@@ -94,6 +95,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
         ? colors2024['neutral-bg-5']
         : colors2024['neutral-bg-1'],
       borderRadius: 12,
+      borderCurve: 'continuous',
       marginBottom: 16,
       marginHorizontal: 12,
       paddingHorizontal: 16,
@@ -123,7 +125,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     title: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
-      fontWeight: '900',
+      fontWeight: '800',
       lineHeight: 24,
       color: colors2024['neutral-title-1'],
       textAlign: 'center',

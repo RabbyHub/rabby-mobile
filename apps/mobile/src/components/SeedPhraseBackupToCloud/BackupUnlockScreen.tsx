@@ -32,6 +32,7 @@ const getStyles = createGetStyles(colors => ({
     borderColor: colors['neutral-line'],
     backgroundColor: 'transparent',
     borderRadius: 8,
+    borderCurve: 'continuous',
     width: '100%',
     color: colors['neutral-title-1'],
     paddingHorizontal: 16,

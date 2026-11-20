@@ -182,6 +182,7 @@ const getStyles = createGetStyles2024(ctx => {
       paddingHorizontal: 8,
       paddingVertical: 4,
       borderRadius: 6,
+      borderCurve: 'continuous',
     },
     headerBtnTitle: {
       fontSize: 13,
@@ -245,6 +246,7 @@ const getStyles = createGetStyles2024(ctx => {
       backgroundColor: ctx.colors2024['neutral-bg-2'],
       padding: 8,
       borderRadius: 8,
+      borderCurve: 'continuous',
       overflow: 'hidden',
     },
   };

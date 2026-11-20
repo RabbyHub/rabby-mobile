@@ -522,6 +522,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   inputContainer: {
     borderRadius: 8,
+    borderCurve: 'continuous',
     height: 56,
   },
   input: {
@@ -530,7 +531,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   headerTitleStyle: {
     color: colors2024['neutral-title-1'],
-    fontWeight: '900',
+    fontWeight: '800',
     fontSize: 20,
     fontFamily: 'SF Pro Rounded',
     lineHeight: 24,

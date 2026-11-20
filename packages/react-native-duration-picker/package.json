@@ -1,0 +1,27 @@
+{
+  "name": "@rabby-wallet/react-native-duration-picker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "System duration controls for Rabby Mobile",
+  "license": "UNLICENSED",
+  "main": "src/index.tsx",
+  "react-native": "src/index.tsx",
+  "types": "src/index.tsx",
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  },
+  "codegenConfig": {
+    "name": "RabbyDurationPickerSpec",
+    "type": "components",
+    "jsSrcsDir": "src",
+    "android": {
+      "javaPackageName": "com.rabby.durationpicker"
+    },
+    "ios": {
+      "componentProvider": {
+        "RabbyDurationPicker": "RabbyDurationPickerView"
+      }
+    }
+  }
+}

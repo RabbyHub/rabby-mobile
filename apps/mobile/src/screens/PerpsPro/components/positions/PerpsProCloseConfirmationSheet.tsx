@@ -248,6 +248,7 @@ const getStyle = createGetStyles2024(
       ...PERPS_PRO_DIALOG_LIST_CARD_PADDING,
       paddingBottom: 12,
       borderRadius: 12,
+      borderCurve: 'continuous',
       backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
     },
     detailRow: getPerpsProListRowStyles(colors2024).listRow,

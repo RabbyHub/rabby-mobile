@@ -132,16 +132,19 @@ const tabLayouts = [
   { height: 32, width: 76, x: 0, y: 0 },
   { height: 32, width: 72, x: 76, y: 0 },
   { height: 32, width: 110, x: 148, y: 0 },
-  { height: 32, width: 82, x: 258, y: 0 },
+  { height: 32, width: 96, x: 258, y: 0 },
+  { height: 32, width: 82, x: 354, y: 0 },
 ];
 const indicatorLayouts = tabLayouts.map(({ width, x }) => ({ width, x }));
 
 const publishAllTabLayouts = () => {
-  ['orders', 'trade', 'transaction', 'funding'].forEach((tab, index) => {
-    fireEvent(screen.getByTestId(`perps-pro-history-tab-${tab}`), 'layout', {
-      nativeEvent: { layout: tabLayouts[index] },
-    });
-  });
+  ['orders', 'trade', 'transaction', 'twap', 'funding'].forEach(
+    (tab, index) => {
+      fireEvent(screen.getByTestId(`perps-pro-history-tab-${tab}`), 'layout', {
+        nativeEvent: { layout: tabLayouts[index] },
+      });
+    },
+  );
 };
 
 const publishScrollableGeometry = () => {
@@ -151,7 +154,7 @@ const publishScrollableGeometry = () => {
     fireEvent(scroll, 'layout', {
       nativeEvent: { layout: { height: 32, width: 200, x: 0, y: 0 } },
     });
-    fireEvent(scroll, 'contentSizeChange', 372, 32);
+    fireEvent(scroll, 'contentSizeChange', 468, 32);
   });
   return scroll;
 };
@@ -265,18 +268,18 @@ describe('PerpsProHistoryTabs', () => {
   it('builds direction-safe strip anchors for unequal-width tabs', () => {
     expect(
       getPerpsProHistoryTabStripAnchors({
-        contentWidth: 372,
+        contentWidth: 468,
         layouts: indicatorLayouts,
         viewportWidth: 200,
       }),
-    ).toEqual([0, 32, 104, 172]);
+    ).toEqual([0, 32, 104, 200, 268]);
     expect(
       getPerpsProHistoryTabStripAnchors({
         contentWidth: 180,
         layouts: indicatorLayouts,
         viewportWidth: 200,
       }),
-    ).toEqual([0, 0, 0, 0]);
+    ).toEqual([0, 0, 0, 0, 0]);
     expect(
       getPerpsProHistoryTabStripAnchors({
         contentWidth: 0,
@@ -304,7 +307,7 @@ describe('PerpsProHistoryTabs', () => {
 
   it('keeps both pill edges monotonic throughout adjacent transitions', () => {
     const anchors = getPerpsProHistoryTabStripAnchors({
-      contentWidth: 372,
+      contentWidth: 468,
       layouts: indicatorLayouts,
       viewportWidth: 200,
     });

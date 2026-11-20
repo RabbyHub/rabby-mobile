@@ -138,7 +138,10 @@ export const DataHeaderInfoSkeleton = () => {
           <Skeleton
             width={100}
             height={20}
-            style={[styles.skeleton, { borderRadius: 4 }]}
+            style={[
+              styles.skeleton,
+              { borderRadius: 4, borderCurve: 'continuous' },
+            ]}
             LinearGradientComponent={LoadingLinear}
           />
         </View>
@@ -177,7 +180,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
     fontSize: 42,
     lineHeight: 46,
-    fontWeight: '900',
+    fontWeight: '800',
   },
   percent: {
     fontFamily: 'SF Pro Rounded',
@@ -189,6 +192,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   skeleton: {
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],

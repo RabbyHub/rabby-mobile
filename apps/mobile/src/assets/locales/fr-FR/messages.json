@@ -2244,7 +2244,10 @@
           "attachedTpSlUnresolved": "Un précédent envoi TP/SL pour ce marché n’est pas résolu. Vérifiez les ordres ouverts et les positions avant de réessayer.",
           "orderFilled": "Ordre exécuté.",
           "orderPlaced": "Ordre passé.",
-          "orderFailed": "Échec de l’ordre."
+          "orderFailed": "Échec de l’ordre.",
+          "scale": "Ordre échelonné",
+          "scaleDescription": "Définissez une plage de prix et placez plusieurs sous-ordres à cours limité",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "Le prix post-only doit être inférieur à la meilleure offre de vente pour éviter une exécution immédiate.",
@@ -2258,6 +2261,9 @@
           "tpSl": {
             "title": "TP/SL",
             "description": "Place des ordres TP/SL au marché simples. Pour les fonctions avancées telles que le TP/SL partiel, définissez le TP/SL sur une position ouverte."
+          },
+          "randomize": {
+            "description": "La randomisation fait varier la taille de chaque sous-ordre jusqu’à ±20 %, tout en respectant la taille maximale des ordres et les autres limites."
           },
           "reduceOnly": {
             "title": "Réduction uniquement",
@@ -2355,7 +2361,8 @@
             "orders": "Historique des ordres",
             "trade": "Historique des trades",
             "transaction": "Dépôts et retraits",
-            "funding": "Frais de financement"
+            "funding": "Frais de financement",
+            "twap": "Historique TWAP"
           },
           "empty": {
             "orders": "Aucun historique d’ordres",
@@ -2537,6 +2544,101 @@
           "cancelPartial": "{{success}} ordres annulés ; {{failed}} en échec",
           "cancelFailed": "Échec de l’annulation de l’ordre",
           "cancelContextChanged": "Le compte a changé. Réessayez."
+        },
+        "scaleOrder": {
+          "lowerPrice": "Prix minimum",
+          "upperPrice": "Prix maximum",
+          "size": "Quantité",
+          "count": "Nombre d’ordres (2–100)",
+          "distribution": "Répartition",
+          "flat": "Uniforme",
+          "ascending": "Croissante",
+          "descending": "Décroissante",
+          "flatDescription": "Chaque ordre reçoit la même quantité",
+          "ascendingDescription": "La quantité augmente avec le prix",
+          "descendingDescription": "La quantité augmente lorsque le prix baisse",
+          "previewBuy": "Aperçu d’achat",
+          "previewSell": "Aperçu de vente",
+          "totalSize": "Quantité totale",
+          "averagePrice": "Prix moyen",
+          "result": "{{accepted}} acceptés, {{rejected}} rejetés, {{unresolved}} en attente de confirmation",
+          "unknown": "Résultat en attente de confirmation. Consultez les ordres ouverts et l’historique avant de placer un autre ordre.",
+          "errors": {
+            "range": "Saisissez des prix valides, avec le maximum supérieur au minimum.",
+            "count": "Saisissez un entier entre 2 et 100.",
+            "size": "Saisissez une quantité d’ordre supérieure à 0 respectant la précision des quantités requise sur ce marché.",
+            "duplicatePrice": "Certains prix d’ordres sont identiques après ajustement à la précision des prix requise. Élargissez la plage de prix ou réduisez le nombre d’ordres.",
+            "minimum": "Après ajustement à la précision des quantités requise, chaque sous-ordre doit avoir une valeur d’au moins $10.",
+            "maximum": "La valeur totale des ordres dépasse la limite autorisée sur ce marché.",
+            "capacity": "Capacité de négociation insuffisante pour ce lot.",
+            "reduceOnly": "La quantité totale des ordres dépasse la quantité de la position pouvant actuellement être clôturée."
+          }
+        },
+        "twap": {
+          "description": "Placer des ordres à intervalles personnalisés",
+          "totalTime": "Durée totale",
+          "durationFieldLabel": "Durée totale (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} min",
+          "minuteValue_one": "{{t}} min",
+          "confirmationDuration": "{{t}} min",
+          "totalSize": "Quantité totale",
+          "selectTime": "Choisir la durée totale",
+          "reset": "Réinitialiser",
+          "randomize": "Aléatoire",
+          "randomized": "Aléatoire activé",
+          "durationHint": "La durée de l’ordre TWAP est de 5 à 1439 minutes.",
+          "minimum": "La quantité totale minimale est de {{amount}}",
+          "filled": "Exécuté",
+          "duration": "Temps écoulé",
+          "runtime": "Durée d’exécution",
+          "averagePrice": "Prix moyen",
+          "end": "Terminer",
+          "detail": "Détails",
+          "add": "Ajouter",
+          "detailTitle": "Détails du TWAP en cours",
+          "historyDetailTitle": "Détails de l’historique TWAP",
+          "trades": "Transactions",
+          "size": "Quantité",
+          "fee": "Frais",
+          "noTrades": "Aucune transaction pour le moment",
+          "endTitle": "Confirmer la fin de l’ordre TWAP",
+          "endMessage": "Après confirmation, votre ordre TWAP sera arrêté et ses ordres ouverts seront automatiquement annulés.",
+          "ending": "Arrêt en cours…",
+          "ended": "Ordre TWAP terminé.",
+          "placed": "Ordre TWAP {{coin}} placé.",
+          "unknownOutcome": "Le résultat du TWAP {{coin}} est en attente de confirmation. Vérifiez les ordres et l’historique avant de placer un autre ordre.",
+          "unknown": "Le résultat du TWAP est en attente de confirmation. Vérifiez les ordres et l’historique avant de réessayer.",
+          "loadError": "Impossible de charger les ordres TWAP. Touchez pour réessayer.",
+          "endedLabel": "Terminé",
+          "skipConfirmation": "Ne plus afficher la double confirmation des ordres TWAP.",
+          "averageFilledPrice": "Prix moyen d’exécution",
+          "status": {
+            "working": "En cours",
+            "waiting": "En attente",
+            "filled": "Exécuté",
+            "cancelled": "Annulé",
+            "expired": "Expiré",
+            "unknown": "Inconnu"
+          },
+          "fills": {
+            "loading": "Chargement des transactions…",
+            "error": "Impossible de charger les transactions. Touchez pour réessayer."
+          },
+          "errors": {
+            "amountRequired": "Saisissez la quantité de l’ordre.",
+            "amountTooSmall": "La valeur de l’ordre TWAP doit être d’au moins $100.",
+            "amountExceedsMaximum": "L’ordre dépasse le maximum disponible.",
+            "invalidPrecision": "Saisissez une quantité respectant la précision de ce marché.",
+            "priceUnavailable": "Le prix actuel est indisponible. Veuillez réessayer.",
+            "durationRequired": "Saisissez une durée totale.",
+            "durationInvalid": "Saisissez un nombre entier de minutes.",
+            "durationTooShort": "La durée minimale du TWAP est de 5 minutes.",
+            "durationTooLong": "La durée maximale du TWAP est de 1439 minutes.",
+            "capacity": "Capacité de trading insuffisante pour cet ordre.",
+            "reduceOnly": "L’ordre dépasse la quantité de la position pouvant être clôturée.",
+            "contextChanged": "Le compte, l’ordre ou le marché a changé. Vérifiez à nouveau l’ordre."
+          }
         }
       },
       "limitOrders": "Ordres à cours limité",

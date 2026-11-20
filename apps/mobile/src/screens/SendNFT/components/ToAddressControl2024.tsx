@@ -232,6 +232,7 @@ export const ToAccountEntry = React.memo(function ToAccountEntry({
 const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
   shadowView: {
     borderRadius: 20,
+    borderCurve: 'continuous',
     // backgroundColor: colors2024['neutral-bg-1'],
   },
   emptyAddrShadowView: {
@@ -248,6 +249,7 @@ const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
     borderWidth: 0,
     // borderColor: colors2024['neutral-line'],
     borderRadius: 20,
+    borderCurve: 'continuous',
     flex: 1,
     flexGrow: 1,
     backgroundColor: colors2024['neutral-bg-1'],
@@ -278,6 +280,7 @@ const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
     height: 24,
     backgroundColor: colors2024['neutral-line'],
     borderRadius: 6,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -349,11 +352,13 @@ const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
     height: 30,
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 30,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
   walletIcon: {
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   modalNextButtonText: {
     fontFamily: 'SF Pro Rounded',

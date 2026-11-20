@@ -68,6 +68,7 @@ const getStyle = createGetStyles2024(ctx => ({
     borderWidth: 1,
     borderColor: ctx.colors2024['brand-default'],
     borderRadius: 8,
+    borderCurve: 'continuous',
     // The English label is the design width; other languages are longer, so this
     // is a minimum rather than a fixed width (QA 1382: "Einfügen"/"Вставить"
     // spilled outside the 85pt pill).

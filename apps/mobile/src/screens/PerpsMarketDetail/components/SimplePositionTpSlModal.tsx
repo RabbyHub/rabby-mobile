@@ -18,6 +18,7 @@ import { useRegisterBlockingModal, type ModalGateId } from '@/utils/modalGate';
 type Props = React.PropsWithChildren<{
   modalId: ModalGateId;
   visible?: boolean;
+  inputFocused?: boolean;
   onRequestClose?: () => void;
   onShow?: () => void;
   onDismiss?: () => void;
@@ -27,10 +28,12 @@ type Props = React.PropsWithChildren<{
 /** Mounted only while the editor is present; keyboard updates stay local. */
 function PositionViewport({
   visible,
+  inputFocused,
   onCloseStart,
   children,
 }: React.PropsWithChildren<{
   visible: boolean;
+  inputFocused: boolean;
   onCloseStart?: () => void;
 }>) {
   const dimensions = useWindowDimensions();
@@ -38,6 +41,8 @@ function PositionViewport({
   const hostRef = useRef<View>(null);
   const visibleRef = useRef(visible);
   visibleRef.current = visible;
+  const inputFocusedRef = useRef(inputFocused);
+  inputFocusedRef.current = inputFocused;
   const closeStartRef = useRef(onCloseStart);
   closeStartRef.current = onCloseStart;
   const [host, setHost] = useState({ y: 0, height: dimensions.height });
@@ -48,12 +53,20 @@ function PositionViewport({
     if (!visible) {
       // The Portal has received visible=false before blur emits keyboard events.
       closeStartRef.current?.();
+    }
+  }, [visible]);
+
+  useEffect(() => {
+    if (!visible || Platform.OS !== 'ios') return;
+    if (!inputFocused) {
+      // A later password sheet owns its keyboard and layout animations.
+      setKeyboardY(null);
       return;
     }
-    if (Platform.OS !== 'ios') return;
     let currentY: number | null = null;
     const move = (nextY: number | null, event: KeyboardEvent) => {
-      if (!visibleRef.current || nextY === currentY) return;
+      if (!visibleRef.current || !inputFocusedRef.current || nextY === currentY)
+        return;
       currentY = nextY;
       if (event.duration) Keyboard.scheduleLayoutAnimation(event);
       setKeyboardY(nextY);
@@ -82,7 +95,7 @@ function PositionViewport({
     currentY = metrics && metrics.screenY > 0 ? metrics.screenY : null;
     setKeyboardY(currentY);
     return () => subscriptions.forEach(subscription => subscription.remove());
-  }, [visible]);
+  }, [inputFocused, visible]);
 
   // Keyboard coordinates are window-relative; convert them to this Portal's
   // measured host before limiting the card. Move only as far as necessary.
@@ -153,6 +166,7 @@ function PositionViewport({
 export function SimplePositionTpSlModal({
   modalId,
   visible = false,
+  inputFocused = false,
   onRequestClose,
   onShow,
   onDismiss,
@@ -236,7 +250,10 @@ export function SimplePositionTpSlModal({
             }
           }}
         />
-        <PositionViewport visible={visible} onCloseStart={onCloseStart}>
+        <PositionViewport
+          visible={visible}
+          inputFocused={inputFocused}
+          onCloseStart={onCloseStart}>
           {children}
         </PositionViewport>
       </Animated.View>

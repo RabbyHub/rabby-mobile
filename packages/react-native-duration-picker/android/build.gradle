@@ -1,0 +1,24 @@
+apply plugin: "com.android.library"
+apply plugin: "org.jetbrains.kotlin.android"
+apply plugin: "com.facebook.react"
+
+android {
+  namespace "com.rabby.durationpicker"
+  compileSdkVersion rootProject.ext.compileSdkVersion
+  defaultConfig {
+    minSdkVersion rootProject.ext.minSdkVersion
+    targetSdkVersion rootProject.ext.targetSdkVersion
+  }
+  sourceSets.main.java.srcDirs += ["${buildDir}/generated/source/codegen/java"]
+}
+
+react {
+  jsRootDir = file("../src")
+  libraryName = "RabbyDurationPickerSpec"
+  codegenJavaPackageName = "com.rabby.durationpicker"
+}
+
+dependencies {
+  implementation "com.facebook.react:react-android"
+  implementation "androidx.recyclerview:recyclerview:1.3.1"
+}

@@ -252,6 +252,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   qrCard: {
     alignItems: 'center',
     borderRadius: 16,
+    borderCurve: 'continuous',
     width: '100%',
     paddingTop: 23,
     paddingBottom: 35,
@@ -273,6 +274,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
     borderRadius: 8,
+    borderCurve: 'continuous',
     padding: 8,
     marginBottom: 24,
     backgroundColor: 'white',
@@ -320,6 +322,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingLeft: 12,
     paddingRight: 6,
     borderRadius: 100,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-4'],
@@ -344,6 +347,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: CHAIN_LOGO_SIZE + 2,
     height: CHAIN_LOGO_SIZE + 2,
     borderRadius: (CHAIN_LOGO_SIZE + 2) / 2,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: isLight
       ? colors2024['neutral-bg-1']
@@ -358,6 +362,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: CHAIN_LOGO_SIZE,
     height: CHAIN_LOGO_SIZE,
     borderRadius: CHAIN_LOGO_SIZE / 2,
+    borderCurve: 'continuous',
   },
   selectChainText: {
     fontFamily: 'SF Pro Rounded',
