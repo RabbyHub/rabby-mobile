@@ -11,6 +11,7 @@ import type { Account } from '@/core/startupServices/preference';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 import type {
   GetNestedScreenRouteProp,
   TransactionNavigatorParamList,
@@ -54,6 +55,7 @@ const MemeCoinBuyContent = ({
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
   const { safeOffHeader } = useSafeSizes();
+  const columnInset = useSystemColumnInset();
 
   const [amountText, setAmountText] = useState(amountUsd.toFixed(2));
   const [maxPriceImpactPct, setMaxPriceImpactPct] = useState<MaxPriceImpactPct>(
@@ -146,7 +148,15 @@ const MemeCoinBuyContent = ({
   }, [account.address, logoByKey, maxPriceImpactPct, plan.legs]);
 
   return (
-    <View style={[styles.screen, { paddingTop: safeOffHeader }]}>
+    <View
+      style={[
+        styles.screen,
+        {
+          paddingTop: safeOffHeader,
+          paddingLeft: columnInset.left,
+          paddingRight: columnInset.right,
+        },
+      ]}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}

@@ -4,7 +4,8 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BackHandler, Dimensions, View } from 'react-native';
+import { BackHandler, View } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import {
   DappWebViewHideContext,
   useDappWebViewScreen,
@@ -105,7 +106,9 @@ export function DappWebViewStubScreen() {
         clearActiveDappOrigin();
       } else {
         const { willClose } = collapseDappWebViewScreen(ctx);
-        if (!willClose) return;
+        if (!willClose) {
+          return;
+        }
         clearActiveDappOrigin();
       }
     },
@@ -327,7 +330,7 @@ const getWebViewStubStyles = createGetStyles2024(ctx => {
       justifyContent: 'center',
       // height: '100%',
       /** @why keep '100%' for iOS layout, but could set as windowHeight for Android */
-      maxHeight: IS_ANDROID ? Dimensions.get('window').height : '100%',
+      maxHeight: IS_ANDROID ? getDimensionsSnapshot('window').height : '100%',
       minHeight: 20,
       backgroundColor: ctx.colors['neutral-bg-1'],
       // ...makeDebugBorder('black'),

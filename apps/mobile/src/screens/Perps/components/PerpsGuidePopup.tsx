@@ -18,13 +18,13 @@ import { useMemoizedFn } from 'ahooks';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Dimensions,
   Image,
   ScrollView,
   TouchableWithoutFeedback,
   useWindowDimensions,
   View,
 } from 'react-native';
+import { svsLayout } from '@/hooks/useAppLayout';
 import {
   PanGestureHandler,
   PanGestureHandlerGestureEvent,
@@ -45,8 +45,6 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-
-const { width: TAB_WIDTH } = Dimensions.get('window');
 
 export const PerpsGuidePopup: React.FC<{
   visible?: boolean;
@@ -114,10 +112,13 @@ export const PerpsGuidePopup: React.FC<{
       onComplete?.();
       return;
     } else {
-      translateX.value = withSpring(-(activeIndex + 1) * TAB_WIDTH, {
-        damping: 20,
-        stiffness: 90,
-      });
+      translateX.value = withSpring(
+        -(activeIndex + 1) * svsLayout.winLayout.value.width,
+        {
+          damping: 20,
+          stiffness: 90,
+        },
+      );
       setActiveIndex(activeIndex + 1);
     }
   });
@@ -143,7 +144,8 @@ export const PerpsGuidePopup: React.FC<{
     onActive: (event, context) => {
       // 限制滑动范围，防止滑动过头
       const newTranslateX = context.startX + event.translationX;
-      const minTranslate = -(steps.length - 1) * TAB_WIDTH;
+      const minTranslate =
+        -(steps.length - 1) * svsLayout.winLayout.value.width;
 
       if (newTranslateX > 0) {
         translateX.value = withSpring(0, { damping: 50 });
@@ -155,9 +157,11 @@ export const PerpsGuidePopup: React.FC<{
     },
     onEnd: event => {
       // 根据滑动速度和距离决定切换到哪个标签
-      const threshold = TAB_WIDTH * 0.3;
+      const threshold = svsLayout.winLayout.value.width * 0.3;
       const draggedDistance = -event.translationX;
-      const currentTab = Math.round(translateX.value / TAB_WIDTH);
+      const currentTab = Math.round(
+        translateX.value / svsLayout.winLayout.value.width,
+      );
 
       if (Math.abs(event.velocityX) > 500) {
         // 快速滑动时根据速度方向切换
@@ -167,35 +171,47 @@ export const PerpsGuidePopup: React.FC<{
           Math.min(steps.length - 1, activeIndex - direction),
         );
 
-        translateX.value = withSpring(-newIndex * TAB_WIDTH, {
-          damping: 20,
-          stiffness: 90,
-        });
+        translateX.value = withSpring(
+          -newIndex * svsLayout.winLayout.value.width,
+          {
+            damping: 20,
+            stiffness: 90,
+          },
+        );
         runOnJS(setActiveIndex)(newIndex);
       } else if (draggedDistance > threshold) {
         // 滑动距离超过阈值，切换到下一个
         const newIndex = Math.min(steps.length - 1, activeIndex + 1);
 
-        translateX.value = withSpring(-newIndex * TAB_WIDTH, {
-          damping: 20,
-          stiffness: 90,
-        });
+        translateX.value = withSpring(
+          -newIndex * svsLayout.winLayout.value.width,
+          {
+            damping: 20,
+            stiffness: 90,
+          },
+        );
         runOnJS(setActiveIndex)(newIndex);
       } else if (draggedDistance < -threshold) {
         // 滑动距离超过阈值，切换到上一个
         const newIndex = Math.max(0, activeIndex - 1);
 
-        translateX.value = withSpring(-newIndex * TAB_WIDTH, {
-          damping: 20,
-          stiffness: 90,
-        });
+        translateX.value = withSpring(
+          -newIndex * svsLayout.winLayout.value.width,
+          {
+            damping: 20,
+            stiffness: 90,
+          },
+        );
         runOnJS(setActiveIndex)(newIndex);
       } else {
         // 回弹到当前标签
-        translateX.value = withSpring(-activeIndex * TAB_WIDTH, {
-          damping: 20,
-          stiffness: 90,
-        });
+        translateX.value = withSpring(
+          -activeIndex * svsLayout.winLayout.value.width,
+          {
+            damping: 20,
+            stiffness: 90,
+          },
+        );
       }
     },
   });
@@ -333,7 +349,7 @@ const getStyle = createGetStyles2024(ctx => {
     },
     step: {
       marginBottom: 20,
-      width: TAB_WIDTH,
+      width: svsLayout.winLayout.value.width,
       paddingHorizontal: 32,
     },
     stepActive: {

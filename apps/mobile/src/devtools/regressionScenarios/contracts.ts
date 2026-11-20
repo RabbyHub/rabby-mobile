@@ -61,7 +61,24 @@ export type ExperimentalRegressionScenarioId =
   (typeof EXPERIMENTAL_REGRESSION_SCENARIO_IDS)[number];
 export type RegressionScenarioId = (typeof REGRESSION_SCENARIO_IDS)[number];
 
-export const REGRESSION_SCREEN_IDS = [
+/**
+ * Screen ids a regression scenario may reference.
+ *
+ * Derived from the generated navigator registry instead of a hand-written
+ * list: every screen a navigator registers is addressable by a scenario and by
+ * the `debug-open-screen` deeplink. Regenerate with
+ * `node scripts/gen-screen-registry.mjs`.
+ *
+ * The previous 18-entry list is kept below as the "curated" subset that the
+ * existing scenarios were written against; it is only used for reporting.
+ */
+import type { RegisteredScreenId } from '../screenRegistry/screens.gen';
+
+export { REGISTERED_SCREEN_IDS as REGRESSION_SCREEN_IDS } from '../screenRegistry/screens.gen';
+
+export type RegressionScreenId = RegisteredScreenId;
+
+export const CURATED_REGRESSION_SCREEN_IDS = [
   'Home',
   'Unlock',
   'SingleAddressHome',
@@ -81,8 +98,6 @@ export const REGRESSION_SCREEN_IDS = [
   'SyncExtensionPassword',
   'MultiAddressHistory',
 ] as const;
-
-export type RegressionScreenId = (typeof REGRESSION_SCREEN_IDS)[number];
 
 export const REGRESSION_SCENARIO_ACTIONS = [
   'configure',

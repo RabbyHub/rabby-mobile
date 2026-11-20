@@ -258,6 +258,9 @@ export function sanitizeLinkForLogging(appLink: string) {
 
   const sensitiveKeys = new Set<string>([
     ...FORBIDDEN_QUERY_KEYS,
+    'key',
+    'keys',
+    'password',
     'uri',
     'wc',
     'dapp',

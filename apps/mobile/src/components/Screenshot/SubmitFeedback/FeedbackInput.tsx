@@ -1,6 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react';
 import type { Ref } from 'react';
-import { Dimensions, Keyboard, View } from 'react-native';
+import { Keyboard, View } from 'react-native';
 
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
