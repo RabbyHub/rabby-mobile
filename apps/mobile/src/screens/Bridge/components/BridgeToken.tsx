@@ -23,7 +23,7 @@ import {
 import TokenSelect from '@/screens/Swap/components/TokenSelect';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { PerpsGestureSlider as Slider } from '@/components/perps/PerpsGestureSlider';
+import { GestureSlider as Slider } from '@/components/GestureSlider';
 import LinearGradient from 'react-native-linear-gradient';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import type { Account } from '@/core/startupServices/preference';
@@ -212,8 +212,11 @@ const BridgeTokenInner = ({
           // excludeChains={excludeChains}
           // supportChains={supportedChains}
         />
-        {/* Unmount native gestures before Fabric recycles the hidden scene. */}
-        {isFromToken && !hiddenSlider && sceneActive && (
+        {/*
+          Keep the slider on screen for the whole pager transition; only the
+          native gesture detaches while the scene is inactive (Fabric recycling).
+        */}
+        {isFromToken && !hiddenSlider && (
           <View style={styles.sliderContainer}>
             <View
               ref={sliderTrackRef}
@@ -223,6 +226,7 @@ const BridgeTokenInner = ({
                 key={`${token?.id}-${token?.chain}`}
                 allowTouchTrack={!disabled}
                 disabled={disabled}
+                interactive={sceneActive}
                 style={styles.sliderInner}
                 value={slider ?? 0}
                 onSlidingStart={onSlidingStart}
