@@ -38937,11 +38937,11 @@ __metadata:
 
 "react-native-pager-view@patch:react-native-pager-view@npm%3A6.7.0#./.yarn/patches/react-native-pager-view-npm-6.7.0-0fd4ad27df.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 6.7.0
-  resolution: "react-native-pager-view@patch:react-native-pager-view@npm%3A6.7.0#./.yarn/patches/react-native-pager-view-npm-6.7.0-0fd4ad27df.patch::version=6.7.0&hash=9bd1ea&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "react-native-pager-view@patch:react-native-pager-view@npm%3A6.7.0#./.yarn/patches/react-native-pager-view-npm-6.7.0-0fd4ad27df.patch::version=6.7.0&hash=138406&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10/20be166e499dda801209392df297c55ef811f4c019cc51ef1728e0a52af45a9cd44f9363acf8174ca72bcdbd964d2aca9e62b47def626857db97ba9410fcd6c9
+  checksum: 10/5c912aa881d04491e7036ab1a430092823546022eee109a89e2f9e71c4584c2373dc2e4d33c74dfaaa0d542cda785dda4db2965c675c6c39b8da028ec2624139
   languageName: node
   linkType: hard
 

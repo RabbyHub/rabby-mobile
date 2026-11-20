@@ -576,3 +576,15 @@ index 507b45d..8127203 100644
  - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
      [self.eventDispatcher sendEvent:[[RCTOnPageScrollStateChanged alloc] initWithReactTag:self.reactTag state:@"idle" coalescingKey:_coalescingKey++]];
  }
+diff --git a/ios/Fabric/RNCPagerViewComponentView.mm b/ios/Fabric/RNCPagerViewComponentView.mm
+--- a/ios/Fabric/RNCPagerViewComponentView.mm
++++ b/ios/Fabric/RNCPagerViewComponentView.mm
+@@ -182,4 +182,8 @@ - (void)handleCommand:(const NSString *)commandName args:(const NSArray *)args {
+    RCTRNCViewPagerHandleCommand(self, commandName, args);
+ }
+ 
++- (void)setScrollEnabledImperatively:(BOOL)scrollEnabled {
++    scrollView.scrollEnabled = scrollEnabled;
++}
++
+ #pragma mark - Internal methods
