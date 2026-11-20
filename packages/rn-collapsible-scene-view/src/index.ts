@@ -12,3 +12,4 @@ export {
   type RootSceneOverlayContext,
   type RootScenePagerUI,
 } from './RootScenePager';
+export { shouldPublishRootSceneSettled } from './rootScenePagerModel';
