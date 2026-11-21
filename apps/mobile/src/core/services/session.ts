@@ -19,6 +19,12 @@ type SessionPort = {
   port: {
     postMessage: (message: any, origin: string) => void;
   };
+  /**
+   * Optional gate the port owner (see `BackgroundBridge`) can implement to drop
+   * a broadcast before it reaches the page — e.g. a `chainChanged` carrying
+   * values the page already holds.
+   */
+  shouldPushMessage?: (event: BroadcastEvent, data: any) => boolean;
 };
 type SessionKey = SessionPort;
 export class Session {
@@ -32,6 +38,10 @@ export class Session {
 
   pushMessage(event: BroadcastEvent, data: any) {
     this.pms.forEach(pm => {
+      if (pm.shouldPushMessage && !pm.shouldPushMessage(event, data)) {
+        return;
+      }
+
       pm.port.postMessage(
         {
           name: 'rabby-provider',
