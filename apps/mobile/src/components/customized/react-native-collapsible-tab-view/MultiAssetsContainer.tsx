@@ -56,6 +56,15 @@ import {
 } from 'react-native-collapsible-tab-view/src/types';
 import { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
 
+/**
+ * `react-native-pager-view` ships `setScrollEnabledImperatively` in JS, but the
+ * Fabric iOS component only implements it from our yarn patch (the Paper
+ * manager always had it). Dispatching it into a native build without the patch
+ * aborts the app with an unrecognized selector, so builds without the patch
+ * must set this to false.
+ */
+const PAGER_VIEW_IMPERATIVE_SCROLL_SUPPORTED = true;
+
 const AnimatedPagerView = Animated.createAnimatedComponent(PagerView);
 
 type MultiAssetsContainerProps = CollapsibleProps & {
@@ -348,6 +357,14 @@ export const MultiAssetsContainer = React.memo(
     // list's native recognizer, which is exactly the scroll it is meant to
     // protect. It only observes the first direction, locks the pager out on a
     // vertical verdict, and fails immediately so the list keeps the gesture.
+    // `react-native-pager-view` exposes `setScrollEnabledImperatively` in JS,
+    // but the Fabric iOS component only implements it from our yarn patch (the
+    // Paper manager always had it). Dispatching it into a native build without
+    // the patch aborts the app with an unrecognized selector, so every
+    // imperative call goes through this switch.
+    const canSetPagerScrollEnabledImperatively =
+      PAGER_VIEW_IMPERATIVE_SCROLL_SUPPORTED;
+
     const pagerScrollEnabledRef = React.useRef(true);
     const setPagerScrollEnabled = React.useCallback(
       (enabled: boolean) => {
@@ -355,16 +372,21 @@ export const MultiAssetsContainer = React.memo(
           return;
         }
         pagerScrollEnabledRef.current = enabled;
+        if (!canSetPagerScrollEnabledImperatively) {
+          return;
+        }
         containerRef.current?.setScrollEnabled?.(enabled);
       },
-      [containerRef],
+      [canSetPagerScrollEnabledImperatively, containerRef],
     );
     React.useEffect(
       () => () => {
         // Never leave the pager disabled if the screen goes away mid-gesture.
-        containerRef.current?.setScrollEnabled?.(true);
+        if (canSetPagerScrollEnabledImperatively) {
+          containerRef.current?.setScrollEnabled?.(true);
+        }
       },
-      [containerRef],
+      [canSetPagerScrollEnabledImperatively, containerRef],
     );
     const pagerGateLocked = useSharedValue(false);
     const pagerGateGesture = React.useMemo(

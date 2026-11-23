@@ -32,6 +32,9 @@ jest.mock('react-native-reanimated', () => ({
   useAnimatedStyle: (callback: () => object) => callback(),
   useSharedValue: (value: unknown) =>
     require('react').useRef({ value }).current,
+  // `@/utils/styles` -> `@/core/dimensions` -> `@/hooks/useAppLayout` builds
+  // its layout mutables at module scope.
+  makeMutable: (value: unknown) => ({ value }),
 }));
 jest.mock('react-native-gesture-handler', () => ({
   TouchableOpacity: require('react-native').TouchableOpacity,
