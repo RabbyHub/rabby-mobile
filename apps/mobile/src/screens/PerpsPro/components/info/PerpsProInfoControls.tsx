@@ -3,8 +3,14 @@ import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
+
+import {
+  PERPS_PRO_INFO_CONTROLS_ROW_HEIGHT,
+  PERPS_PRO_POSITIONS_CONTROLS_HEIGHT,
+  PERPS_PRO_POSITIONS_CONTROLS_INSET,
+} from './perpsProInfoTabsSticky';
 
 interface PerpsProInfoControlsProps {
   actionLabel: string;
@@ -13,6 +19,7 @@ interface PerpsProInfoControlsProps {
   hideOtherSymbols: boolean;
   onAction?: () => void;
   onToggleHideOtherSymbols: () => void;
+  style?: StyleProp<ViewStyle>;
   testID: string;
 }
 
@@ -25,13 +32,14 @@ export const PerpsProInfoControls: React.FC<PerpsProInfoControlsProps> =
       hideOtherSymbols,
       onAction,
       onToggleHideOtherSymbols,
+      style,
       testID,
     }) => {
       const { colors2024, styles } = useTheme2024({ getStyle });
       const { t } = useTranslation();
 
       return (
-        <View style={styles.container} testID={testID}>
+        <View style={[styles.container, style]} testID={testID}>
           <Pressable
             accessibilityLabel={t('page.perps.pro.info.hideOtherSymbols')}
             accessibilityRole="checkbox"
@@ -81,9 +89,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     flexDirection: 'row',
     gap: 8,
+    height: PERPS_PRO_POSITIONS_CONTROLS_HEIGHT,
     // Figma 86609:330024: 12pt list inset + 8pt row inset.
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingVertical: PERPS_PRO_POSITIONS_CONTROLS_INSET,
   },
   filter: {
     alignItems: 'center',
@@ -104,7 +113,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: 6,
     borderCurve: 'continuous',
-    height: 24,
+    height: PERPS_PRO_INFO_CONTROLS_ROW_HEIGHT,
     justifyContent: 'center',
     marginLeft: 'auto',
     minWidth: 64,
@@ -115,7 +124,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: 6,
     borderCurve: 'continuous',
-    height: 24,
+    height: PERPS_PRO_INFO_CONTROLS_ROW_HEIGHT,
     justifyContent: 'center',
     marginLeft: 'auto',
     minWidth: 64,
