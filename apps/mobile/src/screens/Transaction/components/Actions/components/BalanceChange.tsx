@@ -329,6 +329,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => {
       paddingRight: 12,
       backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
       borderRadius: 16,
+      borderCurve: 'continuous',
     },
     tokenBalanceChangeHeader: {
       marginBottom: 16,
@@ -413,6 +414,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => {
       width: 34,
       height: 34,
       borderRadius: 8,
+      borderCurve: 'continuous',
     },
     tokenChainIcon: {
       position: 'absolute',
@@ -423,6 +425,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => {
       borderWidth: 1,
       borderColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
       borderRadius: 1000,
+      borderCurve: 'continuous',
     },
   };
 });

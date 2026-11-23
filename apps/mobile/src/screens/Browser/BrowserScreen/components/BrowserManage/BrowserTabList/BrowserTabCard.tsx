@@ -82,6 +82,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
     borderRadius: 14,
+    borderCurve: 'continuous',
   },
   shadow: {
     shadowColor: 'rgba(0, 0, 0, 0.02)',
@@ -96,6 +97,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
     borderTopLeftRadius: 14,
     borderTopRightRadius: 14,
+    borderCurve: 'continuous',
     paddingHorizontal: 30,
     paddingVertical: 6,
     height: 30,
@@ -123,12 +125,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: '100%',
     borderBottomLeftRadius: 14,
     borderBottomRightRadius: 14,
+    borderCurve: 'continuous',
   },
   wrap: {
     padding: 2,
     borderWidth: 2,
     borderColor: 'transparent',
     borderRadius: 17,
+    borderCurve: 'continuous',
   },
 
   active: {

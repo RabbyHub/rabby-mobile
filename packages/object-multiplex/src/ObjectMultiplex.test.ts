@@ -41,7 +41,7 @@ test('basic - obj', (done) => {
   setImmediate(() => inTransport.end(null, () => undefined));
 });
 
-test.only('roundtrip', (done) => {
+test('roundtrip', (done) => {
   const { outTransport, inStream, outStream } = basicTestSetup();
   const doubler = new Transform({
     objectMode: true,
@@ -113,9 +113,25 @@ function basicTestSetup() {
   // logEvents('inStream', inStream);
   // logEvents('outStream', outStream);
 
+  // readable-stream 4.x reports the intentional teardown below as
+  // ERR_STREAM_PREMATURE_CLOSE. It is expected here: the tests end a transport
+  // to simulate a disconnect, so keep it from surfacing as an unhandled error
+  // while still failing loudly on anything else.
+  const onStreamError = (err: NodeJS.ErrnoException) => {
+    if (err?.code !== 'ERR_STREAM_PREMATURE_CLOSE') {
+      throw err;
+    }
+  };
+  inMux.on('error', onStreamError);
+  outMux.on('error', onStreamError);
+  inTransport.on('error', onStreamError);
+  outTransport.on('error', onStreamError);
+  inStream.on('error', onStreamError);
+  outStream.on('error', onStreamError);
+
   pipeline(inMux, inTransport, outMux, outTransport, inMux, (err) => {
     console.log('pipeline lost connection');
-    if (err) {
+    if (err && err.code !== 'ERR_STREAM_PREMATURE_CLOSE') {
       console.error(err);
     }
   });
@@ -143,6 +159,12 @@ function bufferToEnd(stream: Stream, callback: (err: Error | null, results: any[
   // cleanup of stream should be called at end of each stream
   // this ensures that
   stream.prependListener('close', onFinish);
+  // readable-stream 4.x reports the intentional transport teardown as
+  // ERR_STREAM_PREMATURE_CLOSE; treat it as a normal end instead of an
+  // unhandled error.
+  stream.on('error', (err: NodeJS.ErrnoException) => {
+    onFinish(err?.code === 'ERR_STREAM_PREMATURE_CLOSE' ? null : err);
+  });
   stream.on('data', (chunk) => {
     results.push(chunk);
   });

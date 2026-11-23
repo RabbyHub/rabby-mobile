@@ -1,6 +1,7 @@
 import { AppColorsVariants, AppColors2024Variants } from '@/constant/theme';
 import { FontNames, getRoundedFontStyle } from '@/core/utils/fonts';
 import {
+  Dimensions,
   ImageStyle,
   ScaledSize,
   StyleSheet,
@@ -44,6 +45,21 @@ type CreateStyles2024Options = {
    * @description safe area inset value
    */
   safeAreaInsets: EdgeInsets;
+  /**
+   * Live window size in dp.
+   *
+   * Filled by `useTheme2024` / `getTheme2024`; direct `getStyles(ctx)` callers
+   * (tests, one-off builders) may omit them and get a `Dimensions` snapshot.
+   */
+  windowWidth?: number;
+  windowHeight?: number;
+  /**
+   * Resolved app language (e.g. `en-US`).
+   *
+   * Filled by `useTheme2024` / `getTheme2024`; omitted values stay undefined
+   * for direct callers so a factory can fall back to its own default.
+   */
+  language?: string;
 };
 type CreateStyles2024WithReanimatedOptions = Pick<
   CreateStyles2024Options,
@@ -109,8 +125,17 @@ export function createGetStyles2024(...args: any[]) {
 
   const stylesFn = input?.styles || styles || DefaultGetStyles;
 
-  const getStyles = (ctx: CreateStyles2024Options) =>
-    StyleSheet.create(mutateStyles(stylesFn(ctx)));
+  const getStyles = (ctx: CreateStyles2024Options) => {
+    // Keep direct callers working: fill the layout snapshot while leaving an
+    // explicitly supplied value untouched.
+    const { width, height } = Dimensions.get('window');
+    const withLayout: CreateStyles2024Options = {
+      ...ctx,
+      windowWidth: ctx.windowWidth ?? width,
+      windowHeight: ctx.windowHeight ?? height,
+    };
+    return StyleSheet.create(mutateStyles(stylesFn(withLayout)));
+  };
   const reanimatedStyles = input?.reanimatedStyles || {};
 
   return {

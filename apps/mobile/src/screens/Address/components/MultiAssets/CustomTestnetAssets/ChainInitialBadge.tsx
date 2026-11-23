@@ -14,7 +14,12 @@ export const ChainInitialBadge = memo(
       <View
         style={[
           styles.chainInitialBadge,
-          { width: size, height: size, borderRadius: size / 3 },
+          {
+            width: size,
+            height: size,
+            borderRadius: size / 3,
+            borderCurve: 'continuous',
+          },
         ]}>
         <Text style={styles.chainInitialText}>{label}</Text>
       </View>

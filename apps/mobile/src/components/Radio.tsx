@@ -13,6 +13,7 @@ const getStyles = createGetStyles(colors => {
       width: 16,
       height: 16,
       borderRadius: 12,
+      borderCurve: 'continuous',
       justifyContent: 'center',
       alignItems: 'center',
     },

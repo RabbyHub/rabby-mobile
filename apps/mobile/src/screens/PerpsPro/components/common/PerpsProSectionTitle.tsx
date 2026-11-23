@@ -37,6 +37,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   bar: {
     borderRadius: 2,
+    borderCurve: 'continuous',
     height: 14,
     width: 4,
   },

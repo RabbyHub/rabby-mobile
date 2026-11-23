@@ -119,6 +119,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 4,
     height: 20,
     borderRadius: 100,
+    borderCurve: 'continuous',
     backgroundColor: '#50D2C1',
   },
   sectionTitle: {

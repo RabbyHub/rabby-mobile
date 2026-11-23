@@ -47,6 +47,7 @@ fi
 
 script_dir="$(cd "$(dirname "$0")/.." && pwd -P)"
 project_dir="$(cd "$script_dir/.." && pwd -P)"
+. "$script_dir/ci/ios-compilation-cache.sh"
 sim_repo_root="$(cd "$project_dir/../.." && pwd -P)"
 cd "$project_dir"
 
@@ -115,20 +116,29 @@ fi
 turbo_prepare_ruby_bundle
 turbo_prepare_cocoapods
 
+# React Native's ccache wrappers exec `$CCACHE_BINARY`, which is only a build
+# setting on the Pod targets. Exporting it here makes the same wrapper work for
+# the app target too; otherwise it silently falls back to a plain clang and the
+# cache never sees a compile.
+if [ "${RABBY_MOBILE_POD_USE_CACHE:-}" = "true" ] && command -v ccache >/dev/null 2>&1; then
+  CCACHE_BINARY="$(command -v ccache)"
+  export CCACHE_BINARY
+  turbo_log "ccache wrapper binary: $CCACHE_BINARY"
+fi
+
 # React Native writes its codegen output into ios/build/generated/ios during
 # `pod install`. That directory is gitignored, and turbo_prepare_cocoapods
 # returns early on a cache hit, so a checkout (or a cached Pods layer) that lost
 # it fails later with e.g.
 #   error: .../ios/build/generated/ios/NitroModulesSpec/NitroModulesSpec.h:
 #   No such file or directory (in target 'ReactCodegen')
-# Regenerate whenever the directory is missing or empty.
+# Regenerate whenever the directory is missing or empty. The reinstall helper
+# bypasses the Pods cache: dropping the architecture stamp is not enough, since
+# the restore path brings its own stamp back and reports a cache hit.
 generated_ios_dir="$project_dir/ios/build/generated/ios"
 if [ ! -d "$generated_ios_dir" ] || [ -z "$(find "$generated_ios_dir" -name '*.h' -maxdepth 3 2>/dev/null | head -1)" ]; then
   turbo_log 'ios codegen output missing; re-running pod install'
-  # Dropping the architecture stamp makes turbo_cocoapods_ready fail, so the
-  # normal preparation path performs a real `pod install` instead of skipping.
-  rm -f "$project_dir/ios/Pods/.rabby-react-native-architecture"
-  turbo_prepare_cocoapods || {
+  turbo_reinstall_cocoapods || {
     echo '[ios-simulator] pod install for codegen failed' >&2
     exit 1
   }
@@ -159,7 +169,8 @@ xcodebuild build \
   RABBY_MOBILE_CODE="$RABBY_MOBILE_CODE" \
   RABBY_MOBILE_SIMULATOR_BUILD_INPUT_PROFILE=simulator-smoke-v1 \
   RABBY_MOBILE_SIMULATOR_BUNDLE_RECEIPT="$sim_output_dir/metro-inputs.json" \
-  SENTRY_DISABLE_AUTO_UPLOAD=true FORCE_BUNDLING=1
+  SENTRY_DISABLE_AUTO_UPLOAD=true FORCE_BUNDLING=1 \
+  $(rabby_ios_compilation_cache_xcargs)
 
 # A failed xcodebuild exits above, before any previous DerivedData output can
 # be exported. Preserve this successful build before later validation so a

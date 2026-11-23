@@ -28,6 +28,7 @@ const getNFTBadgeStyle = createGetStyles(colors => {
   return {
     nftTypeBadge: {
       borderRadius: 2,
+      borderCurve: 'continuous',
       borderStyle: 'solid',
       borderColor: colors['neutral-line'],
       borderWidth: 0.5,

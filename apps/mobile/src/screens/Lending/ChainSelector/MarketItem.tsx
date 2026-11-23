@@ -90,6 +90,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingRight: 12,
     marginBottom: 8,
     borderRadius: 20,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: 'transparent',
   },
@@ -101,6 +102,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 46,
     height: 46,
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   contentContainer: {
     flexDirection: 'row',

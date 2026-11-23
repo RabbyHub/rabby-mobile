@@ -35,9 +35,9 @@
     "@rabby-wallet/keyring-utils": "workspace:^",
     "@safe-global/protocol-kit": "5.0.3",
     "@safe-global/types-kit": "1.0.4",
-    "bignumber.js": "9.1.2",
+    "bignumber.js": "npm:bignumber.js@9.1.2",
     "ethereumjs-util": "7.1.5",
-    "semver": "7.6.2",
+    "semver": "7.5.4",
     "web3-utils": "1.7.0"
   },
   "devDependencies": {

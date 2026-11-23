@@ -53,6 +53,7 @@ jest.mock('@/utils/gnosis', () => ({ adjustV: jest.fn() }));
 jest.mock('@/core/apis/safe', () => ({ apisSafe: {} }));
 jest.mock('@/core/utils/signEvent', () => ({
   emitSignComponentAmounted: jest.fn(),
+  cancelSignComponentAmounted: jest.fn(),
 }));
 jest.mock('@/utils/errorTxRetry', () => ({
   retryTxReset: jest.fn(),
@@ -65,6 +66,8 @@ jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
 jest.mock('@/core/apis', () => ({ apiOneKey: { cancel: jest.fn() } }));
+
+const SIGNING_OPERATION_ID = 'signing-operation';
 
 const retryRequest = jest.mocked(
   notificationServiceApi.callCurrentRequestDeferFn,
@@ -80,6 +83,7 @@ function fail() {
   eventBus.emit(EVENTS.SIGN_FINISHED, {
     success: false,
     errorMsg: 'Device disconnected',
+    signingOperationId: SIGNING_OPERATION_ID,
   });
   jest.advanceTimersByTime(600);
 }
@@ -91,7 +95,12 @@ describe('OneKeyHardwareWaiting retry', () => {
     // Even a resolved notification RPC does not finish the hardware attempt.
     retryRequest.mockResolvedValue(undefined);
     popup.mockClear();
-    render(<OneKeyHardwareWaiting params={{} as any} account={{} as any} />);
+    render(
+      <OneKeyHardwareWaiting
+        params={{ signingOperationId: SIGNING_OPERATION_ID } as any}
+        account={{} as any}
+      />,
+    );
     await act(async () => {});
   });
 

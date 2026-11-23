@@ -207,6 +207,7 @@ const styles = StyleSheet.create({
     width: BUTTON_SIZE,
     height: BUTTON_SIZE,
     borderRadius: BUTTON_SIZE / 2,
+    borderCurve: 'continuous',
     borderWidth: 0.7,
     alignItems: 'center',
     justifyContent: 'center',

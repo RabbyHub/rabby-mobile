@@ -282,6 +282,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   logo: {
     backgroundColor: colors2024['neutral-bg-0'],
     borderRadius: 16,
+    borderCurve: 'continuous',
     height: 32,
     width: 32,
   },

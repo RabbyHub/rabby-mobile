@@ -15,6 +15,7 @@ describe('Perps Pro field explanations', () => {
         'marginRatio',
         'markPrice',
         'pnl',
+        'randomize',
         'reduceOnly',
         'roi',
         'tpSl',
@@ -69,6 +70,10 @@ describe('Perps Pro field explanations', () => {
         title: 'PNL',
         description:
           'The mark price is used to calculate unrealized PnL, while realized PnL is calculated using execution prices.',
+      },
+      randomize: {
+        description:
+          'Randomize varies each sub-trade’s size by up to ±20%, while respecting the maximum trade size and other limits.',
       },
       reduceOnly: {
         title: 'Reduce Only',

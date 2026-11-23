@@ -10,6 +10,7 @@ export {
 } from '@/utils/perpsPriceProtocol';
 
 import type { PerpsProBboStrategy } from './bbo';
+import type { PerpsProScaleDistribution } from './scaleOrder';
 import {
   createPerpsProAttachedTpSlDraft,
   getPerpsProAttachedTpSlCompatibilityError,
@@ -19,7 +20,11 @@ import {
 
 export type PerpsProTradeAmountUnit = 'base' | 'quote';
 export type PerpsProTradeAmountSource = 'manual' | 'slider';
-export type PerpsProTradeOrderType = 'conditional' | 'limit' | 'market';
+export type PerpsProSingleTradeOrderType = 'conditional' | 'limit' | 'market';
+export type PerpsProTradeOrderType =
+  | PerpsProSingleTradeOrderType
+  | 'scale'
+  | 'twap';
 export type PerpsProTradeTif = 'Alo' | 'Gtc' | 'Ioc';
 export type PerpsProTradeSide = 'buy' | 'sell';
 export type PerpsProConditionalExecution = 'limit' | 'market';
@@ -37,6 +42,12 @@ export interface PerpsProTradeFormState {
   reduceOnly: boolean;
   tif: PerpsProTradeTif;
   triggerPrice: string;
+  scaleLowerPrice: string;
+  scaleUpperPrice: string;
+  scaleCount: string;
+  scaleDistribution: PerpsProScaleDistribution;
+  twapDuration: string;
+  twapRandomize: boolean;
 }
 
 export interface PerpsProResolvedTradeAmount {
@@ -216,9 +227,10 @@ export const getPerpsProTradeExecutionPrice = ({
   form: PerpsProTradeFormState;
   marketPrice: string;
 }) => {
-  if (form.orderType === 'market') {
+  if (form.orderType === 'market' || form.orderType === 'twap') {
     return marketPrice;
   }
+  if (form.orderType === 'scale') return null;
   if (form.orderType === 'limit') {
     return form.bboEnabled ? bboPrice : form.limitPrice;
   }
@@ -238,9 +250,21 @@ export const getPerpsProAmountInputDecimals = ({
 export const isPerpsProTradeCombinationSupported = (
   form: PerpsProTradeFormState,
 ) => {
+  if (form.orderType === 'twap')
+    return !form.attachedTpSl.enabled && !form.bboEnabled;
+  if (form.orderType === 'scale') {
+    return (
+      !form.attachedTpSl.enabled &&
+      !form.bboEnabled &&
+      form.amountUnit === 'base'
+    );
+  }
   if (
     form.attachedTpSl.enabled &&
-    getPerpsProAttachedTpSlCompatibilityError(form)
+    getPerpsProAttachedTpSlCompatibilityError({
+      ...form,
+      orderType: form.orderType,
+    })
   ) {
     return false;
   }
@@ -263,7 +287,7 @@ export const createPerpsProTradeFormState = ({
   tpSlModes?: PerpsProAttachedTpSlModes;
 } = {}): PerpsProTradeFormState => ({
   amount: '',
-  amountUnit,
+  amountUnit: orderType === 'scale' ? 'base' : amountUnit,
   attachedTpSl: createPerpsProAttachedTpSlDraft(tpSlModes),
   bboEnabled: false,
   bboStrategy: 'cp1',
@@ -274,4 +298,10 @@ export const createPerpsProTradeFormState = ({
   reduceOnly: false,
   tif: 'Gtc',
   triggerPrice: '',
+  scaleLowerPrice: '',
+  scaleUpperPrice: '',
+  scaleCount: '',
+  scaleDistribution: 'flat',
+  twapDuration: '',
+  twapRandomize: false,
 });

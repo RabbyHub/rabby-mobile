@@ -2111,7 +2111,6 @@
       "dataAnalysis": "Rabby verbessern helfen",
       "dataAnalysisDesc": "Teilen Sie anonyme Nutzungsdaten, um Rabby zu verbessern. Die erfassten Daten werden weder mit Ihnen noch mit Ihrem Konto verknüpft.",
       "bugReportChat": "Feedback per Chat teilen",
-      "features": "Funktionen",
       "manageWallets": "Wallets verwalten"
     },
     "settings": {
@@ -2540,7 +2539,10 @@
           "attachedTpSlUnresolved": "Eine frühere TP/SL-Übermittlung für diesen Markt ist noch ungeklärt. Prüfen Sie offene Orders und Positionen, bevor Sie es erneut versuchen.",
           "orderFilled": "Order ausgeführt.",
           "orderPlaced": "Order platziert.",
-          "orderFailed": "Order fehlgeschlagen."
+          "orderFailed": "Order fehlgeschlagen.",
+          "scale": "Staffelorder",
+          "scaleDescription": "Preisbereich festlegen und mehrere Limit-Teilorders platzieren",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "Der Post-only-Preis muss unter dem besten Briefkurs liegen, um eine sofortige Ausführung zu vermeiden.",
@@ -2554,6 +2556,9 @@
           "tpSl": {
             "title": "TP/SL",
             "description": "Platziert einfache Market-TP/SL-Orders. Für erweiterte Funktionen wie partielles TP/SL legen Sie TP/SL bei einer offenen Position fest."
+          },
+          "randomize": {
+            "description": "Die Zufallsverteilung variiert die Größe jeder Teilorder um bis zu ±20 % und hält dabei die maximale Ordergröße sowie andere Limits ein."
           },
           "reduceOnly": {
             "title": "Nur reduzieren",
@@ -2651,7 +2656,8 @@
             "orders": "Orderverlauf",
             "trade": "Trade-Verlauf",
             "transaction": "Ein-/Auszahlungen",
-            "funding": "Funding-Gebühr"
+            "funding": "Funding-Gebühr",
+            "twap": "TWAP-Verlauf"
           },
           "empty": {
             "orders": "Kein Orderverlauf",
@@ -2833,6 +2839,101 @@
           "cancelPartial": "{{success}} Orders storniert; {{failed}} fehlgeschlagen",
           "cancelFailed": "Order konnte nicht storniert werden",
           "cancelContextChanged": "Das Konto hat sich geändert. Versuchen Sie es erneut."
+        },
+        "scaleOrder": {
+          "lowerPrice": "Unterer Preis",
+          "upperPrice": "Oberer Preis",
+          "size": "Menge",
+          "count": "Orderanzahl (2–100)",
+          "distribution": "Mengenverteilung",
+          "flat": "Gleichmäßig",
+          "ascending": "Aufsteigend",
+          "descending": "Absteigend",
+          "flatDescription": "Jede Order erhält die gleiche Menge",
+          "ascendingDescription": "Die Ordermenge steigt mit dem Preis",
+          "descendingDescription": "Die Ordermenge steigt bei sinkendem Preis",
+          "previewBuy": "Kaufvorschau",
+          "previewSell": "Verkaufsvorschau",
+          "totalSize": "Gesamtmenge",
+          "averagePrice": "Durchschnittspreis",
+          "result": "{{accepted}} angenommen, {{rejected}} abgelehnt, {{unresolved}} warten auf Bestätigung",
+          "unknown": "Orderergebnis unbestätigt. Prüfe offene Orders und den Handelsverlauf, bevor du erneut eine Order platzierst.",
+          "errors": {
+            "range": "Gültige Preise eingeben. Der obere Preis muss höher sein.",
+            "count": "Eine ganze Zahl zwischen 2 und 100 eingeben.",
+            "size": "Eine Ordermenge größer als 0 eingeben, die der für diesen Markt zulässigen Mengengenauigkeit entspricht.",
+            "duplicatePrice": "Nach Anpassung an die zulässige Preisgenauigkeit sind einige Orderpreise identisch. Preisbereich erweitern oder Orderanzahl reduzieren.",
+            "minimum": "Nach Anpassung an die zulässige Mengengenauigkeit muss jede Teilorder mindestens $10 wert sein.",
+            "maximum": "Der Gesamtwert der Orders überschreitet das für diesen Markt zulässige Limit.",
+            "capacity": "Nicht genügend Handelskapazität für diese Orders.",
+            "reduceOnly": "Die gesamte Ordermenge überschreitet die aktuell schließbare Positionsmenge."
+          }
+        },
+        "twap": {
+          "description": "Orders in benutzerdefinierten Intervallen platzieren",
+          "totalTime": "Gesamtdauer",
+          "durationFieldLabel": "Gesamtdauer (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} Min.",
+          "minuteValue_one": "{{t}} Min.",
+          "confirmationDuration": "{{t}} Min.",
+          "totalSize": "Gesamtmenge",
+          "selectTime": "Gesamtdauer wählen",
+          "reset": "Zurücksetzen",
+          "randomize": "Zufällig verteilen",
+          "randomized": "Zufällig verteilt",
+          "durationHint": "Die Laufzeit der TWAP-Order beträgt 5–1439 Minuten.",
+          "minimum": "Die Mindestgesamtmenge beträgt {{amount}}",
+          "filled": "Ausgeführt",
+          "duration": "Verstrichen",
+          "runtime": "Laufzeit",
+          "averagePrice": "Ø Preis",
+          "end": "Beenden",
+          "detail": "Details",
+          "add": "Hinzufügen",
+          "detailTitle": "Laufende TWAP: Details",
+          "historyDetailTitle": "TWAP-Verlauf: Details",
+          "trades": "Trades",
+          "size": "Menge",
+          "fee": "Gebühr",
+          "noTrades": "Noch keine Trades",
+          "endTitle": "Beendigung der TWAP-Order bestätigen",
+          "endMessage": "Nach der Bestätigung wird die TWAP-Order gestoppt. Alle offenen Orders dieser TWAP-Order werden automatisch storniert.",
+          "ending": "Wird beendet…",
+          "ended": "TWAP-Order beendet.",
+          "placed": "{{coin}}-TWAP-Order erteilt.",
+          "unknownOutcome": "Das Ergebnis der {{coin}}-TWAP-Order ist noch unbestätigt. Prüfe Orders und Verlauf, bevor du erneut eine Order erteilst.",
+          "unknown": "Das TWAP-Ergebnis ist noch unbestätigt. Prüfe Orders und Verlauf vor einem erneuten Versuch.",
+          "loadError": "TWAP-Orders konnten nicht geladen werden. Zum Wiederholen tippen.",
+          "endedLabel": "Beendet",
+          "skipConfirmation": "Doppelte Bestätigung für TWAP-Orders nicht mehr anzeigen.",
+          "averageFilledPrice": "Ø Ausführungspreis",
+          "status": {
+            "working": "Aktiv",
+            "waiting": "Wartend",
+            "filled": "Ausgeführt",
+            "cancelled": "Storniert",
+            "expired": "Abgelaufen",
+            "unknown": "Unbekannt"
+          },
+          "fills": {
+            "loading": "Trades werden geladen…",
+            "error": "Trades konnten nicht geladen werden. Zum Wiederholen tippen."
+          },
+          "errors": {
+            "amountRequired": "Gib eine Ordermenge ein.",
+            "amountTooSmall": "Die TWAP-Order muss mindestens $100 wert sein.",
+            "amountExceedsMaximum": "Die Order überschreitet das verfügbare Maximum.",
+            "invalidPrecision": "Gib eine Menge mit der für diesen Markt zulässigen Genauigkeit ein.",
+            "priceUnavailable": "Der aktuelle Preis ist nicht verfügbar. Bitte erneut versuchen.",
+            "durationRequired": "Gib eine Gesamtdauer ein.",
+            "durationInvalid": "Gib eine ganze Anzahl von Minuten ein.",
+            "durationTooShort": "Die Mindestdauer für TWAP beträgt 5 Minuten.",
+            "durationTooLong": "Die Höchstdauer für TWAP beträgt 1439 Minuten.",
+            "capacity": "Unzureichender Handelsspielraum für diese Order.",
+            "reduceOnly": "Die Order überschreitet die zum Schließen verfügbare Positionsmenge.",
+            "contextChanged": "Konto, Order oder Markt wurde geändert. Bitte prüfe die Order erneut."
+          }
         }
       },
       "limitOrders": "Limit-Orders",
@@ -3725,7 +3826,7 @@
       "title": "Kleinstbeträge umwandeln"
     },
     "walletConnect": {
-      "screenTitle": "Wallet verbinden",
+      "screenTitle": "Zum Verbinden scannen",
       "connectingToRabby": "Verbindung zu Rabby wird hergestellt",
       "pairingFailed": "WalletConnect-Kopplung fehlgeschlagen.",
       "proposalNotReceived": "Der WalletConnect-QR-Code ist möglicherweise abgelaufen. Bitte aktualisiere ihn und versuche es erneut.",

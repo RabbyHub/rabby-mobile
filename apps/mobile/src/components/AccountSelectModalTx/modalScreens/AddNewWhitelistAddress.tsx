@@ -382,6 +382,7 @@ export const ScreenAddNewWhitelistAddress = ({
             containerStyle={Object.assign(
               {
                 borderRadius: 16,
+                borderCurve: 'continuous' as const,
               },
               error
                 ? {}
@@ -659,6 +660,7 @@ const getStyles = createGetStyles2024(ctx => ({
   editContainer: {
     backgroundColor: ctx.colors2024['neutral-bg-2'],
     borderRadius: 16,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: 'transparent',
     flexDirection: 'row',
@@ -681,6 +683,7 @@ const getStyles = createGetStyles2024(ctx => ({
   selectCex: {
     backgroundColor: ctx.colors2024['neutral-bg-2'],
     borderRadius: 16,
+    borderCurve: 'continuous',
     paddingVertical: 16,
     paddingHorizontal: 20,
   },
@@ -706,7 +709,7 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     gap: 8,
   },
-  logo: { borderRadius: 6, width: 24, height: 24 },
+  logo: { borderRadius: 6, borderCurve: 'continuous', width: 24, height: 24 },
   name: {
     fontSize: 16,
     lineHeight: 20,
@@ -716,6 +719,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   nameInput: {
     borderRadius: 16,
+    borderCurve: 'continuous',
     borderColor: 'transparent',
   },
 

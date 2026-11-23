@@ -24,6 +24,7 @@ import {
   resolvePerpsProTradeAmount,
   type PerpsProTradeFormState,
   type PerpsProTradeSide,
+  type PerpsProSingleTradeOrderType,
 } from '../model/trade';
 
 export type PerpsProOpenOrderExecution =
@@ -52,7 +53,7 @@ export interface PerpsProOpenOrderCommand {
   dexId: string;
   execution: PerpsProOpenOrderExecution;
   marketKey: string;
-  orderType: PerpsProTradeFormState['orderType'];
+  orderType: PerpsProSingleTradeOrderType;
   quoteAmount: string;
   reduceOnly: boolean;
   reviewFacts?: PerpsProOrderReviewFacts;
@@ -157,6 +158,9 @@ export const buildPerpsProOpenOrderCommand = ({
   szDecimals: number;
 }): PerpsProOpenOrderCommand => {
   const normalizedCoin = coin.trim();
+  if (form.orderType === 'scale' || form.orderType === 'twap') {
+    throw new Error('Scale and TWAP orders must use their dedicated executor');
+  }
   if (!account.address || !normalizedCoin || !marketKey) {
     throw new Error('Perps account and market are required');
   }

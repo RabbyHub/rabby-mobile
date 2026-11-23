@@ -19,6 +19,7 @@ const permit2BadgeStyles = createGetStyles(colors => {
   return {
     permit2Badge: {
       borderRadius: 2,
+      borderCurve: 'continuous',
       borderStyle: 'solid',
       borderColor: colors['neutral-line'],
       borderWidth: 0.5,

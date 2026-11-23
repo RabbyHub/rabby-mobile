@@ -8,6 +8,7 @@ jest.mock('@/core/serviceApi/notification', () => ({
   notificationServiceApi: {
     getApproval: jest.fn(),
     resolveApproval: jest.fn(),
+    rejectApproval: jest.fn(),
   },
   getNotificationWindowIdSnapshot: jest.fn(),
 }));
@@ -101,4 +102,46 @@ test('cannot resolve a gated approval outside its request identity provider', as
     await result.current[1]({}, true);
   });
   expect(notificationServiceApi.resolveApproval).not.toHaveBeenCalled();
+});
+
+test('binds an ungated resolution to the displayed approval by default', async () => {
+  const { result } = renderHook(() => useApproval(), { wrapper });
+
+  await act(async () => {
+    await result.current[1]({ signed: true }, true);
+  });
+
+  expect(notificationServiceApi.resolveApproval).toHaveBeenCalledWith(
+    { signed: true },
+    false,
+    'reviewed',
+  );
+});
+
+test('drops a stale ungated resolution after the next approval is promoted', async () => {
+  jest
+    .mocked(notificationServiceApi.getApproval)
+    .mockResolvedValue({ ...approval, id: 'next-request' } as never);
+  const { result } = renderHook(() => useApproval(), { wrapper });
+
+  await act(async () => {
+    await result.current[1]({ signed: true }, true);
+  });
+
+  expect(notificationServiceApi.resolveApproval).not.toHaveBeenCalled();
+});
+
+test('binds rejection to the displayed approval', async () => {
+  const { result } = renderHook(() => useApproval(), { wrapper });
+
+  await act(async () => {
+    await result.current[2]('User rejected', true);
+  });
+
+  expect(notificationServiceApi.rejectApproval).toHaveBeenCalledWith(
+    'User rejected',
+    true,
+    false,
+    'reviewed',
+  );
 });

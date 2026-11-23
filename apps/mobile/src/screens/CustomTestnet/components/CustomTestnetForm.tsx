@@ -106,6 +106,7 @@ const getFormItemStyles = createGetStyles2024(({ colors, colors2024 }) => {
     modernInputContainer: {
       borderWidth: 0,
       borderRadius: 12,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-bg-2'],
     },
     modernInput: {
@@ -128,6 +129,7 @@ const getFormItemStyles = createGetStyles2024(({ colors, colors2024 }) => {
     input: {
       height: 52,
       borderRadius: 6,
+      borderCurve: 'continuous',
       color: colors['neutral-title-1'],
       fontWeight: '500',
       fontSize: 16,

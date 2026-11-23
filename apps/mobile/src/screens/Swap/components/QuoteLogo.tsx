@@ -26,6 +26,7 @@ export const QuoteLogo = ({
       width: imageSize,
       height: imageSize,
       borderRadius: 999999,
+      borderCurve: 'continuous' as const,
     };
   }, [loaded, isLoading, isCex, size]);
 

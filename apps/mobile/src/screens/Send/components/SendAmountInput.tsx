@@ -1051,6 +1051,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
   StyleSheet.create({
     container: {
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-bg-2'],
       height: AMOUNT_CONTAINER_HEIGHT,
       paddingHorizontal: 16,
@@ -1238,11 +1239,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     },
     tokenSelect: {
       borderRadius: 100,
+      borderCurve: 'continuous',
     },
     maxButtonWrapper: {
       padding: 4,
       backgroundColor: colors2024['brand-light-1'],
       borderRadius: 8,
+      borderCurve: 'continuous',
     },
     maxButtonText: {
       color: colors2024['brand-default'],
@@ -1257,6 +1260,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       height: AMOUNT_ROW_HEIGHT,
       width: 120,
       borderRadius: 100,
+      borderCurve: 'continuous',
     },
     skeletonLinear: {
       height: '100%',
@@ -1284,6 +1288,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       height: 16,
       width: 100,
       borderRadius: 8,
+      borderCurve: 'continuous',
     },
     measureText: {
       position: 'absolute',

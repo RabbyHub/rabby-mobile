@@ -146,12 +146,14 @@ const getStyle = createGetStyles2024(
     modal: {
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
+      borderCurve: 'continuous',
       overflow: 'hidden',
     },
     background: {
       backgroundColor: colors2024['neutral-bg-0'],
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
+      borderCurve: 'continuous',
     },
     handle: {
       height: 40,
@@ -163,12 +165,13 @@ const getStyle = createGetStyles2024(
       width: 50,
       height: 6,
       borderRadius: 3,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-sheet-handle'],
     },
     content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 },
     title: {
       fontFamily: 'SF Pro Rounded',
-      fontWeight: '900',
+      fontWeight: '800',
       fontSize: 20,
       lineHeight: 24,
       textAlign: 'center',
@@ -197,6 +200,7 @@ const getStyle = createGetStyles2024(
       flex: 1,
       height: 40,
       borderRadius: 6,
+      borderCurve: 'continuous',
       borderWidth: 1,
       borderColor: 'transparent',
       alignItems: 'center',
@@ -223,6 +227,7 @@ const getStyle = createGetStyles2024(
     button: {
       backgroundColor: SIMPLE_CHART_COLORS.accent,
       borderRadius: 12,
+      borderCurve: 'continuous',
       shadowColor: SIMPLE_CHART_COLORS.buttonShadow,
       shadowRadius: 12,
       shadowOpacity: 0.1,

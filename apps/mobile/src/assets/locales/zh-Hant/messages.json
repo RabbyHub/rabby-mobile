@@ -2047,7 +2047,6 @@
       "dataAnalysis": "協助改善 Rabby",
       "dataAnalysisDesc": "分享匿名使用資料以協助改善 Rabby。收集的資料不會與你或你的帳戶關聯。",
       "bugReportChat": "透過聊天分享回饋",
-      "features": "功能",
       "manageWallets": "管理錢包"
     },
     "settings": {
@@ -2426,7 +2425,10 @@
           "attachedTpSlUnresolved": "此市場先前有一筆 TP/SL 提交尚未確認。重試前請檢查未成交訂單和持倉。",
           "orderFilled": "訂單已成交。",
           "orderPlaced": "訂單已掛出。",
-          "orderFailed": "訂單失敗。"
+          "orderFailed": "訂單失敗。",
+          "scale": "分段委託",
+          "scaleDescription": "設定價格區間並下達多筆限價子單",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "僅掛單模式下，買入價必須低於目前最低賣價，以避免立即成交。",
@@ -2440,6 +2442,9 @@
           "tpSl": {
             "title": "TP/SL",
             "description": "提交基本市價 TP/SL 訂單。如需部分 TP/SL 等進階功能，請在已有持倉上設定 TP/SL。"
+          },
+          "randomize": {
+            "description": "隨機化會使每筆子交易的數量在 ±20% 的範圍內變化，同時遵守最大交易數量及其他限制。"
           },
           "reduceOnly": {
             "title": "只減倉",
@@ -2537,7 +2542,8 @@
             "orders": "委託歷史",
             "trade": "成交歷史",
             "transaction": "資金流水",
-            "funding": "資金費"
+            "funding": "資金費",
+            "twap": "TWAP 歷史"
           },
           "empty": {
             "orders": "暫無委託歷史",
@@ -2719,6 +2725,101 @@
           "cancelPartial": "已取消 {{success}} 筆訂單；{{failed}} 筆失敗",
           "cancelFailed": "取消訂單失敗",
           "cancelContextChanged": "帳戶已變更，請重試。"
+        },
+        "scaleOrder": {
+          "lowerPrice": "最低價",
+          "upperPrice": "最高價",
+          "size": "數量",
+          "count": "訂單數 (2–100)",
+          "distribution": "數量分布",
+          "flat": "固定",
+          "ascending": "升序",
+          "descending": "降序",
+          "flatDescription": "總數量中的每筆訂單分配相同數量",
+          "ascendingDescription": "訂單數量隨價格升高而遞增",
+          "descendingDescription": "訂單數量隨價格降低而遞增",
+          "previewBuy": "預覽買單",
+          "previewSell": "預覽賣單",
+          "totalSize": "總數量",
+          "averagePrice": "平均價格",
+          "result": "已受理 {{accepted}} 筆，已拒絕 {{rejected}} 筆，待確認 {{unresolved}} 筆",
+          "unknown": "下單結果待確認。請先檢查目前委託和交易紀錄，再下新訂單。",
+          "errors": {
+            "range": "請輸入有效價格，最高價必須高於最低價。",
+            "count": "請輸入 2 至 100 之間的整數。",
+            "size": "請輸入大於 0 且符合該市場數量精度的委託數量。",
+            "duplicatePrice": "按價格精度調整後，部分委託價格重複。請擴大價格區間或減少訂單數。",
+            "minimum": "按數量精度調整後，每筆子訂單金額不得低於 $10。",
+            "maximum": "委託總金額超過該市場允許的上限。",
+            "capacity": "目前可交易額度不足以提交整批訂單。",
+            "reduceOnly": "委託總數量超過目前可平倉數量。"
+          }
+        },
+        "twap": {
+          "description": "按自訂時間間隔下單",
+          "totalTime": "總時長",
+          "durationFieldLabel": "總時長 (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} 分鐘",
+          "minuteValue_one": "{{t}} 分鐘",
+          "confirmationDuration": "{{t}} 分鐘",
+          "totalSize": "總數量",
+          "selectTime": "選擇總時長",
+          "reset": "重設",
+          "randomize": "隨機化",
+          "randomized": "已隨機化",
+          "durationHint": "TWAP 訂單運行時間為 5–1439 分鐘。",
+          "minimum": "最小總數量為 {{amount}}",
+          "filled": "已成交",
+          "duration": "已持續",
+          "runtime": "運行時長",
+          "averagePrice": "平均價格",
+          "end": "結束",
+          "detail": "詳情",
+          "add": "新增",
+          "detailTitle": "TWAP 運行詳情",
+          "historyDetailTitle": "TWAP 歷史詳情",
+          "trades": "成交",
+          "size": "數量",
+          "fee": "手續費",
+          "noTrades": "暫無成交",
+          "endTitle": "確認結束 TWAP",
+          "endMessage": "確認後，TWAP 訂單將停止執行，該 TWAP 的所有未成交掛單將自動撤銷。",
+          "ending": "正在結束…",
+          "ended": "TWAP 訂單已結束。",
+          "placed": "{{coin}} TWAP 訂單已提交。",
+          "unknownOutcome": "{{coin}} TWAP 結果待確認。再次下單前，請先檢查訂單與歷史紀錄。",
+          "unknown": "TWAP 結果待確認。再次操作前，請先檢查訂單與歷史紀錄。",
+          "loadError": "無法載入 TWAP 訂單，點擊重試。",
+          "endedLabel": "已結束",
+          "skipConfirmation": "不再顯示 TWAP 訂單二次確認。",
+          "averageFilledPrice": "平均成交價",
+          "status": {
+            "working": "運行中",
+            "waiting": "等待中",
+            "filled": "已成交",
+            "cancelled": "已取消",
+            "expired": "已失效",
+            "unknown": "未知"
+          },
+          "fills": {
+            "loading": "正在載入成交…",
+            "error": "無法載入成交，點擊重試。"
+          },
+          "errors": {
+            "amountRequired": "請輸入下單數量。",
+            "amountTooSmall": "TWAP 訂單價值不得低於 $100。",
+            "amountExceedsMaximum": "下單數量超過可用上限。",
+            "invalidPrecision": "請輸入符合市場數量精度的數量。",
+            "priceUnavailable": "暫時無法取得目前價格，請重試。",
+            "durationRequired": "請輸入總時長。",
+            "durationInvalid": "請輸入整數分鐘。",
+            "durationTooShort": "TWAP 最短時長為 5 分鐘。",
+            "durationTooLong": "TWAP 最長時長為 1439 分鐘。",
+            "capacity": "可用交易額度不足。",
+            "reduceOnly": "下單數量超過可平倉數量。",
+            "contextChanged": "帳戶、訂單或市場已變更，請重新確認訂單。"
+          }
         }
       },
       "limitOrders": "限價單",
@@ -3611,7 +3712,7 @@
       "title": "兌換零散資產"
     },
     "walletConnect": {
-      "screenTitle": "連接錢包",
+      "screenTitle": "掃碼連接",
       "connectingToRabby": "正在連接到 Rabby",
       "pairingFailed": "WalletConnect 配對失敗。",
       "proposalNotReceived": "WalletConnect 二維碼可能已失效，請重新整理後再試一次。",

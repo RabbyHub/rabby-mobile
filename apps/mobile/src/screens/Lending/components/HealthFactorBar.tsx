@@ -114,6 +114,7 @@ const getStyles = createGetStyles2024(ctx => ({
   riskBar: {
     height: 6,
     borderRadius: 3,
+    borderCurve: 'continuous',
   },
   dotContainer: {
     position: 'absolute',
@@ -182,6 +183,7 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingVertical: 1,
     paddingHorizontal: 4,
     borderRadius: 4,
+    borderCurve: 'continuous',
     overflow: 'hidden',
   },
   riskyText: {

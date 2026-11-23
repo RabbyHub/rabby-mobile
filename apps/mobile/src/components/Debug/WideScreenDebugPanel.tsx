@@ -178,6 +178,7 @@ const getStyle = createGetStyles2024(ctx =>
       marginTop: 14,
       padding: 12,
       borderRadius: 12,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-2'],
       gap: 6,
     },

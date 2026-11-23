@@ -247,6 +247,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     height: 74,
     padding: 0,
     borderRadius: 16,
+    borderCurve: 'continuous',
     marginTop: 8,
   },
   skeletonItem: {

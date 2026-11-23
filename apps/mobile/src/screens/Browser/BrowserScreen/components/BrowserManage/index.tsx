@@ -344,6 +344,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   navbarItem: {
     height: 24,
     borderRadius: 12,
+    borderCurve: 'continuous',
     flex: 0,
     paddingHorizontal: 16,
     minWidth: 75,

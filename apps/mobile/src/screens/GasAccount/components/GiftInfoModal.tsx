@@ -77,6 +77,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   gotItButton: {
     backgroundColor: colors2024['brand-default'],
     borderRadius: 12,
+    borderCurve: 'continuous',
     height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',

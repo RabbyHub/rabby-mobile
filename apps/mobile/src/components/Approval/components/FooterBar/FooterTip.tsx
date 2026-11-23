@@ -36,6 +36,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingLeft: 12,
     paddingRight: 5,
     borderRadius: 8,
+    borderCurve: 'continuous',
     position: 'relative',
     marginBottom: 8,
     marginTop: 5,

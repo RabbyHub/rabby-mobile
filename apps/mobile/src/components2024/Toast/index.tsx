@@ -42,6 +42,7 @@ const config: ToastOptions = {
   opacity: 1,
   containerStyle: {
     borderRadius: 12,
+    borderCurve: 'continuous',
     minHeight: TOAST_MIN_H,
     padding: 0,
     overflow: 'visible',
@@ -241,6 +242,7 @@ export const toastLoadingSuccess = (
         justifyContent: 'space-evenly',
         alignItems: 'center',
         borderRadius: 8,
+        borderCurve: 'continuous',
       }}>
       <IconToastSuccess width={50} height={50} />
       {msg ? (
@@ -341,6 +343,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       justifyContent: 'space-evenly',
       alignItems: 'center',
       borderRadius: 8,
+      borderCurve: 'continuous',
       backgroundColor: ThemeColors2024.light['neutral-black'],
       paddingVertical: 18,
       paddingHorizontal: 12,

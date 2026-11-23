@@ -44,6 +44,7 @@ const getStyles = createGetStyles(colors => ({
     lineHeight: 16,
     padding: 12,
     borderRadius: 6,
+    borderCurve: 'continuous',
     position: 'relative',
     borderWidth: 1,
     borderColor: 'transparent',

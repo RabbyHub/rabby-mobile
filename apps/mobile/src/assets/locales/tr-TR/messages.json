@@ -1936,7 +1936,6 @@
       "dataAnalysis": "Rabby'yi geliştirmeye yardım edin",
       "dataAnalysisDesc": "Rabby'yi geliştirmeye yardımcı olmak için anonim kullanım verilerini paylaşın. Toplanan veriler sizinle veya hesabınızla ilişkilendirilmez.",
       "bugReportChat": "Sohbet Üzerinden Geri Bildirim Paylaş",
-      "features": "Özellikler",
       "manageWallets": "Cüzdanları Yönet"
     },
     "settings": {
@@ -2254,7 +2253,10 @@
           "attachedTpSlUnresolved": "Bu piyasa için önceki bir TP/SL gönderimi hâlâ çözümlenmedi. Tekrar denemeden önce Açık Emirleri ve Pozisyonları kontrol edin.",
           "orderFilled": "Emir gerçekleşti.",
           "orderPlaced": "Emir verildi.",
-          "orderFailed": "Emir başarısız."
+          "orderFailed": "Emir başarısız.",
+          "scale": "Kademeli Emir",
+          "scaleDescription": "Bir fiyat aralığı belirleyip birden fazla limit alt emri verin",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "Hemen eşleşmesini önlemek için post-only fiyatı en iyi satış fiyatından düşük olmalıdır.",
@@ -2268,6 +2270,9 @@
           "tpSl": {
             "title": "TP/SL",
             "description": "Temel piyasa TP/SL emirleri verir. Kısmi TP/SL gibi gelişmiş özellikler için açık bir pozisyonda TP/SL ayarlayın."
+          },
+          "randomize": {
+            "description": "Rastgeleleştirme, maksimum işlem büyüklüğüne ve diğer sınırlara uyarak her alt işlemin büyüklüğünü en fazla ±%20 değiştirir."
           },
           "reduceOnly": {
             "title": "Yalnızca Azalt",
@@ -2365,7 +2370,8 @@
             "orders": "Emir Geçmişi",
             "trade": "İşlem Geçmişi",
             "transaction": "Yatırma ve çekme",
-            "funding": "Fonlama Ücreti"
+            "funding": "Fonlama Ücreti",
+            "twap": "TWAP geçmişi"
           },
           "empty": {
             "orders": "Emir geçmişi yok",
@@ -2547,6 +2553,101 @@
           "cancelPartial": "{{success}} emir iptal edildi; {{failed}} başarısız",
           "cancelFailed": "Emir iptal edilemedi",
           "cancelContextChanged": "Hesap değişti. Tekrar deneyin."
+        },
+        "scaleOrder": {
+          "lowerPrice": "Alt Fiyat",
+          "upperPrice": "Üst Fiyat",
+          "size": "Miktar",
+          "count": "Emir Sayısı (2–100)",
+          "distribution": "Miktar Dağılımı",
+          "flat": "Eşit",
+          "ascending": "Artan",
+          "descending": "Azalan",
+          "flatDescription": "Her emre eşit miktar ayrılır",
+          "ascendingDescription": "Fiyat yükseldikçe emir miktarı artar",
+          "descendingDescription": "Fiyat düştükçe emir miktarı artar",
+          "previewBuy": "Alışı Önizle",
+          "previewSell": "Satışı Önizle",
+          "totalSize": "Toplam Miktar",
+          "averagePrice": "Ortalama Fiyat",
+          "result": "{{accepted}} kabul edildi, {{rejected}} reddedildi, {{unresolved}} onay bekliyor",
+          "unknown": "Emir sonucu onay bekliyor. Yeni emir vermeden önce açık emirleri ve işlem geçmişini kontrol edin.",
+          "errors": {
+            "range": "Geçerli fiyatlar girin; üst fiyat alt fiyattan yüksek olmalıdır.",
+            "count": "2 ile 100 arasında bir tam sayı girin.",
+            "size": "0’dan büyük ve bu piyasanın miktar hassasiyeti gereksinimlerine uygun bir emir miktarı girin.",
+            "duplicatePrice": "Fiyat hassasiyetine göre ayarlandıktan sonra bazı emir fiyatları aynı oluyor. Fiyat aralığını genişletin veya emir sayısını azaltın.",
+            "minimum": "Miktar hassasiyetine göre ayarlandıktan sonra her alt emir en az $10 değerinde olmalıdır.",
+            "maximum": "Toplam emir değeri bu piyasa için izin verilen sınırı aşıyor.",
+            "capacity": "Bu emir grubu için işlem kapasitesi yetersiz.",
+            "reduceOnly": "Toplam emir miktarı şu anda kapatılabilecek pozisyon miktarını aşıyor."
+          }
+        },
+        "twap": {
+          "description": "Belirlediğiniz aralıklarla emir verin",
+          "totalTime": "Toplam süre",
+          "durationFieldLabel": "Toplam süre (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} dk",
+          "minuteValue_one": "{{t}} dk",
+          "confirmationDuration": "{{t}} dk",
+          "totalSize": "Toplam miktar",
+          "selectTime": "Toplam süreyi seç",
+          "reset": "Sıfırla",
+          "randomize": "Rastgeleleştir",
+          "randomized": "Rastgeleleştirildi",
+          "durationHint": "TWAP emrinin çalışma süresi 5–1439 dakikadır.",
+          "minimum": "Minimum toplam miktar {{amount}}",
+          "filled": "Gerçekleşen",
+          "duration": "Geçen süre",
+          "runtime": "Çalışma süresi",
+          "averagePrice": "Ort. fiyat",
+          "end": "Sonlandır",
+          "detail": "Ayrıntılar",
+          "add": "Ekle",
+          "detailTitle": "Aktif TWAP ayrıntıları",
+          "historyDetailTitle": "TWAP geçmiş ayrıntıları",
+          "trades": "İşlemler",
+          "size": "Miktar",
+          "fee": "Ücret",
+          "noTrades": "Henüz işlem yok",
+          "endTitle": "TWAP Emrini Sonlandırmayı Onayla",
+          "endMessage": "Onayladığınızda TWAP emriniz durdurulacak ve bu TWAP kapsamındaki açık emirler otomatik olarak iptal edilecektir.",
+          "ending": "Sonlandırılıyor…",
+          "ended": "TWAP emri sonlandırıldı.",
+          "placed": "{{coin}} TWAP emri verildi.",
+          "unknownOutcome": "{{coin}} TWAP sonucu onay bekliyor. Yeni bir emir vermeden önce emirleri ve geçmişi kontrol edin.",
+          "unknown": "TWAP sonucu onay bekliyor. Tekrar denemeden önce emirleri ve geçmişi kontrol edin.",
+          "loadError": "TWAP emirleri yüklenemedi. Tekrar denemek için dokunun.",
+          "endedLabel": "Sonlandı",
+          "skipConfirmation": "TWAP emirleri için ikinci onayı tekrar gösterme.",
+          "averageFilledPrice": "Ort. gerçekleşme fiyatı",
+          "status": {
+            "working": "Çalışıyor",
+            "waiting": "Bekliyor",
+            "filled": "Gerçekleşti",
+            "cancelled": "İptal edildi",
+            "expired": "Süresi doldu",
+            "unknown": "Bilinmiyor"
+          },
+          "fills": {
+            "loading": "İşlemler yükleniyor…",
+            "error": "İşlemler yüklenemedi. Tekrar denemek için dokunun."
+          },
+          "errors": {
+            "amountRequired": "Emir miktarını girin.",
+            "amountTooSmall": "TWAP emrinin değeri en az $100 olmalıdır.",
+            "amountExceedsMaximum": "Emir kullanılabilir maksimum miktarı aşıyor.",
+            "invalidPrecision": "Bu piyasanın miktar hassasiyetine uygun bir miktar girin.",
+            "priceUnavailable": "Güncel fiyat alınamıyor. Lütfen tekrar deneyin.",
+            "durationRequired": "Toplam süreyi girin.",
+            "durationInvalid": "Tam sayı olarak dakika girin.",
+            "durationTooShort": "Minimum TWAP süresi 5 dakikadır.",
+            "durationTooLong": "Maksimum TWAP süresi 1439 dakikadır.",
+            "capacity": "Bu emir için yeterli işlem kapasitesi yok.",
+            "reduceOnly": "Emir, kapatılabilir pozisyon miktarını aşıyor.",
+            "contextChanged": "Hesap, emir veya piyasa değişti. Lütfen emri tekrar inceleyin."
+          }
         }
       },
       "limitOrders": "Limit Emirler",
@@ -3439,7 +3540,7 @@
       "title": "Küçük Bakiyeleri Dönüştür"
     },
     "walletConnect": {
-      "screenTitle": "Cüzdanı Bağla",
+      "screenTitle": "Bağlanmak için Tara",
       "connectingToRabby": "Rabby'ye bağlanıyor",
       "pairingFailed": "WalletConnect eşleştirmesi başarısız.",
       "proposalNotReceived": "WalletConnect QR kodunun süresi dolmuş olabilir. Lütfen yenileyip tekrar deneyin.",

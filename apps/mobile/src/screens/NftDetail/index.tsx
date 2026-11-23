@@ -324,7 +324,7 @@ export const NFTDetailScreen = () => {
               style={styles.images}
               mediaStyle={styles.innerImages}
               playable={true}
-              poster={iToken?.content}
+              poster={iToken?.thumbnail_url}
             />
           </View>
           <View style={styles.bottom}>
@@ -460,6 +460,7 @@ const getStyle = createGetStyles2024(
       width: 18,
       height: 18,
       borderRadius: 4,
+      borderCurve: 'continuous',
     },
     relative: {
       position: 'relative',
@@ -475,6 +476,7 @@ const getStyle = createGetStyles2024(
     },
     imagesView: {
       borderRadius: 4,
+      borderCurve: 'continuous',
       justifyContent: 'center',
       alignItems: 'center',
       position: 'relative',
@@ -514,6 +516,7 @@ const getStyle = createGetStyles2024(
     },
     innerImages: {
       borderRadius: 16,
+      borderCurve: 'continuous',
       // width: '100%',
       // height: 'auto',
     },
@@ -528,6 +531,7 @@ const getStyle = createGetStyles2024(
       width: 16,
       height: 16,
       borderRadius: 16,
+      borderCurve: 'continuous',
       position: 'absolute',
       bottom: 0,
       right: 0,
@@ -536,6 +540,7 @@ const getStyle = createGetStyles2024(
       width: '100%',
       height: '100%',
       borderRadius: 8,
+      borderCurve: 'continuous',
     },
     imageContainer: {
       width: '100%',

@@ -7,6 +7,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   viewBase: {
     borderWidth: 1,
     borderRadius: 16,
+    borderCurve: 'continuous',
     borderColor: colors2024['neutral-line'],
   },
   shadowView: {

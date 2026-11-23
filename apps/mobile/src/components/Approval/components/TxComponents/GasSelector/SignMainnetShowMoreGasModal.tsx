@@ -468,6 +468,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 4,
+    borderCurve: 'continuous',
     paddingVertical: 2,
     paddingHorizontal: 8,
     gap: 2,
@@ -493,6 +494,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     padding: 12,
     borderRadius: 12,
+    borderCurve: 'continuous',
     borderWidth: 0.5,
     borderColor: colors2024['neutral-line'],
     backgroundColor: colors2024['neutral-bg-1'],
@@ -512,6 +514,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   header: {
     padding: 2,
     borderRadius: 6,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-2'],
     borderWidth: 0.5,
     borderColor: colors2024['neutral-line'],
@@ -525,6 +528,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderRadius: 6,
+    borderCurve: 'continuous',
     borderWidth: 0.5,
     borderColor: colors2024['neutral-line'],
     backgroundColor: colors2024['neutral-bg-2'],
@@ -550,6 +554,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 40,
     height: 12,
     borderRadius: 6,
+    borderCurve: 'continuous',
   },
   tempoTokenSymbol: {
     color: colors2024['neutral-title-1'],
@@ -570,6 +575,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderRadius: 6,
+    borderCurve: 'continuous',
     borderWidth: 0.5,
     borderColor: colors2024['brand-default'],
     backgroundColor: colors2024['brand-light-1'],
@@ -597,6 +603,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 4,
     paddingVertical: 2,
     borderRadius: 4,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['brand-light-1'],
     overflow: 'hidden',
     marginLeft: 6,
@@ -621,5 +628,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 56,
     height: 16,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
 }));

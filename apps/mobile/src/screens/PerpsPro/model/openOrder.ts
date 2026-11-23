@@ -1,3 +1,4 @@
+import { isPerpsScaleCloid } from '@/utils/perpsScaleCloid';
 import type { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 import BigNumber from 'bignumber.js';
 
@@ -114,7 +115,14 @@ const resolveEditKind = ({
     !isTopLevel ||
     hasChildren ||
     !hasEditableSize ||
-    (typeof order.cloid === 'string' && !!order.cloid.trim())
+    (typeof order.cloid === 'string' &&
+      !!order.cloid.trim() &&
+      !(
+        category === 'basic' &&
+        !order.isTrigger &&
+        !order.isPositionTpsl &&
+        isPerpsScaleCloid(order.cloid)
+      ))
   ) {
     return null;
   }

@@ -264,6 +264,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingBottom: 13,
     backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 20,
+    borderCurve: 'continuous',
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
@@ -295,6 +296,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colors2024['neutral-bg-2'],
     padding: 12,
     borderRadius: 12,
+    borderCurve: 'continuous',
     marginBlock: 8,
   },
   unifiedHeader: {
@@ -325,6 +327,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     height: 56,
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   portSuffix: {
     fontSize: 16,

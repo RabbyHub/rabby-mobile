@@ -1,10 +1,16 @@
+import type { PerpsTwapRecord } from '@/hooks/perps/twap/types';
 import type {
   UserHistoricalOrders,
   UserNonFundingLedgerUpdates,
 } from '@rabby-wallet/hyperliquid-sdk';
 import type { PerpsFillFeeSnapshot } from '@/utils/perpsFillFee';
 
-export type PerpsProHistoryTab = 'orders' | 'trade' | 'transaction' | 'funding';
+export type PerpsProHistoryTab =
+  | 'orders'
+  | 'trade'
+  | 'transaction'
+  | 'twap'
+  | 'funding';
 
 export type PerpsProHistoryStatus =
   | 'idle'
@@ -97,7 +103,15 @@ export interface PerpsProFundingHistoryRow {
   time: number;
 }
 
+export interface PerpsProTwapHistoryRow {
+  kind: 'twap';
+  key: string;
+  time: number;
+  order: PerpsTwapRecord;
+}
+
 export type PerpsProHistoryRow =
+  | PerpsProTwapHistoryRow
   | PerpsProOrderHistoryRow
   | PerpsProTradeHistoryRow
   | PerpsProTransactionHistoryRow
@@ -112,12 +126,14 @@ export interface PerpsProHistoryTabState<
   loadingEarlier: boolean;
   loadEarlierError?: string;
   oldestLoadedTime?: number;
+  refreshError?: string;
   refreshing: boolean;
   rows: Row[];
   status: PerpsProHistoryStatus;
 }
 
 export type PerpsProHistoryState = {
+  twap: PerpsProHistoryTabState<PerpsProTwapHistoryRow>;
   funding: PerpsProHistoryTabState<PerpsProFundingHistoryRow>;
   orders: PerpsProHistoryTabState<PerpsProOrderHistoryRow>;
   trade: PerpsProHistoryTabState<PerpsProTradeHistoryRow>;

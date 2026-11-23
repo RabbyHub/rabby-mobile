@@ -17,26 +17,34 @@ export function Block({
   style,
   children,
 }: React.PropsWithChildren<{
-  label: string;
+  /**
+   * Omit to render the card without a section header. An empty string still
+   * reserves the header row, which is what spaces label-less cards apart.
+   */
+  label?: string;
   style?: React.ComponentProps<typeof View>['style'];
 }>) {
   const { colors2024, isLight } = useTheme2024();
+  const hasHeader = label !== undefined;
 
   return (
     <View style={style}>
-      <Text
-        style={{
-          fontSize: 16,
-          color: colors2024['neutral-secondary'],
-          ...RoundedFontStyles.regular,
-          paddingLeft: 12,
-        }}>
-        {label}
-      </Text>
+      {hasHeader ? (
+        <Text
+          style={{
+            fontSize: 16,
+            color: colors2024['neutral-secondary'],
+            ...RoundedFontStyles.regular,
+            paddingLeft: 12,
+          }}>
+          {label}
+        </Text>
+      ) : null}
       <View
         style={{
           borderRadius: 24,
-          marginTop: 8,
+          borderCurve: 'continuous',
+          marginTop: hasHeader ? 8 : 0,
           flexDirection: 'column',
           backgroundColor: isLight
             ? colors2024['neutral-bg-1']
@@ -228,7 +236,7 @@ const getBlockItemStyles = createGetStyles2024(({ colors2024 }) => {
 Block.Item = BlockItem;
 
 export type SettingConfBlock = {
-  label: string;
+  label?: string;
   items: Pick<
     React.ComponentProps<typeof BlockItem>,
     | 'label'

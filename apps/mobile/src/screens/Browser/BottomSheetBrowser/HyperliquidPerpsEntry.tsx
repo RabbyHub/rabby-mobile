@@ -198,6 +198,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       gap: 4,
       paddingHorizontal: 15,
       borderRadius: 19,
+      borderCurve: 'continuous',
       overflow: 'hidden',
       backgroundColor: IS_IOS ? 'transparent' : androidBackground,
       borderWidth: StyleSheet.hairlineWidth,

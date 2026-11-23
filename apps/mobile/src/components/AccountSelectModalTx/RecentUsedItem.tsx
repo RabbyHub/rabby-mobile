@@ -191,11 +191,13 @@ export const RecentUsedItem = ({
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   shadow: {
     borderRadius: SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-1'],
   },
   root: {
     overflow: 'hidden',
     borderRadius: SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS,
+    borderCurve: 'continuous',
     height: 78,
     // backgroundColor: colors2024['neutral-bg-1'],
   },
@@ -204,6 +206,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     borderWidth: 0,
     borderRadius: SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS,
+    borderCurve: 'continuous',
     flex: 1,
     flexGrow: 1,
     backgroundColor: colors2024['neutral-bg-1'],
@@ -266,5 +269,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   walletIcon: {
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
 }));

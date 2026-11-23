@@ -211,6 +211,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       isLight,
     }),
     borderRadius: 6,
+    borderCurve: 'continuous',
     flexDirection: 'row',
     height: 26,
     justifyContent: 'center',
@@ -281,6 +282,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   tradeButton: {
     alignItems: 'center',
     borderRadius: 8,
+    borderCurve: 'continuous',
     height: 34,
     justifyContent: 'center',
   },

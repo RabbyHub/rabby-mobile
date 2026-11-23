@@ -247,6 +247,7 @@ const getSheetStyles = createGetStyles2024(({ colors2024 }) => ({
     width: 58,
     height: 58,
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: 'rgba(30, 30, 30, 0.75)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -276,6 +277,7 @@ const getSheetStyles = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    borderCurve: 'continuous',
   },
 
   simulateChangeContainer: {
@@ -291,5 +293,6 @@ const getSheetStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingTop: 12,
     paddingBottom: 0,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
 }));

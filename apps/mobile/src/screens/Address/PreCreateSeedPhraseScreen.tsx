@@ -26,6 +26,7 @@ const getStyles = (colors: AppColorsVariants) =>
     walletItem: {
       marginBottom: 16,
       borderRadius: 8,
+      borderCurve: 'continuous',
       height: 64,
       gap: 4,
     },

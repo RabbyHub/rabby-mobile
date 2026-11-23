@@ -33,6 +33,8 @@ import Animated, {
 interface CameraViewProps {
   onCodeScanned?: (code: Code[]) => void;
   containerStyle?: StyleProp<ViewStyle>;
+  /** Style for the clipped preview layer, e.g. to change its corner radius. */
+  cameraWrapStyle?: StyleProp<ViewStyle>;
   size?: number;
   showScanLine?: boolean;
   /** Pauses the camera without unmounting it, e.g. while a photo is picked. */
@@ -48,6 +50,7 @@ const getStyles = (colors: AppColorsVariants) =>
       width: 200,
       height: 200,
       borderRadius: 8,
+      borderCurve: 'continuous',
       padding: 15,
     },
     camera: {
@@ -58,6 +61,7 @@ const getStyles = (colors: AppColorsVariants) =>
     cameraWrap: {
       position: 'relative',
       borderRadius: 8,
+      borderCurve: 'continuous',
       backgroundColor: colors['neutral-black'],
       overflow: 'hidden',
       filter: 'blur(4px)',
@@ -67,6 +71,7 @@ const getStyles = (colors: AppColorsVariants) =>
 export const CameraView = ({
   onCodeScanned,
   containerStyle,
+  cameraWrapStyle,
   size = Dimensions.get('window').width - 70,
   showScanLine,
   active = true,
@@ -96,7 +101,7 @@ export const CameraView = ({
 
   const scanLineStyle = useAnimatedStyle(() => ({
     position: 'absolute',
-    width: size - 30,
+    width: '100%',
     height: 30,
     left: 0,
     top: 0,
@@ -145,7 +150,7 @@ export const CameraView = ({
 
   return (
     <View style={StyleSheet.flatten([styles.container, containerStyle])}>
-      <View style={styles.cameraWrap}>
+      <View style={[styles.cameraWrap, cameraWrapStyle]}>
         {device != null && (
           <VisionCamera
             ref={cameraRef}

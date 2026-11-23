@@ -371,6 +371,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       paddingHorizontal: 16,
       paddingVertical: 12,
       borderRadius: 6,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['orange-light-1'],
       gap: 4,
     },
@@ -416,6 +417,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       paddingVertical: 6,
       paddingHorizontal: 6,
       borderRadius: 6,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-bg-1'],
       flexDirection: 'row',
       alignItems: 'center',
@@ -432,6 +434,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     },
     supportedChainIcon: {
       borderRadius: 6,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-bg-1'],
       borderWidth: 1.5,
       borderColor: colors2024['neutral-bg-1'],
@@ -452,6 +455,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     card: {
       backgroundColor: colors2024['neutral-bg-1'],
       borderRadius: 16,
+      borderCurve: 'continuous',
       paddingLeft: 12,
       paddingRight: 16,
       paddingVertical: 14,
@@ -478,12 +482,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     },
     chainIcon: {
       borderRadius: 46,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-bg-1'],
     },
     chainIconFallback: {
       width: 24,
       height: 24,
       borderRadius: 12,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-bg-2'],
     },
     addressText: {

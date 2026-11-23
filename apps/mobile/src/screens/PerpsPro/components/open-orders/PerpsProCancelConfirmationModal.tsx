@@ -104,6 +104,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 12,
+    borderCurve: 'continuous',
     gap: 16,
     padding: 24,
     width: '100%',
@@ -151,6 +152,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   actionLayout: {
     alignItems: 'center',
     borderRadius: 10,
+    borderCurve: 'continuous',
     flex: 1,
     height: CANCEL_ACTION_HEIGHT,
     justifyContent: 'center',

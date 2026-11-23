@@ -63,6 +63,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingTop: 8,
     paddingBottom: 6,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   container: {
     marginTop: 8,

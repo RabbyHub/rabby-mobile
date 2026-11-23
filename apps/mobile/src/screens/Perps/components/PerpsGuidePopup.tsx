@@ -346,7 +346,7 @@ const getStyle = createGetStyles2024(ctx => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '900',
+      fontWeight: '800',
       color: ctx.colors2024['neutral-title-1'],
       marginBottom: 15,
       textAlign: 'center',
@@ -384,6 +384,7 @@ const getStyle = createGetStyles2024(ctx => {
       width: 6,
       height: 6,
       borderRadius: 1000,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['brand-light-2'],
     },
     tabContentContainer: {

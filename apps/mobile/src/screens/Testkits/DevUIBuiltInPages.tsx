@@ -266,6 +266,7 @@ const getStyles = createGetStyles2024(ctx =>
       borderWidth: 1,
       borderColor: ctx.colors2024['neutral-line'],
       borderRadius: 8,
+      borderCurve: 'continuous',
       padding: 12,
     },
     propertyLabel: {

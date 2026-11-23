@@ -10,6 +10,7 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsProBboStrategy } from '../../model/bbo';
+import type { PerpsProColumnLayout } from '../../model/layout';
 import {
   getPerpsProPriceInputMaxDecimals,
   resolvePerpsProMinimumOrderAmount,
@@ -17,6 +18,7 @@ import {
   sanitizePerpsProPriceInput,
   type PerpsProTradeTif,
 } from '../../model/trade';
+import { PERPS_PRO_TWAP_MIN_NOTIONAL } from '../../model/twapOrder';
 import { getPerpsProTradeDisplayReferencePrice } from '../../model/tradeProjection';
 import type { PerpsProTradeController } from '../../scene/usePerpsProTrade';
 import { formatPerpsProDecimal } from '../../utils/format';
@@ -31,6 +33,8 @@ import { PerpsProTradeAmountSlider } from './PerpsProTradeAmountSlider';
 import { PerpsProTradeBboField } from './PerpsProTradeBboField';
 import { PerpsProTradePriceField } from './PerpsProTradePriceField';
 import { PerpsProTifSheet } from './PerpsProTifSheet';
+import { PerpsProScaleOrderFields } from './PerpsProScaleOrderFields';
+import { PerpsProScaleDistributionSheet } from './PerpsProScaleDistributionSheet';
 import { PerpsProTpSlFields } from './PerpsProTpSlFields';
 import {
   PerpsProTradeButton,
@@ -39,7 +43,18 @@ import {
   PerpsProTradeSummaryRow,
 } from './PerpsProTradePrimitives';
 
-type Sheet = 'bbo' | 'leverage' | 'margin' | 'orderType' | 'tif' | null;
+import { PerpsProTwapFields, PerpsProTwapHint } from './PerpsProTwapFields';
+import { PerpsProTwapDurationSheet } from './PerpsProTwapDurationSheet';
+
+type Sheet =
+  | 'bbo'
+  | 'leverage'
+  | 'margin'
+  | 'orderType'
+  | 'tif'
+  | 'duration'
+  | 'distribution'
+  | null;
 
 const bboLabels: Record<PerpsProBboStrategy, string> = {
   cp1: 'Counterparty 1',
@@ -57,6 +72,7 @@ const tifLabels: Record<PerpsProTradeTif, string> = {
 };
 
 type PerpsProTradeFormProps = {
+  columnLayout?: PerpsProColumnLayout;
   addFundsMode?: 'deposit' | 'swap';
   configurationReady?: boolean;
   controller: PerpsProTradeController;
@@ -64,6 +80,7 @@ type PerpsProTradeFormProps = {
 };
 
 const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
+  columnLayout,
   addFundsMode = 'deposit',
   configurationReady = true,
   controller,
@@ -88,6 +105,8 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
     }
   }, [configurationReady]);
   const { form, market } = controller;
+  const canEditOrder =
+    configurationReady || (form.orderType === 'scale' && !!market);
   const priceSzDecimals = market?.marketData.szDecimals ?? 0;
   const priceInputMaxDecimals =
     getPerpsProPriceInputMaxDecimals(priceSzDecimals);
@@ -100,27 +119,47 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
     (value: string) => sanitizePerpsProPriceInput(value, priceSzDecimals),
     [priceSzDecimals],
   );
-  const getKeyboardMinimum = useCallback(() => {
-    if (form.reduceOnly || !market) {
-      return null;
-    }
-    const minimum = resolvePerpsProMinimumOrderAmount({
-      minimumQuoteAmount: PERPS_MINI_USD_VALUE,
-      price:
-        getPerpsProTradeDisplayReferencePrice({
-          form,
-          marketPrice:
-            market.marketData.midPx || market.marketData.markPx || '',
-        }) || '',
-      szDecimals: market.marketData.szDecimals,
-    });
-    if (!minimum) {
-      return null;
-    }
-    return form.amountUnit === 'base'
-      ? `${minimum.minimumBaseSize} ${market.displayBase}`
-      : `${minimum.displayQuoteAmount} ${market.quoteAsset}`;
-  }, [form, market]);
+  const getMinimumAmount = useCallback(
+    (includeBaseConversion = false) => {
+      if ((form.reduceOnly && form.orderType !== 'twap') || !market) {
+        return null;
+      }
+      const minimum = resolvePerpsProMinimumOrderAmount({
+        minimumQuoteAmount:
+          form.orderType === 'twap'
+            ? PERPS_PRO_TWAP_MIN_NOTIONAL
+            : PERPS_MINI_USD_VALUE,
+        price:
+          getPerpsProTradeDisplayReferencePrice({
+            form,
+            marketPrice:
+              form.orderType === 'twap'
+                ? market.marketData.midPx || ''
+                : market.marketData.midPx || market.marketData.markPx || '',
+          }) || '',
+        szDecimals: market.marketData.szDecimals,
+      });
+      if (!minimum) {
+        return null;
+      }
+      return form.amountUnit === 'base'
+        ? `${minimum.minimumBaseSize} ${market.displayBase}`
+        : `${minimum.displayQuoteAmount} ${market.quoteAsset}${
+            includeBaseConversion
+              ? ` ≈ ${minimum.minimumBaseSize} ${market.displayBase}`
+              : ''
+          }`;
+    },
+    [form, market],
+  );
+  const getKeyboardMinimum = useCallback(
+    () => getMinimumAmount(),
+    [getMinimumAmount],
+  );
+  const showTwapMinimum =
+    form.orderType === 'twap' &&
+    (!!form.amount || controller.percentage > 0) &&
+    controller.getTwapValidation('buy').amountError === 'amountTooSmall';
   const quoteAsset = market?.quoteAsset ?? '-';
   const amountLabel = `${t('page.perps.pro.trade.amount')}(${
     controller.amountUnitLabel
@@ -153,12 +192,26 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
     },
     [controller, dismissKeyboardThen],
   );
+  const amountField =
+    form.orderType === 'scale' ? null : (
+      <PerpsProTradeAmountField
+        invalid={showTwapMinimum}
+        getKeyboardMinimum={getKeyboardMinimum}
+        label={amountLabel}
+        maxDecimals={controller.amountDecimals}
+        onBlur={controller.endAmountEntry}
+        onChangeText={controller.setAmount}
+        onFocus={controller.beginAmountEntry}
+        onPressIn={controller.beginAmountEntry}
+        onToggleUnit={controller.toggleAmountUnit}
+        ref={amountInputRef}
+        unit={controller.amountUnitLabel}
+        value={form.amount}
+      />
+    );
   return (
     <View
-      accessibilityState={{ disabled: !configurationReady }}
-      pointerEvents={
-        controller.pending || !configurationReady ? 'none' : 'auto'
-      }
+      pointerEvents={controller.pending ? 'none' : 'auto'}
       style={styles.container}
       testID="perps-pro-trade-form">
       <View style={styles.inputGroup}>
@@ -190,10 +243,24 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
           />
         </View>
         <PerpsProTradeSelect
-          disabled={!configurationReady}
+          disabled={!market}
           label={orderTypeLabel}
           onPress={() => openSheet('orderType')}
         />
+      </View>
+      <View
+        style={styles.inputGroup}
+        pointerEvents={canEditOrder ? 'auto' : 'none'}
+        accessibilityState={{ disabled: !canEditOrder }}
+        testID="perps-pro-trade-inputs">
+        {form.orderType === 'scale' ? (
+          <PerpsProScaleOrderFields
+            amountInputRef={amountInputRef}
+            controller={controller}
+            onDistributionHelp={() => openSheet('distribution')}
+            onTif={() => openSheet('tif')}
+          />
+        ) : null}
         {form.orderType === 'limit' ? (
           form.bboEnabled ? (
             <PerpsProTradeBboField
@@ -278,39 +345,92 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
             />
           </>
         ) : null}
-        <PerpsProTradeAmountField
-          getKeyboardMinimum={getKeyboardMinimum}
-          label={amountLabel}
-          maxDecimals={controller.amountDecimals}
-          onBlur={controller.endAmountEntry}
-          onChangeText={controller.setAmount}
-          onFocus={controller.beginAmountEntry}
-          onPressIn={controller.beginAmountEntry}
-          onToggleUnit={controller.toggleAmountUnit}
-          ref={amountInputRef}
-          unit={controller.amountUnitLabel}
-          value={form.amount}
-        />
-        {controller.showAmountConversion && controller.resolvedAmount ? (
-          <Text style={styles.convertedAmount}>
-            ≈{' '}
-            {form.amountUnit === 'quote'
-              ? `${formatPerpsProDecimal(
-                  controller.resolvedAmount.baseSize,
-                  market?.marketData.szDecimals,
-                )} ${market?.displayBase ?? '-'}`
-              : `${formatPerpsProDecimal(
-                  controller.resolvedAmount.quoteAmount,
-                  2,
-                )} ${quoteAsset}`}
-          </Text>
+        {amountField ? (
+          <>
+            {form.orderType === 'twap' ? (
+              <View
+                collapsable={false}
+                pointerEvents="box-none"
+                style={styles.amountWithHint}
+                testID="perps-pro-twap-amount-anchor">
+                {amountField}
+                {showTwapMinimum ? (
+                  <PerpsProTwapHint columnLayout={columnLayout}>
+                    {t('page.perps.pro.twap.minimum', {
+                      amount:
+                        getMinimumAmount(true) ??
+                        `${PERPS_PRO_TWAP_MIN_NOTIONAL} USD`,
+                    })}
+                  </PerpsProTwapHint>
+                ) : null}
+              </View>
+            ) : (
+              amountField
+            )}
+            {controller.showAmountConversion && controller.resolvedAmount ? (
+              <Text style={styles.convertedAmount}>
+                ≈{' '}
+                {form.amountUnit === 'quote'
+                  ? `${formatPerpsProDecimal(
+                      controller.resolvedAmount.baseSize,
+                      market?.marketData.szDecimals,
+                    )} ${market?.displayBase ?? '-'}`
+                  : `${formatPerpsProDecimal(
+                      controller.resolvedAmount.quoteAmount,
+                      2,
+                    )} ${quoteAsset}`}
+              </Text>
+            ) : null}
+            <PerpsProTradeAmountSlider
+              draggingContainerStyle={
+                form.orderType === 'twap'
+                  ? styles.twapSliderDragging
+                  : undefined
+              }
+              onChange={
+                configurationReady ? controller.setPercentage : undefined
+              }
+              value={controller.percentage}
+            />
+          </>
         ) : null}
-        <PerpsProTradeAmountSlider
-          onChange={configurationReady ? controller.setPercentage : undefined}
-          value={controller.percentage}
-        />
+        {form.orderType === 'twap' ? (
+          <PerpsProTwapFields
+            controller={controller}
+            onSelectTime={() => openSheet('duration')}
+          />
+        ) : null}
       </View>
-      <View style={styles.optionsGroup}>
+      <View
+        pointerEvents={canEditOrder ? 'auto' : 'none'}
+        style={[
+          styles.optionsGroup,
+          form.orderType === 'scale' && styles.scaleOptions,
+        ]}>
+        {form.orderType === 'twap' ? (
+          <View style={styles.twapOptions}>
+            <PerpsProTradeCheckbox
+              checked={form.twapRandomize}
+              explanationKey="randomize"
+              label={t('page.perps.pro.twap.randomize')}
+              onPress={() =>
+                controller.patchForm({ twapRandomize: !form.twapRandomize })
+              }
+            />
+            <PerpsProTradeCheckbox
+              checked={form.reduceOnly}
+              disabled={
+                !configurationReady ||
+                controller.reduceOnlyAvailability.checkboxDisabled
+              }
+              explanationKey="reduceOnly"
+              label={t('page.perps.pro.trade.reduceOnly')}
+              onPress={() =>
+                controller.patchForm({ reduceOnly: !form.reduceOnly })
+              }
+            />
+          </View>
+        ) : null}
         <PerpsProTradeSummaryRow
           label={t('page.perps.pro.trade.available')}
           onPressValue={configurationReady ? onAddFunds : undefined}
@@ -340,7 +460,9 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
           }
           valueTestID="perps-pro-trade-available-deposit"
         />
-        {controller.attachedTpSlExecutionEnabled ? (
+        {controller.attachedTpSlExecutionEnabled &&
+        form.orderType !== 'scale' &&
+        form.orderType !== 'twap' ? (
           <PerpsProTpSlFields
             controller={controller.tpSl}
             draft={form.attachedTpSl}
@@ -359,39 +481,41 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
             }
           />
         ) : null}
-        <View style={styles.optionRow}>
-          <PerpsProTradeCheckbox
-            checked={form.reduceOnly}
-            disabled={
-              !configurationReady ||
-              controller.reduceOnlyAvailability.checkboxDisabled
-            }
-            explanationKey="reduceOnly"
-            label={t('page.perps.pro.trade.reduceOnly')}
-            onPress={() => {
-              const reduceOnly = !form.reduceOnly;
-              controller.patchForm({
-                attachedTpSl: reduceOnly
-                  ? { ...form.attachedTpSl, enabled: false }
-                  : form.attachedTpSl,
-                reduceOnly,
-              });
-            }}
-          />
-          {form.orderType === 'limit' ? (
-            <Pressable
-              disabled={!configurationReady}
-              onPress={() => openSheet('tif')}
-              style={styles.tif}
-              testID="perps-pro-trade-tif-trigger">
-              <Text style={styles.tifText}>{tifLabels[form.tif]}</Text>
-              <PerpsProSelectCaret
-                color={colors2024['neutral-secondary']}
-                testID="perps-pro-trade-tif-caret"
-              />
-            </Pressable>
-          ) : null}
-        </View>
+        {form.orderType !== 'twap' ? (
+          <View style={styles.optionRow}>
+            <PerpsProTradeCheckbox
+              checked={form.reduceOnly}
+              disabled={
+                !configurationReady ||
+                controller.reduceOnlyAvailability.checkboxDisabled
+              }
+              explanationKey="reduceOnly"
+              label={t('page.perps.pro.trade.reduceOnly')}
+              onPress={() => {
+                const reduceOnly = !form.reduceOnly;
+                controller.patchForm({
+                  attachedTpSl: reduceOnly
+                    ? { ...form.attachedTpSl, enabled: false }
+                    : form.attachedTpSl,
+                  reduceOnly,
+                });
+              }}
+            />
+            {form.orderType === 'limit' ? (
+              <Pressable
+                disabled={!configurationReady}
+                onPress={() => openSheet('tif')}
+                style={styles.tif}
+                testID="perps-pro-trade-tif-trigger">
+                <Text style={styles.tifText}>{tifLabels[form.tif]}</Text>
+                <PerpsProSelectCaret
+                  color={colors2024['neutral-secondary']}
+                  testID="perps-pro-trade-tif-caret"
+                />
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
       </View>
       <View style={styles.orderGroups}>
         {(['buy', 'sell'] as const).map(side => {
@@ -407,60 +531,70 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
             : null;
           return (
             <View key={side} style={styles.orderGroup}>
-              <View style={styles.orderSummary}>
-                {liquidationPrice != null ? (
+              {form.orderType !== 'scale' ? (
+                <View style={styles.orderSummary}>
+                  {liquidationPrice != null ? (
+                    <PerpsProTradeSummaryRow
+                      dottedLabel
+                      explanationKey="estimatedLiquidationPrice"
+                      label={t('page.perps.pro.trade.liquidationPrice')}
+                      value={
+                        liquidationPrice === '--'
+                          ? '--'
+                          : `${formatPerpsProDecimal(
+                              liquidationPrice,
+                              market?.marketData.pxDecimals ?? 2,
+                            )} ${quoteAsset}`
+                      }
+                    />
+                  ) : null}
                   <PerpsProTradeSummaryRow
-                    dottedLabel
-                    explanationKey="estimatedLiquidationPrice"
-                    label={t('page.perps.pro.trade.liquidationPrice')}
+                    label={t('page.perps.pro.trade.max')}
                     value={
-                      liquidationPrice === '--'
-                        ? '--'
-                        : `${formatPerpsProDecimal(
-                            liquidationPrice,
-                            market?.marketData.pxDecimals ?? 2,
-                          )} ${quoteAsset}`
+                      configurationReady
+                        ? `${formatPerpsProDecimal(
+                            controller.getMaxDisplayAmount(side),
+                            form.amountUnit === 'base'
+                              ? market?.marketData.szDecimals
+                              : 2,
+                          )} ${controller.amountUnitLabel}`
+                        : `-- ${controller.amountUnitLabel}`
                     }
                   />
-                ) : null}
-                <PerpsProTradeSummaryRow
-                  label={t('page.perps.pro.trade.max')}
-                  value={
-                    configurationReady
-                      ? `${formatPerpsProDecimal(
-                          controller.getMaxDisplayAmount(side),
-                          form.amountUnit === 'base'
-                            ? market?.marketData.szDecimals
-                            : 2,
-                        )} ${controller.amountUnitLabel}`
-                      : `-- ${controller.amountUnitLabel}`
-                  }
-                />
-                <PerpsProTradeSummaryRow
-                  dottedLabel
-                  explanationKey="cost"
-                  label={t('page.perps.pro.trade.cost')}
-                  value={
-                    configurationReady
-                      ? `${formatPerpsProDecimal(
-                          controller.getCostDisplayAmount(side),
-                          2,
-                        )} ${quoteAsset}`
-                      : `-- ${quoteAsset}`
-                  }
-                />
-              </View>
+                  <PerpsProTradeSummaryRow
+                    dottedLabel
+                    explanationKey="cost"
+                    label={t('page.perps.pro.trade.cost')}
+                    value={
+                      configurationReady
+                        ? `${formatPerpsProDecimal(
+                            controller.getCostDisplayAmount(side),
+                            2,
+                          )} ${quoteAsset}`
+                        : `-- ${quoteAsset}`
+                    }
+                  />
+                </View>
+              ) : null}
               <PerpsProTradeButton
-                disabled={controller.pending || !configurationReady}
-                label={t(
-                  `page.perps.pro.trade.${
-                    side === 'buy' ? 'buyLong' : 'sellShort'
-                  }`,
-                )}
+                disabled={controller.pending || !canEditOrder}
+                label={
+                  form.orderType === 'scale'
+                    ? t(
+                        `page.perps.pro.scaleOrder.${
+                          side === 'buy' ? 'previewBuy' : 'previewSell'
+                        }`,
+                      )
+                    : t(
+                        `page.perps.pro.trade.${
+                          side === 'buy' ? 'buyLong' : 'sellShort'
+                        }`,
+                      )
+                }
                 onPress={() => requestOrder(side)}
                 side={side}
                 subtitle={
-                  sliderAmount == null
+                  sliderAmount == null || form.orderType === 'scale'
                     ? undefined
                     : `≈${formatPerpsProDecimal(
                         sliderAmount,
@@ -475,11 +609,21 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
         })}
       </View>
 
+      <PerpsProTwapDurationSheet
+        visible={sheet === 'duration' && form.orderType === 'twap'}
+        value={form.twapDuration}
+        onClose={() => setSheet(null)}
+        onConfirm={twapDuration => controller.patchForm({ twapDuration })}
+      />
       <PerpsProOrderTypeSheet
         onClose={() => setSheet(null)}
         onSelect={controller.setOrderType}
         selected={form.orderType}
-        visible={configurationReady && sheet === 'orderType'}
+        visible={!!market && sheet === 'orderType'}
+      />
+      <PerpsProScaleDistributionSheet
+        visible={canEditOrder && sheet === 'distribution'}
+        onClose={() => setSheet(null)}
       />
       <PerpsProMarginModeSheet
         disabledValues={
@@ -498,7 +642,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
         onClose={() => setSheet(null)}
         onSelect={controller.setTif}
         selected={form.tif}
-        visible={configurationReady && sheet === 'tif'}
+        visible={canEditOrder && sheet === 'tif'}
       />
       <PerpsProBboSheet
         onClose={() => setSheet(null)}
@@ -528,11 +672,16 @@ export const PerpsProTradeForm = React.memo(PerpsProTradeFormComponent);
 PerpsProTradeForm.displayName = 'PerpsProTradeForm';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  container: { gap: 16, minHeight: 416 },
+  container: { gap: 8, minHeight: 416 },
   inputGroup: { gap: 8 },
+  // Changing stacking order mid-edit can detach the focused or touched native view.
+  amountWithHint: { zIndex: 1 },
+  twapSliderDragging: { zIndex: 2 },
   doubleRow: { flexDirection: 'row', gap: 8 },
   flexItem: { flex: 1, minWidth: 0 },
-  optionsGroup: { gap: 8 },
+  twapOptions: { gap: 8 },
+  optionsGroup: { gap: 8, marginTop: 8 },
+  scaleOptions: { flexDirection: 'column-reverse', gap: 4 },
   convertedAmount: {
     ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-secondary'],
@@ -554,7 +703,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 12,
     lineHeight: 16,
   },
-  orderGroups: { gap: 16 },
+  orderGroups: { gap: 16, marginTop: 8 },
   orderGroup: { gap: 8 },
   orderSummary: { gap: 4 },
 }));

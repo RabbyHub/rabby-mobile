@@ -33,6 +33,7 @@ export const QuoteLogo = ({
       width: MAIN_LOGO_SIZE,
       height: MAIN_LOGO_SIZE,
       borderRadius: 999999,
+      borderCurve: 'continuous' as const,
     };
   }, []);
 
@@ -44,6 +45,7 @@ export const QuoteLogo = ({
       width: BRIDGE_LOGO_SIZE,
       height: BRIDGE_LOGO_SIZE,
       borderRadius: 999999,
+      borderCurve: 'continuous' as const,
     };
   }, []);
 

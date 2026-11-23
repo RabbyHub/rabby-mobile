@@ -173,6 +173,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     zIndex: 3,
     elevation: 3,
     borderRadius: 12,
+    borderCurve: 'continuous',
     // TODO: backgroundColor: colors2024['neutral-card-2'],
     backgroundColor: colors2024['neutral-line'],
     // backgroundColor: colors2024['neutral-bg-2'],

@@ -1518,7 +1518,7 @@
       "connectWallet": "连接钱包"
     },
     "walletConnect": {
-      "screenTitle": "连接钱包",
+      "screenTitle": "扫码连接",
       "connectingToRabby": "正在连接到 Rabby",
       "pairingFailed": "WalletConnect 配对失败。",
       "proposalNotReceived": "WalletConnect 二维码可能已失效，请刷新后重试。",
@@ -2033,7 +2033,6 @@
       "dataAnalysis": "帮助改进 Rabby",
       "dataAnalysisDesc": "分享匿名使用数据以帮助改进 Rabby。收集的数据不会与您或您的账户关联。",
       "bugReportChat": "通过聊天分享反馈",
-      "features": "功能",
       "manageWallets": "管理钱包"
     },
     "settings": {
@@ -2404,7 +2403,10 @@
           "attachedTpSlUnresolved": "该市场此前有一笔 TP/SL 提交尚未确认。重试前请检查未成交订单和仓位。",
           "orderFilled": "订单已成交。",
           "orderPlaced": "订单已挂出。",
-          "orderFailed": "订单失败。"
+          "orderFailed": "订单失败。",
+          "scale": "分段委托",
+          "scaleDescription": "设置价格区间并下达多笔限价子单",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "仅挂单模式下，买入价必须低于当前最低卖价，以避免立即成交。",
@@ -2418,6 +2420,9 @@
           "tpSl": {
             "title": "TP/SL",
             "description": "提交基础市价 TP/SL 订单。如需部分 TP/SL 等高级功能，请在已有仓位上设置 TP/SL。"
+          },
+          "randomize": {
+            "description": "随机化会使每笔子交易的数量在 ±20% 的范围内变化，同时遵守最大交易数量及其他限制。"
           },
           "reduceOnly": {
             "title": "只减仓",
@@ -2515,7 +2520,8 @@
             "orders": "委托历史",
             "trade": "成交历史",
             "transaction": "资金流水",
-            "funding": "资金费"
+            "funding": "资金费",
+            "twap": "TWAP 历史"
           },
           "empty": {
             "orders": "暂无委托历史",
@@ -2697,6 +2703,101 @@
           "cancelPartial": "已取消 {{success}} 笔订单；{{failed}} 笔失败",
           "cancelFailed": "取消订单失败",
           "cancelContextChanged": "账户已发生变化，请重试。"
+        },
+        "scaleOrder": {
+          "lowerPrice": "最低价",
+          "upperPrice": "最高价",
+          "size": "数量",
+          "count": "订单数 (2–100)",
+          "distribution": "数量分布",
+          "flat": "固定",
+          "ascending": "升序",
+          "descending": "降序",
+          "flatDescription": "总数量中的每笔订单分配相同数量",
+          "ascendingDescription": "订单数量随价格升高而递增",
+          "descendingDescription": "订单数量随价格降低而递增",
+          "previewBuy": "预览买单",
+          "previewSell": "预览卖单",
+          "totalSize": "总数量",
+          "averagePrice": "平均价格",
+          "result": "已受理 {{accepted}} 笔，已拒绝 {{rejected}} 笔，待确认 {{unresolved}} 笔",
+          "unknown": "下单结果待确认。请先检查当前委托和交易历史，再下新订单。",
+          "errors": {
+            "range": "请输入有效价格，最高价必须高于最低价。",
+            "count": "请输入 2 至 100 之间的整数。",
+            "size": "请输入大于 0 且符合该市场数量精度的委托数量。",
+            "duplicatePrice": "按价格精度调整后，部分委托价格重复。请扩大价格区间或减少订单数。",
+            "minimum": "按数量精度调整后，每笔子订单金额不得低于 $10。",
+            "maximum": "委托总金额超过该市场允许的上限。",
+            "capacity": "当前可交易额度不足以提交整批订单。",
+            "reduceOnly": "委托总数量超过当前可平仓数量。"
+          }
+        },
+        "twap": {
+          "description": "按自定义时间间隔下单",
+          "totalTime": "总时间",
+          "durationFieldLabel": "总时间 (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} 分钟",
+          "minuteValue_one": "{{t}} 分钟",
+          "confirmationDuration": "{{t}} 分钟",
+          "totalSize": "总数量",
+          "selectTime": "选择总运行时间",
+          "reset": "重置",
+          "randomize": "随机化",
+          "randomized": "已随机化",
+          "durationHint": "TWAP 运行时长为 5–1439 分钟。",
+          "minimum": "最小总数量为 {{amount}}",
+          "filled": "已成交",
+          "duration": "持续时间",
+          "runtime": "运行时间",
+          "averagePrice": "平均成交价",
+          "end": "结束",
+          "detail": "详情",
+          "add": "添加",
+          "detailTitle": "TWAP 运行详情",
+          "historyDetailTitle": "TWAP 历史详情",
+          "trades": "成交",
+          "size": "数量",
+          "fee": "费用",
+          "noTrades": "暂无成交",
+          "endTitle": "确认结束 TWAP",
+          "endMessage": "确认后，TWAP 订单将停止执行，该 TWAP 的所有未成交挂单将自动撤销。",
+          "ending": "正在结束…",
+          "ended": "TWAP 订单已结束。",
+          "placed": "{{coin}} TWAP 订单已提交。",
+          "unknownOutcome": "{{coin}} TWAP 结果待确认。再次下单前请检查订单和历史。",
+          "unknown": "TWAP 结果待确认。重试前请检查订单和历史。",
+          "loadError": "无法加载 TWAP 订单，点击重试。",
+          "status": {
+            "working": "运行中",
+            "waiting": "等待中",
+            "filled": "已成交",
+            "cancelled": "已取消",
+            "expired": "已终止",
+            "unknown": "未知"
+          },
+          "fills": {
+            "loading": "正在加载成交…",
+            "error": "无法加载成交记录，点击重试。"
+          },
+          "errors": {
+            "amountRequired": "请输入下单金额。",
+            "amountTooSmall": "TWAP 订单总额不能低于 100 美元。",
+            "amountExceedsMaximum": "订单超过当前可用上限。",
+            "invalidPrecision": "请输入符合该市场数量精度的金额。",
+            "priceUnavailable": "当前价格不可用，请稍后重试。",
+            "durationRequired": "请输入总时间。",
+            "durationInvalid": "请输入整数分钟。",
+            "durationTooShort": "TWAP 最短运行时间为 5 分钟。",
+            "durationTooLong": "TWAP 最长运行时间为 1439 分钟。",
+            "capacity": "当前可用交易额度不足。",
+            "reduceOnly": "订单数量超过当前可平仓数量。",
+            "contextChanged": "账户、订单或市场已变更，请重新确认订单。"
+          },
+          "endedLabel": "已结束",
+          "skipConfirmation": "TWAP 订单不再显示二次确认。",
+          "averageFilledPrice": "平均成交价"
         }
       },
       "limitOrders": "限价单",

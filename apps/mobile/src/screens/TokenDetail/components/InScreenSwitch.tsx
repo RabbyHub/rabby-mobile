@@ -96,6 +96,7 @@ const getStyle = createGetStyles2024(ctx => {
   return {
     container: {
       borderRadius: 8,
+      borderCurve: 'continuous',
       paddingHorizontal: 8,
       paddingVertical: 6,
       backgroundColor: ctx.colors2024['neutral-bg-5'],
@@ -117,6 +118,7 @@ const getStyle = createGetStyles2024(ctx => {
     },
     walletIcon: {
       borderRadius: 5,
+      borderCurve: 'continuous',
       width: 18,
       height: 18,
       marginRight: 8,

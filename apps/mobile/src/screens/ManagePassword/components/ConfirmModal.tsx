@@ -32,6 +32,7 @@ const getConfirmSetPasswordModalStyles = createGetStyles(colors => {
     modalContent: {
       position: 'relative',
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: colors['neutral-bg1'],
       width: '100%',
       maxWidth: LAYOUTS.contentMaxWidth,
@@ -86,6 +87,7 @@ const getConfirmSetPasswordModalStyles = createGetStyles(colors => {
     },
     buttonContainer: {
       borderRadius: 8,
+      borderCurve: 'continuous',
       width: '100%',
     },
     button: {

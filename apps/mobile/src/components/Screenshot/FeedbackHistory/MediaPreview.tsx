@@ -524,6 +524,7 @@ const styles = StyleSheet.create({
     minHeight: 52,
     paddingHorizontal: 12,
     borderRadius: 12,
+    borderCurve: 'continuous',
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.52)',
@@ -554,6 +555,7 @@ const styles = StyleSheet.create({
     width: 4,
     height: 16,
     borderRadius: 2,
+    borderCurve: 'continuous',
     backgroundColor: '#fff',
   },
   videoSlider: {
@@ -564,11 +566,13 @@ const styles = StyleSheet.create({
   videoSliderTrack: {
     height: 3,
     borderRadius: 2,
+    borderCurve: 'continuous',
   },
   videoSliderThumb: {
     width: 12,
     height: 12,
     borderRadius: 6,
+    borderCurve: 'continuous',
     backgroundColor: '#fff',
   },
   videoTimeText: {

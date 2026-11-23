@@ -235,6 +235,7 @@ describe.each([true, false])('PerpsProMarketRow (iOS=%s)', isIOS => {
     expect(source.props.adjustsFontSizeToFit).toBeUndefined();
     expect(sourceStyle).toEqual({
       backgroundColor: 'neutral-bg-5',
+      borderCurve: 'continuous',
       borderRadius: 4,
       color: 'neutral-foot',
       ...RoundedFontStyles.medium,

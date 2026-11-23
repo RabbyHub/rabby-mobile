@@ -240,6 +240,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
   return {
     receiveAddressItemShadow: {
       borderRadius: 20,
+      borderCurve: 'continuous',
     },
     active: {
       borderColor: ctx.colors2024['brand-light-2'],
@@ -250,6 +251,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
     },
     addressItemContainer: {
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-1'],
       overflow: 'hidden',
       padding: 16,
@@ -259,6 +261,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
     },
     receiveAddressItemContainer: {
       borderRadius: 20,
+      borderCurve: 'continuous',
       backgroundColor: ctx.isLight
         ? ctx.colors2024['neutral-bg-1']
         : ctx.colors2024['neutral-bg-2'],
@@ -271,7 +274,13 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
       width: '100%',
     },
-    walletIcon: { marginRight: 8, width: 46, height: 46, borderRadius: 12 },
+    walletIcon: {
+      marginRight: 8,
+      width: 46,
+      height: 46,
+      borderRadius: 12,
+      borderCurve: 'continuous',
+    },
     centerInfo: {
       flex: 1,
       flexShrink: 1,
@@ -319,6 +328,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       height: 20,
       marginLeft: 4,
       borderRadius: 6,
+      borderCurve: 'continuous',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
@@ -349,6 +359,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       width: 26,
       height: 26,
       borderRadius: 100,
+      borderCurve: 'continuous',
       // backgroundColor: ctx.colors2024['neutral-bg-2'],
       display: 'flex',
       justifyContent: 'center',
@@ -362,6 +373,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       top: -1,
       right: -1,
       borderTopRightRadius: 20,
+      borderCurve: 'continuous',
     },
   };
 });
@@ -564,7 +576,7 @@ export function AccountsPanelInSheetModal({
         <View
           key={`${item.address}-${item.type}-${item.brandName}-${index}`}
           style={[
-            { borderRadius: isReceive ? 20 : 16 },
+            { borderRadius: isReceive ? 20 : 16, borderCurve: 'continuous' },
             isReceiveSectionFirstItem && styles.receiveSectionFirstItemGap,
             index > 0 && styles.addressItemTopGap,
           ]}>
@@ -804,6 +816,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
       height: 6,
       width: 50,
       borderRadius: 104,
+      borderCurve: 'continuous',
     },
   };
 });

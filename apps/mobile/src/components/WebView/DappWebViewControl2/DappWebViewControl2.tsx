@@ -482,7 +482,7 @@ const getStyles = createGetStyles2024(ctx =>
     HeadTitleOrigin: {
       fontSize: 20,
       fontFamily: 'SF Pro Rounded',
-      fontWeight: '900',
+      fontWeight: '800',
       textAlign: 'center',
       color: ctx.colors['neutral-title-1'],
       lineHeight: 24,

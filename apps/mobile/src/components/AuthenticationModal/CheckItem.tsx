@@ -41,6 +41,7 @@ const getStyle = createGetStyles(colors => {
       gap: 8,
       padding: 16,
       borderRadius: 8,
+      borderCurve: 'continuous',
       backgroundColor: colors['neutral-card2'],
       flexDirection: 'row',
       borderWidth: 1,

@@ -24,6 +24,7 @@ const getStyles = createGetStyles(colors => ({
     backgroundColor: colors['blue-default'],
     height: 52,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   buttonText: {
     color: colors['neutral-title-2'],

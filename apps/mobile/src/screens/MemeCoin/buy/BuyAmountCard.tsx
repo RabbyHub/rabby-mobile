@@ -163,6 +163,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingBottom: 14,
     paddingHorizontal: 16,
     borderRadius: 16,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-card-1'],
   },
   amountRow: {
@@ -185,7 +186,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     includeFontPadding: false,
     fontFamily: 'SF Pro Rounded',
     fontSize: 28,
-    fontWeight: '900',
+    fontWeight: '800',
     color: colors2024['neutral-title-1'],
   },
   amountText: {
@@ -203,6 +204,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 36,
     paddingHorizontal: 12,
     borderRadius: 18,
+    borderCurve: 'continuous',
     justifyContent: 'center',
     backgroundColor: colors2024['neutral-bg-5'],
   },
@@ -293,6 +295,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   memeLogo: {
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   memeChain: {
     right: -1,

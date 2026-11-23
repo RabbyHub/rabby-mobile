@@ -44,10 +44,12 @@ export const HOME_FEATURE_NEW_TAG_CONFIG: Partial<
   Record<MultiHomeFeatTitle, HomeFeatureNewTagConfig>
 > = {
   // 配置是否显示NEW标签在这里
+  // Market / Convert Dust 的 NEW 已挂数月且对新用户无意义，先临时关闭；
+  // 后续改为按上线时间窗口 + 安装时间判断后再按需开启。
   [MultiHomeFeatTitle.Market]: {
-    enableNewTag: true,
+    enableNewTag: false,
   },
   [MultiHomeFeatTitle.ConvertDust]: {
-    enableNewTag: true,
+    enableNewTag: false,
   },
 };

@@ -47,6 +47,7 @@ import {
   buildTempoTransaction,
   isTempoBatchSupportedAccountType,
   isTempoChain,
+  resolveTempoProtocolFallbackGasToken,
   shouldUseTempoTransaction,
   toTempoCallsTx,
 } from './tempo';
@@ -293,6 +294,19 @@ export const sendTransaction = async ({
     gasTokenDecimals: gasToken.token.decimals,
   });
 
+  // Tempo: without feeToken the chain falls back to OUSD when pathUSD cannot
+  // cover the max fee, so check against the token it will actually charge.
+  const chargedGasToken = ignoreGasNotEnoughCheck
+    ? gasToken
+    : await resolveTempoProtocolFallbackGasToken({
+        account,
+        address,
+        chainServerId: chain.serverId,
+        gasTokenBalance: gasToken,
+        txFeeToken: (tx as TxWithTempoExtras<Tx>).feeToken,
+        maxGasCostRawAmount: gasCost.maxGasCostRawAmount,
+      });
+
   // check gas errors
   const checkErrors = ignoreGasNotEnoughCheck
     ? []
@@ -306,9 +320,9 @@ export const sendTransaction = async ({
         isCancel: false,
         tx,
         isGnosisAccount: false,
-        nativeTokenBalance: balance,
+        nativeTokenBalance: chargedGasToken.rawBalance,
         recommendGasLimitRatio,
-        gasTokenDecimals: gasToken.token.decimals,
+        gasTokenDecimals: chargedGasToken.token.decimals,
         checkTxValueInBalance,
       });
 

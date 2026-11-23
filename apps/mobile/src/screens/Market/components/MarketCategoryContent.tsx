@@ -369,6 +369,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     height: 74,
     padding: 0,
     borderRadius: 16,
+    borderCurve: 'continuous',
     marginTop: 8,
   },
   firstItemPadding: {

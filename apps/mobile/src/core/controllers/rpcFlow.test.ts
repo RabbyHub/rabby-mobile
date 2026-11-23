@@ -1,5 +1,9 @@
+import 'reflect-metadata';
+
 const mockCaptureException = jest.fn();
 const mockAutoConnect = jest.fn();
+const mockHasDappPermission = jest.fn(() => true);
+const mockEthRequestAccounts = jest.fn();
 const mockFindChain = jest.fn();
 const mockRequestApproval = jest.fn();
 const mockEthSendTransaction = jest.fn();
@@ -46,7 +50,8 @@ jest.mock('@/core/serviceApi/dapp', () => ({
   getConnectedDappSnapshot: (...args: unknown[]) =>
     mockGetConnectedDapp(...args),
   getDappSnapshot: (...args: unknown[]) => mockGetDapp(...args),
-  hasDappPermissionSnapshot: jest.fn(() => true),
+  hasDappPermissionSnapshot: (...args: unknown[]) =>
+    mockHasDappPermission(...args),
   updateDappSync: (...args: unknown[]) => mockUpdateDapp(...args),
 }));
 
@@ -95,9 +100,14 @@ jest.mock('@/core/serviceApi/customTestnet', () => ({
   },
 }));
 
+jest.mock('@/core/serviceApi/transactionHistory', () => ({
+  getTransactionHistoryTransactions: jest.fn(),
+}));
+
 jest.mock('./provider', () => ({
   __esModule: true,
   default: {
+    ethRequestAccounts: (...args: unknown[]) => mockEthRequestAccounts(...args),
     ethSendTransaction: (...args: unknown[]) => mockEthSendTransaction(...args),
     ethSignTypedData: (...args: unknown[]) => mockEthSignTypedData(...args),
     ethSignTypedDataV1: (...args: unknown[]) => mockEthSignTypedData(...args),
@@ -147,6 +157,7 @@ jest.mock('@/utils/number', () => ({
 
 jest.mock('../utils/signEvent', () => ({
   waitSignComponentAmounted: jest.fn(),
+  cancelSignComponentAmounted: jest.fn(),
 }));
 
 jest.mock('./gnosisController', () => ({
@@ -171,6 +182,12 @@ jest.mock('@/utils/walletUnlockError', () => ({
 import rpcFlow from './rpcFlow';
 import type { ProviderRequest } from './type';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant/internalRequest';
+import { connect } from '../apis/dapp';
+import { getAccountList } from '../apis/account';
+import { getDappAccount } from '@/core/utils/dappAccount';
+import { getTransactionHistoryTransactions } from '@/core/serviceApi/transactionHistory';
+import { shouldAutoConnect } from './autoConnect';
+import { openapi } from '../request';
 
 const account = {
   address: '0x1111111111111111111111111111111111111111',
@@ -463,12 +480,39 @@ describe('rpcFlow typed-data chain pinning', () => {
     },
   );
 
+  it.each([
+    ['eth_sign_typed_data_v1', 'eth_signTypedData_v1'],
+    ['ethSignTypedDataV1', 'eth_signTypedData_v1'],
+    ['eth_sign_typed_data', 'eth_signTypedData'],
+    ['ethSignTypedData', 'eth_signTypedData'],
+    ['eth_sign_typed_data_v3', 'eth_signTypedData_v3'],
+    ['ethSignTypedDataV4', 'eth_signTypedData_v4'],
+    ['eth_sign_typed_data_v_1', 'eth_signTypedData_v1'],
+    ['eth_sign_typed_data_v_3', 'eth_signTypedData_v3'],
+    ['eth_sign_typed_data_v_4', 'eth_signTypedData_v4'],
+  ])(
+    'accepts %s and presents the matching canonical method for approval',
+    async (method, canonicalMethod) => {
+      const request = makeRequest(canonicalMethod, 1);
+      request.data.method = method;
+      await expect(rpcFlow(request)).resolves.toBe('0xsignature');
+      expect(mockRequestApproval.mock.calls[0][0].params).toMatchObject({
+        method: canonicalMethod,
+        data: request.data.params,
+      });
+      expect(mockEthSignTypedData.mock.calls[0][0].data.params).toBe(
+        request.data.params,
+      );
+      expect(request.data.method).toBe(method);
+    },
+  );
+
   it('starts a retry from the mounted waiting UI without another mount event', async () => {
     const { waitSignComponentAmounted } =
       jest.requireMock('../utils/signEvent');
     // Only the initial mount emits; a retry comes from the same mounted UI.
     waitSignComponentAmounted
-      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(true)
       .mockReturnValue(new Promise(() => {}));
     mockRequestApproval
       .mockResolvedValueOnce({ uiRequestComponent: 'LedgerHardwareWaiting' })
@@ -490,7 +534,7 @@ describe('rpcFlow typed-data chain pinning', () => {
     const { waitSignComponentAmounted } =
       jest.requireMock('../utils/signEvent');
     const { eventBus } = jest.requireMock('@/utils/events');
-    waitSignComponentAmounted.mockResolvedValue(undefined);
+    waitSignComponentAmounted.mockResolvedValue(true);
     mockRequestApproval
       .mockResolvedValueOnce({ uiRequestComponent: 'PrivatekeyWaiting' })
       .mockResolvedValueOnce('0xfromWaitingUi');
@@ -506,6 +550,7 @@ describe('rpcFlow typed-data chain pinning', () => {
       expect(eventBus.emit).toHaveBeenCalledWith('SIGN_FINISHED', {
         success: false,
         errorMsg: 'device busy',
+        signingOperationId: expect.any(String),
       });
       expect(unhandled).toEqual([]);
     } finally {
@@ -513,11 +558,58 @@ describe('rpcFlow typed-data chain pinning', () => {
     }
   });
 
+  it('binds waiting params, retries and completion to one signing operation', async () => {
+    const { waitSignComponentAmounted } =
+      jest.requireMock('../utils/signEvent');
+    const { eventBus } = jest.requireMock('@/utils/events');
+    waitSignComponentAmounted.mockResolvedValue(true);
+    mockRequestApproval
+      .mockResolvedValueOnce({ uiRequestComponent: 'PrivatekeyWaiting' })
+      .mockResolvedValueOnce('0xfromWaitingUi');
+    mockEthSignTypedData.mockResolvedValue('0xsignature-a');
+
+    await expect(rpcFlow(makeRequest())).resolves.toBe('0xfromWaitingUi');
+    await new Promise(resolve => setImmediate(resolve));
+
+    const waitingApproval = mockRequestApproval.mock.calls[1][0];
+    const { signingOperationId } = waitingApproval.params;
+    expect(signingOperationId).toEqual(expect.any(String));
+    expect(waitSignComponentAmounted).toHaveBeenCalledWith(signingOperationId);
+    expect(mockSetCurrentRequestDeferFn).toHaveBeenCalledWith(
+      expect.any(Function),
+      signingOperationId,
+    );
+    expect(eventBus.emit).toHaveBeenCalledWith('SIGN_FINISHED', {
+      success: true,
+      data: '0xsignature-a',
+      signingOperationId,
+    });
+  });
+
+  it('does not start signing when its waiting mount was cancelled', async () => {
+    const { waitSignComponentAmounted, cancelSignComponentAmounted } =
+      jest.requireMock('../utils/signEvent');
+    const { eventBus } = jest.requireMock('@/utils/events');
+    waitSignComponentAmounted.mockResolvedValue(false);
+    mockRequestApproval
+      .mockResolvedValueOnce({ uiRequestComponent: 'LedgerHardwareWaiting' })
+      .mockRejectedValueOnce(new Error('user cancel'));
+
+    await expect(rpcFlow(makeRequest())).rejects.toThrow('user cancel');
+    await new Promise(resolve => setImmediate(resolve));
+
+    expect(mockEthSignTypedData).not.toHaveBeenCalled();
+    expect(eventBus.emit).not.toHaveBeenCalled();
+    expect(cancelSignComponentAmounted).toHaveBeenCalledWith(
+      expect.any(String),
+    );
+  });
+
   describe('Safe owner signing', () => {
     const openSafeOwnerApproval = (registerDuringApproval?: () => void) => {
       const { waitSignComponentAmounted } =
         jest.requireMock('../utils/signEvent');
-      waitSignComponentAmounted.mockResolvedValue(undefined);
+      waitSignComponentAmounted.mockResolvedValue(true);
       mockSetCurrentRequestDeferFn.mockImplementation(fn => {
         mockCurrentDeferFn = fn;
       });
@@ -639,5 +731,87 @@ describe('rpcFlow error propagation without an approval UI', () => {
     mockPersonalEcRecover.mockRejectedValue(new Error('boom'));
 
     await expect(rpcFlow(request)).rejects.toThrow('boom');
+  });
+});
+
+describe('rpcFlow disconnected dapps', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(Reflect, 'getMetadata').mockReturnValue(undefined);
+    mockHasDappPermission.mockReturnValue(false);
+    mockGetDapp.mockReturnValue(undefined);
+    mockGetCustomTestnetList.mockReturnValue([]);
+    mockGetTestnetChainList.mockReturnValue([]);
+    mockAutoConnect.mockResolvedValue(undefined);
+    mockEthRequestAccounts.mockResolvedValue([account.address]);
+    mockRequestApproval.mockResolvedValue({
+      defaultAccount: account,
+      defaultChain: 'eth',
+    });
+    jest.mocked(shouldAutoConnect).mockReturnValue(true);
+    jest
+      .mocked(getAccountList)
+      .mockResolvedValue({ accounts: [account] } as never);
+    jest.mocked(getTransactionHistoryTransactions).mockResolvedValue([]);
+    jest.mocked(getDappAccount).mockReturnValue(account);
+    jest.mocked(openapi.getRecommendChains).mockResolvedValue([]);
+  });
+
+  afterEach(() => {
+    mockHasDappPermission.mockReturnValue(true);
+    jest.restoreAllMocks();
+  });
+
+  const request = (isFromMobileInnerDapp: boolean) =>
+    ({
+      data: { method: 'eth_requestAccounts', params: [] },
+      session: {
+        origin: 'https://dapp.example',
+        name: 'Dapp',
+        icon: '',
+        $mobileCtx: { isFromMobileInnerDapp },
+      },
+    } as ProviderRequest);
+
+  it.each([false, true])(
+    'requires approval after disconnect (inner dapp: %s)',
+    async isInnerDapp => {
+      mockGetDapp.mockReturnValue({ isConnected: false });
+      await expect(rpcFlow(request(isInnerDapp))).resolves.toEqual([
+        account.address,
+      ]);
+      expect(mockAutoConnect).not.toHaveBeenCalled();
+      expect(mockRequestApproval).toHaveBeenCalledWith(
+        expect.objectContaining({ approvalComponent: 'Connect' }),
+        expect.anything(),
+      );
+      expect(connect).toHaveBeenCalledWith(
+        expect.objectContaining({ isAutoConnect: false }),
+      );
+    },
+  );
+
+  it.each([false, true])(
+    'preserves first-time automatic connection (inner dapp: %s)',
+    async isInnerDapp => {
+      if (!isInnerDapp) {
+        mockAutoConnect.mockResolvedValue({ defaultAccount: account });
+      }
+      await expect(rpcFlow(request(isInnerDapp))).resolves.toEqual([
+        account.address,
+      ]);
+      expect(mockRequestApproval).not.toHaveBeenCalled();
+      expect(connect).toHaveBeenCalledWith(
+        expect.objectContaining({ isAutoConnect: true }),
+      );
+    },
+  );
+
+  it('keeps a dapp disconnected when reconnection is rejected', async () => {
+    mockGetDapp.mockReturnValue({ isConnected: false });
+    mockRequestApproval.mockRejectedValue(new Error('User rejected'));
+    await expect(rpcFlow(request(true))).rejects.toThrow('User rejected');
+    expect(connect).not.toHaveBeenCalled();
+    expect(mockEthRequestAccounts).not.toHaveBeenCalled();
   });
 });

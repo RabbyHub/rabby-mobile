@@ -488,7 +488,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 18,
       lineHeight: 20,
-      fontWeight: '900',
+      fontWeight: '800',
     },
     edit: {
       color: colors2024['neutral-body'],
@@ -549,6 +549,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       backgroundColor: colors2024['neutral-body'],
       height: 4,
       borderRadius: 100,
+      borderCurve: 'continuous',
     },
 
     favoriteLabelContainer: {
@@ -666,6 +667,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       height: 42,
       width: 143,
       borderRadius: 6,
+      borderCurve: 'continuous',
     },
     searchButtonText: {
       fontSize: 16,

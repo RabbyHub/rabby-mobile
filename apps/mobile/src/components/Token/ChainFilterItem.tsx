@@ -15,6 +15,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     chainFilterItem: {
       height: FILTER_ITEM_H,
       borderRadius: 12,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-bg-5'],
       paddingHorizontal: 8,
       gap: 6,
@@ -128,6 +129,7 @@ const getAccountFilterItemStyle = createGetStyles2024(({ colors2024 }) => {
     filterAccountButton: {
       height: FILTER_ITEM_H,
       borderRadius: 12,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-bg-5'],
       paddingHorizontal: 8,
       gap: 6,
@@ -139,6 +141,7 @@ const getAccountFilterItemStyle = createGetStyles2024(({ colors2024 }) => {
       width: 18,
       height: 18,
       borderRadius: 4,
+      borderCurve: 'continuous',
     },
     filterAccountAddress: {
       color: colors2024['neutral-body'],

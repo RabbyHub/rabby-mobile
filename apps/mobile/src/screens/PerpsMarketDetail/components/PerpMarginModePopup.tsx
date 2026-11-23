@@ -35,7 +35,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '900',
+      fontWeight: '800',
       color: colors2024['neutral-title-1'],
       marginBottom: 24,
       textAlign: 'center',
@@ -45,6 +45,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => {
     },
     modeCard: {
       borderRadius: 16,
+      borderCurve: 'continuous',
       paddingHorizontal: 16,
       paddingVertical: 12,
       backgroundColor: colors2024['neutral-bg-2'],
@@ -87,6 +88,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => {
       width: 20,
       height: 20,
       borderRadius: 10,
+      borderCurve: 'continuous',
       borderWidth: 2,
       borderColor: colors2024['neutral-line'],
       alignItems: 'center',
@@ -99,6 +101,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => {
       width: 10,
       height: 10,
       borderRadius: 5,
+      borderCurve: 'continuous',
       backgroundColor: '#50D2C1',
     },
     footer: {

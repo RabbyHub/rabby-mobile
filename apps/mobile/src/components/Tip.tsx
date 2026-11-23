@@ -281,6 +281,7 @@ const getStyle = (colors: AppColorsVariants) =>
       backgroundColor: colors['neutral-black'],
       elevation: 10,
       borderRadius: 8,
+      borderCurve: 'continuous',
       padding: 0,
     },
     content: {

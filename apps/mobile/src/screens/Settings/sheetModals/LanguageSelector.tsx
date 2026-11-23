@@ -183,6 +183,7 @@ const getStyles = createGetStyles2024(ctx => {
         ? ctx.colors2024['neutral-bg-1']
         : ctx.colors2024['neutral-bg-2'],
       borderRadius: 16,
+      borderCurve: 'continuous',
 
       flexDirection: 'row',
       justifyContent: 'space-between',

@@ -174,7 +174,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerTabTextActive: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '900',
+    fontWeight: '800',
     fontSize: 20,
     lineHeight: 24,
   },

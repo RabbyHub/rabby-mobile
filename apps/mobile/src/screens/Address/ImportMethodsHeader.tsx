@@ -3,7 +3,11 @@ import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AutoFitHeaderTitle } from '@/components/AutoFitHeaderTitle';
+import {
+  AutoFitHeaderTitle,
+  HeaderTitleLanguageStyle,
+} from '@/components/AutoFitHeaderTitle';
+import { resolveHeaderTitleLanguageStyle } from '@/components/headerTitleTypography';
 import { HeaderBackButton } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -14,6 +18,8 @@ const HEADER_CONTENT_HEIGHT = 48;
 // Same inset as the page content below, so the back control starts exactly
 // where the cards do (header layout contract).
 const HEADER_HORIZONTAL_INSET = 16;
+const HEADER_SIDE_SLOT_WIDTH = 44;
+const TITLE_AREA_HORIZONTAL_MARGIN = 8;
 
 /**
  * Custom header for the "select import method" screen.
@@ -24,10 +30,30 @@ const HEADER_HORIZONTAL_INSET = 16;
  * a single-line title that truncates with an ellipsis, so every language starts
  * at the same x and never overflows.
  */
-export const ImportMethodsHeader = () => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+export const ImportMethodsHeader = ({
+  titleKey,
+  textStylesByLanguage,
+}: {
+  /** i18n key of the title; drives the English narrow-width typography ladder. */
+  titleKey?: string;
+  /** Exact language tag -> typography override; decided by the navigator. */
+  textStylesByLanguage?: Partial<Record<string, HeaderTitleLanguageStyle>>;
+} = {}) => {
+  const { styles, colors2024, windowWidth, language } = useTheme2024({
+    getStyle,
+  });
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
+  const availableWidth =
+    windowWidth -
+    2 * HEADER_HORIZONTAL_INSET -
+    2 * HEADER_SIDE_SLOT_WIDTH -
+    2 * TITLE_AREA_HORIZONTAL_MARGIN;
+  const languageStyle = resolveHeaderTitleLanguageStyle({
+    titleKey,
+    language,
+    availableWidth,
+  });
 
   return (
     <View style={[styles.outer, { paddingTop: insets.top }]}>
@@ -42,6 +68,8 @@ export const ImportMethodsHeader = () => {
           <AutoFitHeaderTitle
             text={t('screens.addressStackTitle.ImportMethods')}
             textStyle={styles.title}
+            textStylesByLanguage={textStylesByLanguage}
+            languageStyle={languageStyle}
           />
         </View>
         {/* Reserved trailing slot: keeps the title centred on the screen, the
@@ -65,7 +93,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   // 44pt wide, full row height: the chevron sits at the page content's left
   // edge and the whole slot is tappable.
   backSlot: {
-    width: 44,
+    width: HEADER_SIDE_SLOT_WIDTH,
     height: HEADER_CONTENT_HEIGHT,
     alignItems: 'flex-start',
     justifyContent: 'center',
@@ -81,10 +109,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 8,
+    marginHorizontal: TITLE_AREA_HORIZONTAL_MARGIN,
   },
   rightSlot: {
-    width: 44,
+    width: HEADER_SIDE_SLOT_WIDTH,
     height: HEADER_CONTENT_HEIGHT,
     flexShrink: 0,
   },

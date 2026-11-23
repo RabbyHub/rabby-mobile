@@ -380,6 +380,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 16,
+    borderCurve: 'continuous',
     // borderWidth: 0.5,
     // borderColor: '#D0D8E0',
     height: 148,
@@ -405,6 +406,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   maxBtnBox: {
     borderRadius: 8,
+    borderCurve: 'continuous',
     padding: 4,
     backgroundColor: colors2024['brand-light-1'],
     marginRight: 8,
@@ -494,6 +496,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 36,
     width: 138,
     borderRadius: 100,
+    borderCurve: 'continuous',
   },
   footer: {
     // marginTop: 14,
@@ -568,6 +571,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 14,
     height: 14,
     borderRadius: 14,
+    borderCurve: 'continuous',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-1'],
@@ -576,6 +580,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 10,
     height: 10,
     borderRadius: 10,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['brand-default'],
   },
 }));
