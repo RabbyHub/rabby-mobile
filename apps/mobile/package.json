@@ -1,6 +1,6 @@
 {
   "name": "rabby-mobile",
-  "version": "0.6.99",
+  "version": "0.7.1",
   "private": true,
   "repository": {
     "type": "git",
@@ -134,7 +134,6 @@
     "@rabby-wallet/react-native-ios-context-menu": "workspace:^",
     "@rabby-wallet/react-native-keychain-9": "workspace:^",
     "@rabby-wallet/react-native-menu": "workspace:^",
-    "@rabby-wallet/rn-collapsible-scene-view": "workspace:^",
     "@rabby-wallet/rn-webview-bridge": "workspace:^",
     "@rabby-wallet/rozenite-resource-flow-plugin": "workspace:^",
     "@rabby-wallet/service-address": "workspace:^",

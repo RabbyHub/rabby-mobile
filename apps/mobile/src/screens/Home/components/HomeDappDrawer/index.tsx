@@ -20,7 +20,6 @@ import Animated, {
   runOnUI,
   scrollTo,
   useAnimatedProps,
-  useAnimatedReaction,
   useAnimatedRef,
   useAnimatedScrollHandler,
   useAnimatedStyle,
@@ -54,11 +53,6 @@ import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { Text } from '@/components/Typography';
 import MarketScreen from '@/screens/Market';
 import { HomeDappDrawerContent } from './HomeDappDrawerContent';
-import {
-  HOME_GESTURE_AXIS,
-  beginHomeGesture,
-  resolveHomeGestureAxis,
-} from '@/screens/Home/gesture/homeGestureAuthority';
 
 const AnimatedFlatList =
   Animated.createAnimatedComponent<FlatListProps<DappInfo>>(RNFlatList);
@@ -67,7 +61,7 @@ const DRAWER_GESTURE_ACTIVE_OFFSET_Y = 8;
 const DRAWER_GESTURE_FAIL_OFFSET_X = 12;
 const DRAWER_CONTENT_IDLE_MOUNT_DELAY_MS = 3000;
 
-const { pullPercent, isExpanded, translateY, swipeUpHintHeight, panelReveal } =
+const { pullPercent, isExpanded, translateY, swipeUpHintHeight } =
   homeDrawerAnimateMutable;
 
 export const HomeDappDrawer: React.FC<{
@@ -125,14 +119,9 @@ export const HomeDappDrawer: React.FC<{
   const onPressHome = useCallback(() => {
     translateY.value = withTiming(0, undefined, () => {
       scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+      !IS_ANDROID && handleScrollBack();
     });
-    // Start the first floor's trip back to the top together with the close
-    // animation, on both platforms: the dismissal and the scroll-back read as
-    // one gesture instead of two consecutive ones. `handleScrollBack` is a
-    // worklet that drives the UI-thread scroll, so it has to be scheduled
-    // there: calling it from this JS touch handler would make the native
-    // `scrollTo` dispatch return immediately.
-    runOnUI(handleScrollBack)();
+    IS_ANDROID && runOnUI(handleScrollBack)();
 
     triggerImpact();
   }, [scrollableStatus, handleScrollBack]);
@@ -172,7 +161,6 @@ export const HomeDappDrawer: React.FC<{
 
               drawerGestureStartX.value = touch.absoluteX;
               drawerGestureStartY.value = touch.absoluteY;
-              beginHomeGesture(touch.absoluteX, touch.absoluteY);
             })
             .onTouchesMove((event, stateManager) => {
               'worklet';
@@ -187,16 +175,6 @@ export const HomeDappDrawer: React.FC<{
               const diffY = touch.absoluteY - drawerGestureStartY.value;
               const absX = Math.abs(diffX);
               const absY = Math.abs(diffY);
-
-              // The shared verdict decides the axis once per touch sequence; a
-              // horizontal drag belongs to the pager / tab strip, never here.
-              if (
-                resolveHomeGestureAxis(touch.absoluteX, touch.absoluteY) ===
-                HOME_GESTURE_AXIS.HORIZONTAL
-              ) {
-                stateManager.fail();
-                return;
-              }
 
               if (absX > DRAWER_GESTURE_FAIL_OFFSET_X && absX > absY) {
                 stateManager.fail();
@@ -344,37 +322,25 @@ export const HomeDappDrawer: React.FC<{
   });
 
   const safeAreaInsets = useSafeAreaInsets();
-
-  // The panel reveal only tracks the drag while the drawer is opening. Once it
-  // is on its way back it keeps its size and purely translates down, exactly
-  // like the first floor does, so both layers leave the screen at the same
-  // apparent speed. The 0.75 snap at the end happens while the panel is
-  // already fully off-screen.
-  useAnimatedReaction(
-    () => pullPercent.value,
-    (percent, previousPercent) => {
-      if (percent === 0) {
-        panelReveal.value = 0;
-        return;
-      }
-
-      const revealed = Math.min(1, Math.max(0, -percent / 100));
-      const isOpening = previousPercent === null || percent < previousPercent;
-      if (isOpening || revealed >= panelReveal.value) {
-        panelReveal.value = revealed;
-      }
-    },
-  );
-
   const panelScaleStyle = useAnimatedStyle(() => {
     return {
       transformOrigin: 'top',
       transform: [
         {
-          scale: 0.75 + 0.25 * panelReveal.value,
+          scale: interpolate(
+            pullPercent.value,
+            [0, -100],
+            isExpanded.value ? [1, 1] : [0.75, 1],
+            Extrapolate.CLAMP,
+          ),
         },
       ],
-      paddingTop: safeAreaInsets.top * panelReveal.value,
+      paddingTop: interpolate(
+        pullPercent.value,
+        [-100, 0],
+        [safeAreaInsets.top, 0],
+        Extrapolate.CLAMP,
+      ),
     };
   });
 

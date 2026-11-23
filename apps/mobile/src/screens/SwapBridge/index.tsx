@@ -1,10 +1,5 @@
-import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { View } from 'react-native';
-import {
-  RootScenePager,
-  type RootScenePagerGestureMode,
-  type RootScenePagerProps,
-} from '@rabby-wallet/rn-collapsible-scene-view';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import {
   useIsFocused,
   useNavigation,
@@ -42,14 +37,6 @@ import {
   createInitialMountedSwapBridgeScenes,
   mountSwapBridgeScene,
 } from './sceneMounting';
-import { useRootPagerEnabled } from '@/hooks/useRootPagerEnabled';
-import { useRootScenePagerBackGesture } from '@/hooks/useRootScenePagerBackGesture';
-
-const ROOT_SCENES: readonly SwapBridgeTab[] = ['swap', 'bridge'];
-// `edge-handoff` (A): every page hands a rightward drag that starts on the
-// native back edge to the system. Flip to `boundary-handoff` (B) to give the
-// system gesture only to the first sub-screen.
-const ROOT_PAGER_GESTURE_MODE: RootScenePagerGestureMode = 'edge-handoff';
 
 type SwapBridgeRoute = GetNestedScreenRouteProp<
   'TransactionNavigatorParamList',
@@ -68,37 +55,6 @@ function SwapBridgeActivationProbe({
   useFeatureActivationDiagnostics(activeTab);
   return null;
 }
-
-// Keep the selected tab on navigation blur so returning preserves its form.
-const SwapBridgeRootPage = memo(function SwapBridgeRootPage({
-  tab,
-  tabSelected,
-  sceneActive,
-  isForMultipleAddress,
-}: {
-  tab: SwapBridgeTab;
-  tabSelected: boolean;
-  sceneActive: boolean;
-  isForMultipleAddress: boolean;
-}) {
-  const Component =
-    tab === 'swap'
-      ? isForMultipleAddress
-        ? Swap.ForMultipleAddress
-        : Swap
-      : isForMultipleAddress
-      ? Bridge.ForMultipleAddress
-      : Bridge;
-  return (
-    <Component
-      disableHeaderRight
-      disableAccountSwitcherModal
-      tabSelected={tabSelected}
-      sceneActive={sceneActive}
-      diagnosticActive={isNonProductionDiagnosticsEnabled && sceneActive}
-    />
-  );
-});
 
 function SwapBridgeScreenContent({
   isForMultipleAddress = false,
@@ -136,21 +92,6 @@ function SwapBridgeScreenContent({
   // Swap-again can leave an earlier SwapBridge route mounted. Shared scene
   // modals must have only one focused host.
   const isScreenFocused = useIsFocused();
-  const pagerEnabled = useRootPagerEnabled(isScreenFocused);
-  // Prepare the neighbouring form outside the initial render, without
-  // activating it: the incoming page is already laid out when a drag starts.
-  const [prewarm, setPrewarm] = useState(false);
-  useEffect(() => {
-    if (!pagerEnabled || prewarm) {
-      return;
-    }
-    if (typeof requestIdleCallback !== 'function') {
-      setPrewarm(true);
-      return;
-    }
-    const idle = requestIdleCallback(() => setPrewarm(true));
-    return () => cancelIdleCallback(idle);
-  }, [pagerEnabled, prewarm]);
   const { styles } = useTheme2024({ getStyle });
   const regressionScenario = useRegressionScenario<'SwapBridge'>();
 
@@ -195,45 +136,16 @@ function SwapBridgeScreenContent({
     });
   }, [activeTab, regressionScenario]);
 
-  // The route param is the settled tab; the pager only moves it on settle.
-  useRootScenePagerBackGesture({
-    atFirstPage: activeTab === 'swap',
-    gestureMode: ROOT_PAGER_GESTURE_MODE,
+  const swapSceneActive = isSwapBridgeSceneActive({
+    activeTab,
+    scene: 'swap',
+    screenFocused: isScreenFocused,
   });
-
-  const onSettled = useCallback(
-    (key: string) => {
-      const tab = key as SwapBridgeTab;
-      if (tab !== activeTab) {
-        navigation.setParams({ activeTab: tab });
-      }
-    },
-    [activeTab, navigation],
-  );
-
-  const renderPage = useCallback<RootScenePagerProps['renderPage']>(
-    (key, context) => {
-      const tab = key as SwapBridgeTab;
-      // Mount what the track is revealing or prewarming; retention after the
-      // swipe comes from the visited-scene state.
-      if (!mountedScenes[tab] && !context.visible && !prewarm) {
-        return null;
-      }
-      return (
-        <SwapBridgeRootPage
-          tab={tab}
-          tabSelected={activeTab === tab}
-          sceneActive={isSwapBridgeSceneActive({
-            activeTab,
-            scene: tab,
-            screenFocused: isScreenFocused,
-          })}
-          isForMultipleAddress={isForMultipleAddress}
-        />
-      );
-    },
-    [activeTab, isForMultipleAddress, isScreenFocused, mountedScenes, prewarm],
-  );
+  const bridgeSceneActive = isSwapBridgeSceneActive({
+    activeTab,
+    scene: 'bridge',
+    screenFocused: isScreenFocused,
+  });
 
   return (
     <View style={styles.container}>
@@ -243,15 +155,66 @@ function SwapBridgeScreenContent({
       {isScreenFocused && (
         <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
       )}
-      <RootScenePager
-        keys={ROOT_SCENES}
-        requestedKey={activeTab}
-        onSettled={onSettled}
-        renderPage={renderPage}
-        enabled={pagerEnabled}
-        gestureMode={ROOT_PAGER_GESTURE_MODE}
-        testID="swap-bridge-root"
-      />
+      {mountedScenes.swap ? (
+        <View
+          pointerEvents={activeTab === 'swap' ? 'auto' : 'none'}
+          style={[
+            styles.tabScene,
+            activeTab !== 'swap' && styles.inactiveTabScene,
+          ]}>
+          {isForMultipleAddress ? (
+            <Swap.ForMultipleAddress
+              disableHeaderRight
+              disableAccountSwitcherModal
+              tabSelected={activeTab === 'swap'}
+              sceneActive={swapSceneActive}
+              diagnosticActive={
+                isNonProductionDiagnosticsEnabled && swapSceneActive
+              }
+            />
+          ) : (
+            <Swap
+              disableHeaderRight
+              disableAccountSwitcherModal
+              tabSelected={activeTab === 'swap'}
+              sceneActive={swapSceneActive}
+              diagnosticActive={
+                isNonProductionDiagnosticsEnabled && swapSceneActive
+              }
+            />
+          )}
+        </View>
+      ) : null}
+      {mountedScenes.bridge ? (
+        <View
+          pointerEvents={activeTab === 'bridge' ? 'auto' : 'none'}
+          style={[
+            styles.tabScene,
+            activeTab !== 'bridge' && styles.inactiveTabScene,
+          ]}>
+          {isForMultipleAddress ? (
+            <Bridge.ForMultipleAddress
+              disableHeaderRight
+              disableAccountSwitcherModal
+              tabSelected={activeTab === 'bridge'}
+              sceneActive={bridgeSceneActive}
+              diagnosticActive={
+                isNonProductionDiagnosticsEnabled && bridgeSceneActive
+              }
+            />
+          ) : (
+            <Bridge
+              disableHeaderRight
+              disableAccountSwitcherModal
+              tabSelected={activeTab === 'bridge'}
+              sceneActive={bridgeSceneActive}
+              diagnosticActive={
+                isNonProductionDiagnosticsEnabled && bridgeSceneActive
+              }
+            />
+          )}
+        </View>
+      ) : null}
       <TokenInfoPopup />
     </View>
   );
@@ -292,6 +255,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flex: 1,
     backgroundColor: colors2024['neutral-bg-1'],
+  },
+  tabScene: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  inactiveTabScene: {
+    display: 'none',
   },
 }));
 

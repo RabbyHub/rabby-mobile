@@ -27,7 +27,7 @@ import {
   useBottomSheetModalInternal,
 } from '@gorhom/bottom-sheet';
 import { Portal } from '@gorhom/portal';
-import { GestureSlider } from '@/components/GestureSlider';
+import { PerpsGestureSlider } from '@/components/perps/PerpsGestureSlider';
 import { Text, TextInput } from '@/components/Typography';
 import { CircleSpinnerCC } from '@/components2024/CircleSpinner/CircleSpinnerCC';
 import PositionCancel from '@/assets2024/icons/perps/PerpsSimpleAccount/tpsl-cancel.svg';
@@ -205,7 +205,7 @@ it.each(['simple', 'close', 'leverage', 'order', 'margin'] as const)(
       );
     }
     const ui = render(safe(<ControlledSlider />));
-    const input = ui.UNSAFE_getByType(GestureSlider);
+    const input = ui.UNSAFE_getByType(PerpsGestureSlider);
     const host = input.findAllByType(View).find(node => node.props.onLayout)!;
     act(() =>
       host.props.onLayout({
@@ -459,7 +459,7 @@ it('draws the close progress and points from the thumb UI-thread mirror', () => 
     step: 1,
   };
   const ui = render(safe(<PerpsSlider {...props} value={30} />));
-  const slider = ui.UNSAFE_getByType(GestureSlider);
+  const slider = ui.UNSAFE_getByType(PerpsGestureSlider);
   const progress = slider.props.progressValue;
   // The custom track reads the slider's UI-thread mirror: no React round trip.
   expect(progress).toBeDefined();
@@ -523,7 +523,7 @@ it('draws the close progress and points from the thumb UI-thread mirror', () => 
   // Default sliders keep their own built-in track and no mirror.
   ui.rerender(safe(<PerpsSlider value={30} onValueChange={jest.fn()} />));
   expect(
-    ui.UNSAFE_getByType(GestureSlider).props.progressValue,
+    ui.UNSAFE_getByType(PerpsGestureSlider).props.progressValue,
   ).toBeUndefined();
   expect(ui.queryByTestId('perps-close-progress')).toBeNull();
 });
@@ -552,13 +552,13 @@ it('keeps default slider haptics isolated and gives close a haptic per step', ()
   const ui = render(
     safe(<PerpsSlider value={0} onValueChange={change} step={1} />),
   );
-  expect(ui.UNSAFE_getByType(GestureSlider).props.minimumTrackTintColor).toBe(
-    '#50D2C1',
-  );
+  expect(
+    ui.UNSAFE_getByType(PerpsGestureSlider).props.minimumTrackTintColor,
+  ).toBe('#50D2C1');
   act(() => {
     for (const value of [25, 50, 50, 75, 100]) {
       advanceHapticClock(100);
-      ui.UNSAFE_getByType(GestureSlider).props.onValueChange(value);
+      ui.UNSAFE_getByType(PerpsGestureSlider).props.onValueChange(value);
     }
   });
   expect(trigger).toHaveBeenCalledTimes(2);
@@ -569,7 +569,7 @@ it('keeps default slider haptics isolated and gives close a haptic per step', ()
       <PerpsSlider variant="close" value={0} onValueChange={change} step={1} />,
     ),
   );
-  const slider = ui.UNSAFE_getByType(GestureSlider);
+  const slider = ui.UNSAFE_getByType(PerpsGestureSlider);
   expect(slider.props.step).toBe(1);
   act(() => {
     for (const value of [1, 2, 2, 3, 4]) {
@@ -611,11 +611,15 @@ it.each([
       ),
     );
     expect(trigger).not.toHaveBeenCalled();
-    act(() => ui.UNSAFE_getByType(GestureSlider).props.onSlidingStart(initial));
+    act(() =>
+      ui.UNSAFE_getByType(PerpsGestureSlider).props.onSlidingStart(initial),
+    );
     values.forEach((value, i) => {
       advanceHapticClock(100);
       const before = trigger.mock.calls.length;
-      act(() => ui.UNSAFE_getByType(GestureSlider).props.onValueChange(value));
+      act(() =>
+        ui.UNSAFE_getByType(PerpsGestureSlider).props.onValueChange(value),
+      );
       // A single native event emits at most one pulse, even across many steps.
       expect(trigger.mock.calls.length - before).toBe(pulses[i]);
     });
@@ -637,7 +641,7 @@ it('throttles close step pulses to one per 80ms during a fast drag', () => {
       />,
     ),
   );
-  const slider = ui.UNSAFE_getByType(GestureSlider);
+  const slider = ui.UNSAFE_getByType(PerpsGestureSlider);
   act(() => slider.props.onSlidingStart(0));
   act(() => slider.props.onValueChange(1));
   expect(trigger).toHaveBeenCalledTimes(1);
@@ -667,7 +671,7 @@ it('handles track-tap ordering, controlled resets, and disabled close sliders', 
   };
   const ui = render(safe(<PerpsSlider {...sliderProps} value={100} />));
   act(() => {
-    const slider = ui.UNSAFE_getByType(GestureSlider);
+    const slider = ui.UNSAFE_getByType(PerpsGestureSlider);
     slider.props.onValueChange(24);
     slider.props.onSlidingStart(24);
     slider.props.onValueChange(24);
@@ -679,17 +683,19 @@ it('handles track-tap ordering, controlled resets, and disabled close sliders', 
   ui.rerender(safe(<PerpsSlider {...sliderProps} value={100} />));
   expect(trigger).toHaveBeenCalledTimes(1);
   advanceHapticClock(100);
-  act(() => ui.UNSAFE_getByType(GestureSlider).props.onValueChange(100));
+  act(() => ui.UNSAFE_getByType(PerpsGestureSlider).props.onValueChange(100));
   expect(trigger).toHaveBeenCalledTimes(1);
-  act(() => ui.UNSAFE_getByType(GestureSlider).props.onSlidingComplete(100));
+  act(() =>
+    ui.UNSAFE_getByType(PerpsGestureSlider).props.onSlidingComplete(100),
+  );
   ui.rerender(safe(<PerpsSlider {...sliderProps} value={51} />));
   advanceHapticClock(100);
-  act(() => ui.UNSAFE_getByType(GestureSlider).props.onValueChange(49));
+  act(() => ui.UNSAFE_getByType(PerpsGestureSlider).props.onValueChange(49));
   expect(trigger).toHaveBeenCalledTimes(2);
   ui.rerender(safe(<PerpsSlider {...sliderProps} value={49} disabled />));
   const before = change.mock.calls.length;
   advanceHapticClock(100);
-  act(() => ui.UNSAFE_getByType(GestureSlider).props.onValueChange(0));
+  act(() => ui.UNSAFE_getByType(PerpsGestureSlider).props.onValueChange(0));
   expect(trigger).toHaveBeenCalledTimes(2);
   expect(change).toHaveBeenCalledTimes(before);
 });

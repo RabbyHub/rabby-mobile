@@ -4,7 +4,7 @@ import UnselectedPoint from '@/assets2024/icons/perps/PerpsSimpleAccount/slider-
 import { BubbleWithText } from '@/screens/Swap/components/Slider';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { GestureSlider as Slider } from '@/components/GestureSlider';
+import { PerpsGestureSlider as Slider } from '@/components/perps/PerpsGestureSlider';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Platform, View } from 'react-native';
 import Animated, {
