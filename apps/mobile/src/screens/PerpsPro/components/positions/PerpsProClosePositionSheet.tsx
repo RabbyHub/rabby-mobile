@@ -521,7 +521,7 @@ export const PerpsProClosePositionSheet: React.FC<{
 
                 <View style={styles.amountGroup}>
                   <View style={styles.amountField}>
-                    <Text style={[styles.floatingLabel, styles.amountLabel]}>
+                    <Text style={styles.floatingLabel}>
                       {t('page.perps.pro.positions.amount')}
                     </Text>
                     <BottomSheetTextInput

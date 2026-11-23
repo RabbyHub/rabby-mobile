@@ -343,7 +343,7 @@ describe('PerpsProClosePositionSheet', () => {
         const fields = screen
           .UNSAFE_getAllByType(View)
           .map(view => StyleSheet.flatten(view.props.style))
-          .filter(style => style?.borderRadius === 6);
+          .filter(style => style?.borderRadius === 8);
         expect(fields).toHaveLength(3);
         for (const field of fields) {
           expect(field.backgroundColor).toBe(fieldColor);
