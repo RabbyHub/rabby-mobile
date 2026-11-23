@@ -123,7 +123,7 @@ PerpsProAccountSummary.displayName = 'PerpsProAccountSummary';
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     backgroundColor:
-      colors2024[isLight === false ? 'neutral-bg-2' : 'neutral-bg-1'],
+      colors2024[isLight === false ? 'neutral-bg-3' : 'neutral-bg-1'],
     borderRadius: 14,
     borderCurve: 'continuous',
     gap: 8,

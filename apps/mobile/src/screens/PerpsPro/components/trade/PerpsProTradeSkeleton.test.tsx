@@ -194,9 +194,9 @@ describe('PerpsProTradeSkeleton', () => {
       backgroundColor: 'neutral-bg-1',
       borderColor: 'neutral-title-1',
       opacity: 1,
-      borderWidth: 2,
-      height: 10,
-      width: 10,
+      borderWidth: 1,
+      height: 8,
+      width: 8,
     });
     expect(screen.getByLabelText('Amount(USDC)')).toBeTruthy();
     expect(screen.queryByTestId('perps-pro-trade-amount-minus')).toBeNull();

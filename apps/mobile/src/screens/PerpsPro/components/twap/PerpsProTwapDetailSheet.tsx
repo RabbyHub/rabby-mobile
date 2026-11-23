@@ -307,7 +307,7 @@ const getStyle = createGetStyles2024(
       marginHorizontal: 12,
       borderRadius: 12,
       overflow: 'hidden',
-      backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-2'],
+      backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-3'],
       marginBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     },
     list: { paddingBottom: 8 },
@@ -316,7 +316,7 @@ const getStyle = createGetStyles2024(
     },
     historyTradesSection: {
       marginHorizontal: 12,
-      backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-2'],
+      backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-3'],
     },
     historyTradesTop: { borderTopLeftRadius: 12, borderTopRightRadius: 12 },
     historyTradesBottom: {
@@ -326,7 +326,7 @@ const getStyle = createGetStyles2024(
     },
     historyFill: {
       paddingHorizontal: 12,
-      backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-2'],
+      backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-3'],
     },
     trades: {
       fontFamily: 'SF Pro Rounded',

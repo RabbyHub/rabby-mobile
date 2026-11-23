@@ -383,7 +383,7 @@ const PerpsProTwapElapsed = ({
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
     borderRadius: 12,
-    backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-2'],
+    backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-3'],
     padding: 12,
     marginHorizontal: 12,
     marginBottom: 12,

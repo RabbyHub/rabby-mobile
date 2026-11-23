@@ -161,7 +161,7 @@ describe.each(['light', 'dark'] as const)(
         expect(style.backgroundColor).toBe(
           option.props.accessibilityState.checked
             ? PERPS_PRO_DIALOG_TOKENS.selectedBackground
-            : colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
+            : colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-3'],
         );
       }
     };
@@ -367,7 +367,7 @@ describe.each(['light', 'dark'] as const)(
       ).toMatchObject({ height: 6, width: 50 });
       for (const kind of ['limit', 'market', 'conditional']) {
         expect(screen.getByTestId(`order-type-${kind}-svg`).props.fill2).toBe(
-          colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
+          colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-3'],
         );
       }
       expect(screen.getByText('Limit description')).toBeTruthy();

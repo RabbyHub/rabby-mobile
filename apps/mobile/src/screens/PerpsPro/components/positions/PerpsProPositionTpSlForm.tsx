@@ -846,7 +846,9 @@ const getStyle = createGetStyles2024(
       lineHeight: 16,
     },
     amountSection: { marginTop: 20 },
-    slider: { marginTop: 10 },
+    // Figma 87936:196124: the 18pt slider row starts 20pt below the amount
+    // field and the hint 12pt below it; the 40pt touch box is centered on it.
+    slider: { marginTop: 6 },
     sliderAmountValue: {
       ...PERPS_PRO_NUMBER_STYLE,
       right: 72,
@@ -860,7 +862,7 @@ const getStyle = createGetStyles2024(
       top: PERPS_PRO_DIALOG_LABELED_FIELD.valueTop,
     },
     amountAvailable: {
-      marginTop: 8,
+      marginTop: -2,
       color: colors2024['neutral-foot'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,

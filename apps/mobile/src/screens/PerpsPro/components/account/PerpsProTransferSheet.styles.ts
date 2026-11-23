@@ -22,7 +22,8 @@ export const getPerpsProTransferSheetStyles = createGetStyles2024(
     },
     sectionHeader: { paddingHorizontal: 4 },
     directionCard: {
-      backgroundColor: colors2024['neutral-bg-2'],
+      backgroundColor:
+        colors2024[isLight === false ? 'neutral-bg-3' : 'neutral-bg-2'],
       borderRadius: 12,
       borderCurve: 'continuous',
       height: 92,

@@ -1030,7 +1030,7 @@ const getStyle = createGetStyles2024(
       activeTab: {
         backgroundColor:
           isLight === false
-            ? colors2024['neutral-title-1']
+            ? colors2024['neutral-bg-2']
             : ThemeColors2024.dark['neutral-bg-0'],
         borderRadius: 6,
         borderCurve: 'continuous',
@@ -1043,10 +1043,7 @@ const getStyle = createGetStyles2024(
         lineHeight: 18,
       },
       activeTabText: {
-        color:
-          isLight === false
-            ? colors2024['neutral-bg-0']
-            : ThemeColors2024.dark['neutral-title-1'],
+        color: ThemeColors2024.dark['neutral-title-1'],
         fontFamily: 'SF Pro Rounded',
         fontSize: 14,
         fontWeight: '700',

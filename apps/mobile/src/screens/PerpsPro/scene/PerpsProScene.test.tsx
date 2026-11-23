@@ -2026,9 +2026,11 @@ describe('PerpsProScene market loading states', () => {
     const infoTabsOverlayStyle = StyleSheet.flatten(
       screen.getByTestId('perps-pro-info-tabs-overlay').props.style,
     );
-    expect(infoTabsOverlayStyle).toEqual(
-      expect.objectContaining({ height: 44 }),
-    );
+    // The overlay also carries the sticky controls; empty areas pass touches.
+    expect(infoTabsOverlayStyle?.height).toBeUndefined();
+    expect(
+      screen.getByTestId('perps-pro-info-tabs-overlay').props.pointerEvents,
+    ).toBe('box-none');
     const infoTabsTranslateY = infoTabsOverlayStyle?.transform?.[0]
       ?.translateY as unknown as number | { __getValue: () => number };
     expect(
@@ -2040,6 +2042,19 @@ describe('PerpsProScene market loading states', () => {
       screen.getByTestId('perps-pro-info-tabs-spacer').children,
     ).toHaveLength(0);
     expect(screen.getAllByTestId('perps-pro-info-tab-account')).toHaveLength(1);
+    // Controls stick with the tabs; the lists only reserve their height.
+    expect(
+      within(screen.getByTestId('perps-pro-info-controls-overlay')).getByTestId(
+        'perps-pro-open-orders-controls',
+      ),
+    ).toBeTruthy();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-open-orders-controls-spacer', {
+          includeHiddenElements: true,
+        }).props.style,
+      ),
+    ).toMatchObject({ height: 74 });
   });
 
   it('puts the entire iOS info tab strip inside a native scroll bridge', () => {

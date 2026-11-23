@@ -305,7 +305,7 @@ describe('PerpsProClosePositionSheet', () => {
       );
       const colors = ThemeColors2024[mode];
       const cardColor =
-        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'];
+        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-3'];
       const fieldColor =
         colors[mode === 'light' ? 'neutral-bg-0' : 'neutral-bg-5'];
       for (const orderType of ['market', 'limit'] as const) {

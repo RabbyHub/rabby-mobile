@@ -292,9 +292,9 @@ describe('PerpsProManageMarginSheet', () => {
       expect(cards).toHaveLength(3);
       // Figma 86609:345881: the editable margin card is bg-5.
       expect(cards.map(card => card.backgroundColor)).toEqual([
-        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
+        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-3'],
         colors['neutral-bg-5'],
-        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
+        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-3'],
       ]);
       for (const card of cards) {
         expect(card.backgroundColor).not.toBe(background);

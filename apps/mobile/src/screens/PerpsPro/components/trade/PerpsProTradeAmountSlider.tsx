@@ -1,5 +1,5 @@
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
-// Figma cNPc4bz8P8QBjkPk2huEml / 86719:167816: 12px thumb, 2.35px stroke.
+// Figma cNPc4bz8P8QBjkPk2huEml / 87900:97230: 12px thumb, 2px stroke.
 import RcAmountSliderThumb from '@/assets2024/icons/perps/PerpsProTradeAmountSliderThumb.svg';
 import { Text } from '@/components/Typography';
 import { PerpsGestureSlider as Slider } from '@/components/perps/PerpsGestureSlider';
@@ -16,13 +16,16 @@ import Animated, {
 import { usePerpsProSliderHaptics } from '../common/usePerpsProSliderHaptics';
 
 const TRADE_SLIDER_POINTS = [0, 25, 50, 75, 100] as const;
-// Figma 86719:167812: 2px track, 10px points with 2px strokes, centered at y=10.
+// Figma 87900:97230: an 18pt row with a 4px bg-5 track and 8px points with
+// 1px strokes. The 24pt touch box overhangs that row by 3pt on each side.
+const TRADE_SLIDER_HEIGHT = 24;
+const TRADE_SLIDER_LAYOUT_HEIGHT = 18;
 const TRADE_SLIDER_THUMB_SIZE = 12;
 const TRADE_SLIDER_TRACK_INSET = 9;
-const TRADE_SLIDER_TRACK_HEIGHT = 2;
-const TRADE_SLIDER_POINT_SIZE = 10;
-const TRADE_SLIDER_POINT_BORDER = 2;
-const TRADE_SLIDER_CENTER_Y = 10;
+const TRADE_SLIDER_TRACK_HEIGHT = 4;
+const TRADE_SLIDER_POINT_SIZE = 8;
+const TRADE_SLIDER_POINT_BORDER = 1;
+const TRADE_SLIDER_CENTER_Y = TRADE_SLIDER_HEIGHT / 2;
 const TRADE_SLIDER_TOOLTIP_WIDTH = 36;
 
 const toFraction = (value: number) => {
@@ -193,12 +196,13 @@ PerpsProTradeAmountSlider.displayName = 'PerpsProTradeAmountSlider';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    height: 24,
+    height: TRADE_SLIDER_HEIGHT,
+    marginVertical: (TRADE_SLIDER_LAYOUT_HEIGHT - TRADE_SLIDER_HEIGHT) / 2,
     position: 'relative',
     width: '100%',
   },
   slider: {
-    height: 24,
+    height: TRADE_SLIDER_HEIGHT,
     // The gesture thumb travels containerWidth - thumbWidth. Match its center
     // to the same inset used by the track, quarter points and tooltip.
     marginHorizontal: TRADE_SLIDER_TRACK_INSET - TRADE_SLIDER_THUMB_SIZE / 2,
@@ -210,7 +214,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: TRADE_SLIDER_TRACK_HEIGHT,
   },
   trackBase: {
-    backgroundColor: colors2024['neutral-line'],
+    backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: TRADE_SLIDER_TRACK_HEIGHT / 2,
     borderCurve: 'continuous',
     height: TRADE_SLIDER_TRACK_HEIGHT,
@@ -290,7 +294,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     // No horizontal padding: "100%" needs about 28pt, which is all a 4pt
     // inset leaves, so wider system digits wrapped it onto a second line.
     position: 'absolute',
-    top: -18,
+    // 2pt above the thumb.
+    top: TRADE_SLIDER_CENTER_Y - TRADE_SLIDER_THUMB_SIZE / 2 - 22,
     zIndex: 4,
   },
   tooltipText: {

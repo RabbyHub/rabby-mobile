@@ -76,6 +76,7 @@ import { PerpsProHeader } from '../components/header/PerpsProHeader';
 import { PerpsProAccountSelectorLayer } from '../components/header/PerpsProAccountSelectorLayer';
 import { usePerpsProHeaderCollapse } from '../components/header/usePerpsProHeaderCollapse';
 import { PERPS_PRO_HEADER_HEIGHT } from '../components/header/constants';
+import { PerpsProInfoControlsOverlay } from '../components/info/PerpsProInfoControlsOverlay';
 import { PerpsProInfoTabs } from '../components/info/PerpsProInfoTabs';
 import {
   PERPS_PRO_INFO_TABS,
@@ -95,6 +96,8 @@ import {
   PERPS_PRO_INFO_TABS_HEIGHT,
   PERPS_PRO_INFO_SECTION_BOTTOM_PADDING,
   PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT,
+  PERPS_PRO_OPEN_ORDERS_CONTROLS_HEIGHT,
+  PERPS_PRO_POSITIONS_CONTROLS_HEIGHT,
 } from '../components/info/perpsProInfoTabsSticky';
 import {
   PerpsProMarketBarSkeleton,
@@ -170,12 +173,15 @@ type PerpsProSceneRow =
       key: 'account-summary';
       type: 'account-summary';
     }
-  | { key: 'positions-controls'; type: 'positions-controls' }
+  | {
+      key: 'positions-controls' | 'open-orders-controls';
+      tab: 'positions' | 'openOrders';
+      type: 'controls-spacer';
+    }
   | { key: 'positions-empty'; type: 'positions-empty' }
   | { key: string; position: PerpsPositionViewModel; type: 'position' }
   | { key: string; order: PerpsTwapRecord; type: 'twap' }
   | { key: 'twap-state'; type: 'twap-state' }
-  | { key: 'open-orders-controls'; type: 'open-orders-controls' }
   | { key: 'open-orders-empty'; type: 'open-orders-empty' }
   | { key: string; order: PerpsOpenOrderViewModel; type: 'open-order' };
 
@@ -916,6 +922,11 @@ export const PerpsProScene: React.FC<{
   );
 
   const rowsByTab = useMemo<Record<PerpsProInfoTab, PerpsProSceneRow[]>>(() => {
+    const positionsControlsSpacerRow: PerpsProSceneRow = {
+      key: 'positions-controls',
+      tab: 'positions',
+      type: 'controls-spacer',
+    };
     const accountRows: PerpsProSceneRow[] = [];
     if (info.accountState === 'ready') {
       // Asset rows render inside the summary card (Figma 86609:327475).
@@ -944,15 +955,12 @@ export const PerpsProScene: React.FC<{
         ? [{ key: 'positions-empty', type: 'positions-empty' }]
         : info.positionCollectionPresentation === 'filteredEmpty'
         ? [
-            { key: 'positions-controls', type: 'positions-controls' },
+            positionsControlsSpacerRow,
             { key: 'positions-empty', type: 'positions-empty' },
           ]
         : info.positionCollectionPresentation === 'populated'
-        ? [
-            { key: 'positions-controls', type: 'positions-controls' },
-            ...positionDataRows,
-          ]
-        : [{ key: 'positions-controls', type: 'positions-controls' }];
+        ? [positionsControlsSpacerRow, ...positionDataRows]
+        : [positionsControlsSpacerRow];
 
     const openOrderDataRows: PerpsProSceneRow[] =
       info.openOrderCategory === 'twap'
@@ -967,7 +975,11 @@ export const PerpsProScene: React.FC<{
             type: 'open-order',
           }));
     const openOrderRows: PerpsProSceneRow[] = [
-      { key: 'open-orders-controls', type: 'open-orders-controls' },
+      {
+        key: 'open-orders-controls',
+        tab: 'openOrders',
+        type: 'controls-spacer',
+      },
       ...openOrderDataRows,
       ...(info.openOrderCategory === 'twap'
         ? info.twapReadiness !== 'ready'
@@ -1125,14 +1137,18 @@ export const PerpsProScene: React.FC<{
               onWithdraw={openWithdraw}
             />
           );
-        case 'positions-controls':
+        case 'controls-spacer':
+          // The controls render in the sticky overlay above this space.
           return (
-            <PerpsProPositionsControls
-              actionDisabled={info.allPositionsCount === 0}
-              actionPending={closeAll.pending}
-              hideOtherSymbols={info.hideOtherPositionSymbols}
-              onCloseAll={closeAll.requestCloseAll}
-              onToggleHideOtherSymbols={toggleHideOtherPositionSymbols}
+            <View
+              style={
+                item.tab === 'positions'
+                  ? styles.positionsControlsSpacer
+                  : styles.openOrdersControlsSpacer
+              }
+              testID={`perps-pro-${
+                item.tab === 'positions' ? 'positions' : 'open-orders'
+              }-controls-spacer`}
             />
           );
         case 'positions-empty':
@@ -1182,38 +1198,6 @@ export const PerpsProScene: React.FC<{
               />
             </Pressable>
           );
-        case 'open-orders-controls':
-          return (
-            <PerpsProOpenOrdersControls
-              twapCount={info.twapCount}
-              onAddTwap={() => {
-                setTradeOrderType('twap');
-                runOnUI(() => {
-                  'worklet';
-                  interruptPerpsProInfoScrollBridge(infoScrollBridge);
-                  scrollPerpsProInfoBridgeTarget(
-                    infoScrollBridge,
-                    infoScrollBridge.activeIndex.value,
-                    0,
-                  );
-                })();
-              }}
-              basicCount={info.openOrderCounts.basic}
-              category={info.openOrderCategory}
-              conditionalCount={info.openOrderCounts.conditional}
-              hideOtherSymbols={info.hideOtherOpenOrderSymbols}
-              isCancelAllPending={cancelOrders.isCancelAllPending}
-              onCancelAll={() =>
-                info.openOrderCategory !== 'twap' &&
-                cancelOrders.confirmCancelAll(
-                  info.openOrderCommandCandidates,
-                  info.openOrderCategory,
-                )
-              }
-              onSetCategory={info.setOpenOrderCategory}
-              onToggleHideOtherSymbols={toggleHideOtherOpenOrderSymbols}
-            />
-          );
         case 'open-orders-empty':
           return (
             <PerpsProEmptyState
@@ -1251,11 +1235,9 @@ export const PerpsProScene: React.FC<{
       twapDetail,
       requestedInfoTab,
       scene.routeFocused,
-      setTradeOrderType,
+      styles.openOrdersControlsSpacer,
+      styles.positionsControlsSpacer,
       trade.amountUnit,
-      infoScrollBridge,
-      closeAll.pending,
-      closeAll.requestCloseAll,
       info,
       manageMargin.open,
       isOpenOrderEditUnavailable,
@@ -1268,9 +1250,80 @@ export const PerpsProScene: React.FC<{
       openOpenOrderEdit,
       selectCardMarket,
       t,
+      transfer.open,
+    ],
+  );
+
+  const showPositionsControls =
+    info.positionCollectionPresentation !== 'authoritativeEmpty';
+  const addTwap = useCallback(() => {
+    setTradeOrderType('twap');
+    runOnUI(() => {
+      'worklet';
+      interruptPerpsProInfoScrollBridge(infoScrollBridge);
+      scrollPerpsProInfoBridgeTarget(
+        infoScrollBridge,
+        infoScrollBridge.activeIndex.value,
+        0,
+      );
+    })();
+  }, [infoScrollBridge, setTradeOrderType]);
+  const {
+    openOrderCategory,
+    openOrderCommandCandidates,
+    setOpenOrderCategory,
+  } = info;
+  const cancelAllOpenOrders = useCallback(() => {
+    if (openOrderCategory !== 'twap') {
+      cancelOrders.confirmCancelAll(
+        openOrderCommandCandidates,
+        openOrderCategory,
+      );
+    }
+  }, [cancelOrders, openOrderCategory, openOrderCommandCandidates]);
+  const infoControlsPanels = useMemo(
+    () => ({
+      openOrders: (
+        <PerpsProOpenOrdersControls
+          twapCount={info.twapCount}
+          onAddTwap={addTwap}
+          basicCount={info.openOrderCounts.basic}
+          category={openOrderCategory}
+          conditionalCount={info.openOrderCounts.conditional}
+          hideOtherSymbols={info.hideOtherOpenOrderSymbols}
+          isCancelAllPending={cancelOrders.isCancelAllPending}
+          onCancelAll={cancelAllOpenOrders}
+          onSetCategory={setOpenOrderCategory}
+          onToggleHideOtherSymbols={toggleHideOtherOpenOrderSymbols}
+        />
+      ),
+      positions: showPositionsControls ? (
+        <PerpsProPositionsControls
+          actionDisabled={info.allPositionsCount === 0}
+          actionPending={closeAll.pending}
+          hideOtherSymbols={info.hideOtherPositionSymbols}
+          onCloseAll={closeAll.requestCloseAll}
+          onToggleHideOtherSymbols={toggleHideOtherPositionSymbols}
+        />
+      ) : null,
+    }),
+    [
+      addTwap,
+      cancelAllOpenOrders,
+      cancelOrders.isCancelAllPending,
+      closeAll.pending,
+      closeAll.requestCloseAll,
+      info.allPositionsCount,
+      info.hideOtherOpenOrderSymbols,
+      info.hideOtherPositionSymbols,
+      info.openOrderCounts.basic,
+      info.openOrderCounts.conditional,
+      info.twapCount,
+      openOrderCategory,
+      setOpenOrderCategory,
+      showPositionsControls,
       toggleHideOtherOpenOrderSymbols,
       toggleHideOtherPositionSymbols,
-      transfer.open,
     ],
   );
 
@@ -1540,6 +1593,7 @@ export const PerpsProScene: React.FC<{
               ) : null}
               {settledInfoTab && displayedInfoTab ? (
                 <SceneOverlayView
+                  pointerEvents="box-none"
                   style={[styles.infoTabsOverlay, infoTabsOverlayMotionStyle]}
                   testID="perps-pro-info-tabs-overlay">
                   {Platform.OS === 'android' ? (
@@ -1552,6 +1606,11 @@ export const PerpsProScene: React.FC<{
                       {infoTabsContent}
                     </PerpsProOverlayScrollBridge>
                   )}
+                  <PerpsProInfoControlsOverlay
+                    pagePosition={infoTabIndicatorPosition}
+                    panels={infoControlsPanels}
+                    scrollBridge={infoScrollBridge}
+                  />
                 </SceneOverlayView>
               ) : null}
             </>
@@ -1826,8 +1885,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     top: 0,
     zIndex: 3,
   },
+  // Tabs plus the sticky controls below them; empty areas pass touches on.
   infoTabsOverlay: {
-    height: PERPS_PRO_INFO_TABS_HEIGHT,
     left: 0,
     position: 'absolute',
     right: 0,
@@ -1843,6 +1902,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     zIndex: 1,
   },
   infoTabsSpacer: { height: PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT },
+  positionsControlsSpacer: { height: PERPS_PRO_POSITIONS_CONTROLS_HEIGHT },
+  openOrdersControlsSpacer: { height: PERPS_PRO_OPEN_ORDERS_CONTROLS_HEIGHT },
   scroll: {
     bottom: 0,
     left: 0,

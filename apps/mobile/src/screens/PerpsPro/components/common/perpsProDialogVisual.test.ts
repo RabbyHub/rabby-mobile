@@ -57,7 +57,7 @@ describe('Pro dialog surfaces', () => {
       );
       expect(styles.background.backgroundColor).toBe(colors['neutral-bg-0']);
       expect(inactive.backgroundColor).toBe(
-        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
+        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-3'],
       );
       expect(inactive.backgroundColor).not.toBe(
         styles.background.backgroundColor,
