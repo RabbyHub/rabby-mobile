@@ -1271,7 +1271,8 @@
       "onekey": {
         "notFound": {
           "title": "デバイスが見つかりません",
-          "description": "BluetoothをオンにしてOneKeyをアンロックしてください。"
+          "description": "BluetoothをオンにしてOneKeyをアンロックしてください。",
+          "retry": "再検索"
         },
         "ble": {
           "title": "OneKeyを接続する",
@@ -1294,6 +1295,23 @@
         "connect": {
           "title": "接続中",
           "description": "デバイスでPINまたはパスフレーズを入力してください。"
+        },
+        "error": {
+          "deviceNotFound": "OneKeyが見つかりません。デバイスのロックが解除され、Bluetoothがオンになっていて、スマートフォンの近くにあることを確認してください。",
+          "disconnected": "OneKeyとの接続が切断されました。ロックを解除したままスマートフォンの近くに置いて、もう一度お試しください。",
+          "deviceBusy": "OneKeyは別のリクエストを処理中です。デバイスで完了またはキャンセルしてから、もう一度お試しください。",
+          "passphraseDisabled": "デバイスでパスフレーズがオフになっています。オンにするか、このウォレットを再インポートしてください。",
+          "firmwareTooOld": "OneKeyのファームウェアが古すぎます。OneKeyアプリで更新してから、もう一度お試しください。",
+          "bluetoothOff": "Bluetoothがオフになっています。Bluetoothをオンにしてから、もう一度お試しください。",
+          "bluetoothPermission": "RabbyにBluetoothの使用権限がありません。設定でRabbyにBluetooth（Android 11以前は位置情報）を許可してから、もう一度お試しください。",
+          "locationServicesDisabled": "位置情報サービスがオフになっています。Bluetoothデバイスを検索するにはオンにしてください。",
+          "bluetoothUnsupported": "このスマートフォンはBluetoothに対応していません。",
+          "scanFailed": "Bluetoothの検索に失敗しました。もう一度お試しください。",
+          "pairingFailed": "Bluetoothのペアリングに失敗しました。スマートフォンとOneKeyでペアリングリクエストを承認してから、もう一度お試しください。",
+          "pairingInvalid": "Bluetoothのペアリング情報が無効になりました。スマートフォンのBluetooth設定でOneKeyの登録を解除してから、もう一度ペアリングしてください。",
+          "pinInvalid": "PINが正しくありません。もう一度お試しください。",
+          "cancelled": "リクエストはキャンセルされました。",
+          "openSettings": "設定を開く"
         }
       },
       "keystone": {

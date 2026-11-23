@@ -12,6 +12,9 @@ import {
   setRetryTxRecommendNonce,
 } from '@/utils/errorTxRetry';
 import BigNumber from 'bignumber.js';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { cancel as cancelOneKeyRequest } from '@/core/apis/onekey';
+import { isOneKeyDisconnectError } from '@/utils/onekeyError';
 
 type TxStatus = 'sended' | 'signed' | 'idle' | 'failed';
 
@@ -50,6 +53,24 @@ const miniSignTxInfoAtom = atom(get => {
 export const useGetMiniSignInfo = () => useAtomValue(miniSignTxInfoAtom);
 
 let globalCurrentTaskId = uniqueId();
+
+// True while a OneKey device is asked to sign a mini-approval tx.
+let oneKeySigningInFlight = false;
+
+/**
+ * When the mini approval is rejected, cleared or unmounted while the OneKey
+ * still shows the confirmation, release the device so the next request does
+ * not fail as busy. No-op when nothing is waiting on the device.
+ */
+export function releaseOneKeyMiniSign() {
+  if (!oneKeySigningInFlight) {
+    return;
+  }
+  oneKeySigningInFlight = false;
+  cancelOneKeyRequest().catch(e => {
+    console.warn('[OneKey] mini sign cancel failed', e);
+  });
+}
 export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
   const [list, setList] = useAtom(taskListAtom);
   const [status, setStatus] = useAtom(taskStatusAtom);
@@ -73,6 +94,7 @@ export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
   );
 
   const init = useMemoizedFn((list: ListItemType[]) => {
+    releaseOneKeyMiniSign();
     setList(list);
     setStatus('idle');
     setError(null);
@@ -144,7 +166,11 @@ export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
             }
           }
 
+          const isOneKey = options.account?.type === KEYRING_TYPE.OneKeyKeyring;
           try {
+            if (isOneKey) {
+              oneKeySigningInFlight = true;
+            }
             const result = await sendTransaction({
               ...options,
               ga,
@@ -161,6 +187,9 @@ export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
                     },
                   });
                 } else if (status === 'signed') {
+                  if (isOneKey) {
+                    oneKeySigningInFlight = false;
+                  }
                   _updateList({
                     index,
                     payload: {
@@ -170,6 +199,9 @@ export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
                 }
               },
             });
+            if (isOneKey && currentId === globalCurrentTaskId) {
+              oneKeySigningInFlight = false;
+            }
             if (currentId !== globalCurrentTaskId) {
               throw new Error('different taskId');
             }
@@ -181,6 +213,9 @@ export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
             });
             resultList.push(result);
           } catch (e: any) {
+            if (isOneKey && currentId === globalCurrentTaskId) {
+              oneKeySigningInFlight = false;
+            }
             console.error(e);
             if (currentId !== globalCurrentTaskId) {
               return;
@@ -198,12 +233,15 @@ export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
               e.name === FailedCode.UserRejected ? 'REJECTED' : 'FAILED';
 
             retryTxReset();
-            await setRetryTxRecommendNonce({
-              from: tx.from,
-              chainId: tx.chainId,
-              account: options.account,
-              nonce: tx.nonce,
-            });
+            // Unplug must not look like a nonce collision on the next tx.
+            if (!isOneKeyDisconnectError(e) && !isOneKeyDisconnectError(msg)) {
+              await setRetryTxRecommendNonce({
+                from: tx.from,
+                chainId: tx.chainId,
+                account: options.account,
+                nonce: tx.nonce,
+              });
+            }
 
             setError({
               status: _status,
@@ -279,6 +317,7 @@ export const useClearMiniApprovalTask = () => {
   const [, setError] = useAtom(taskErrorAtom);
 
   const clear = useMemoizedFn(() => {
+    releaseOneKeyMiniSign();
     setList([]);
     setStatus('idle');
     setError(null);
