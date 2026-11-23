@@ -67,7 +67,11 @@ export const PerpsHeaderTitle = React.memo(
     const { compact, quote } = snapshot;
 
     return (
-      <View style={[styles.headerOuter, { marginTop: top }]}>
+      <View
+        style={[
+          styles.headerOuter,
+          { height: HEADER_HEIGHT + top, paddingTop: top },
+        ]}>
         <View style={styles.headerInner}>
           <View style={styles.headerLeft}>
             <HeaderBackPressable tintColor={colors2024['neutral-title-1']} />
@@ -104,13 +108,14 @@ export const PerpsHeaderTitle = React.memo(
 
 const HEADER_HEIGHT = 56;
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerOuter: {
     height: HEADER_HEIGHT,
     paddingLeft: 12,
     paddingRight: 16,
     justifyContent: 'center',
-    backgroundColor: colors2024[isLight ? 'neutral-bg-0' : 'neutral-bg-1'],
+    // Figma 88081:166461: the status bar and title share the chart's bg-1.
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   headerInner: {
     flexDirection: 'row',
