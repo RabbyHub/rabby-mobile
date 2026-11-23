@@ -756,8 +756,16 @@ export default function AppNavigation() {
                     options={mergeScreenOptions2024([
                       {
                         headerShown: true,
-                        headerTitle: t(
-                          'screens.addressStackTitle.ChooseBackup',
+                        title: t('screens.addressStackTitle.ChooseBackup'),
+                        // Native iOS headers shift a long title away from the
+                        // back button (QA 1439 on the SE: the English title sat
+                        // +20pt right, the shorter Chinese one stayed centred).
+                        // The JS header keeps equal leading/trailing slots.
+                        header: () => (
+                          <AutoFitCenterHeader
+                            title={t('screens.addressStackTitle.ChooseBackup')}
+                            titleKey="screens.addressStackTitle.ChooseBackup"
+                          />
                         ),
                       },
                     ])}
