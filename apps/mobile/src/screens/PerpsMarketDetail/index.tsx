@@ -35,6 +35,10 @@ import { PerpsClosePositionPopup } from './components/PerpsClosePositionPopup';
 import { PerpsDepositCard } from './components/PerpsDepositCard';
 import { PerpsFooter } from './components/PerpsFooter';
 import { PerpsHeaderTitle } from './components/PerpsHeaderTitle';
+import {
+  PerpsMarketSelectorSheet,
+  type PerpsMarketSelectorSheetHandle,
+} from './components/PerpsMarketSelectorSheet';
 import { PerpsAbout } from './components/PerpsAbout';
 import { PerpsOpenPositionPopup } from './components/PerpsOpenPositionPopup';
 import { PerpsPosition } from './components/PerpsPosition';
@@ -404,6 +408,19 @@ export const PerpsMarketDetailScreen = () => {
     priceMeasureId.current += 1;
   }, [coin, headerPresentation]);
 
+  const marketSelectorRef = useRef<PerpsMarketSelectorSheetHandle>(null);
+  const selectMarket = useCallback((market: string) => {
+    naviReplace(RootNames.StackTransaction, {
+      screen: RootNames.PerpsMarketDetail,
+      params: {
+        market,
+        fromSource: 'marketDetail',
+        showOpenPosition: false,
+        direction: 'Long',
+      },
+    });
+  }, []);
+
   const HeaderTitle = useCallback(() => {
     return (
       <PerpsHeaderTitle
@@ -415,15 +432,7 @@ export const PerpsMarketDetailScreen = () => {
         displayName={currentAssetCtx?.displayName || coin}
         coin={coin}
         logoUrl={currentAssetCtx?.logoUrl}
-        onSelectCoin={() => {
-          naviReplace(RootNames.StackTransaction, {
-            screen: RootNames.PerpsSearch,
-            params: {
-              openFromSource: 'marketDetail',
-              initialTab: 'topVolume',
-            },
-          });
-        }}
+        onSelectCoin={() => marketSelectorRef.current?.present()}
       />
     );
   }, [
@@ -592,6 +601,11 @@ export const PerpsMarketDetailScreen = () => {
           />
         ) : null}
       </NormalScreenContainer2024>
+      <PerpsMarketSelectorSheet
+        currentMarket={coin}
+        onSelect={selectMarket}
+        ref={marketSelectorRef}
+      />
 
       <PerpsDepositPopup
         account={currentPerpsAccount}

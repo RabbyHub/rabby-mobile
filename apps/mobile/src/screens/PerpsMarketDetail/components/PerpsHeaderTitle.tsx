@@ -26,7 +26,7 @@ export const PerpsHeaderTitle = React.memo(
     {
       account?: Account | null;
       snapshotRef?: React.RefObject<AccountHeaderSnapshot>;
-      onSelectCoin: () => void;
+      onSelectCoin?: () => void;
       popupIsOpen: boolean;
       coin: string;
       displayName: string;
