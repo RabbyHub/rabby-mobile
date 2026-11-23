@@ -191,6 +191,35 @@ it('removes the retry footer when a retry returns partial trades', async () => {
   expect(screen.queryByText('noTrades')).toBeNull();
 });
 
+it('keeps a complete stored trade list free of a failed reload footer', async () => {
+  jest.mocked(usePerpsTwapFills).mockReturnValue([
+    {
+      key: 'BTC:42:1',
+      coin: 'BTC',
+      twapId: 42,
+      tid: 1,
+      oid: 1,
+      side: 'B',
+      px: '100',
+      sz: '10',
+      fee: '0',
+      feeToken: 'USDC',
+      time: 30000,
+    },
+  ]);
+  jest.mocked(loadPerpsTwapFills).mockClear();
+  try {
+    await renderAsync(
+      <PerpsProTwapDetailSheet order={endedOrder} onClose={jest.fn()} />,
+    );
+    expect(loadPerpsTwapFills).not.toHaveBeenCalled();
+    expect(screen.queryByText('error')).toBeNull();
+    expect(screen.queryByText('loading')).toBeNull();
+  } finally {
+    jest.mocked(usePerpsTwapFills).mockReturnValue([]);
+  }
+});
+
 it.each([
   ['runningDetail', 'B'],
   ['runningDetail', 'A'],
