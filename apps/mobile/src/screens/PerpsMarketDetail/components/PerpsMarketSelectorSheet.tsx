@@ -1,11 +1,13 @@
 import React, {
   forwardRef,
   useCallback,
+  useContext,
   useImperativeHandle,
   useRef,
   useState,
 } from 'react';
 import { Keyboard, useWindowDimensions, View } from 'react-native';
+import { NavigationContext } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
@@ -31,6 +33,9 @@ export const PerpsMarketSelectorSheet = forwardRef<
 >(({ currentMarket, onSelect }, ref) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const modalRef = useRef<AppBottomSheetModal>(null);
+  // The sheet portals outside NavigationContainer; forward the screen's
+  // navigation so focus-aware hooks in the panel keep working.
+  const navigation = useContext(NavigationContext);
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   // Freeze the height while open so the keyboard cannot resize the sheet.
@@ -89,13 +94,15 @@ export const PerpsMarketSelectorSheet = forwardRef<
       handleIndicatorStyle={styles.handleIndicator}
       handleStyle={styles.handle}
       style={styles.modal}>
-      <View style={styles.content} testID="perps-market-selector-sheet">
-        <PerpsSearchPanel
-          initialTab="topVolume"
-          onSelect={handleSelect}
-          style={styles.search}
-        />
-      </View>
+      <NavigationContext.Provider value={navigation}>
+        <View style={styles.content} testID="perps-market-selector-sheet">
+          <PerpsSearchPanel
+            initialTab="topVolume"
+            onSelect={handleSelect}
+            style={styles.search}
+          />
+        </View>
+      </NavigationContext.Provider>
     </AppBottomSheetModal>
   );
 });
