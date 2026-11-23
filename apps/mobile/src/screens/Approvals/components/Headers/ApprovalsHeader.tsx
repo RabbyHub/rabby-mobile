@@ -1,10 +1,11 @@
 import React from 'react';
 import { View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
+import { useCustomHeaderTop } from '@/hooks/useAppLayout';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 import { createGetStyles2024 } from '@/utils/styles';
 import { RoundedFontStyles } from '@/core/utils/fonts';
 import { HeaderBackButton } from '@/hooks/navigation';
@@ -35,7 +36,8 @@ const HEADER_HORIZONTAL_INSET = 16;
  */
 export const ApprovalsHeader = ({ account }: { account?: Account | null }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const insets = useSafeAreaInsets();
+  const headerTop = useCustomHeaderTop();
+  const columnInset = useSystemColumnInset();
   const searchKw = useApprovalsHeaderState(state => state.searchKw);
   const isSearching = useApprovalsHeaderState(state => state.isSearching);
   const setSearchKw = (value: string) =>
@@ -44,8 +46,17 @@ export const ApprovalsHeader = ({ account }: { account?: Account | null }) => {
     setApprovalsHeaderState({ isSearching: value });
 
   return (
-    <View style={[styles.outer, { paddingTop: insets.top }]}>
-      <View style={styles.row}>
+    <View style={[styles.outer, { paddingTop: headerTop }]}>
+      <View
+        style={[
+          styles.row,
+          columnInset.left > 0 && {
+            paddingLeft: HEADER_HORIZONTAL_INSET + columnInset.left,
+          },
+          columnInset.right > 0 && {
+            paddingRight: HEADER_HORIZONTAL_INSET + columnInset.right,
+          },
+        ]}>
         <View
           style={[styles.backSlot, isSearching && styles.backSlotSearching]}>
           <HeaderBackButton

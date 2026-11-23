@@ -16,6 +16,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { IS_IOS } from '@/core/native/utils';
 import ArrowLeftSVG from '@/components/AccountSelectModalTx/icons/nav-left-cc.svg';
 import { naviPush } from '@/utils/navigation';
+import { navigateThenDismiss } from '@/utils/navigateThenDismiss';
 import { RootNames } from '@/constant/layout';
 import { Text } from '@/components/Typography';
 
@@ -139,15 +140,18 @@ export const NotMatterAddressDialog: React.FC<{
   const renderItem = useCallback(
     ({ item }) => {
       const gotoAddressDetail = () => {
-        onDone?.();
-        naviPush(RootNames.StackAddress, {
-          screen: RootNames.AddressDetail,
-          params: {
-            address: item.address,
-            type: item.type,
-            brandName: item.brandName,
-          },
-        });
+        navigateThenDismiss(
+          () =>
+            naviPush(RootNames.StackAddress, {
+              screen: RootNames.AddressDetail,
+              params: {
+                address: item.address,
+                type: item.type,
+                brandName: item.brandName,
+              },
+            }),
+          onDone,
+        );
       };
 
       return (

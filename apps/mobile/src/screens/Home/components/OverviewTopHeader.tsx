@@ -151,8 +151,8 @@ export function TabsTopHeader(): JSX.Element {
         changeActivity: state.activity,
       })),
     );
-  const isAnyRemoteRefreshing = useHomeRefreshProjection(
-    state => state.isAnyRemoteRefreshing,
+  const isBalanceOrChangeRefreshing = useHomeRefreshProjection(
+    state => state.isBalanceFetchingRemote || state.is24hChangeFetchingRemote,
   );
   const showBalanceLoadingWithoutLocal =
     isHomeProjectionWaitingForValue(balanceAvailability);
@@ -216,8 +216,8 @@ export function TabsTopHeader(): JSX.Element {
   }, [data.changePercent, data.isLoss]);
   const showChangeLoading = showChangeLoadingWithoutLocal;
   const showHeaderSideLoadingIndicator = useMemo(() => {
-    return showBalanceLoadingWithoutLocal || isAnyRemoteRefreshing;
-  }, [isAnyRemoteRefreshing, showBalanceLoadingWithoutLocal]);
+    return showBalanceLoadingWithoutLocal || isBalanceOrChangeRefreshing;
+  }, [isBalanceOrChangeRefreshing, showBalanceLoadingWithoutLocal]);
   const showNetWorthSideLoadingIndicator =
     showHeaderSideLoadingIndicator &&
     !showBalanceLoadingWithoutLocal &&
@@ -280,7 +280,7 @@ export function TabsTopHeader(): JSX.Element {
     const opacity = formOpacity(p, 0);
     return {
       opacity,
-      pointerEvents: opacity > 0.5 ? 'auto' : 'none',
+      pointerEvents: opacity > 0.5 ? 'box-none' : 'none',
     };
   });
   const tokenFormStyle = useAnimatedStyle(() => {
@@ -289,7 +289,7 @@ export function TabsTopHeader(): JSX.Element {
     return {
       opacity,
       transform: [{ translateX: formSlideX(p, 1) }],
-      pointerEvents: opacity > 0.5 ? 'auto' : 'none',
+      pointerEvents: opacity > 0.5 ? 'box-none' : 'none',
     };
   });
   const assetsFormStyle = useAnimatedStyle(() => {
@@ -298,7 +298,7 @@ export function TabsTopHeader(): JSX.Element {
     return {
       opacity,
       transform: [{ translateX: formSlideX(p, 2) }],
-      pointerEvents: opacity > 0.5 ? 'auto' : 'none',
+      pointerEvents: opacity > 0.5 ? 'box-none' : 'none',
     };
   });
   // The history/clock is the same element in the token, defi and nft forms, so
@@ -313,7 +313,7 @@ export function TabsTopHeader(): JSX.Element {
     // it fights the token form sliding in from above.
     return {
       opacity,
-      pointerEvents: opacity > 0.5 ? 'auto' : 'none',
+      pointerEvents: opacity > 0.5 ? 'box-none' : 'none',
     };
   });
 
@@ -433,7 +433,11 @@ export function TabsTopHeader(): JSX.Element {
         {/* All three forms stay mounted and only animate opacity/translate, so
             the form turns with the drag instead of waiting for the settle
             commit. Pointer events follow whichever form is more than half
-            visible, so a faded-out form can never swallow a tap. */}
+            visible, so a faded-out form can never swallow a tap. The visible
+            form is `box-none`, not `auto`: each slot stretches across the
+            whole right-hand header row, so a filled slot would swallow every
+            tap between the title and the icons. Those taps must keep reaching
+            the Pressable below, which switches to the Token tab (QA 1396). */}
         <Animated.View style={[styles.rightAnchorSlot, anchorStyle]}>
           <MultiHeaderRightHistory />
         </Animated.View>
@@ -569,6 +573,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: HeaderHeight,
     paddingHorizontal: 12,
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-5'],
     // justifyContent: 'center',
     alignItems: 'center',
@@ -619,6 +624,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 6,
     height: 6,
     borderRadius: 3,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['red-default'],
     position: 'absolute',
     top: 0,

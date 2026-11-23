@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import { apisHomeTabIndex, HomeTabName } from '@/hooks/navigation';
 import { TabsTopHeader } from './OverviewTopHeader';
+import type { HomeRefreshProjection } from '@/store/homePortfolio/refresh';
 
 type TickerProps = React.ComponentProps<
   typeof import('@/components/Animated/RefreshNudgedTickerText').default
@@ -12,6 +13,8 @@ const mockTickerRender = jest.fn<void, [TickerProps]>();
 let mockTotalBalance = 100;
 let mockCurrency = 'USD';
 let mockRefreshing = false;
+let mockChangeRefreshing = false;
+let mockCurveRefreshing = false;
 let mockChangePercent = '';
 let mockThemeColor = '#123456';
 
@@ -29,6 +32,9 @@ jest.mock('react-native-reanimated', () => ({
   useAnimatedStyle: (callback: () => object) => callback(),
   useSharedValue: (value: unknown) =>
     require('react').useRef({ value }).current,
+  // `@/utils/styles` -> `@/core/dimensions` -> `@/hooks/useAppLayout` builds
+  // its layout mutables at module scope.
+  makeMutable: (value: unknown) => ({ value }),
 }));
 jest.mock('react-native-gesture-handler', () => ({
   TouchableOpacity: require('react-native').TouchableOpacity,
@@ -95,7 +101,16 @@ jest.mock('@/store/homePortfolio', () => ({
     changeData: { changePercent: mockChangePercent, isLoss: false },
     changeActivity: { isActive: false },
   }),
-  useHomeRefreshProjection: () => mockRefreshing,
+  useHomeRefreshProjection: (
+    select: (state: Partial<HomeRefreshProjection>) => unknown,
+  ) =>
+    select({
+      isBalanceFetchingRemote: mockRefreshing,
+      is24hChangeFetchingRemote: mockChangeRefreshing,
+      isCurveFetchingRemote: mockCurveRefreshing,
+      isAnyRemoteRefreshing:
+        mockRefreshing || mockChangeRefreshing || mockCurveRefreshing,
+    }),
 }));
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: any) => {
@@ -113,7 +128,13 @@ jest.mock('@/components/Typography', () => ({
 jest.mock('@/components/WebView/LocalWebView/LocalWebView', () => ({
   LocalWebView: () => null,
 }));
-jest.mock('@/components2024/RotateLoadingCircle', () => () => null);
+jest.mock(
+  '@/components2024/RotateLoadingCircle',
+  () => () =>
+    require('react').createElement(require('react-native').View, {
+      testID: 'header-loading',
+    }),
+);
 jest.mock('@/components/Animated/RefreshNudgedTickerText', () => ({
   __esModule: true,
   default: require('react').memo(function MockRefreshTicker(
@@ -149,6 +170,8 @@ beforeEach(() => {
   mockTotalBalance = 100;
   mockCurrency = 'USD';
   mockRefreshing = false;
+  mockChangeRefreshing = false;
+  mockCurveRefreshing = false;
   mockChangePercent = '';
   mockThemeColor = '#123456';
 });
@@ -166,6 +189,45 @@ it('still switches to assets when the empty header area itself is pressed', () =
   getHeaderArea().props.onPress({ target: 101, currentTarget: 101 });
   expect(apisHomeTabIndex.setTabIndex).toHaveBeenCalledTimes(1);
   expect(apisHomeTabIndex.setTabIndex).toHaveBeenCalledWith(1, true);
+});
+
+it('keeps the right-hand form slots box-none so the empty header still switches tabs', () => {
+  render(<TabsTopHeader />);
+  const rightSlots = screen.UNSAFE_root.findAll(node => {
+    const style = StyleSheet.flatten(node.props.style);
+    return (
+      style?.justifyContent === 'flex-end' && style?.pointerEvents !== undefined
+    );
+  });
+  // overview / token / defi+nft forms all stretch across the right-hand row.
+  expect(rightSlots.length).toBeGreaterThanOrEqual(3);
+  const pointerEvents = rightSlots.map(
+    slot => StyleSheet.flatten(slot.props.style)?.pointerEvents,
+  );
+  // The settled overview form must let empty taps through. `auto` here would
+  // swallow every tap between the title and the icons, so the Pressable below
+  // could never switch to the Token tab (QA 1396).
+  expect(pointerEvents).toContain('box-none');
+  expect(pointerEvents).not.toContain('auto');
+});
+
+it('shows balance and 24h refresh activity independently of curve loading', () => {
+  mockCurveRefreshing = true;
+  const { rerender } = render(<TabsTopHeader />);
+  expect(screen.queryAllByTestId('header-loading')).toHaveLength(0);
+
+  mockRefreshing = true;
+  rerender(<TabsTopHeader />);
+  expect(screen.queryAllByTestId('header-loading').length).toBeGreaterThan(0);
+
+  mockRefreshing = false;
+  mockChangeRefreshing = true;
+  rerender(<TabsTopHeader />);
+  expect(screen.queryAllByTestId('header-loading').length).toBeGreaterThan(0);
+
+  mockChangeRefreshing = false;
+  rerender(<TabsTopHeader />);
+  expect(screen.queryAllByTestId('header-loading')).toHaveLength(0);
 });
 
 it('does not rerender the ticker for unrelated refresh and change updates', () => {

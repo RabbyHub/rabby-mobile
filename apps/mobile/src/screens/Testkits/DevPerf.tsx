@@ -5,14 +5,8 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {
-  Alert,
-  Dimensions,
-  FlatList,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Alert, FlatList, ScrollView, StyleSheet, View } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import RNFS from '@rabby-wallet/react-native-fs';
 
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
@@ -154,8 +148,8 @@ function DevWorker() {
         <Button
           title={
             IS_IOS
-              ? `LS iOS MainBundlePath Dir List`
-              : `LS Android Assets Dir List`
+              ? 'LS iOS MainBundlePath Dir List'
+              : 'LS Android Assets Dir List'
           }
           type="ghost"
           height={48}
@@ -235,7 +229,7 @@ function DevWorker() {
             gap: 8,
             marginTop: 12,
             width: '100%',
-            // maxWidth: Dimensions.get('screen').width - 24,
+            // maxWidth: getDimensionsSnapshot('screen').width - 24,
           }}>
           <NextInput
             containerStyle={{ flexShrink: 1 }}
@@ -263,7 +257,7 @@ function DevWorker() {
           />
           <Button
             disabled={plusData.leftValue === '' || plusData.rightValue === ''}
-            title={`= ? (RPC)`}
+            title={'= ? (RPC)'}
             type="ghost"
             height={48}
             containerStyle={{ height: '100%' }}
@@ -281,7 +275,7 @@ function DevWorker() {
 
         <View style={{ marginTop: 12, width: '100%' }}>
           <Button
-            title={`Trigger Lending Data`}
+            title={'Trigger Lending Data'}
             type="ghost"
             height={48}
             containerStyle={{ height: '100%' }}
@@ -346,7 +340,6 @@ function DevPerf(): JSX.Element {
   );
 }
 
-const CONTENT_W = Dimensions.get('screen').width - 24;
 const getStyles = createGetStyles2024(ctx =>
   StyleSheet.create({
     screen: {
@@ -423,7 +416,7 @@ const getStyles = createGetStyles2024(ctx =>
     propertyDesc: {
       flexDirection: 'row',
       width: '100%',
-      maxWidth: CONTENT_W,
+      maxWidth: getDimensionsSnapshot('screen').width - 24,
       flexWrap: 'wrap',
       alignItems: 'flex-start',
       justifyContent: 'flex-start',

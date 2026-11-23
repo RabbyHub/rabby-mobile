@@ -5,18 +5,19 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { FlatListProps } from 'react-native';
 import {
-  Dimensions,
   Platform,
   FlatList as RNFlatList,
   TouchableOpacity,
   View,
   useWindowDimensions,
 } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Extrapolate,
   interpolate,
   runOnJS,
+  runOnUI,
   scrollTo,
   useAnimatedProps,
   useAnimatedReaction,
@@ -76,7 +77,7 @@ export const HomeDappDrawer: React.FC<{
     getStyle,
   });
   const { t } = useTranslation();
-  const height = Dimensions.get('screen').height;
+  const height = getDimensionsSnapshot('screen').height;
 
   const { setPartialBrowserState } = useBrowser();
   const isDrawerExpanded = useValueFromSharedValue(isExpanded);
@@ -127,8 +128,11 @@ export const HomeDappDrawer: React.FC<{
     });
     // Start the first floor's trip back to the top together with the close
     // animation, on both platforms: the dismissal and the scroll-back read as
-    // one gesture instead of two consecutive ones.
-    handleScrollBack();
+    // one gesture instead of two consecutive ones. `handleScrollBack` is a
+    // worklet that drives the UI-thread scroll, so it has to be scheduled
+    // there: calling it from this JS touch handler would make the native
+    // `scrollTo` dispatch return immediately.
+    runOnUI(handleScrollBack)();
 
     triggerImpact();
   }, [scrollableStatus, handleScrollBack]);
@@ -340,7 +344,6 @@ export const HomeDappDrawer: React.FC<{
   });
 
   const safeAreaInsets = useSafeAreaInsets();
-
   // The panel reveal only tracks the drag while the drawer is opening. Once it
   // is on its way back it keeps its size and purely translates down, exactly
   // like the first floor does, so both layers leave the screen at the same
@@ -362,6 +365,10 @@ export const HomeDappDrawer: React.FC<{
     },
   );
 
+  // On the Duo outer screen `safeAreaInsets.top` is 0, but the expanded panel
+  // still has to clear the system column/status strip; `safeHeaderTop` carries
+  // the same foldable compensation used by the JS headers (QA 1431).
+  const { safeHeaderTop } = useSafeSizes();
   const panelScaleStyle = useAnimatedStyle(() => {
     return {
       transformOrigin: 'top',
@@ -370,7 +377,7 @@ export const HomeDappDrawer: React.FC<{
           scale: 0.75 + 0.25 * panelReveal.value,
         },
       ],
-      paddingTop: safeAreaInsets.top * panelReveal.value,
+      paddingTop: safeHeaderTop * panelReveal.value,
     };
   });
 
@@ -562,6 +569,7 @@ const getStyle = createGetStyles2024(
       height: 1002,
       width: 1002,
       borderRadius: 10000,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['brand-light-1'],
       zIndex: 10,
       pointerEvents: 'none',
@@ -581,7 +589,7 @@ const getStyle = createGetStyles2024(
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      maxHeight: Dimensions.get('screen').height - safeAreaInsets.top,
+      maxHeight: getDimensionsSnapshot('screen').height - safeAreaInsets.top,
     },
     favoritesList: {
       flex: 1,
@@ -593,6 +601,7 @@ const getStyle = createGetStyles2024(
     gradient: {
       padding: 12,
       borderRadius: 20,
+      borderCurve: 'continuous',
       justifyContent: 'center',
       alignItems: 'center',
       borderWidth: 1,
@@ -607,6 +616,7 @@ const getStyle = createGetStyles2024(
       gap: 4,
       height: 46,
       borderRadius: 12,
+      borderCurve: 'continuous',
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: colors2024['neutral-bg-5'],
@@ -662,7 +672,7 @@ const getStyle = createGetStyles2024(
       fontFamily: 'SF Pro Rounded',
       fontSize: 18,
       lineHeight: 20,
-      fontWeight: '900',
+      fontWeight: '800',
     },
     edit: {
       color: colors2024['neutral-body'],
@@ -722,6 +732,7 @@ const getStyle = createGetStyles2024(
       height: 42,
       width: 143,
       borderRadius: 6,
+      borderCurve: 'continuous',
     },
     searchButtonText: {
       fontSize: 18,
