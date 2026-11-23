@@ -741,6 +741,19 @@ class OneKeyKeyring extends EventEmitter {
   }
 
   unlock(): Promise<string> {
+    // Reading the device state costs a BLE round trip, and the import list
+    // calls this once per address. Skip it while the selected device is the
+    // one whose xpub is in memory. A device switch goes through
+    // setDeviceConnectId -> cleanUp, which drops the xpub first.
+    if (
+      !this.unlockPromise &&
+      this.isUnlocked() &&
+      Boolean(this.deviceId && this.connectId) &&
+      this.connectId === this._deviceConnectId
+    ) {
+      this.pendingWorkCancelled = false;
+      return Promise.resolve('already unlocked');
+    }
     if (!this.unlockPromise) {
       const promise = this.unlockDevice().finally(() => {
         // A device switch replaces this promise. The old finally must not
