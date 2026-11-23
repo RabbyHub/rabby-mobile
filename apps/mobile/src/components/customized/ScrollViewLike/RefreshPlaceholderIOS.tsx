@@ -3,12 +3,12 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import {
   ActivityIndicator,
-  Dimensions,
   ScrollView,
   StyleProp,
   StyleSheet,
   ViewStyle,
 } from 'react-native';
+import { svsLayout } from '@/hooks/useAppLayout';
 import Animated, {
   useDerivedValue,
   AnimatedStyle,
@@ -36,13 +36,14 @@ export const pulldownRefreshSizes = {
   homeHeaderHeight: Math.min(HOME_TOP_HEADER_SIZES.scrollableListTopOffset, 56),
 };
 
-const scrHeight = Dimensions.get('screen').height;
-
 export function isOverPulldownRefreshThreshold(pullDistance: number) {
   'worklet';
   return (
     pullDistance >=
-    Math.min(scrHeight * 0.3, pulldownRefreshSizes.homeHeaderHeight + 55)
+    Math.min(
+      svsLayout.screenLayout.value.height * 0.3,
+      pulldownRefreshSizes.homeHeaderHeight + 55,
+    )
   );
 }
 
@@ -157,7 +158,9 @@ export const usePulldownRefreshGesture = <
       .onEnd((_event, success) => {
         // An ACTIVE gesture cancelled by navigation or another handler still
         // reaches onEnd. Only a completed pull should start a refresh.
-        if (!success) return;
+        if (!success) {
+          return;
+        }
         pullRefresh: {
           const hasImpactOnPanup = startValues.value.hasImpactOnPanup;
           if (
@@ -257,8 +260,16 @@ export const usePulldownRefreshStyles = ({
         // Keep overpull visible while dragging. The refreshing stage animates
         // back to indicatorSpaceHeight on release; capping here at that height
         // would pin the list before activation and hide the rebound animation.
-        [0, scrHeight * 0.5 - HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset],
-        [0, scrHeight * 0.5 - HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset],
+        [
+          0,
+          svsLayout.screenLayout.value.height * 0.5 -
+            HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset,
+        ],
+        [
+          0,
+          svsLayout.screenLayout.value.height * 0.5 -
+            HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset,
+        ],
         Extrapolate.CLAMP,
       ),
       // paddingTop: 0,
@@ -328,7 +339,9 @@ export const setPulldownRefreshStage = (input: {
   pullDistance: SharedValue<number>;
 }) => {
   'worklet';
-  if (!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING) return;
+  if (!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING) {
+    return;
+  }
 
   switch (input.state) {
     case 'refreshing': {
@@ -367,7 +380,9 @@ export function RefreshPlaceholderIOS({
 }) {
   const { styles } = useTheme2024({ getStyle });
 
-  if (IS_ANDROID) return null;
+  if (IS_ANDROID) {
+    return null;
+  }
 
   const {
     isRefreshing,

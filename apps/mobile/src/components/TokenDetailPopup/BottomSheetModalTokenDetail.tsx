@@ -7,13 +7,8 @@ import React, {
 } from 'react';
 import type { Ref } from 'react';
 import type { ViewStyle } from 'react-native';
-import {
-  View,
-  Platform,
-  Image,
-  Dimensions,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Platform, Image, ActivityIndicator } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { last } from 'lodash';
 
 import { useThemeStyles } from '@/hooks/theme';
@@ -531,9 +526,13 @@ export const BottomSheetModalTokenDetail = ({
     }
   }, [finalAccount, token]);
   const tokenWithAmount = useMemo(() => {
-    if (!token) return null;
+    if (!token) {
+      return null;
+    }
     const { token: tokenInfo } = tokenLoad;
-    if (!tokenInfo || tokenInfo.id !== token._tokenId) return token;
+    if (!tokenInfo || tokenInfo.id !== token._tokenId) {
+      return token;
+    }
 
     return ensureAbstractPortfolioToken({
       ...abstractTokenToTokenItem(token),
@@ -558,7 +557,9 @@ export const BottomSheetModalTokenDetail = ({
   const chainItem = findChain({ serverId: token?.chain });
 
   const checkIsAdded = useMemoizedFn(async () => {
-    if (!token) return;
+    if (!token) {
+      return;
+    }
 
     if (chainItem?.isTestnet) {
       const isAdded = await apiCustomTestnet.isAddedCustomTestnetToken({
@@ -709,7 +710,9 @@ export const BottomSheetModalTokenDetail = ({
   ]);
 
   const onEndReached = React.useCallback(() => {
-    if (isLoadingFirst) return;
+    if (isLoadingFirst) {
+      return;
+    }
     if (latestData?.tokenId !== token?._tokenId) {
       if (__DEV__) {
         console.warn('latestData?.tokenId !== token?._tokenId, skip load more');
@@ -745,7 +748,9 @@ export const BottomSheetModalTokenDetail = ({
 
   const switchSceneCurrentAccount = useCallback(
     async (...args: Parameters<typeof _switchSceneCurrentAccount>) => {
-      if (!__shouldSwitchSceneAccountBeforeRedirect__) return;
+      if (!__shouldSwitchSceneAccountBeforeRedirect__) {
+        return;
+      }
 
       return _switchSceneCurrentAccount(...args);
     },
@@ -814,8 +819,9 @@ export const BottomSheetModalTokenDetail = ({
   );
 
   const ListHeaderComponent = React.useMemo(() => {
-    if (isHiddenButton || hideOperationButtons)
+    if (isHiddenButton || hideOperationButtons) {
       return <View style={{ height: 12 }} />;
+    }
 
     return (
       <View style={[styles.buttonGroup]}>
@@ -1017,7 +1023,7 @@ const getStyles = createGetStyles(colors => {
       marginTop: 4,
       marginBottom: SIZES.buttonGap,
       width:
-        Dimensions.get('window').width -
+        getDimensionsSnapshot('window').width -
         SIZES.horizontalPadding * 2 +
         SIZES.buttonGap,
       flexDirection: 'row',

@@ -27,9 +27,14 @@ jest.mock('react-native-reanimated', () => ({
   default: { View: require('react-native').View },
   Extrapolate: { CLAMP: 'clamp' },
   interpolate: () => 0,
+  clamp: (value: number, lower: number, upper: number) =>
+    Math.min(Math.max(value, lower), upper),
   useAnimatedStyle: (callback: () => object) => callback(),
   useSharedValue: (value: unknown) =>
     require('react').useRef({ value }).current,
+  // `@/utils/styles` -> `@/core/dimensions` -> `@/hooks/useAppLayout` builds
+  // its layout mutables at module scope.
+  makeMutable: (value: unknown) => ({ value }),
 }));
 jest.mock('react-native-gesture-handler', () => ({
   TouchableOpacity: require('react-native').TouchableOpacity,
@@ -184,6 +189,26 @@ it('still switches to assets when the empty header area itself is pressed', () =
   getHeaderArea().props.onPress({ target: 101, currentTarget: 101 });
   expect(apisHomeTabIndex.setTabIndex).toHaveBeenCalledTimes(1);
   expect(apisHomeTabIndex.setTabIndex).toHaveBeenCalledWith(1, true);
+});
+
+it('keeps the right-hand form slots box-none so the empty header still switches tabs', () => {
+  render(<TabsTopHeader />);
+  const rightSlots = screen.UNSAFE_root.findAll(node => {
+    const style = StyleSheet.flatten(node.props.style);
+    return (
+      style?.justifyContent === 'flex-end' && style?.pointerEvents !== undefined
+    );
+  });
+  // overview / token / defi+nft forms all stretch across the right-hand row.
+  expect(rightSlots.length).toBeGreaterThanOrEqual(3);
+  const pointerEvents = rightSlots.map(
+    slot => StyleSheet.flatten(slot.props.style)?.pointerEvents,
+  );
+  // The settled overview form must let empty taps through. `auto` here would
+  // swallow every tap between the title and the icons, so the Pressable below
+  // could never switch to the Token tab (QA 1396).
+  expect(pointerEvents).toContain('box-none');
+  expect(pointerEvents).not.toContain('auto');
 });
 
 it('shows balance and 24h refresh activity independently of curve loading', () => {

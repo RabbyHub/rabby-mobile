@@ -1,7 +1,6 @@
 import { useThemeColors } from '@/hooks/theme';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Dimensions,
   Image,
   Linking,
   StyleProp,
@@ -10,6 +9,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import {
   CameraRuntimeError,
   Code,
@@ -72,7 +72,7 @@ export const CameraView = ({
   onCodeScanned,
   containerStyle,
   cameraWrapStyle,
-  size = Dimensions.get('window').width - 70,
+  size = getDimensionsSnapshot('window').width - 70,
   showScanLine,
   active = true,
 }: CameraViewProps) => {

@@ -1,6 +1,5 @@
 import React from 'react';
 import { View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   AutoFitHeaderTitle,
@@ -8,9 +7,11 @@ import {
 } from '@/components/AutoFitHeaderTitle';
 import { resolveHeaderTitleLanguageStyle } from '@/components/headerTitleTypography';
 import { HeaderBackButton } from '@/hooks/navigation';
+import { useCustomHeaderTop } from '@/hooks/useAppLayout';
 import { useTheme2024 } from '@/hooks/theme';
 import { IS_IOS } from '@/core/native/utils';
 import { ScreenLayouts } from '@/constant/layout';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 import { createGetStyles2024 } from '@/utils/styles';
 
 // Match the container's header offset (`ScreenLayouts.headerAreaHeight`), so a
@@ -57,11 +58,14 @@ export const AutoFitCenterHeader = ({
   const { styles, colors2024, windowWidth, language } = useTheme2024({
     getStyle,
   });
-  const insets = useSafeAreaInsets();
-  // Live title slot: the same paddings/margins the row below applies. Kept in
-  // sync with `getStyle` so the width ladder sees the real glyph width.
+  const headerTop = useCustomHeaderTop();
+  const columnInset = useSystemColumnInset();
+  // Live title slot: the row's paddings/slots/margins plus the foldable column
+  // inset. Kept in sync with `getStyle` so the ladder sees the real glyph width.
   const availableWidth =
     windowWidth -
+    columnInset.left -
+    columnInset.right -
     2 * HEADER_HORIZONTAL_INSET -
     2 * HEADER_SIDE_SLOT_WIDTH -
     2 * TITLE_AREA_HORIZONTAL_MARGIN;
@@ -72,8 +76,15 @@ export const AutoFitCenterHeader = ({
   });
 
   return (
-    <View style={[styles.outer, { paddingTop: insets.top }]}>
-      <View style={styles.row}>
+    <View style={[styles.outer, { paddingTop: headerTop }]}>
+      <View
+        style={[
+          styles.row,
+          {
+            paddingLeft: HEADER_HORIZONTAL_INSET + columnInset.left,
+            paddingRight: HEADER_HORIZONTAL_INSET + columnInset.right,
+          },
+        ]}>
         <View style={styles.backSlot}>
           <HeaderBackButton
             style={styles.backButtonTouch}

@@ -10026,6 +10026,22 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@rabby-wallet/rn-collapsible-scene-view@workspace:packages/rn-collapsible-scene-view":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/rn-collapsible-scene-view@workspace:packages/rn-collapsible-scene-view"
+  dependencies:
+    react: "npm:19.1.4"
+    react-native: "npm:0.81.6"
+    react-native-gesture-handler: "npm:2.30.0"
+    react-native-reanimated: "npm:3.19.5"
+  peerDependencies:
+    react: ">=18"
+    react-native: ">=0.76"
+    react-native-gesture-handler: ">=2"
+    react-native-reanimated: ">=3"
+  languageName: unknown
+  linkType: soft
+
 "@rabby-wallet/rn-page-provider@workspace:packages/rn-page-provider":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/rn-page-provider@workspace:packages/rn-page-provider"
@@ -38920,11 +38936,11 @@ __metadata:
 
 "react-native-pager-view@patch:react-native-pager-view@npm%3A6.7.0#./.yarn/patches/react-native-pager-view-npm-6.7.0-0fd4ad27df.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 6.7.0
-  resolution: "react-native-pager-view@patch:react-native-pager-view@npm%3A6.7.0#./.yarn/patches/react-native-pager-view-npm-6.7.0-0fd4ad27df.patch::version=6.7.0&hash=2c4441&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "react-native-pager-view@patch:react-native-pager-view@npm%3A6.7.0#./.yarn/patches/react-native-pager-view-npm-6.7.0-0fd4ad27df.patch::version=6.7.0&hash=138406&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10/3a003075fe796652bad1dcea6be95207e2872918a58736af0850b82ef912a0aa2357d4bce89c9dab1deb1318bafae7336e973de929e5402b79a4b81edcf60638
+  checksum: 10/5c912aa881d04491e7036ab1a430092823546022eee109a89e2f9e71c4584c2373dc2e4d33c74dfaaa0d542cda785dda4db2965c675c6c39b8da028ec2624139
   languageName: node
   linkType: hard
 

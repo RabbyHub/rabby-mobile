@@ -23,6 +23,8 @@ import * as Sentry from '@sentry/react-native';
 import { addHexPrefix, stripHexPrefix } from 'ethereumjs-util';
 import { eventBus, EVENTS } from '@/utils/events';
 import { Chain, CHAINS_ENUM, getTestnetChainList } from '@/constant/chains';
+import { isNonPublicProductionEnv } from '@/constant';
+import { captureProviderRequest } from '@/devtools/screenRegistry/requestCapture';
 import * as apisDapp from '../apis/dapp';
 import {
   cancelSignComponentAmounted,
@@ -612,6 +614,9 @@ async function runRpcFlow(request: ProviderRequest) {
 }
 
 export default async function rpcFlow(request: ProviderRequest) {
+  if (isNonPublicProductionEnv) {
+    void captureProviderRequest(request).catch(() => {});
+  }
   await Promise.all([
     ensureDappServiceReady(),
     ensureNotificationServiceReady(),

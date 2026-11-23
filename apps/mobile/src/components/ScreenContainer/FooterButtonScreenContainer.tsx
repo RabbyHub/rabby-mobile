@@ -14,6 +14,7 @@ import {
 } from '@/components/FooterButton/FooterButton';
 import { ScreenLayouts } from '@/constant/layout';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 import { FooterButtonGroup } from '../FooterButton/FooterButtonGroup';
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -84,6 +85,7 @@ export const FooterButtonScreenContainer: React.FC<Props> = ({
   onCancel,
 }) => {
   const { top } = useSafeAreaInsets();
+  const columnInset = useSystemColumnInset();
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
 
@@ -93,6 +95,8 @@ export const FooterButtonScreenContainer: React.FC<Props> = ({
       style={StyleSheet.flatten([
         styles.root,
         { paddingTop: top + ScreenLayouts.headerAreaHeight },
+        columnInset.left > 0 && { paddingLeft: columnInset.left },
+        columnInset.right > 0 && { paddingRight: columnInset.right },
         style,
       ])}
       behavior="padding">
