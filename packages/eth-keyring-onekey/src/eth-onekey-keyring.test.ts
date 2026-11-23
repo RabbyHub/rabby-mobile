@@ -1107,9 +1107,9 @@ describe('OneKeyKeyring unlock wallet selection', () => {
         mode: 'select-hidden',
       });
       expect(bridge.initSession).not.toHaveBeenCalled();
-      // Import reads state twice. The later sign looks the stored connect id
-      // up again instead of reopening the wallet session.
-      expect(bridge.getDeviceState).toHaveBeenCalledTimes(3);
+      // Import reads state twice. The later sign reuses the unlocked session
+      // without another device read or a reopened wallet session.
+      expect(bridge.getDeviceState).toHaveBeenCalledTimes(2);
       expect(bridge.getPassphraseState).not.toHaveBeenCalled();
       expect(bridge.evmGetPublicKey).toHaveBeenCalledTimes(1);
       expect(bridge.evmGetPublicKey).toHaveBeenCalledWith(
@@ -1426,12 +1426,54 @@ describe('OneKeyKeyring unlock wallet selection', () => {
     expect(keyring.deviceId).toBeNull();
   });
 
-  it('does not keep the previous xpub when unlocking another device fails', async () => {
+  it('skips the device read while the same device stays unlocked', async () => {
+    const { bridge, keyring } = setup(undefined, {
+      passphraseProtection: false,
+      unlocked: true,
+    });
+    expect(await keyring.unlock()).toBe('just unlocked');
+    const firstAddresses = await keyring.getAddresses(0, 5);
+    bridge.getDeviceState.mockClear();
+    bridge.searchDevices.mockClear();
+    bridge.evmGetPublicKey.mockClear();
+
+    expect(await keyring.unlock()).toBe('already unlocked');
+    expect(await keyring.getAddresses(0, 5)).toStrictEqual(firstAddresses);
+    expect(await keyring.getAddresses(5, 10)).toHaveLength(5);
+
+    expect(bridge.getDeviceState).not.toHaveBeenCalled();
+    expect(bridge.searchDevices).not.toHaveBeenCalled();
+    expect(bridge.evmGetPublicKey).not.toHaveBeenCalled();
+  });
+
+  it('reads the device again after switching to another device', async () => {
+    const { bridge, keyring } = setup(undefined, {
+      passphraseProtection: false,
+      unlocked: true,
+    });
+    expect(await keyring.unlock()).toBe('just unlocked');
+    bridge.getDeviceState.mockClear();
+    bridge.evmGetPublicKey.mockClear();
+
+    keyring.setDeviceConnectId('other-connect');
+    expect(keyring.isUnlocked()).toBe(false);
+
+    expect(await keyring.unlock()).toBe('just unlocked');
+    expect(bridge.getDeviceState).toHaveBeenCalledWith('other-connect');
+    expect(bridge.evmGetPublicKey).toHaveBeenCalledTimes(1);
+    expect(keyring.connectId).toBe('other-connect');
+  });
+
+  it('does not keep the previous identity when unlocking another device fails', async () => {
     const { bridge, keyring } = setup('hidden-wallet-token', {
       passphraseProtection: true,
     });
     expect(await keyring.unlock()).toBe('just unlocked');
     expect(keyring.isUnlocked()).toBe(true);
+    // An unlocked session skips the device read. Drop the xpub the way 113
+    // recovery does, keeping the old identity, so the next unlock reads the
+    // device and finds that a different one answers.
+    keyring.hdk = new HDKey();
 
     bridge.getDeviceState.mockImplementation(async (id: string) => {
       if (id === 'connect-id') {
