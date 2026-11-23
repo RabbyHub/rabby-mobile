@@ -39136,6 +39136,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-root-toast@patch:react-native-root-toast@npm%3A4.0.1#./.yarn/patches/react-native-root-toast-npm-4.0.1-a8295326fd.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 4.0.1
+  resolution: "react-native-root-toast@patch:react-native-root-toast@npm%3A4.0.1#./.yarn/patches/react-native-root-toast-npm-4.0.1-a8295326fd.patch::version=4.0.1&hash=6ce863&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    react-native-root-siblings: "npm:^5.0.0"
+  peerDependencies:
+    react-native: ">=0.47.0"
+    react-native-safe-area-context: "*"
+  checksum: 10/0673ce2c0fa91c93cbfb0c53e59178e2e7cd92d92f468b77c8bc5b9fddac23345d07ca64c6056a1f952b5cf003ff01056f3b569eae7d6b03e58cda395892e94e
+  languageName: node
+  linkType: hard
+
 "react-native-safe-area-context@npm:5.6.2":
   version: 5.6.2
   resolution: "react-native-safe-area-context@npm:5.6.2"

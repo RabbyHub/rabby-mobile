@@ -1,0 +1,53 @@
+diff --git a/lib/ToastContainer.js b/lib/ToastContainer.js
+index 10d2636ba96c8292ad45ba4b24cce50e2760ac33..a2ea3c2ec0acfd0bb7bf58d7883c7ddbafbce4ae 100644
+--- a/lib/ToastContainer.js
++++ b/lib/ToastContainer.js
+@@ -119,13 +119,26 @@ class ToastContainer extends Component {
+   };
+ 
+   componentWillUnmount = () => {
+-    this._hide();
++    // Rabby: a toast that already faded out must not start a second hide
++    // animation while it is being destroyed; under Fabric that restart flashes
++    // the toast at full opacity for a frame.
++    this._unmounted = true;
++    clearTimeout(this._showTimeout);
++    clearTimeout(this._hideTimeout);
++    this.state.opacity.stopAnimation();
++    if (!this._hidden) {
++      this._hidden = true;
++      this.props.onHide && this.props.onHide(this.props.siblingManager);
++      this.props.onHidden && this.props.onHidden(this.props.siblingManager);
++    }
+     this.dimensionListener?.remove();
+     this.keyboardListener?.remove?.();
+   };
+ 
+   _platform = Platform.OS;
+   _animating = false;
++  _hidden = false;
++  _unmounted = false;
+   _root = null;
+   _hideTimeout = null;
+   _showTimeout = null;
+@@ -158,6 +171,7 @@ class ToastContainer extends Component {
+     clearTimeout(this._showTimeout);
+     if (!this._animating) {
+       clearTimeout(this._hideTimeout);
++      this._hidden = false;
+       this._animating = true;
+       this._setPointerEvents('auto');
+       this.props.onShow && this.props.onShow(this.props.siblingManager);
+@@ -201,6 +215,12 @@ class ToastContainer extends Component {
+       }).start(({finished}) => {
+         if (finished) {
+           this._animating = false;
++          if (this._hidden || this._unmounted) {
++            return;
++          }
++          this._hidden = true;
++          // Rabby: drop the faded view before the owner destroys the sibling.
++          this.setState({visible: false});
+           this.props.onHidden && this.props.onHidden(this.props.siblingManager);
+         }
+       });

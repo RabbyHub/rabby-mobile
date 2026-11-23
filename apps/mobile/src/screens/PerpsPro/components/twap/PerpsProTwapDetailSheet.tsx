@@ -19,6 +19,7 @@ import {
   usePerpsTwapRecord,
 } from '@/hooks/perps/twap/usePerpsTwapStore';
 import { loadPerpsTwapFills } from '@/hooks/perps/twap/twapRepository';
+import { hasAllPerpsTwapFills } from '@/hooks/perps/twap/twapReconciliation';
 import { usePerpsProTradeAmountUnit } from '../../scene/usePerpsProTradePreferences';
 import { formatPerpsProDecimal, formatPerpsProTime } from '../../utils/format';
 import { getPerpsProDialogStyles } from '../common/perpsProDialogVisual';
@@ -57,11 +58,27 @@ export const PerpsProTwapDetailSheet = React.memo(
     const [retry, setRetry] = useState(0);
     const loadOrder = useRef(order);
     loadOrder.current = order;
+    const loadedFills = useRef(fills);
+    loadedFills.current = fills;
+    // Live subscriptions may already hold every executed slice; the request
+    // outcome only matters while the visible list is still incomplete.
+    const fillsComplete = hasAllPerpsTwapFills(order, fills);
+    const visibleLoad =
+      fillsComplete && (load === 'loading' || load === 'error')
+        ? 'complete'
+        : load;
     usePerpsProSheetNavigationRegistration({ active: true, dismiss: onClose });
     useEffect(() => {
       modal.current?.present();
     }, []);
     useEffect(() => {
+      if (
+        loadOrder.current.endedAt !== null &&
+        hasAllPerpsTwapFills(loadOrder.current, loadedFills.current)
+      ) {
+        setLoad('complete');
+        return;
+      }
       let valid = true;
       setLoad('loading');
       loadPerpsTwapFills(initial.state.user, loadOrder.current, () => valid)
@@ -180,13 +197,13 @@ export const PerpsProTwapDetailSheet = React.memo(
       </Text>
     );
     const fillStatus =
-      load === 'loading' || load === 'error' ? (
+      visibleLoad === 'loading' || visibleLoad === 'error' ? (
         <Pressable
-          disabled={load === 'loading'}
+          disabled={visibleLoad === 'loading'}
           onPress={() => setRetry(value => value + 1)}
           style={styles.footer}>
           <Text style={styles.footerText}>
-            {t(`page.perps.pro.twap.fills.${load}`)}
+            {t(`page.perps.pro.twap.fills.${visibleLoad}`)}
           </Text>
         </Pressable>
       ) : null;
@@ -222,7 +239,7 @@ export const PerpsProTwapDetailSheet = React.memo(
           )
         }
         ListEmptyComponent={
-          load === 'complete' ? (
+          visibleLoad === 'complete' ? (
             <View style={history && styles.historyTradesSection}>
               <Text style={styles.footerText}>
                 {t('page.perps.pro.twap.noTrades')}

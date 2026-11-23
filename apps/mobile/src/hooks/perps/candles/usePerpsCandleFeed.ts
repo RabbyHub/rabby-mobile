@@ -301,21 +301,30 @@ export const usePerpsCandleFeed = ({
         } else {
           baselineReady = false;
           baselineLoading = false;
-          setNonReady(
-            'error',
-            toError(error, 'Failed to load Perps candle snapshot'),
+          const loadError = toError(
+            error,
+            'Failed to load Perps candle snapshot',
           );
-          if (
-            simplePresentation &&
-            !waitingForReconnect &&
-            recoveryAttempt < SIMPLE_RECOVERY_DELAYS.length
-          ) {
-            const delay = SIMPLE_RECOVERY_DELAYS[recoveryAttempt++];
+          if (!simplePresentation || waitingForReconnect) {
+            setNonReady('error', loadError);
+          } else {
+            // A scheduled recovery is still loading, not a failure to retry by
+            // hand. Once the quick attempts are spent, surface the retry
+            // control but keep recovering while this feed stays enabled.
+            const quickAttempt =
+              recoveryAttempt < SIMPLE_RECOVERY_DELAYS.length;
+            const delay =
+              SIMPLE_RECOVERY_DELAYS[
+                Math.min(recoveryAttempt, SIMPLE_RECOVERY_DELAYS.length - 1)
+              ];
+            recoveryAttempt += 1;
+            setNonReady(quickAttempt ? 'loading' : 'error', loadError);
             recoveryTimer = setTimeout(() => {
               recoveryTimer = undefined;
               if (isCurrent() && !waitingForReconnect && !baselineLoading) {
                 pendingNotBefore = Date.now();
-                void loadBaseline();
+                // Background attempts keep the retry control steady.
+                void loadBaseline({ preserveVisible: !quickAttempt });
               }
             }, delay);
           }
