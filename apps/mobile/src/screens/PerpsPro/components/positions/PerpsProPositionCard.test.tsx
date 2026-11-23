@@ -593,14 +593,54 @@ describe('PerpsProPositionCard', () => {
     expect(value.props.adjustsFontSizeToFit).toBeUndefined();
     expect(value.props.numberOfLines).toBe(1);
     expect(StyleSheet.flatten(value.props.style)).toMatchObject({
-      fontSize: 13,
-      lineHeight: 16,
+      fontSize: 14,
+      fontWeight: '700',
+      lineHeight: 18,
       fontVariant: ['tabular-nums'],
     });
     expect(
       screen.getByTestId('perps-pro-position-liquidation-distance-BTC').props
         .style,
     ).toMatchObject({ bottom: 0, left: 0, position: 'absolute', right: 0 });
+  });
+
+  it('shrinks a long Isolated Liq. Distance so it stops before the Margin value', () => {
+    render(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        onManageMargin={jest.fn()}
+        position={createPosition({
+          liquidationPrice: '123456.78',
+          marginMode: 'isolated',
+        })}
+      />,
+    );
+    const text = '+117477.89%(+123,351.78)';
+    fireEvent(
+      screen.getByTestId('perps-pro-position-middle-metric-BTC'),
+      'layout',
+      { nativeEvent: { layout: { height: 40, width: 109, x: 117, y: 0 } } },
+    );
+    fireEvent(screen.getByText('4.97'), 'layout', {
+      nativeEvent: { layout: { height: 18, width: 40, x: 0, y: 0 } },
+    });
+    // The hidden probe reports the natural width; the visible copy's layout
+    // bubbles to the full-row container.
+    const [probe, value] = screen.getAllByText(text, {
+      includeHiddenElements: true,
+    });
+    fireEvent(probe, 'layout', {
+      nativeEvent: { layout: { height: 18, width: 220, x: 0, y: 0 } },
+    });
+    fireEvent(value, 'layout', {
+      nativeEvent: { layout: { height: 18, width: 345, x: 0, y: 0 } },
+    });
+
+    // 345 - (117 + 40 + 4 + 16 button + 8 gap) = 160pt.
+    expect(StyleSheet.flatten(value.props.style)).toMatchObject({
+      fontSize: 10,
+      maxWidth: 160,
+    });
   });
 
   it('keeps compact geometry for fitting copy and expands only after native measurements collide', () => {

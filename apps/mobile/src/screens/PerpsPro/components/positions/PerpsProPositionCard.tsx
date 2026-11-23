@@ -10,7 +10,10 @@ import {
   Pressable,
   View,
   type LayoutChangeEvent,
+  type StyleProp,
   type TextLayoutEvent,
+  type TextStyle,
+  type ViewStyle,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Pressable as GesturePressable } from 'react-native-gesture-handler';
@@ -45,12 +48,18 @@ import {
 } from '../common/perpsProSemanticTagStyles';
 import { getPerpsProInfoCardStyle } from '../common/perpsProListVisual';
 import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
+import { resolvePerpsProFittedFontSize } from '../common/perpsProFitFontSize';
+import { PerpsProTextWidthProbe } from '../common/PerpsProTextWidthProbe';
 import {
   resolvePerpsProPositionMetricCollision,
   type PerpsProPositionMetricCollisionMeasurements,
 } from './perpsProPositionMetricCollision';
 
 const METRIC_COLUMN_GAP = 8;
+const METRIC_VALUE_FONT_SIZE = 14;
+const METRIC_VALUE_MIN_FONT_SIZE = 10;
+const MARGIN_BUTTON_SIZE = 16;
+const MARGIN_VALUE_ROW_GAP = 4;
 
 type MetricRow = 'position' | 'price';
 type MetricMeasurements = Partial<PerpsProPositionMetricCollisionMeasurements>;
@@ -188,6 +197,129 @@ const SIZE_UNIT_HIT_SLOP = {
 const withOptionalUnit = (label: string, unit: string | null) =>
   unit ? `${label} (${unit})` : label;
 
+/**
+ * Single-line metric value that shrinks to its container (Figma 87900:107734).
+ * The container stretches to the metric column, so its width never depends on
+ * the fitted text; `reservedWidth` keeps room for siblings sharing the space.
+ * Below the minimum size the value is capped so it never overlaps them.
+ */
+const FittedMetricValue: React.FC<
+  React.PropsWithChildren<{
+    containerStyle?: StyleProp<ViewStyle>;
+    onValueWidth?: (width: number) => void;
+    reservedWidth?: number;
+    textStyle: StyleProp<TextStyle>;
+    value: string;
+  }>
+> = ({
+  children,
+  containerStyle,
+  onValueWidth,
+  reservedWidth = 0,
+  textStyle,
+  value,
+}) => {
+  const { styles } = useTheme2024({ getStyle });
+  const [containerWidth, setContainerWidth] = React.useState(0);
+  const [measured, setMeasured] = React.useState({ text: '', width: 0 });
+  const availableWidth = containerWidth - reservedWidth;
+  const fontSize = resolvePerpsProFittedFontSize({
+    availableWidth,
+    baseFontSize: METRIC_VALUE_FONT_SIZE,
+    minFontSize: METRIC_VALUE_MIN_FONT_SIZE,
+    naturalWidth: measured.text === value ? measured.width : 0,
+  });
+  return (
+    <View
+      onLayout={event => setContainerWidth(event.nativeEvent.layout.width)}
+      style={[styles.fittedValueContainer, containerStyle]}>
+      <PerpsProTextWidthProbe
+        onWidth={width =>
+          setMeasured(current =>
+            current.text === value && current.width === width
+              ? current
+              : { text: value, width },
+          )
+        }
+        style={textStyle}
+        text={value}
+      />
+      <Text
+        numberOfLines={1}
+        onLayout={
+          onValueWidth
+            ? event => onValueWidth(event.nativeEvent.layout.width)
+            : undefined
+        }
+        style={[
+          textStyle,
+          fontSize === METRIC_VALUE_FONT_SIZE ? null : { fontSize },
+          reservedWidth > 0 && availableWidth > 0
+            ? { maxWidth: availableWidth }
+            : null,
+        ]}>
+        {value}
+      </Text>
+      {children}
+    </View>
+  );
+};
+
+type MarginValueGeometry = Readonly<{ columnX: number; valueWidth: number }>;
+type LiquidationDistanceValueHandle = {
+  update: (geometry: MarginValueGeometry) => void;
+};
+
+/**
+ * The Isolated Liq. Distance value spans the row so it can borrow the middle
+ * column's free space, but stops one column gap after the Margin value and
+ * its button. Margin geometry is pushed here so measuring it never re-renders
+ * the whole card.
+ */
+const LiquidationDistanceValue = React.forwardRef<
+  LiquidationDistanceValueHandle,
+  {
+    showManageMargin: boolean;
+    textStyle: StyleProp<TextStyle>;
+    value: string;
+  }
+>(({ showManageMargin, textStyle, value }, ref) => {
+  const { styles } = useTheme2024({ getStyle });
+  const [geometry, setGeometry] = React.useState<MarginValueGeometry>({
+    columnX: 0,
+    valueWidth: 0,
+  });
+  React.useImperativeHandle(
+    ref,
+    () => ({
+      update: next =>
+        setGeometry(current =>
+          current.columnX === next.columnX &&
+          current.valueWidth === next.valueWidth
+            ? current
+            : next,
+        ),
+    }),
+    [],
+  );
+  const reservedWidth =
+    geometry.valueWidth > 0
+      ? geometry.columnX +
+        geometry.valueWidth +
+        (showManageMargin ? MARGIN_VALUE_ROW_GAP + MARGIN_BUTTON_SIZE : 0) +
+        METRIC_COLUMN_GAP
+      : 0;
+  return (
+    <FittedMetricValue
+      containerStyle={styles.rightFittedValue}
+      reservedWidth={reservedWidth}
+      textStyle={textStyle}
+      value={value}
+    />
+  );
+});
+LiquidationDistanceValue.displayName = 'LiquidationDistanceValue';
+
 const PositionAction: React.FC<{
   label: string;
   onPress?: () => void;
@@ -295,6 +427,32 @@ export const PerpsProPositionCard: React.FC<{
       ],
     );
     const metricLayout = useResponsiveMetricLayout(metricMeasurementKey);
+    const showManageMargin =
+      position.marginMode === 'isolated' && !!onManageMargin;
+    const marginGeometryRef = React.useRef<MarginValueGeometry>({
+      columnX: 0,
+      valueWidth: 0,
+    });
+    const liquidationDistanceRef =
+      React.useRef<LiquidationDistanceValueHandle | null>(null);
+    const updateMarginGeometry = React.useCallback(
+      (patch: Partial<MarginValueGeometry>) => {
+        marginGeometryRef.current = { ...marginGeometryRef.current, ...patch };
+        liquidationDistanceRef.current?.update(marginGeometryRef.current);
+      },
+      [],
+    );
+    const attachLiquidationDistance = React.useCallback(
+      (handle: LiquidationDistanceValueHandle | null) => {
+        liquidationDistanceRef.current = handle;
+        handle?.update(marginGeometryRef.current);
+      },
+      [],
+    );
+    const updateMarginValueWidth = React.useCallback(
+      (valueWidth: number) => updateMarginGeometry({ valueWidth }),
+      [updateMarginGeometry],
+    );
     const displaySize =
       sizeUnit === 'quote'
         ? formatPerpsProDecimal(size, 2)
@@ -463,10 +621,13 @@ export const PerpsProPositionCard: React.FC<{
                   />
                 </View>
               </Pressable>
-              <Text style={styles.value}>{displaySize}</Text>
+              <FittedMetricValue textStyle={styles.value} value={displaySize} />
             </View>
             <View
-              onLayout={metricLayout.position.onSecondColumnLayout}
+              onLayout={event => {
+                metricLayout.position.onSecondColumnLayout(event);
+                updateMarginGeometry({ columnX: event.nativeEvent.layout.x });
+              }}
               style={[
                 styles.secondColumn,
                 metricLayout.expanded ? styles.expandedMetricColumn : null,
@@ -477,18 +638,24 @@ export const PerpsProPositionCard: React.FC<{
                 style={styles.label}>
                 {marginLabel}
               </Text>
-              <View style={styles.marginValueRow}>
-                <Text style={styles.marginValue}>
-                  {formatPerpsProDecimal(position.margin, 2)}
-                </Text>
-                {position.marginMode === 'isolated' && onManageMargin ? (
+              <FittedMetricValue
+                containerStyle={styles.marginValueRow}
+                onValueWidth={updateMarginValueWidth}
+                reservedWidth={
+                  showManageMargin
+                    ? MARGIN_BUTTON_SIZE + MARGIN_VALUE_ROW_GAP
+                    : 0
+                }
+                textStyle={styles.marginValue}
+                value={formatPerpsProDecimal(position.margin, 2)}>
+                {showManageMargin ? (
                   <Pressable
                     accessibilityLabel={t(
                       'page.perps.pro.positions.manageMargin',
                     )}
                     accessibilityRole="button"
                     hitSlop={8}
-                    onPress={() => onManageMargin(position)}
+                    onPress={() => onManageMargin?.(position)}
                     style={styles.marginButton}
                     testID={`perps-pro-position-manage-margin-${position.key}`}>
                     <RcManageMargin
@@ -498,7 +665,7 @@ export const PerpsProPositionCard: React.FC<{
                     />
                   </Pressable>
                 ) : null}
-              </View>
+              </FittedMetricValue>
             </View>
             <View
               style={[
@@ -523,15 +690,17 @@ export const PerpsProPositionCard: React.FC<{
                     ]}>
                     {marginRatioLabel}
                   </PerpsProDottedUnderlineText>
-                  <Text style={styles.value}>
-                    {formatPerpsProPercent(
+                  <FittedMetricValue
+                    containerStyle={styles.rightFittedValue}
+                    textStyle={styles.value}
+                    value={formatPerpsProPercent(
                       position.marginRatio == null
                         ? null
                         : Number(position.marginRatio),
                       2,
                       false,
                     )}
-                  </Text>
+                  />
                 </>
               ) : metricLayout.expanded ? (
                 <>
@@ -575,11 +744,12 @@ export const PerpsProPositionCard: React.FC<{
                   pointerEvents="none"
                   style={styles.liquidationDistanceValueOverlay}
                   testID={`perps-pro-position-liquidation-distance-${position.key}`}>
-                  <Text
-                    numberOfLines={1}
-                    style={[styles.value, styles.liquidationDistanceValue]}>
-                    {displayLiquidationDistance}
-                  </Text>
+                  <LiquidationDistanceValue
+                    ref={attachLiquidationDistance}
+                    showManageMargin={showManageMargin}
+                    textStyle={[styles.value, styles.liquidationDistanceValue]}
+                    value={displayLiquidationDistance}
+                  />
                 </View>
               </>
             ) : null}
@@ -595,9 +765,13 @@ export const PerpsProPositionCard: React.FC<{
                 metricLayout.expanded ? styles.expandedMetricColumn : null,
               ]}>
               <Text style={styles.label}>{entryLabel}</Text>
-              <Text style={styles.value}>
-                {formatPerpsProPrice(position.entryPrice, market.pxDecimals)}
-              </Text>
+              <FittedMetricValue
+                textStyle={styles.value}
+                value={formatPerpsProPrice(
+                  position.entryPrice,
+                  market.pxDecimals,
+                )}
+              />
             </View>
             <View
               onLayout={metricLayout.price.onSecondColumnLayout}
@@ -611,9 +785,10 @@ export const PerpsProPositionCard: React.FC<{
                 style={styles.label}>
                 {markLabel}
               </Text>
-              <Text style={styles.value}>
-                {formatPerpsProPrice(market.markPrice, market.pxDecimals)}
-              </Text>
+              <FittedMetricValue
+                textStyle={styles.value}
+                value={formatPerpsProPrice(market.markPrice, market.pxDecimals)}
+              />
             </View>
             <View
               style={[
@@ -632,7 +807,11 @@ export const PerpsProPositionCard: React.FC<{
               ) : (
                 <View style={styles.metricLabelSpacer} />
               )}
-              <Text style={styles.value}>{displayLiquidationPrice}</Text>
+              <FittedMetricValue
+                containerStyle={styles.rightFittedValue}
+                textStyle={styles.value}
+                value={displayLiquidationPrice}
+              />
             </View>
             {metricLayout.expanded ? null : (
               <View
@@ -732,7 +911,8 @@ export const PerpsProPositionCard: React.FC<{
 
 PerpsProPositionCard.displayName = 'PerpsProPositionCard';
 
-// Figma 86609:329983: 12pt-inset cards, 12pt apart; metric values 13/16.
+// Figma 86609:329983 / 87900:107683: 12pt-inset cards, 12pt apart;
+// metric labels 12/500, values 14/700.
 const METRIC_VALUE_GAP = 6;
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
@@ -804,6 +984,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
+    fontWeight: '500',
     lineHeight: 16,
   },
   emphasizedValue: {
@@ -861,7 +1042,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     height: 16,
   },
   metricValueSpacer: {
-    height: METRIC_VALUE_GAP + 16,
+    height: METRIC_VALUE_GAP + 18,
   },
   rightMetricLabelOverlay: {
     alignItems: 'flex-end',
@@ -894,19 +1075,21 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   expandedRightLabel: {
     textAlign: 'right',
   },
+  fittedValueContainer: { alignSelf: 'stretch' },
+  rightFittedValue: { alignItems: 'flex-end' },
   value: {
     ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 13,
-    fontWeight: '500',
-    lineHeight: 16,
+    fontSize: METRIC_VALUE_FONT_SIZE,
+    fontWeight: '700',
+    lineHeight: 18,
     marginTop: METRIC_VALUE_GAP,
   },
   marginValueRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 4,
+    gap: MARGIN_VALUE_ROW_GAP,
     marginTop: METRIC_VALUE_GAP,
   },
   marginValue: {
@@ -915,16 +1098,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     minWidth: 0,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 13,
-    fontWeight: '500',
-    lineHeight: 16,
+    fontSize: METRIC_VALUE_FONT_SIZE,
+    fontWeight: '700',
+    lineHeight: 18,
   },
   marginButton: {
     flexShrink: 0,
     alignItems: 'center',
-    height: 16,
+    height: MARGIN_BUTTON_SIZE,
     justifyContent: 'center',
-    width: 16,
+    width: MARGIN_BUTTON_SIZE,
   },
   liquidationDistanceValueOverlay: {
     alignItems: 'flex-end',
@@ -937,7 +1120,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginTop: 0,
   },
   tpslRow: {
-    paddingVertical: 4,
+    paddingTop: 4,
     alignItems: 'center',
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -991,6 +1174,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'center',
     width: 16,
   },
+  // 8pt card gap + 8pt = 16pt above the buttons, with or without TP/SL.
   actions: {
     flexDirection: 'row',
     gap: 8,
