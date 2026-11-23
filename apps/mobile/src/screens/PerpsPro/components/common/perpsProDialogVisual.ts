@@ -37,11 +37,11 @@ const DISABLED_ACTION_BACKGROUND = colord(
   .toRgbString();
 
 // bg-0 and bg-1 resolve to the same Dark color. Preserve the Light design
-// binding while using Pro's existing raised surface token in Dark mode.
+// binding while Dark cards use bg-3 (Figma 87900:97324).
 export const resolvePerpsProDialogCardBackground = (
   colors: AppColors2024Variants,
   isLight: boolean | undefined,
-) => colors[isLight === false ? 'neutral-bg-2' : 'neutral-bg-1'];
+) => colors[isLight === false ? 'neutral-bg-3' : 'neutral-bg-1'];
 
 /** September dialog geometry; legacy Pro sheets keep their existing defaults. */
 export const getPerpsProDialogStyles = (

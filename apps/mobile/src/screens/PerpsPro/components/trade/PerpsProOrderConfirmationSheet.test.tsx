@@ -329,7 +329,7 @@ describe.each(['light', 'dark'] as const)(
           card?.props.style,
         ).backgroundColor;
         expect(background).toBe(
-          colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
+          colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-3'],
         );
         expect(background).not.toBe(
           StyleSheet.flatten(

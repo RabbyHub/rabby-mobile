@@ -557,8 +557,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   orderActions: { flexDirection: 'row', gap: 12, marginTop: 8 },
   orderAction: {
     alignItems: 'center',
-    backgroundColor:
-      colors2024[isLight === false ? 'neutral-bg-5' : 'neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: 6,
     borderCurve: 'continuous',
     height: 32,

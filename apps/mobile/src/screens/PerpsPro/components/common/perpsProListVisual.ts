@@ -6,18 +6,21 @@ import type { AppColors2024Variants } from '@/constant/theme';
  */
 export const PERPS_PRO_CARD_SHADOW = '0px 5px 20px 0px rgba(0, 0, 0, 0.08)';
 
-// Dark mode cards use bg-2 without a shadow (design note on 86609:329983).
+// Dark mode cards use bg-3 without a shadow (Figma 87900:97324).
 export const getPerpsProInfoCardStyle = (
   colors: AppColors2024Variants,
   isLight: boolean | undefined,
+  { shadow = true }: { shadow?: boolean } = {},
 ) =>
   ({
     backgroundColor:
-      colors[isLight === false ? 'neutral-bg-2' : 'neutral-bg-1'],
+      colors[isLight === false ? 'neutral-bg-3' : 'neutral-bg-1'],
     borderRadius: 12,
     borderCurve: 'continuous',
     padding: 12,
-    ...(isLight === false ? null : { boxShadow: PERPS_PRO_CARD_SHADOW }),
+    ...(isLight === false || !shadow
+      ? null
+      : { boxShadow: PERPS_PRO_CARD_SHADOW }),
   } as const);
 
 /** 30pt label/value rows shared by Pro cards and dialogs. */

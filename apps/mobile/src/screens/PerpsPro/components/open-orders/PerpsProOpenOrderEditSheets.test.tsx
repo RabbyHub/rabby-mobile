@@ -541,7 +541,7 @@ describe('Perps Pro open order edit sheets', () => {
         .filter(style => style?.borderRadius === 12);
       expect(cards).toHaveLength(1);
       expect(cards[0].backgroundColor).toBe(
-        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
+        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-3'],
       );
       expect(cards[0].backgroundColor).not.toBe(background);
       if (!confirmation) {

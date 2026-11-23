@@ -114,7 +114,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     backgroundColor:
       isLight === false
-        ? colors2024['neutral-title-1']
+        ? colors2024['neutral-bg-2']
         : ThemeColors2024.dark['neutral-bg-0'],
     borderRadius: 8,
     borderCurve: 'continuous',
@@ -130,10 +130,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
   },
   activeText: {
-    color:
-      isLight === false
-        ? colors2024['neutral-bg-0']
-        : ThemeColors2024.dark['neutral-title-1'],
+    // Dark keeps the Light selected copy on the bg-2 chip (Figma 87900:97310).
+    color: ThemeColors2024.dark['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '700',
@@ -150,10 +148,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
-    color:
-      isLight === false
-        ? ThemeColors2024.light['neutral-foot']
-        : ThemeColors2024.dark['neutral-foot'],
+    color: ThemeColors2024.dark['neutral-foot'],
     fontWeight: '400',
   },
 }));
