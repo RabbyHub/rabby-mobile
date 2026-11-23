@@ -85,7 +85,7 @@ function scheduleReadableAccountStoreWarmupForTab(idx: number) {
 }
 
 const onIndexChange = (idx: number) => {
-  apisHomeTabIndex.setTabIndex(idx);
+  apisHomeTabIndex.publishSettledIndex(idx);
   scheduleReadableAccountStoreWarmupForTab(idx);
 };
 

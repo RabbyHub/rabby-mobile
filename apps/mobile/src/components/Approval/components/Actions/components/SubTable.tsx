@@ -1,10 +1,5 @@
-import {
-  Dimensions,
-  LayoutRectangle,
-  StyleSheet,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { LayoutRectangle, StyleSheet, View, ViewStyle } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import React, { ReactNode } from 'react';
 import IconQuestionMark from '@/assets2024/icons/common/help-cc.svg';
 import { useTheme2024 } from '@/hooks/theme';
@@ -44,7 +39,6 @@ const getStyles = createGetStyles2024(({ colors, colors2024, isLight }) => ({
   },
 }));
 
-const WIDTH = Dimensions.get('window').width;
 export const SubTable = ({
   children,
   style,
@@ -55,7 +49,9 @@ export const SubTable = ({
   target?: React.RefObject<View | null>;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const [left, setLeft] = React.useState(WIDTH - 100);
+  const [left, setLeft] = React.useState(
+    getDimensionsSnapshot('window').width - 100,
+  );
   const [visible, setVisible] = React.useState(true);
 
   React.useEffect(() => {

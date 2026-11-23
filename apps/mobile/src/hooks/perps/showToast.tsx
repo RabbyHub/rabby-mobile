@@ -1,5 +1,6 @@
 import React from 'react';
-import { Dimensions, Platform } from 'react-native';
+import { Platform } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { toast, toastWithIcon } from '@/components2024/Toast';
 import { Text } from '@/components/Typography';
 
@@ -19,7 +20,7 @@ export const showToast = (
                 styles.text,
                 styles.selfDefinedContent,
                 {
-                  maxWidth: Dimensions.get('window').width - 100,
+                  maxWidth: getDimensionsSnapshot('window').width - 100,
                 },
               ]}>
               {msgText}
