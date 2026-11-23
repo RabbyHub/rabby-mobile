@@ -306,6 +306,7 @@ const getStyle = createGetStyles2024(
       flex: 1,
       marginHorizontal: 12,
       borderRadius: 12,
+      borderCurve: 'continuous',
       overflow: 'hidden',
       backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-3'],
       marginBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
@@ -318,10 +319,15 @@ const getStyle = createGetStyles2024(
       marginHorizontal: 12,
       backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-3'],
     },
-    historyTradesTop: { borderTopLeftRadius: 12, borderTopRightRadius: 12 },
+    historyTradesTop: {
+      borderTopLeftRadius: 12,
+      borderTopRightRadius: 12,
+      borderCurve: 'continuous',
+    },
     historyTradesBottom: {
       borderBottomLeftRadius: 12,
       borderBottomRightRadius: 12,
+      borderCurve: 'continuous',
       paddingBottom: 8,
     },
     historyFill: {
@@ -361,6 +367,7 @@ const getStyle = createGetStyles2024(
       paddingHorizontal: 4,
       paddingVertical: 1,
       borderRadius: 4,
+      borderCurve: 'continuous',
       overflow: 'hidden',
     },
     fillTime: {

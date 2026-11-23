@@ -121,6 +121,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   field: {
     height: 42,
     borderRadius: 6,
+    borderCurve: 'continuous',
     backgroundColor: colors2024[isLight ? 'neutral-bg-0' : 'neutral-bg-5'],
     justifyContent: 'center',
     paddingHorizontal: 8,
@@ -156,6 +157,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     height: 24,
     borderRadius: 6,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors2024[isLight ? 'neutral-bg-0' : 'neutral-bg-5'],
@@ -182,6 +184,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   hintText: {
     fontFamily: 'SF Pro Rounded',
