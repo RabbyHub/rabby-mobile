@@ -10,6 +10,7 @@ import {
   Easing,
   Platform,
   Pressable,
+  StyleSheet,
   View,
   type LayoutChangeEvent,
   type StyleProp,
@@ -134,7 +135,9 @@ const PerpsProInfoTabLabel: React.FC<{
 };
 
 const labelStyles = {
+  // Lets a squeezed tab clip its label instead of pushing History out.
   container: {
+    maxWidth: '100%' as const,
     position: 'relative' as const,
   },
   visibleText: {
@@ -309,12 +312,19 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
     );
 
     return (
-      <LinearGradient
+      <View
         accessibilityRole="tablist"
-        colors={gradientColors}
-        start={PERPS_PRO_INFO_TABS_GRADIENT_START}
         onLayout={event => setContainerWidth(event.nativeEvent.layout.width)}
         style={styles.container}>
+        {/* Keep padding and clipping off the legacy gradient: under Fabric it
+            forwards them to both its interop wrapper and its inset Paper view,
+            which shifts the row and clips History at the trailing edge. */}
+        <LinearGradient
+          colors={gradientColors}
+          pointerEvents="none"
+          start={PERPS_PRO_INFO_TABS_GRADIENT_START}
+          style={StyleSheet.absoluteFill}
+        />
         {/* The Light gradient strip has no divider (Figma 86609:327462). */}
         {isLight === false ? (
           <View pointerEvents="none" style={styles.divider} />
@@ -381,7 +391,7 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
             />
           )}
         </Pressable>
-      </LinearGradient>
+      </View>
     );
   },
 );
@@ -408,9 +418,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'absolute',
     right: 0,
   },
+  // Tabs give way before History when the fitted font still overflows.
   tab: {
     alignItems: 'center',
+    flexShrink: 1,
     height: '100%',
+    minWidth: 0,
     paddingTop: 12,
     position: 'relative',
   },
@@ -421,6 +434,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   history: {
     alignItems: 'center',
+    flexShrink: 0,
     height: INFO_TAB_HISTORY_SIZE,
     justifyContent: 'center',
     marginLeft: 'auto',
