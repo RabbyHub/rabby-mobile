@@ -8,6 +8,7 @@ import {
   isKeyringUnlockedSnapshot,
 } from '@/core/serviceApi/keyring';
 import { urlUtils } from '@rabby-wallet/base-utils';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { browserApis } from './browser/useBrowser';
 import useMount from 'react-use/lib/useMount';
 import { toastWithIcon } from '@/components2024/Toast';
@@ -116,6 +117,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-lending'
     | 'debug-open-target'
     | 'debug-create-address'
+    | 'debug-open-hd-address'
     | 'debug-set-language'
     | 'toggle-pager-offset-sampling'
     | 'toggle-home-chrome-bridge'
@@ -155,6 +157,8 @@ type OnParseUrlAndProcessAction = (payload: {
   debugLanguage?: string;
   /** Non-production only: address seeded by `debug-create-address`. */
   debugAddress?: string;
+  /** Non-production only: which seed-phrase address `debug-open-hd-address` opens. */
+  debugHdAddressPick?: 'first' | 'random';
   debugChainStatsLoading?: boolean;
   debugChainStatsLoadingForMs?: number;
   debugChainStatsLoadingOff?: boolean;
@@ -587,6 +591,20 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     return {
       type: 'toggle-home-chrome-bridge',
       debugHomeChromeBridge: mode,
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: jump straight to the Wallet Detail page of a
+  // seed-phrase address, so a UI check can navigate there without taps.
+  // `?_cmd=debug-open-hd-address&pick=first|random` (default `first`).
+  if (
+    rabbyGoCmd === 'debug-open-hd-address' ||
+    target === 'debug-open-hd-address'
+  ) {
+    const pick = urlInfo.searchParams.get('pick');
+    return {
+      type: 'debug-open-hd-address',
+      debugHdAddressPick: pick === 'random' ? 'random' : 'first',
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -1259,6 +1277,34 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
         'legacy:',
         debugHomeChromeBridge.legacy,
       );
+      break;
+    case 'debug-open-hd-address':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void import('@/core/apis/address').then(async ({ getAllAccounts }) => {
+        const accounts = await getAllAccounts();
+        const hdAccounts = accounts.filter(
+          account => account.type === KEYRING_TYPE.HdKeyring,
+        );
+        if (!hdAccounts.length) {
+          console.warn('[useUniversalLinkOnTop] no seed-phrase address found');
+          return;
+        }
+        const target =
+          payload.debugHdAddressPick === 'random'
+            ? hdAccounts[Math.floor(Math.random() * hdAccounts.length)]
+            : hdAccounts[0];
+
+        navigateDeprecated(RootNames.StackAddress, {
+          screen: RootNames.AddressDetail,
+          params: {
+            address: target.address,
+            type: target.type,
+            brandName: target.brandName,
+          },
+        } as any);
+      });
       break;
     case 'regression-scenario':
       handleRegressionScenarioCommand(

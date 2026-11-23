@@ -57,8 +57,16 @@ export const AddressAssetsItem: React.FC<AddressInfoProps> = props => {
 
   return (
     <Card style={styles.card}>
-      <Item label={t('page.addressDetail.assets')} value={useValue} />
-      <Item label={t('page.addressDetail.source')} value={source} />
+      <Item
+        label={t('page.addressDetail.assets')}
+        value={useValue}
+        labelStyle={styles.fixedLabel}
+      />
+      <Item
+        label={t('page.addressDetail.source')}
+        value={source}
+        labelStyle={styles.fixedLabel}
+      />
 
       {account.type === KEYRING_TYPE.HdKeyring && (
         <Item style={styles.subItemView}>
@@ -76,7 +84,11 @@ export const AddressAssetsItem: React.FC<AddressInfoProps> = props => {
       ) : null}
 
       {hdPathValue ? (
-        <Item label={t('page.addressDetail.hd-path')} value={hdPathValue} />
+        <Item
+          label={t('page.addressDetail.hd-path')}
+          value={hdPathValue}
+          labelStyle={styles.fixedLabel}
+        />
       ) : null}
     </Card>
   );
@@ -90,5 +102,10 @@ const getStyle = createGetStyles2024(({}) => ({
   },
   subItemView: {
     marginTop: -12,
+  },
+  // Keep the label at its natural width so a long value wraps instead of
+  // squeezing the label below its longest word (ru/fr broke words mid-way).
+  fixedLabel: {
+    flexShrink: 0,
   },
 }));
