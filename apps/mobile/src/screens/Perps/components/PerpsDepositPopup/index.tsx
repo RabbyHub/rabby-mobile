@@ -47,6 +47,11 @@ import {
   type TextInputProps,
 } from 'react-native';
 import { useUsdInput } from '@/hooks/useUsdInput';
+import {
+  getAuthTransactionKey,
+  useAuthFormGuard,
+} from '@/hooks/useAuthFormGuard';
+import { toast } from '@/components2024/Toast';
 import AuthButton from '@/components2024/AuthButton';
 import { zCreate, zMutative } from '@/core/utils/reexports';
 import {
@@ -575,6 +580,42 @@ export const PerpsDepositPopup: React.FC<{
       isHypeDeposit
     );
   }, [selectedToken, isHypeDeposit]);
+  const {
+    shouldTwoStep,
+    currentTxs: twoStepCurrentTxs,
+    next: twoStepNext,
+    isApprove: twoStepIsApprove,
+    approvePending: twoStepApprovePending,
+  } = useTwoStepSwap({
+    chain: (chainInfo?.enum || '') as CHAINS_ENUM,
+    txs: txs.length > 0 ? txs : undefined,
+    enable: isHypeDeposit && isAccountSupportMiniApproval(account?.type),
+    type: 'approveDeposit',
+  });
+  const transactionKey = useMemo(
+    () => getAuthTransactionKey(shouldTwoStep ? twoStepCurrentTxs || [] : txs),
+    [shouldTwoStep, twoStepCurrentTxs, txs],
+  );
+  const authForm = useAuthFormGuard(
+    {
+      amount: usdValue,
+      account: account?.address,
+      accountType: account?.type,
+      accountBrand: account?.brandName,
+      token: tokenInfo?.id,
+      chain: tokenInfo?.chain,
+      selectedToken: selectedToken?.id,
+      selectedChain: selectedToken?.chain,
+      isDirectDeposit,
+      visible,
+      transactionKey,
+      shouldTwoStep,
+      twoStepIsApprove,
+      receiveAmount: bridgeQuote?.to_token_amount,
+      sourceAmount: cacheBridgeHistory?.from_token_amount,
+    },
+    () => toast.info(t('page.bridge.formChangedAmount')),
+  );
 
   const depositMaxUsdValue = useMemo(() => {
     return isDirectDeposit
@@ -777,6 +818,9 @@ export const PerpsDepositPopup: React.FC<{
   }, [isValidAmount, visible, setTxs, setBridgeQuote, setQuoteLoading]);
 
   const handleMax = React.useCallback(() => {
+    if (authForm.blockInput()) {
+      return;
+    }
     if (tokenInfo) {
       if (tokenIsNativeToken && gasList) {
         const checkGasIsEnough = (price: number) => {
@@ -816,6 +860,7 @@ export const PerpsDepositPopup: React.FC<{
       }
     }
   }, [
+    authForm,
     nativeTokenDecimals,
     gasList,
     tokenIsNativeToken,
@@ -847,19 +892,6 @@ export const PerpsDepositPopup: React.FC<{
   }, [bridgeQuote, isMissingRole]);
 
   const canShowDirectSubmit = isAccountSupportDirectSign(account?.type);
-
-  const {
-    shouldTwoStep,
-    currentTxs: twoStepCurrentTxs,
-    next: twoStepNext,
-    isApprove: twoStepIsApprove,
-    approvePending: twoStepApprovePending,
-  } = useTwoStepSwap({
-    chain: (chainInfo?.enum || '') as CHAINS_ENUM,
-    txs: txs.length > 0 ? txs : undefined,
-    enable: isHypeDeposit && isAccountSupportMiniApproval(account?.type),
-    type: 'approveDeposit',
-  });
 
   const { runAsync: handleDeposit, loading } = useRequest(
     async () => {
@@ -1066,7 +1098,12 @@ export const PerpsDepositPopup: React.FC<{
                   placeholder="$0"
                   placeholderTextColor={colors2024['neutral-info']}
                   value={displayedAmount}
-                  onChangeText={setUsdValue}
+                  onChangeText={value => {
+                    if (authForm.blockInput()) {
+                      return;
+                    }
+                    setUsdValue(value);
+                  }}
                   numberOfLines={1}
                 />
                 {usdValue ? (
@@ -1088,6 +1125,9 @@ export const PerpsDepositPopup: React.FC<{
               <View style={styles.divider} />
               <TouchableOpacity
                 onPress={() => {
+                  if (authForm.blockInput()) {
+                    return;
+                  }
                   Keyboard.dismiss();
                   setIsShowTokenPopup(true);
                 }}>
@@ -1116,6 +1156,9 @@ export const PerpsDepositPopup: React.FC<{
                   key={item.label}
                   style={styles.quickAmountBtn}
                   onPress={() => {
+                    if (authForm.blockInput()) {
+                      return;
+                    }
                     const val = new BigNumber(depositMaxUsdValue)
                       .times(item.value)
                       .decimalPlaces(2, BigNumber.ROUND_DOWN)
@@ -1142,7 +1185,9 @@ export const PerpsDepositPopup: React.FC<{
                     ? t('page.swap.approve')
                     : t('page.perps.PerpsDepositPopup.depositBtn')
                 }
-                onFinished={handleDeposit}
+                onFinished={() => authForm.onFinished(handleDeposit)}
+                onCancel={authForm.onCancel}
+                onAuthModalDismiss={authForm.onAuthModalDismiss}
                 disabled={
                   !isValidAmount ||
                   Boolean(quoteError) ||
@@ -1159,6 +1204,7 @@ export const PerpsDepositPopup: React.FC<{
                 ]}
                 syncUnlockTime
                 onBeforeAuth={() => {
+                  authForm.onBeforeAuth();
                   Keyboard.dismiss();
                 }}
               />
@@ -1190,6 +1236,9 @@ export const PerpsDepositPopup: React.FC<{
         tokenRows={depositTokenRows}
         onClose={() => setIsShowTokenPopup(false)}
         onSelect={async token => {
+          if (authForm.blockInput()) {
+            return;
+          }
           setSelectedToken(token);
           setIsShowTokenPopup(false);
           if (!isPerpsDirectDepositToken(token)) {
