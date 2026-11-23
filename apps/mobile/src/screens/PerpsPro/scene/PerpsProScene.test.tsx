@@ -1,4 +1,5 @@
 // These isolated scene tests replace child sheets and action controllers.
+jest.mock('react-native-linear-gradient', () => require('react-native').View);
 jest.mock('../components/twap/PerpsProTwapCard', () => ({
   PerpsProTwapCard: () => null,
 }));

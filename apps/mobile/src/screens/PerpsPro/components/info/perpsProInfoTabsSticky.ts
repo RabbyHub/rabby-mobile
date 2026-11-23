@@ -8,6 +8,12 @@ export const PERPS_PRO_INFO_SECTION_TOP_GAP = 20;
 export const PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT =
   PERPS_PRO_INFO_SECTION_TOP_GAP + PERPS_PRO_INFO_TABS_HEIGHT;
 export const PERPS_PRO_INFO_SECTION_BOTTOM_PADDING = 36;
+// The bg-1 → bg-0 band spans the lead gap and the tabs. The sticky tabs start
+// their gradient above themselves so they continue the in-list band exactly.
+export const PERPS_PRO_INFO_TABS_GRADIENT_START = {
+  x: 0,
+  y: -PERPS_PRO_INFO_SECTION_TOP_GAP / PERPS_PRO_INFO_TABS_HEIGHT,
+};
 
 // The controls below the tabs stick with them, so their heights are fixed:
 // Positions keeps 12pt around the 24pt row (Figma 87900:107683); Open Orders

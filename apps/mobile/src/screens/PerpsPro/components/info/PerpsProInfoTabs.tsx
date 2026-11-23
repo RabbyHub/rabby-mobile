@@ -16,6 +16,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import LinearGradient from 'react-native-linear-gradient';
 import Reanimated, {
   useAnimatedStyle,
   type SharedValue,
@@ -28,13 +29,17 @@ import {
 import { resolvePerpsProFittedFontSize } from '../common/perpsProFitFontSize';
 import { PerpsProTextWidthProbe } from '../common/PerpsProTextWidthProbe';
 import { getPerpsProFontStyle } from '../common/perpsProVisual';
+import { getPerpsProInfoTabsGradientColors } from '../common/perpsProListVisual';
 import {
   getPerpsProTabDividerColor,
   getPerpsProTabIndicatorStyle,
   getPerpsProTabTextStyle,
   PERPS_PRO_TAB_TOKENS,
 } from '../common/perpsProTabVisual';
-import { PERPS_PRO_INFO_TABS_HEIGHT } from './perpsProInfoTabsSticky';
+import {
+  PERPS_PRO_INFO_TABS_GRADIENT_START,
+  PERPS_PRO_INFO_TABS_HEIGHT,
+} from './perpsProInfoTabsSticky';
 import { PERPS_PRO_INFO_TABS } from './perpsProInfoTabOrder';
 
 interface PerpsProInfoTabsProps {
@@ -218,8 +223,12 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
     pendingFundingCount,
     positionsCount,
   }) => {
-    const { colors2024, styles } = useTheme2024({ getStyle });
+    const { colors2024, isLight, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
+    const gradientColors = React.useMemo(
+      () => getPerpsProInfoTabsGradientColors(colors2024),
+      [colors2024],
+    );
     const [tabFrames, setTabFrames] = React.useState<
       Partial<Record<PerpsProInfoTab, PerpsProTabIndicatorLayout>>
     >({});
@@ -300,11 +309,16 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
     );
 
     return (
-      <View
+      <LinearGradient
         accessibilityRole="tablist"
+        colors={gradientColors}
+        start={PERPS_PRO_INFO_TABS_GRADIENT_START}
         onLayout={event => setContainerWidth(event.nativeEvent.layout.width)}
         style={styles.container}>
-        <View pointerEvents="none" style={styles.divider} />
+        {/* The Light gradient strip has no divider (Figma 86609:327462). */}
+        {isLight === false ? (
+          <View pointerEvents="none" style={styles.divider} />
+        ) : null}
         {PERPS_PRO_INFO_TABS.map(tab => (
           <PerpsProInfoTabLabelProbe
             key={tab}
@@ -367,7 +381,7 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
             />
           )}
         </Pressable>
-      </View>
+      </LinearGradient>
     );
   },
 );
@@ -377,7 +391,6 @@ PerpsProInfoTabs.displayName = 'PerpsProInfoTabs';
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-1'],
     flexDirection: 'row',
     gap: INFO_TAB_GAP,
     height: PERPS_PRO_INFO_TABS_HEIGHT,
@@ -385,7 +398,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     overflow: 'hidden',
     position: 'relative',
   },
-  // Figma 86609:327462: the divider sits 2pt above the 44pt strip bottom.
+  // Dark keeps the divider 2pt above the 44pt strip bottom.
   // Paint it as a sibling so the indicator shares the strip's box.
   divider: {
     backgroundColor: getPerpsProTabDividerColor(colors2024),
