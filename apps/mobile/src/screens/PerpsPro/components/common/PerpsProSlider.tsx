@@ -1,6 +1,7 @@
 import DialogPoint from '@/assets2024/icons/perps/PerpsProDialogSliderPoint.svg';
 import { resolvePerpsProDialogCardBackground } from './perpsProDialogVisual';
 import LeverageThumb from '@/assets2024/icons/perps/PerpsProLeverageThumb.svg';
+import OrderThumb from '@/assets2024/icons/perps/PerpsProTradeAmountSliderThumb.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { PerpsGestureSlider as Slider } from '@/components/perps/PerpsGestureSlider';
@@ -20,7 +21,7 @@ import Animated, {
 export const PERPS_PRO_NEUTRAL_RAIL = {
   default: { left: 0, right: 16 },
   leverage: { left: 3, right: 23 },
-  order: { left: -6, right: 14 },
+  order: { left: -2, right: 10 },
 } as const;
 
 export const PerpsProSlider: React.FC<{
@@ -222,11 +223,26 @@ export const PerpsProSlider: React.FC<{
                 style={[
                   styles.neutralThumb,
                   isThumbArtwork && styles.leverageThumb,
+                  isOrderDialog && styles.orderThumb,
                   showDisabledAppearance && styles.neutralThumbDisabled,
                   neutralThumbStyle,
                 ]}
                 testID="perps-pro-slider-neutral-thumb">
-                {isThumbArtwork ? (
+                {isOrderDialog ? (
+                  <OrderThumb
+                    width={12}
+                    height={12}
+                    fill={resolvePerpsProDialogCardBackground(
+                      colors2024,
+                      isLight,
+                    )}
+                    stroke={
+                      showDisabledAppearance
+                        ? colors2024['neutral-secondary']
+                        : colors2024['neutral-title-1']
+                    }
+                  />
+                ) : isLeverageDialog ? (
                   <LeverageThumb
                     width={20}
                     height={20}
@@ -270,7 +286,7 @@ export const PerpsProSlider: React.FC<{
                     color={
                       index / (points.length - 1) <= neutralProgress
                         ? colors2024['neutral-title-1']
-                        : colors2024['neutral-info']
+                        : colors2024['neutral-line']
                     }
                   />
                 </View>
@@ -345,10 +361,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   // RNEUI travels containerWidth - thumbWidth. The -6 outer margin with
   // a 20px native thumb makes its center travel 4 .. width-4, exactly the
-  // same rail as the five 8px points and the visible SVG thumb.
+  // same rail as the five 8px points and the visible 12px thumb
+  // (Figma 87936:196187). The 40pt box keeps the touch target.
   orderContainer: { height: 40 },
   orderSlider: { height: 40, marginHorizontal: -6 },
   orderTrack: {
+    backgroundColor: colors2024['neutral-bg-5'],
     height: 4,
     borderRadius: 2,
     borderCurve: 'continuous',
@@ -363,7 +381,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   orderProgressRail: { height: 4, left: 4, right: 4, top: 18 },
   orderProgress: { height: 4, borderRadius: 2, borderCurve: 'continuous' },
-  orderThumbRail: { height: 20, left: -6, right: 14, top: 10 },
+  orderThumbRail: { height: 12, left: -2, right: 10, top: 14 },
+  orderThumb: { height: 12, width: 12 },
   orderPoints: { top: 16 },
   neutralContainer: {
     height: 32,
