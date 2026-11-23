@@ -548,7 +548,7 @@ describe('Perps Pro open order edit sheets', () => {
         const fields = screen
           .UNSAFE_getAllByType(View)
           .map(view => StyleSheet.flatten(view.props.style))
-          .filter(style => style?.borderRadius === 6);
+          .filter(style => style?.borderRadius === 8);
         expect(fields).toHaveLength(kind === 'basic' ? 2 : 4);
         for (const field of fields) {
           expect(field.backgroundColor).toBe(

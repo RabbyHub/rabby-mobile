@@ -16,8 +16,8 @@ import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineTe
 import { PerpsProAccountAssetRow } from './PerpsProAccountAssetRow';
 import { PerpsProAccountValue } from './PerpsProAccountValue';
 
-// Figma 86609:327475: one card holds the summary, actions and asset rows.
-const ACCOUNT_CARD_SHADOW = '0px 5px 20px 0px rgba(0, 0, 0, 0.06)';
+// Figma 86609:327475: one flat card holds the summary, actions and asset
+// rows on the bg-0 info list.
 
 interface PerpsProAccountSummaryProps {
   account: PerpsAccountViewModel;
@@ -132,7 +132,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingBottom: 8,
     paddingHorizontal: 16,
     paddingTop: 16,
-    ...(isLight === false ? null : { boxShadow: ACCOUNT_CARD_SHADOW }),
   },
   summary: {
     gap: 12,

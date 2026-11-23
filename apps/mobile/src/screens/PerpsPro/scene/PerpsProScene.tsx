@@ -49,6 +49,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import LinearGradient from 'react-native-linear-gradient';
 import Reanimated, { runOnUI, useSharedValue } from 'react-native-reanimated';
 
 import { PerpsProAccountState } from '../components/account/PerpsProAccountState';
@@ -64,6 +65,7 @@ import {
 } from '../components/chart/PerpsProKlineSheet';
 import { registerPerpsProKeyboardTradeScroll } from '../components/common/perpsProKeyboardSession';
 import { PerpsProEmptyState } from '../components/common/PerpsProEmptyState';
+import { getPerpsProInfoTabsGradientColors } from '../components/common/perpsProListVisual';
 import { PerpsProOverlayScrollBridge } from '../components/common/PerpsProOverlayScrollBridge';
 import { PerpsProFieldExplanationProvider } from '../components/common/PerpsProFieldExplanationProvider';
 import { triggerPerpsProLightHaptic } from '../components/common/triggerPerpsProLightHaptic';
@@ -244,7 +246,11 @@ export const PerpsProScene: React.FC<{
   onSwitchToSimple,
 }) => {
   const { width } = useWindowDimensions();
-  const { styles } = useTheme2024({ getStyle });
+  const { colors2024, styles } = useTheme2024({ getStyle });
+  const infoTabsLeadGradient = useMemo(
+    () => getPerpsProInfoTabsGradientColors(colors2024),
+    [colors2024],
+  );
   const { t } = useTranslation();
   const scene = usePerpsProScene();
   const activeAsset = useActiveAssetSubscription(
@@ -862,6 +868,7 @@ export const PerpsProScene: React.FC<{
   const renderScrollLeadIn = useCallback(
     (tab: PerpsProInfoTab, active: boolean) => (
       <View
+        style={styles.scrollLeadIn}
         testID={
           active
             ? 'perps-pro-scroll-lead-in'
@@ -901,7 +908,8 @@ export const PerpsProScene: React.FC<{
               : `perps-pro-trade-lead-in-spacer-${tab}`
           }
         />
-        <View
+        <LinearGradient
+          colors={infoTabsLeadGradient}
           style={styles.infoTabsSpacer}
           testID={
             active
@@ -912,11 +920,13 @@ export const PerpsProScene: React.FC<{
       </View>
     ),
     [
+      infoTabsLeadGradient,
       regionAlertLeadInStyle,
       showRegionAlert,
       styles.headerLeadInSpacer,
       styles.infoTabsSpacer,
       styles.marketLeadInSpacer,
+      styles.scrollLeadIn,
       tradeLeadInSpacerStyle,
     ],
   );
@@ -1911,10 +1921,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     right: 0,
     top: 0,
   },
+  // The info list sits on bg-0 (Figma 86609:327462); the lead-in under the
+  // overlays stays bg-1.
   scrollContent: {
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-0'],
     flexGrow: 1,
   },
+  scrollLeadIn: { backgroundColor: colors2024['neutral-bg-1'] },
   headerLeadInSpacer: { height: PERPS_PRO_HEADER_HEIGHT },
   marketLeadInSpacer: { height: PERPS_PRO_MARKET_BAR_HEIGHT },
   columns: {

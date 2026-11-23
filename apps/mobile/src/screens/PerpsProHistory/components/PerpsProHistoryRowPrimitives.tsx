@@ -141,7 +141,7 @@ const value = (color: string) => ({
 // Figma 86313:138628; My trades cards drop the Trade card shadow.
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   row: {
-    ...getPerpsProInfoCardStyle(colors2024, isLight, { shadow: false }),
+    ...getPerpsProInfoCardStyle(colors2024, isLight),
     gap: 10,
     marginHorizontal: 12,
   },

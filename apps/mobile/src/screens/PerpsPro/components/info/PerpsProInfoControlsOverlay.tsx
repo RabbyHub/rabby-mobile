@@ -99,8 +99,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: Math.max(...Object.values(PERPS_PRO_INFO_CONTROLS_HEIGHTS)),
     width: '100%',
   },
+  // Matches the bg-0 list so the white first card keeps its edge.
   panel: {
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-0'],
     left: 0,
     overflow: 'hidden',
     position: 'absolute',

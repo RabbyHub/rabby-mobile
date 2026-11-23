@@ -27,7 +27,7 @@ export const PerpsHeaderTitle = React.memo(
     {
       account?: Account | null;
       snapshotRef?: React.RefObject<AccountHeaderSnapshot>;
-      onSelectCoin: () => void;
+      onSelectCoin?: () => void;
       popupIsOpen: boolean;
       coin: string;
       displayName: string;
@@ -73,7 +73,8 @@ export const PerpsHeaderTitle = React.memo(
         style={[
           styles.headerOuter,
           {
-            marginTop: headerTop,
+            height: HEADER_HEIGHT + headerTop,
+            paddingTop: headerTop,
             paddingLeft: 12 + columnInset.left,
             paddingRight: 16 + columnInset.right,
           },
@@ -114,13 +115,14 @@ export const PerpsHeaderTitle = React.memo(
 
 const HEADER_HEIGHT = 56;
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerOuter: {
     height: HEADER_HEIGHT,
     paddingLeft: 12,
     paddingRight: 16,
     justifyContent: 'center',
-    backgroundColor: colors2024[isLight ? 'neutral-bg-0' : 'neutral-bg-1'],
+    // Figma 88081:166461: the status bar and title share the chart's bg-1.
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   headerInner: {
     flexDirection: 'row',
