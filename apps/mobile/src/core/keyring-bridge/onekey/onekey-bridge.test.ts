@@ -140,6 +140,10 @@ describe('OneKeyBridge', () => {
     await bridge.init();
 
     expect(mockInit).toHaveBeenCalledTimes(1);
+    expect(mockInit).toHaveBeenCalledWith({
+      debug: false,
+      fetchConfig: false,
+    });
     expect(mockOn).toHaveBeenCalledTimes(1);
 
     const event = {
