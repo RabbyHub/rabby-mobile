@@ -14,6 +14,9 @@ export const PERPS_PRO_INFO_TABS_GRADIENT_START = {
   x: 0,
   y: -PERPS_PRO_INFO_SECTION_TOP_GAP / PERPS_PRO_INFO_TABS_HEIGHT,
 };
+// Same x as the start keeps the band vertical; the library's default end
+// (x 0.5) would slant it across the strip.
+export const PERPS_PRO_INFO_TABS_GRADIENT_END = { x: 0, y: 1 };
 
 // The controls below the tabs stick with them, so their heights are fixed:
 // Positions keeps 12pt around the 24pt row (Figma 87900:107683); Open Orders

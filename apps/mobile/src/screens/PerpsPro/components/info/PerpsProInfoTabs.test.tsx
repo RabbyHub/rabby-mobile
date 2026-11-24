@@ -18,6 +18,7 @@ jest.mock('@/assets2024/icons/home/pending.svg', () => {
 });
 
 jest.mock('@/components/Typography', () => ({
+  AnimatedText: require('react-native').Text,
   Text: require('react-native').Text,
 }));
 

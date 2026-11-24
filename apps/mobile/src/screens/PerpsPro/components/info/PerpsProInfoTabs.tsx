@@ -1,6 +1,6 @@
 import RcIconHistory from '@/assets2024/icons/perps/IconHistoryCC.svg';
 import RcIconPending from '@/assets2024/icons/home/pending.svg';
-import { Text } from '@/components/Typography';
+import { AnimatedText, Text } from '@/components/Typography';
 import type { PerpsProInfoTab } from '@/core/services/perpsService';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -18,10 +18,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
-import Reanimated, {
-  useAnimatedStyle,
-  type SharedValue,
-} from 'react-native-reanimated';
+import { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
 import {
   PerpsProTabIndicator,
@@ -38,6 +35,7 @@ import {
   PERPS_PRO_TAB_TOKENS,
 } from '../common/perpsProTabVisual';
 import {
+  PERPS_PRO_INFO_TABS_GRADIENT_END,
   PERPS_PRO_INFO_TABS_GRADIENT_START,
   PERPS_PRO_INFO_TABS_HEIGHT,
 } from './perpsProInfoTabsSticky';
@@ -102,8 +100,9 @@ const PerpsProInfoTabLabel: React.FC<{
 
   return (
     <View style={labelStyles.container}>
-      {/* Fixed font layers avoid a text layout update at the swipe midpoint. */}
-      <Reanimated.Text
+      {/* Fixed font layers avoid a text layout update at the swipe midpoint.
+          AnimatedText keeps system font scaling off, as the width probe does. */}
+      <AnimatedText
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
         numberOfLines={1}
@@ -115,8 +114,8 @@ const PerpsProInfoTabLabel: React.FC<{
         ]}
         testID={`${testID}-active`}>
         {label}
-      </Reanimated.Text>
-      <Reanimated.Text
+      </AnimatedText>
+      <AnimatedText
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
         numberOfLines={1}
@@ -129,7 +128,7 @@ const PerpsProInfoTabLabel: React.FC<{
         ]}
         testID={`${testID}-inactive`}>
         {label}
-      </Reanimated.Text>
+      </AnimatedText>
     </View>
   );
 };
@@ -321,6 +320,7 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
             which shifts the row and clips History at the trailing edge. */}
         <LinearGradient
           colors={gradientColors}
+          end={PERPS_PRO_INFO_TABS_GRADIENT_END}
           pointerEvents="none"
           start={PERPS_PRO_INFO_TABS_GRADIENT_START}
           style={StyleSheet.absoluteFill}
