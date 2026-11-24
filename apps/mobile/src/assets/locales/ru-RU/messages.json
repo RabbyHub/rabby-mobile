@@ -2965,9 +2965,6 @@
         "hyperliquidFee": "Торговые комиссии Hyperliquid.",
         "activateNow": "Активировать сейчас"
       },
-      "dappSelect": {
-        "title": "Выберите провайдера бессрочных фьючерсов"
-      },
       "search": {
         "placeholder": "Поиск бессрочных фьючерсов",
         "empty": "Ничего не найдено"
@@ -3462,20 +3459,6 @@
         "btnCopyAddress": "Копировать адрес",
         "title": "Получить активы"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "Выбрать поставщика прогнозов"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableTitle": "Сервис недоступен",
-      "serviceUnavailableDesc": "Сервис не поддерживается в вашем текущем регионе."
-    },
-    "DAppFrame": {
-      "walletBalance": "Кошелек/Баланс",
-      "netWorth": "Чистая стоимость",
-      "selectAWallet": "Выберите кошелек"
     },
     "meme": {
       "tokenHeader": {

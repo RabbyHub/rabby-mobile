@@ -22,7 +22,7 @@ import { ProviderRequest } from './type';
 import * as Sentry from '@sentry/react-native';
 import { addHexPrefix, stripHexPrefix } from 'ethereumjs-util';
 import { eventBus, EVENTS } from '@/utils/events';
-import { Chain, CHAINS_ENUM, getTestnetChainList } from '@/constant/chains';
+import { CHAINS_ENUM, getTestnetChainList } from '@/constant/chains';
 import { isNonPublicProductionEnv } from '@/constant';
 import { captureProviderRequest } from '@/devtools/screenRegistry/requestCapture';
 import * as apisDapp from '../apis/dapp';
@@ -37,11 +37,6 @@ import { getRetryTxRecommendNonce, getRetryTxType } from '@/utils/errorTxRetry';
 import { hexToNumber, isHex } from 'viem';
 import { intToHex } from '@/utils/number';
 import BigNumber from 'bignumber.js';
-import { getAccountList } from '../apis/account';
-import { getDappAccount } from '@/core/utils/dappAccount';
-import { getTransactionHistoryTransactions } from '@/core/serviceApi/transactionHistory';
-import { shouldAutoConnect, shouldAutoPersonalSign } from './autoConnect';
-import { openapi } from '../request';
 import type { Account } from '@/types/account';
 import { ensureWalletUnlocked } from '@/utils/walletUnlockGuard';
 import { isWalletUnlockCancelled } from '@/utils/walletUnlockError';
@@ -128,7 +123,6 @@ const flowContext = flow
       mapMethod,
     } = ctx;
 
-    const { isFromMobileInnerDapp } = $mobileCtx || {};
     // // leave here for debug
     // console.debug('[debug] flowContext:: before check connect');
     if (
@@ -155,46 +149,6 @@ const flowContext = flow
           if (autoConnectInfo) {
             defaultAccount = autoConnectInfo.defaultAccount;
             defaultChain = autoConnectInfo.defaultChain || CHAINS_ENUM.ETH;
-          } else if (
-            getDappSnapshot(origin)?.isConnected !== false &&
-            isFromMobileInnerDapp &&
-            shouldAutoConnect(origin, ctx.request.data.method)
-          ) {
-            const site = getDappSnapshot(origin);
-            const [{ accounts }, transactions] = await Promise.all([
-              getAccountList(),
-              getTransactionHistoryTransactions(),
-            ]);
-            defaultAccount = getDappAccount({
-              dappInfo: site,
-              accounts,
-              transactions,
-            })!;
-            defaultChain =
-              site?.chainId && findChain({ enum: site.chainId })
-                ? site.chainId
-                : null;
-
-            if (defaultAccount && !defaultChain) {
-              const recommendChains = await openapi.getRecommendChains(
-                defaultAccount.address,
-                origin,
-              );
-              let targetChain: Chain | undefined;
-              if (recommendChains) {
-                for (let i = 0; i < recommendChains.length; i++) {
-                  targetChain =
-                    findChain({
-                      serverId: recommendChains[i]?.id,
-                    }) || undefined;
-                  if (targetChain) {
-                    break;
-                  }
-                }
-              }
-
-              defaultChain = targetChain ? targetChain.enum : CHAINS_ENUM.ETH;
-            }
           } else {
             const res = await notificationServiceApi.requestApproval(
               {
@@ -242,7 +196,6 @@ const flowContext = flow
       mapMethod,
     } = ctx;
     const $mobileCtx = _$mobileCtx || params?.$mobileCtx;
-    const isFromMobileInnerDapp = $mobileCtx?.isFromMobileInnerDapp;
     // // leave here for debug
     // console.debug('[debug] flowContext:: before check need approval');
     const [approvalType, condition, options = {}] =
@@ -348,32 +301,22 @@ const flowContext = flow
     }
     if (approvalType && (!condition || !condition(ctx.request))) {
       ctx.request.requestedApproval = true;
-      if (
-        !isFromMobileInnerDapp ||
-        !shouldAutoPersonalSign({
-          origin,
-          method: ctx.request.data.method,
-          account: ctx.request.account,
-          msgParams: ctx.request.data.params,
-        })
-      ) {
-        ctx.approvalRes = await notificationServiceApi.requestApproval(
-          {
-            approvalComponent: approvalType,
-            params: {
-              $ctx: ctx?.request?.data?.$ctx,
-              $mobileCtx,
-              requestContext: ctx.request.requestContext,
-              method: TYPED_DATA_METHODS[mapMethod] || method,
-              data: ctx.request.data.params,
-              session: { origin, name, icon, $mobileCtx },
-            },
-            account: ctx.request.account,
-            origin,
+      ctx.approvalRes = await notificationServiceApi.requestApproval(
+        {
+          approvalComponent: approvalType,
+          params: {
+            $ctx: ctx?.request?.data?.$ctx,
+            $mobileCtx,
+            requestContext: ctx.request.requestContext,
+            method: TYPED_DATA_METHODS[mapMethod] || method,
+            data: ctx.request.data.params,
+            session: { origin, name, icon, $mobileCtx },
           },
-          { height: windowHeight },
-        );
-      }
+          account: ctx.request.account,
+          origin,
+        },
+        { height: windowHeight },
+      );
 
       if (isSignApproval(approvalType)) {
         const dapp = getDappSnapshot(origin);
@@ -403,21 +346,10 @@ const flowContext = flow
       session: { origin, $mobileCtx },
     } = request;
 
-    const isFromMobileInnerDapp = $mobileCtx?.isFromMobileInnerDapp;
-
-    const isAutoPersonalSign =
-      isFromMobileInnerDapp &&
-      shouldAutoPersonalSign({
-        origin,
-        method: ctx.request.data.method,
-        account: ctx.request.account,
-        msgParams: ctx.request.data.params,
-      });
-
     // With an approval UI, the dapp gets its answer from that UI (which also
     // owns retries); otherwise the caller awaits requestDefer directly and must
     // see the error instead of a request that never settles.
-    const callerAwaitsRequestDefer = isAutoPersonalSign || !uiRequestComponent;
+    const callerAwaitsRequestDefer = !uiRequestComponent;
 
     const createRequestDeferFn =
       (originApprovalRes: typeof approvalRes) =>
@@ -521,7 +453,6 @@ const flowContext = flow
     // started from that mounted UI, which emits no further mount event.
     const requestDefer =
       !approvalRes?.isGnosis &&
-      !isAutoPersonalSign &&
       isSignApproval(approvalType) &&
       uiRequestComponent
         ? waitSignComponentAmounted(signingOperationId).then(mounted =>
@@ -558,7 +489,7 @@ const flowContext = flow
         throw e;
       }
     }
-    if (!isAutoPersonalSign && uiRequestComponent) {
+    if (uiRequestComponent) {
       ctx.request.requestedApproval = true;
       const result = await requestApprovalLoop({ uiRequestComponent, ...rest });
       if (rest?.safeMessage) {

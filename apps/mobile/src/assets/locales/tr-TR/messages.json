@@ -2846,9 +2846,6 @@
         "description": "Etkinleştirmek için Rabby kodunu kullanın",
         "activateNow": "Şimdi Etkinleştir"
       },
-      "dappSelect": {
-        "title": "Perps Sağlayıcısını Seçin"
-      },
       "search": {
         "placeholder": "Perps Ara",
         "empty": "Sonuç bulunamadı"
@@ -3343,20 +3340,6 @@
         "title": "Varlıkları Al",
         "btnCopyAddress": "Adresi Kopyala"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "Tahmin Sağlayıcısını Seçin"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableDesc": "Hizmet mevcut bölgenizde desteklenmiyor.",
-      "serviceUnavailableTitle": "Hizmet Kullanılamıyor"
-    },
-    "DAppFrame": {
-      "selectAWallet": "Cüzdan Seçin",
-      "walletBalance": "Cüzdan/Bakiye",
-      "netWorth": "Net Değer"
     },
     "meme": {
       "tokenHeader": {

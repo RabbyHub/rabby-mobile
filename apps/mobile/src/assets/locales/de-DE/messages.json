@@ -3132,9 +3132,6 @@
         "activatedSuccess": "4% Hyperliquid-Gebühreneinsparungen aktiviert",
         "title": "Auf Hyperliquid Gebühren sparen"
       },
-      "dappSelect": {
-        "title": "Wählen Sie Perps-Anbieter"
-      },
       "search": {
         "placeholder": "Perps suchen",
         "empty": "Keine Ergebnisse gefunden"
@@ -3629,20 +3626,6 @@
         "btnCopyAddress": "Adresse kopieren",
         "title": "Vermögenswerte empfangen"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "Wählen Sie den Vorhersageanbieter aus"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableTitle": "Dienst nicht verfügbar",
-      "serviceUnavailableDesc": "Der Dienst wird in Ihrer aktuellen Region nicht unterstützt."
-    },
-    "DAppFrame": {
-      "netWorth": "Vermögen",
-      "selectAWallet": "Wählen Sie eine Wallet",
-      "walletBalance": "Wallet/Guthaben"
     },
     "meme": {
       "tokenHeader": {

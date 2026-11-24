@@ -2846,9 +2846,6 @@
         "activatedFailed": "활성화 실패",
         "activateNow": "지금 활성화하세요"
       },
-      "dappSelect": {
-        "title": "무기한 선물 제공자 선택"
-      },
       "search": {
         "placeholder": "무기한 선물 검색",
         "empty": "결과 없음"
@@ -3343,20 +3340,6 @@
         "title": "자산 받기",
         "btnCopyAddress": "주소 복사"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "예측 제공자 선택"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableTitle": "서비스를 이용할 수 없습니다",
-      "serviceUnavailableDesc": "현재 지역에서는 이 서비스가 지원되지 않습니다."
-    },
-    "DAppFrame": {
-      "netWorth": "순자산",
-      "walletBalance": "지갑/잔액",
-      "selectAWallet": "지갑 선택"
     },
     "meme": {
       "tokenHeader": {
