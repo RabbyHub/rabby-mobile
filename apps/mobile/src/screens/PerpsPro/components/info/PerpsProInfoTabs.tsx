@@ -35,6 +35,7 @@ import {
   PERPS_PRO_TAB_TOKENS,
 } from '../common/perpsProTabVisual';
 import {
+  PERPS_PRO_INFO_TABS_GRADIENT_END,
   PERPS_PRO_INFO_TABS_GRADIENT_START,
   PERPS_PRO_INFO_TABS_HEIGHT,
 } from './perpsProInfoTabsSticky';
@@ -319,6 +320,7 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
             which shifts the row and clips History at the trailing edge. */}
         <LinearGradient
           colors={gradientColors}
+          end={PERPS_PRO_INFO_TABS_GRADIENT_END}
           pointerEvents="none"
           start={PERPS_PRO_INFO_TABS_GRADIENT_START}
           style={StyleSheet.absoluteFill}
