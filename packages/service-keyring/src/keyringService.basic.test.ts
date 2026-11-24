@@ -148,6 +148,35 @@ describe('OneKey passphrase persistence', () => {
     expect(keyring.consumePassphraseStateCleared.calledOnce).toBe(true);
     expect(persist.called).toBe(false);
   });
+
+  it('persists the keyring when OneKey updates remembered device protocols during signing', async () => {
+    const keyringService = new KeyringService({
+      encryptor: mockEncryptor as any,
+    });
+    keyringService.loadStore({});
+    await keyringService.boot(oneKeyPassword);
+    const keyring = {
+      type: 'Onekey Hardware',
+      signTransaction: sinon.stub().resolves('signed'),
+      consumePassphraseStateCleared: sinon.stub().returns(false),
+      consumeDeviceProtocolsChanged: sinon.stub().returns(true),
+    };
+    const persist = sinon
+      .stub(keyringService, 'persistAllKeyrings')
+      .resolves(true);
+
+    const signed = await keyringService.signTransaction(
+      keyring,
+      {},
+      '0x1111111111111111111111111111111111111111',
+      {},
+    );
+
+    expect(signed).toBe('signed');
+    expect(keyring.consumePassphraseStateCleared.calledOnce).toBe(true);
+    expect(keyring.consumeDeviceProtocolsChanged.calledOnce).toBe(true);
+    expect(persist.calledOnce).toBe(true);
+  });
 });
 
 describe('keyringService', () => {

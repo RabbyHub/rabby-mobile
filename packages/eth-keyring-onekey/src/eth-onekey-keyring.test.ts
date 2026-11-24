@@ -38,6 +38,7 @@ function createBridge() {
     openWalletSession: undefined,
     evmGetPublicKey: jest.fn(),
     getDeviceState: jest.fn(),
+    setDeviceConnectProtocol: jest.fn(),
     receivePin: jest.fn(),
     receivePassphrase: jest.fn(),
     cancel: jest.fn(),
@@ -2440,5 +2441,120 @@ describe('OneKeyKeyring session reset', () => {
       index: 0,
     };
     expect(fromDetails.indexFromAddress(SIGNING_ADDRESS)).toBe(0);
+  });
+
+  it('persists confirmed device protocols and replays them to the bridge on init and deserialize', async () => {
+    const bridge = createBridge();
+    bridge.getDeviceState.mockResolvedValue({
+      success: true,
+      payload: {
+        protocol: 'V1',
+        identity: { deviceId: 'classic-device' },
+        status: { passphraseProtection: false, unlocked: true },
+      },
+    });
+
+    const keyring = new OneKeyKeyring({ bridge });
+    keyring.setDeviceConnectId('BLE-Classic-01');
+    await keyring.trySearchDevice();
+
+    expect(bridge.setDeviceConnectProtocol).toHaveBeenCalledWith(
+      'BLE-Classic-01',
+      'V1',
+    );
+    expect(keyring.consumeDeviceProtocolsChanged()).toBe(true);
+    expect(keyring.consumeDeviceProtocolsChanged()).toBe(false);
+
+    const serialized = await keyring.serialize();
+    expect(serialized.deviceProtocols).toStrictEqual({
+      'ble-classic-01': 'V1',
+    });
+
+    const restoredBridge = createBridge();
+    const restored = new OneKeyKeyring({
+      ...serialized,
+      bridge: restoredBridge,
+    });
+    expect(restored.consumeDeviceProtocolsChanged()).toBe(false);
+    expect(restoredBridge.setDeviceConnectProtocol).toHaveBeenCalledWith(
+      'ble-classic-01',
+      'V1',
+    );
+
+    restoredBridge.setDeviceConnectProtocol.mockClear();
+    await restored.init();
+    expect(restoredBridge.setDeviceConnectProtocol).toHaveBeenCalledWith(
+      'ble-classic-01',
+      'V1',
+    );
+  });
+
+  it('clears a stale remembered protocol and reprobes once on protocol mismatch', async () => {
+    const bridge = createBridge();
+    bridge.getDeviceState
+      .mockResolvedValueOnce({
+        success: false,
+        payload: {
+          code: 800,
+          error:
+            'Device protocol mismatch: expected V2, but device did not respond to expected protocol',
+        },
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        payload: {
+          protocol: 'V1',
+          identity: { deviceId: 'classic-device' },
+          status: { passphraseProtection: false, unlocked: true },
+        },
+      });
+
+    const keyring = new OneKeyKeyring({
+      bridge,
+      deviceProtocols: { 'ble-device-1': 'V2' },
+    });
+    keyring.setDeviceConnectId('BLE-Device-1');
+
+    const device = await keyring.trySearchDevice();
+
+    expect(device).toStrictEqual({
+      deviceId: 'classic-device',
+      connectId: 'BLE-Device-1',
+    });
+    expect(bridge.setDeviceConnectProtocol).toHaveBeenCalledWith(
+      'BLE-Device-1',
+      undefined,
+    );
+    expect(bridge.getDeviceState).toHaveBeenNthCalledWith(1, 'BLE-Device-1');
+    expect(bridge.getDeviceState).toHaveBeenNthCalledWith(2, 'BLE-Device-1', {
+      forceProtocolDetection: true,
+    });
+    expect(bridge.setDeviceConnectProtocol).toHaveBeenLastCalledWith(
+      'BLE-Device-1',
+      'V1',
+    );
+    expect(keyring.consumeDeviceProtocolsChanged()).toBe(true);
+    expect((await keyring.serialize()).deviceProtocols).toStrictEqual({
+      'ble-device-1': 'V1',
+    });
+  });
+
+  it('does not persist unconfirmed protocols when getDeviceState omits protocol', async () => {
+    const bridge = createBridge();
+    bridge.getDeviceState.mockResolvedValue({
+      success: true,
+      payload: {
+        identity: { deviceId: 'unknown-protocol-device' },
+        status: { passphraseProtection: false },
+      },
+    });
+
+    const keyring = new OneKeyKeyring({ bridge });
+    keyring.setDeviceConnectId('ble-unknown');
+    await keyring.trySearchDevice();
+
+    expect(bridge.setDeviceConnectProtocol).not.toHaveBeenCalled();
+    expect(keyring.consumeDeviceProtocolsChanged()).toBe(false);
+    expect((await keyring.serialize()).deviceProtocols).toStrictEqual({});
   });
 });

@@ -123,10 +123,23 @@ export async function getAddresses(start: number, end: number) {
   return keyring.getAddresses(start, end);
 }
 
+async function persistDeviceProtocolsIfChanged(keyring: OneKeyKeyring) {
+  const session = keyring as OneKeyKeyring & {
+    consumeDeviceProtocolsChanged?: () => boolean;
+  };
+  if (session.consumeDeviceProtocolsChanged?.()) {
+    await keyringServiceApi.persistKeyringsForKeyring(keyring);
+  }
+}
+
 export async function unlockDevice() {
   const keyring = await getOneKeyKeyring();
 
-  await keyring.unlock();
+  try {
+    await keyring.unlock();
+  } finally {
+    await persistDeviceProtocolsIfChanged(keyring);
+  }
 }
 
 export async function fixConnectId(address: string, connectId: string) {
@@ -290,8 +303,14 @@ export async function isConnected(
 
   try {
     await keyring.trySearchDevice();
+    await persistDeviceProtocolsIfChanged(keyring).catch(e => {
+      console.warn('[OneKey] persist device protocols failed', e);
+    });
     return [true, detail.connectId];
   } catch (e) {
+    await persistDeviceProtocolsIfChanged(keyring).catch(err => {
+      console.warn('[OneKey] persist device protocols failed', err);
+    });
     return [false, detail.connectId];
   }
 }

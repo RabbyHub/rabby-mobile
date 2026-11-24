@@ -75,6 +75,8 @@ export default class OneKeyBridge implements OneKeyBridgeInterface {
 
   getDeviceState = HardwareBleSdk.getDeviceState;
 
+  setDeviceConnectProtocol = HardwareBleSdk.setDeviceConnectProtocol;
+
   receivePin: OneKeyBridgeInterface['receivePin'] = data => {
     HardwareBleSdk.uiResponse({
       ...data.responseCorrelation,

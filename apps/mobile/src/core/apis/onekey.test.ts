@@ -370,4 +370,23 @@ describe('core/apis/onekey', () => {
       ).toBe(false);
     });
   });
+
+  it('persists remembered device protocols after unlockDevice and isConnected', async () => {
+    const {
+      unlockDevice,
+      isConnected,
+      mockKeyring,
+      mockPersistKeyringsForKeyring,
+    } = setupApiOneKeyModule();
+    (mockKeyring as any).consumeDeviceProtocolsChanged = jest
+      .fn()
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(true);
+
+    await unlockDevice();
+    await expect(isConnected('0x1234')).resolves.toEqual([true, 'connect-id']);
+
+    expect(mockPersistKeyringsForKeyring).toHaveBeenCalledTimes(2);
+    expect(mockPersistKeyringsForKeyring).toHaveBeenCalledWith(mockKeyring);
+  });
 });
