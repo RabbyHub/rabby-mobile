@@ -366,6 +366,7 @@ jest.mock('@/assets2024/icons/perps/PerpsProEmptyDark.svg', () => {
 });
 
 jest.mock('@/components/Typography', () => ({
+  AnimatedText: require('react-native').Text,
   Text: require('react-native').Text,
 }));
 
