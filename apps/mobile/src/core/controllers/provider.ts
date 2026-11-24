@@ -80,6 +80,7 @@ import { updateExpiredTime } from '@/databases/sync/utils';
 import { assertProviderRequest } from '../utils/assertProviderRequest';
 import {
   findShadowedBuiltinType,
+  hasInvalidTypedDataValue,
   parseTypedDataJson,
 } from '../utils/typedDataTypes';
 import type { ProviderRequest } from './type';
@@ -483,6 +484,9 @@ const signTypedDataVlidation = (
     throw ethErrors.rpc.invalidParams(
       `types should not redefine built-in type: ${shadowedType}`,
     );
+  }
+  if (hasInvalidTypedDataValue(jsonData)) {
+    throw ethErrors.rpc.invalidParams('invalid typed data');
   }
   if (!isInternalDappSnapshot(session.origin)) {
     const currentChain =
