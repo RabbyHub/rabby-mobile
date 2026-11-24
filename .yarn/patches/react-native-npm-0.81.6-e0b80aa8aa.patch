@@ -177,3 +177,25 @@ diff --git a/React/Fabric/Mounting/ComponentViews/Modal/RCTModalHostViewComponen
  }
  
  - (void)updateProps:(const Props::Shared &)props oldProps:(const Props::Shared &)oldProps
+diff --git a/React/Fabric/Mounting/ComponentViews/ScrollView/RCTScrollViewComponentView.mm b/React/Fabric/Mounting/ComponentViews/ScrollView/RCTScrollViewComponentView.mm
+index 1494fd225aff1fa0429e917404d6b4ca5fc961c5..40d6e0c9ca275f8d71dffb21b1166f4649dd3f18 100644
+--- a/React/Fabric/Mounting/ComponentViews/ScrollView/RCTScrollViewComponentView.mm
++++ b/React/Fabric/Mounting/ComponentViews/ScrollView/RCTScrollViewComponentView.mm
+@@ -134,6 +134,17 @@ - (instancetype)initWithFrame:(CGRect)frame
+     _isUserTriggeredScrolling = NO;
+     _shouldUpdateContentInsetAdjustmentBehavior = YES;
+     _automaticallyAdjustKeyboardInsets = NO;
++#if defined(__IPHONE_26_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_26_0
++    // The app opts out of Liquid Glass (UIDesignRequiresCompatibility), which
++    // newer iOS releases no longer honour. Keep scroll views free of the
++    // system edge effect so offset-anchored scroll proxies do not fade content.
++    if (@available(iOS 26.0, *)) {
++      _scrollView.topEdgeEffect.hidden = YES;
++      _scrollView.bottomEdgeEffect.hidden = YES;
++      _scrollView.leftEdgeEffect.hidden = YES;
++      _scrollView.rightEdgeEffect.hidden = YES;
++    }
++#endif
+     [self addSubview:_scrollView];
+ 
+     _containerView = [[UIView alloc] initWithFrame:CGRectZero];
