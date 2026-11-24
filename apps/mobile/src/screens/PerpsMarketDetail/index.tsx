@@ -461,7 +461,11 @@ export const PerpsMarketDetailScreen = () => {
     <>
       <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
         {!hasPermission ? <PerpsRegionAlert /> : null}
+        {/* Overscroll would expose the page's bg-0 between the bg-1 header
+            and chart, so the content stops at the top like Perps Pro. */}
         <PerpsSimpleChartScrollView
+          bounces={false}
+          overScrollMode="never"
           scrollGesture={scrollGesture}
           onScroll={onAccountScroll}
           scrollEventThrottle={16}
