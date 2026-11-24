@@ -282,10 +282,18 @@ describe('PerpsProTransferSheet', () => {
       />,
     );
 
+    const isSelected = (shortcut: number) =>
+      screen.getByTestId(`perps-pro-transfer-shortcut-${shortcut}`).props
+        .accessibilityState.selected;
     fireEvent.press(screen.getByTestId('perps-pro-transfer-shortcut-0.25'));
     expect(screen.getByTestId('perps-pro-transfer-amount').props.value).toBe(
       '2.52',
     );
+    expect(isSelected(0.25)).toBe(true);
+    expect(isSelected(1)).toBe(false);
+    fireEvent.changeText(screen.getByTestId('perps-pro-transfer-amount'), '3');
+    expect(isSelected(0.25)).toBe(false);
+    fireEvent.press(screen.getByTestId('perps-pro-transfer-shortcut-0.25'));
 
     view.rerender(
       <PerpsProTransferSheet

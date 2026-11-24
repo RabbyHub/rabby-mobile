@@ -3,8 +3,25 @@ import {
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import { RoundedFontStyles } from '@/core/utils/fonts';
+import type { AppColors2024Variants } from '@/constant/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { getPerpsProInputDialogStyles } from '../common/perpsProDialogVisual';
+import { colord } from 'colord';
+import {
+  getPerpsProInputDialogStyles,
+  PERPS_PRO_DIALOG_TOKENS,
+} from '../common/perpsProDialogVisual';
+
+// Dark cards use bg-3 (Figma 87900:97324).
+const getTransferCardBackground = (
+  colors: AppColors2024Variants,
+  isLight: boolean | undefined,
+) => colors[isLight === false ? 'neutral-bg-3' : 'neutral-bg-2'];
+
+// Figma 86642:350832: the picked shortcut uses the action mint.
+const SHORTCUT_ACTIVE_COLOR = PERPS_PRO_DIALOG_TOKENS.actionBackground;
+const SHORTCUT_ACTIVE_BACKGROUND = colord(SHORTCUT_ACTIVE_COLOR)
+  .alpha(0.12)
+  .toRgbString();
 
 // Figma 86313:146099: bg-1 sheet, 17pt section titles and bg-2 inputs.
 export const getPerpsProTransferSheetStyles = createGetStyles2024(
@@ -22,8 +39,7 @@ export const getPerpsProTransferSheetStyles = createGetStyles2024(
     },
     sectionHeader: { paddingHorizontal: 4 },
     directionCard: {
-      backgroundColor:
-        colors2024[isLight === false ? 'neutral-bg-3' : 'neutral-bg-2'],
+      backgroundColor: getTransferCardBackground(colors2024, isLight),
       borderRadius: 12,
       borderCurve: 'continuous',
       height: 92,
@@ -61,7 +77,7 @@ export const getPerpsProTransferSheetStyles = createGetStyles2024(
     },
     amountField: {
       alignItems: 'center',
-      backgroundColor: colors2024['neutral-bg-2'],
+      backgroundColor: getTransferCardBackground(colors2024, isLight),
       borderRadius: 16,
       borderCurve: 'continuous',
       flexDirection: 'row',
@@ -111,6 +127,11 @@ export const getPerpsProTransferSheetStyles = createGetStyles2024(
       height: 40,
       justifyContent: 'center',
     },
+    shortcutActive: {
+      backgroundColor: SHORTCUT_ACTIVE_BACKGROUND,
+      borderColor: SHORTCUT_ACTIVE_COLOR,
+      borderWidth: 1,
+    },
     shortcutDisabled: { opacity: 0.55 },
     shortcutText: {
       color: colors2024['neutral-body'],
@@ -118,6 +139,10 @@ export const getPerpsProTransferSheetStyles = createGetStyles2024(
       fontSize: 14,
       fontWeight: '500',
       lineHeight: 18,
+    },
+    shortcutActiveText: {
+      color: SHORTCUT_ACTIVE_COLOR,
+      ...RoundedFontStyles.bold,
     },
     footer: {
       marginTop: 'auto',
