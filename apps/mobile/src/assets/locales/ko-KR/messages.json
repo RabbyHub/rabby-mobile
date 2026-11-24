@@ -30,6 +30,17 @@
     }
   },
   "page": {
+    "securePreferences": {
+      "damagedTitle": "일부 보안 설정이 손상되었을 수 있습니다",
+      "damagedDescription": "아래 설정을 기본값으로 재설정하세요. 다음 거래 전에 설정을 확인하세요.",
+      "unavailableTitle": "보안 설정을 일시적으로 사용할 수 없습니다",
+      "unavailableDescription": "Rabby는 확인하지 못한 설정에 기본값을 사용합니다. 아래 설정의 변경 사항은 저장되지 않습니다. 기기의 잠금을 해제한 후 Rabby를 다시 열어 주세요.",
+      "reset": "설정 재설정",
+      "whitelist": "전송 화이트리스트",
+      "contactBook": "주소록 및 메모",
+      "securityEngine": "보안 규칙 및 목록",
+      "rpc": "사용자 지정 RPC"
+    },
     "transactions": {
       "explain": {
         "unknown": "컨트랙트 상호작용",

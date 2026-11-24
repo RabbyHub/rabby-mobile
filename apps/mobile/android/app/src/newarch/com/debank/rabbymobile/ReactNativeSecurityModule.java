@@ -3,7 +3,7 @@ package com.debank.rabbymobile;
 import android.app.Activity;
 import androidx.annotation.NonNull;
 
-import com.facebook.react.bridge.ReactContextBaseJavaModule;
+import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.module.annotations.ReactModule;
@@ -50,6 +50,37 @@ public class ReactNativeSecurityModule extends NativeReactNativeSecuritySpec {
           activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
         }
       });
+    }
+  }
+
+  @ReactMethod
+  @Override
+  public void openSecurePreferencesKey(boolean stage, Promise promise) {
+    try {
+      promise.resolve(SecurePreferenceKey.open(stage));
+    } catch (Exception error) {
+      promise.reject("E_SECURE_PREFERENCES_KEY", "Secure preference key unavailable");
+    }
+  }
+
+  @ReactMethod
+  @Override
+  public void commitSecurePreferencesKey(String storagePath, Promise promise) {
+    try {
+      SecurePreferenceKey.commit(storagePath);
+      promise.resolve(null);
+    } catch (Exception error) {
+      promise.reject("E_SECURE_PREFERENCES_KEY", "Secure preference migration could not be committed");
+    }
+  }
+
+  @ReactMethod(isBlockingSynchronousMethod = true)
+  @Override
+  public String computeSecurePreferenceHmac(String message) {
+    try {
+      return SecurePreferenceKey.authenticate(message);
+    } catch (Exception error) {
+      return "";
     }
   }
 }

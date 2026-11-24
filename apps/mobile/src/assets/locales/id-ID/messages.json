@@ -30,6 +30,17 @@
     }
   },
   "page": {
+    "securePreferences": {
+      "damagedTitle": "Beberapa pengaturan keamanan mungkin rusak",
+      "damagedDescription": "Setel ulang pengaturan di bawah ke nilai bawaan. Periksa pengaturan tersebut sebelum transaksi berikutnya.",
+      "unavailableTitle": "Pengaturan keamanan untuk sementara tidak tersedia",
+      "unavailableDescription": "Rabby menggunakan nilai bawaan untuk pengaturan yang tidak dapat diverifikasi. Perubahan pada pengaturan di bawah tidak akan disimpan. Buka kunci perangkat dan buka kembali Rabby.",
+      "reset": "Setel ulang pengaturan",
+      "whitelist": "Daftar izin transfer",
+      "contactBook": "Buku alamat dan catatan",
+      "securityEngine": "Aturan dan daftar keamanan",
+      "rpc": "RPC khusus"
+    },
     "getStart": {
       "goToHome": "Pergi ke Beranda",
       "createNewAddress": "Buat Dompet Baru",
