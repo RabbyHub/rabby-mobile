@@ -15,13 +15,14 @@ import { approveToken } from './approvals';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { GasAccountBridgeQuote, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import type { ITokenItem } from '@/types/assets';
+import { validateGasAccountDepositBridgeQuote } from '@/core/depositBridgeValidation';
 
 type GasAccountBridgeToken = Pick<
   ITokenItem,
   'chain' | 'id' | 'decimals' | 'price'
 >;
 
-const getGasAccountBridgeRawAmount = ({
+export const getGasAccountBridgeRawAmount = ({
   token,
   usdValue,
 }: {
@@ -41,22 +42,35 @@ export const fetchGasAccountBridgeQuote = async ({
   token,
   account,
   usdValue,
+  fromTokenRawAmount,
 }: {
   token: GasAccountBridgeToken;
   account: Account;
   usdValue: number;
+  fromTokenRawAmount?: string;
 }) => {
-  const rawAmount = getGasAccountBridgeRawAmount({
-    token,
-    usdValue,
-  });
+  const rawAmount =
+    fromTokenRawAmount ??
+    getGasAccountBridgeRawAmount({
+      token,
+      usdValue,
+    });
 
-  return openapi.getGasAccountBridgeQuote({
+  const quote = await openapi.getGasAccountBridgeQuote({
     user_addr: account.address,
     from_chain_id: token.chain,
     from_token_id: token.id,
     from_token_raw_amount: rawAmount,
   });
+
+  validateGasAccountDepositBridgeQuote(quote, {
+    userAddress: account.address,
+    fromChainId: token.chain,
+    fromTokenId: token.id,
+    fromTokenRawAmount: rawAmount,
+  });
+
+  return quote;
 };
 
 export const buildGasAccountBridgeTxs = async ({
@@ -64,12 +78,28 @@ export const buildGasAccountBridgeTxs = async ({
   account,
   quote,
   usdValue,
+  fromTokenRawAmount,
 }: {
   token: GasAccountBridgeToken;
   account: Account;
   quote: GasAccountBridgeQuote;
   usdValue: number;
+  fromTokenRawAmount?: string;
 }) => {
+  const rawAmount =
+    fromTokenRawAmount ??
+    getGasAccountBridgeRawAmount({
+      token,
+      usdValue,
+    });
+
+  validateGasAccountDepositBridgeQuote(quote, {
+    userAddress: account.address,
+    fromChainId: token.chain,
+    fromTokenId: token.id,
+    fromTokenRawAmount: rawAmount,
+  });
+
   const txs: Tx[] = [];
   const fromChain = findChain({ serverId: token.chain });
   const isNative =
@@ -77,10 +107,6 @@ export const buildGasAccountBridgeTxs = async ({
     isSameAddress(token.id, fromChain.nativeTokenAddress);
 
   if (!isNative && quote.approve_contract_id) {
-    const rawAmount = getGasAccountBridgeRawAmount({
-      token,
-      usdValue,
-    });
     const allowance = await getERC20Allowance(
       token.chain,
       token.id,

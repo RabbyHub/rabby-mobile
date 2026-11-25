@@ -174,6 +174,37 @@ describe('core/sentry', () => {
     expect(sentry.captureEvent).not.toHaveBeenCalled();
   });
 
+  it.each([undefined, 'perps_deposit', 'gas_account_deposit'] as const)(
+    'keeps only the source tag distinct in the bridge report for %s',
+    source => {
+      const { sentry, sentryModule } = loadSentryModule({
+        userBehaviorTrackingOptOut: false,
+      });
+      const { BridgeError, BRIDGE_ERRORS } =
+        require('@rabby-wallet/rabby-bridge') as typeof import('@rabby-wallet/rabby-bridge');
+      const { reportBridgeSdkError } =
+        require('./bridgeSdkReport') as typeof import('./bridgeSdkReport');
+      sentryModule.initSentry();
+
+      const report = new BridgeError(BRIDGE_ERRORS.FROM_AMOUNT_MISMATCH, {
+        aggregatorId: 'relay',
+      }).toJSON();
+      reportBridgeSdkError(report, source);
+
+      const [event, hint] = (sentry.captureEvent as jest.Mock).mock.calls[0];
+      const options = (sentry.init as jest.Mock).mock.calls[0][0];
+      const outgoingEvent = options.beforeSend(event, hint);
+      expect(outgoingEvent.message).toBe('bridge SDK validation failed');
+      expect(outgoingEvent.tags.bridge_source).toBe(source);
+      expect(outgoingEvent.fingerprint).toEqual([
+        'bridge-sdk-validation',
+        report.error_code,
+        'relay',
+        'unknown',
+      ]);
+    },
+  );
+
   it('initializes on sync when tracking becomes allowed', () => {
     const { sentry, sentryModule } = loadSentryModule({
       userBehaviorTrackingOptOut: false,

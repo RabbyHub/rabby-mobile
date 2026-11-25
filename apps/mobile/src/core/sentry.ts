@@ -41,7 +41,10 @@ function beforeSendSentryEvent(event: SentryEvent, hint?: SentryEventHint) {
     if (!hint?.data?.bridge_sdk_report) {
       return null;
     }
-    const reportEvent = createBridgeSdkSentryEvent(hint.data.bridge_sdk_report);
+    const reportEvent = createBridgeSdkSentryEvent(
+      hint.data.bridge_sdk_report,
+      hint.data.bridge_source,
+    );
     if (!reportEvent) {
       return null;
     }
