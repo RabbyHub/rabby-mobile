@@ -1432,6 +1432,48 @@ describe('PerpsProInfoPager', () => {
     expect(mockWithTiming).not.toHaveBeenCalled();
   });
 
+  it('keeps a second iOS swipe live when the first selection arrives late', () => {
+    const indicatorPosition = { value: 0 } as SharedValue<number>;
+    const onPageDragStart = jest.fn();
+    const onPageSelected = jest.fn();
+    renderPager({ indicatorPosition, onPageDragStart, onPageSelected });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+    const scroll = (position: number, offset: number) =>
+      fireEvent(pager, 'pageScroll', { nativeEvent: { offset, position } });
+    const drag = () =>
+      fireEvent(pager, 'pageScrollStateChanged', {
+        nativeEvent: { pageScrollState: 'dragging' },
+      });
+
+    drag();
+    scroll(0, 0.7);
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'settling' },
+    });
+    scroll(0, 0.95);
+    // UIKit lets the next drag begin before the first transition finishes.
+    drag();
+    expect(onPageDragStart).toHaveBeenCalledTimes(2);
+    scroll(0, 0.98);
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    expect(onPageSelected.mock.calls.map(call => [call[0]])).toEqual([
+      ['openOrders'],
+    ]);
+
+    scroll(1, 0.4);
+    expect(indicatorPosition.value).toBe(1.4);
+    scroll(1, 0.8);
+    expect(indicatorPosition.value).toBe(1.8);
+
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 2 } });
+    scroll(2, 0);
+    expect(onPageSelected.mock.calls.map(call => [call[0]])).toEqual([
+      ['openOrders'],
+      ['account'],
+    ]);
+    expect(indicatorPosition.value).toBe(2);
+  });
+
   it('keeps iOS gesture progress native-owned until the exact final scroll', () => {
     const indicatorPosition = { value: 0 } as SharedValue<number>;
     renderPager({ indicatorPosition });
