@@ -40,10 +40,15 @@ import { eventBus, EVENTS } from '@/utils/events';
 import type { Account } from '@/core/startupServices/preference';
 import { useAutoSlippageEffect } from './autoSlippageEffect';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
+import { shouldScheduleQuotePolling } from '@/utils/quotePolling';
+import { useScopedActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import {
-  getQuotePollingResumeDelay,
-  shouldScheduleQuotePolling,
-} from '@/utils/quotePolling';
+  clearQuoteRefreshSession,
+  pauseQuoteRefreshSession,
+  quoteRefreshCountdownStore,
+  resumeQuoteRefreshSession,
+  scheduleQuoteRefreshSession,
+} from './quoteRefreshScheduler';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 import { convert18RawToTokenRaw, isTempoChain } from '@/utils/tempo';
 import {
@@ -441,99 +446,53 @@ export const useTokenPair = ({
     QuoteProvider | undefined
   >();
 
-  const expiredTimer = useRef<NodeJS.Timeout>(undefined);
-  const autoQuoteRefreshDeadlineRef = useRef<number | null>(null);
-  const [quoteRefreshCountdown, setQuoteRefreshCountdown] = useState<{
-    startedAt: number;
-    deadline: number;
-  } | null>(null);
   const autoQuoteRefreshPausedRef = useRef(false);
   const reloadTxRefreshPausedRef = useRef(false);
   const enableRefreshRef = useRef(false);
 
-  const stopExpiredTimer = useCallback(() => {
-    if (expiredTimer.current) {
-      clearTimeout(expiredTimer.current);
-      expiredTimer.current = undefined;
-    }
-  }, []);
+  // The countdown and its timer are owned by a module-level scheduler; this
+  // hook only publishes/subscribes the current deadline.
+  const quoteRefreshCountdown = useScopedActivityStore(
+    active,
+    quoteRefreshCountdownStore,
+    state => state.countdown,
+    Object.is,
+    { storeLabel: 'swap-quote-refresh-countdown' },
+  );
 
   const clearExpiredTimer = useCallback(() => {
-    stopExpiredTimer();
-    autoQuoteRefreshDeadlineRef.current = null;
-    setQuoteRefreshCountdown(null);
-  }, [stopExpiredTimer]);
-
-  const runScheduledQuoteRefresh = useCallback(() => {
-    expiredTimer.current = undefined;
-
-    if (autoQuoteRefreshPausedRef.current) {
-      return;
-    }
-
-    autoQuoteRefreshDeadlineRef.current = null;
-    setQuoteRefreshCountdown(null);
-    if (
-      shouldScheduleQuotePolling({
-        enabled: enableRefreshRef.current,
-        paused: false,
-      })
-    ) {
-      setRefreshId(e => e + 1);
-    }
-  }, [setRefreshId]);
+    clearQuoteRefreshSession();
+  }, []);
 
   const scheduleQuoteRefresh = useCallback(
     (delay: number) => {
-      stopExpiredTimer();
-      const startedAt = Date.now();
-      const deadline = startedAt + delay;
-      autoQuoteRefreshDeadlineRef.current = deadline;
-      setQuoteRefreshCountdown({ startedAt, deadline });
-
-      if (autoQuoteRefreshPausedRef.current) {
-        return;
-      }
-
-      expiredTimer.current = setTimeout(runScheduledQuoteRefresh, delay);
+      scheduleQuoteRefreshSession({
+        delay,
+        paused: autoQuoteRefreshPausedRef.current,
+        shouldFire: () =>
+          shouldScheduleQuotePolling({
+            enabled: enableRefreshRef.current,
+            paused: false,
+          }),
+        onFire: () => {
+          setRefreshId(e => e + 1);
+        },
+      });
     },
-    [runScheduledQuoteRefresh, stopExpiredTimer],
+    [setRefreshId],
   );
 
-  const resumeQuoteRefresh = useCallback(() => {
-    const delay = getQuotePollingResumeDelay({
-      deadline: autoQuoteRefreshDeadlineRef.current,
-    });
-
-    if (delay === null) {
+  const setAutoQuoteRefreshPaused = useCallback((paused: boolean) => {
+    if (autoQuoteRefreshPausedRef.current === paused) {
       return;
     }
-
-    if (delay <= 0) {
-      runScheduledQuoteRefresh();
+    autoQuoteRefreshPausedRef.current = paused;
+    if (paused) {
+      pauseQuoteRefreshSession();
       return;
     }
-
-    stopExpiredTimer();
-    expiredTimer.current = setTimeout(runScheduledQuoteRefresh, delay);
-  }, [runScheduledQuoteRefresh, stopExpiredTimer]);
-
-  const setAutoQuoteRefreshPaused = useCallback(
-    (paused: boolean) => {
-      if (autoQuoteRefreshPausedRef.current === paused) {
-        return;
-      }
-
-      autoQuoteRefreshPausedRef.current = paused;
-      if (paused) {
-        stopExpiredTimer();
-        return;
-      }
-
-      resumeQuoteRefresh();
-    },
-    [resumeQuoteRefresh, stopExpiredTimer],
-  );
+    resumeQuoteRefreshSession();
+  }, []);
 
   const setReloadTxRefreshPaused = useCallback((paused: boolean) => {
     reloadTxRefreshPausedRef.current = paused;
@@ -541,10 +500,9 @@ export const useTokenPair = ({
 
   useEffect(() => {
     return () => {
-      stopExpiredTimer();
-      autoQuoteRefreshDeadlineRef.current = null;
+      clearQuoteRefreshSession();
     };
-  }, [stopExpiredTimer]);
+  }, []);
 
   const setActiveProvider: React.Dispatch<
     React.SetStateAction<QuoteProvider | undefined>
