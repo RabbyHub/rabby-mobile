@@ -14,6 +14,7 @@ import MarketItem from './MarketItem';
 import { CustomMarket, MarketDataType, marketsData } from '../config/market';
 import { Text, TextInput } from '@/components/Typography';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { useMainnetChainList } from '@/hooks/useChainList';
 import useProtocolListStore from '@/store/protocols';
 import type { IProtocolItem } from '@/types/assets';
 import { useLendingSummaryCard } from '../hooks';
@@ -59,6 +60,7 @@ export default function SelectLendingChain({ value, onChange }: IProps) {
   const [canSearch, setCanSearch] = useState(false);
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [search, setSearch] = useState('');
+  const mainnetList = useMainnetChainList();
   const { finalSceneCurrentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
@@ -126,13 +128,14 @@ export default function SelectLendingChain({ value, onChange }: IProps) {
 
   const filterMarketList: MarketDataType[] = useMemo(() => {
     const formatKey = search.trim().toLowerCase();
+    const supportedChainIds = new Set(mainnetList.map(chain => chain.id));
     return marketList
-      .filter(item => {
-        if (!formatKey) {
-          return true;
-        }
-        return item.marketTitle.toLowerCase().includes(formatKey);
-      })
+      .filter(
+        item =>
+          (supportedChainIds.size === 0 ||
+            supportedChainIds.has(item.chainId)) &&
+          item.marketTitle.toLowerCase().includes(formatKey),
+      )
       .sort((a, b) => {
         if (hasUserMarketValue) {
           const aUserValue = marketUsdValueMap.get(a.market) || 0;
@@ -152,7 +155,7 @@ export default function SelectLendingChain({ value, onChange }: IProps) {
           (marketTotalMarketSizeMap[a.market] || 0)
         );
       });
-  }, [hasUserMarketValue, marketUsdValueMap, search]);
+  }, [hasUserMarketValue, mainnetList, marketUsdValueMap, search]);
 
   const handleToggleSearch = () => {
     if (!canSearch) {
