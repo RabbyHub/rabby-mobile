@@ -28,7 +28,6 @@ import { getTokenSymbol, isTokenMarketClosed } from '@/utils/token';
 import { findChainByEnum } from '@/utils/chain';
 import { getSwapAutoSlippageValue, useSlippageStore } from './slippage';
 import { useLowCreditState } from '../components/LowCreditModal';
-import { trigger } from 'react-native-haptic-feedback';
 import { apiProvider } from '@/core/apis';
 import { getGasTokenBalance } from '@/core/apis/transactions';
 import { getSwapGasReserveGasLimit, isSwapWrapToken } from '../utils';
@@ -47,7 +46,7 @@ import {
   scheduleQuoteRefreshSession,
 } from './quoteRefreshScheduler';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
-import { convert18RawToTokenRaw, isTempoChain } from '@/utils/tempo';
+import { isTempoChain } from '@/utils/tempo';
 import {
   shouldApplyInitialChainFallback,
   type PersistedSwapSelectionStatus,
@@ -56,6 +55,14 @@ import { useSwapService } from '../swapServiceDependencies';
 import { useSceneActiveAsync } from '@/screens/SwapBridge/hooks/useSceneActiveAsync';
 import { getRabbyFeeInfo } from './fee';
 import { resolveSwapChainTokens } from './swapChainTokens';
+import {
+  swapFormStore,
+  useSwapForm,
+} from '@/screens/SwapBridge/state/swapFormStores';
+import {
+  amountToSlider,
+  resolveSliderAmount,
+} from '@/screens/SwapBridge/state/swapFormMath';
 import {
   applySwapQuoteProvider,
   beginSwapQuoteCycle,
@@ -90,7 +97,6 @@ export {
 
 export const enableInsufficientQuote = true;
 
-const sliderHapticTriggerNumbers = [0, 50, 100];
 const SWAP_QUOTE_REFRESH_INTERVAL = 1000 * 20;
 
 const { isSameAddress } = addressUtils;
@@ -256,7 +262,9 @@ export const useTokenPair = ({
     [chain],
   );
 
-  const [payAmount, setPayAmount] = useState('');
+  const payAmount = useSwapForm(state => state.committed);
+  const isMaxAmount = useSwapForm(state => state.isMax);
+  const formActions = swapFormStore.getState().actions;
 
   const { autoSlippage, setAutoSlippage } = useSlippageStore();
 
@@ -273,19 +281,6 @@ export const useTokenPair = ({
   const currentProvider = useSwapQuoteActiveProvider(active);
   const bestQuoteDex = useSwapQuoteBestDex(active);
   const quoteLoading = useSwapQuoteLoading(active);
-
-  const autoQuoteRefreshPausedRef = useRef(false);
-  const reloadTxRefreshPausedRef = useRef(false);
-
-  // The countdown and its timer are owned by a module-level scheduler; this
-  // hook only publishes/subscribes the current deadline.
-  const quoteRefreshCountdown = useScopedActivityStore(
-    active,
-    quoteRefreshCountdownStore,
-    state => state.countdown,
-    Object.is,
-    { storeLabel: 'swap-quote-refresh-countdown' },
-  );
 
   const clearExpiredTimer = useCallback(() => {
     clearQuoteRefreshSession();
@@ -356,6 +351,12 @@ export const useTokenPair = ({
     enabled: active,
   });
 
+  // Mirror the selection into the scene store so leaf components can subscribe
+  // without prop drilling.
+  useEffect(() => {
+    formActions.setTokens({ chain, payToken, receiveToken });
+  }, [chain, formActions, payToken, receiveToken]);
+
   const {
     lowCreditToken,
     lowCreditVisible,
@@ -422,11 +423,17 @@ export const useTokenPair = ({
           setPayToken(undefined);
         }
       }
-      setPayAmount('');
-      setSlider(0);
+      formActions.resetAmount();
       setActiveProvider(undefined);
     },
-    [chain, handleChain, setActiveProvider, setPayToken, setReceiveToken],
+    [
+      chain,
+      formActions,
+      handleChain,
+      setActiveProvider,
+      setPayToken,
+      setReceiveToken,
+    ],
   );
 
   const switchSwapAgain = useCallback(
@@ -440,11 +447,10 @@ export const useTokenPair = ({
         ...getChainDefaultToken(c),
         id: receiveTokenId,
       });
-      setPayAmount('');
-      setSlider(0);
+      formActions.resetAmount();
       setActiveProvider(undefined);
     },
-    [handleChain, setActiveProvider, setPayToken, setReceiveToken],
+    [formActions, handleChain, setActiveProvider, setPayToken, setReceiveToken],
   );
 
   useAsyncInitializeChainList({
@@ -507,9 +513,8 @@ export const useTokenPair = ({
   const exchangeToken = useCallback(() => {
     setPayToken(receiveToken);
     setReceiveToken(payToken);
-    setPayAmount('');
-    setSlider(0);
-  }, [setPayToken, receiveToken, setReceiveToken, payToken]);
+    formActions.resetAmount();
+  }, [formActions, setPayToken, receiveToken, setReceiveToken, payToken]);
 
   useEffect(() => {
     if (payToken && receiveToken && payToken?.id === receiveToken?.id) {
@@ -531,22 +536,21 @@ export const useTokenPair = ({
     [chainInfo.serverId],
   );
 
-  const { value: tempoGasTokenInfo, loading: isTempoGasTokenLoading } =
-    useSceneActiveAsync(
-      async () => {
-        if (!userAddress || !isTempoSwapChain) {
-          return null;
-        }
+  const { value: tempoGasTokenInfo } = useSceneActiveAsync(
+    async () => {
+      if (!userAddress || !isTempoSwapChain) {
+        return null;
+      }
 
-        return getGasTokenBalance({
-          account,
-          address: userAddress,
-          chainId: chainInfo.id,
-        });
-      },
-      active,
-      [account, userAddress, chainInfo.id, refreshId, isTempoSwapChain],
-    );
+      return getGasTokenBalance({
+        account,
+        address: userAddress,
+        chainId: chainInfo.id,
+      });
+    },
+    active,
+    [account, userAddress, chainInfo.id, refreshId, isTempoSwapChain],
+  );
 
   const payTokenIsTempoFeeToken = useMemo(() => {
     if (
@@ -567,11 +571,11 @@ export const useTokenPair = ({
 
   /* Gas */
 
-  const [passGasPrice, setUseGasPrice] = useState(false);
+  const passGasPrice = useSwapForm(state => state.passGasPrice);
 
   const gasLimit = useMemo(() => getSwapGasReserveGasLimit(chain), [chain]);
 
-  const { value: gasList, loading: isGasMarketLoading } = useSceneActiveAsync(
+  const { value: gasList } = useSceneActiveAsync(
     () =>
       apiProvider.gasMarketV2(
         {
@@ -619,28 +623,19 @@ export const useTokenPair = ({
       if (!/^\d*(\.\d*)?$/.test(v)) {
         return;
       }
-      setSwapUseSlider(false);
       if (v !== payAmount) {
         clearSwapQuoteList();
       }
-      setPayAmount(v);
-      if (payToken) {
-        const slider = v
-          ? Number(
-              new BigNumber(v || 0)
-                .div(payToken?.amount ? tokenAmountBn(payToken) : 1)
-                .times(100)
-                .toFixed(0),
-            )
-          : 0;
-        setSlider(slider < 0 ? 0 : slider > 100 ? 100 : slider);
-        if (!payToken?.amount) {
-          setSlider(0);
-        }
-      }
-      setUseGasPrice(false);
+      formActions.setAmountFromInput({
+        draft: v,
+        slider: amountToSlider(
+          v,
+          payToken ? tokenAmountBn(payToken) : new BigNumber(0),
+        ),
+      });
+      formActions.setPassGasPrice(false);
     },
-    [payAmount, payToken, setUseGasPrice],
+    [formActions, payAmount, payToken],
   );
 
   const isStableCoin = useMemo(() => {
@@ -724,14 +719,12 @@ export const useTokenPair = ({
 
   const { getAllQuotes, validSlippage } = useQuoteMethods();
 
-  const [isDraggingSlider, setIsDraggingSlider] = useState<boolean>(false);
-
   // The request itself runs from the module-owned session (debounce, rate limit
   // and in-flight bookkeeping), so its loading lifecycle cannot re-render the
   // swap screen.
   const quoteFetchRunner = useCallback(
     async (currentFetchId: number) => {
-      if (!canRunQuoteRequest || isDraggingSlider) {
+      if (!canRunQuoteRequest || swapFormStore.getState().isDragging) {
         markSwapQuoteCycleIdle(currentFetchId);
         return;
       }
@@ -799,7 +792,6 @@ export const useTokenPair = ({
       feeRate,
       getAllQuotes,
       inSufficient,
-      isDraggingSlider,
       payAmount,
       payToken,
       receiveToken,
@@ -843,7 +835,6 @@ export const useTokenPair = ({
     chain,
     feeRate || '',
     payAmount,
-    isDraggingSlider ? '1' : '0',
     slippage,
     autoSlippage ? '1' : '0',
   ].join('|');
@@ -855,10 +846,13 @@ export const useTokenPair = ({
       resetSwapQuoteListOnInactive();
       return;
     }
+    // A drag only changes the draft; the committed amount (and therefore the
+    // quote cycle) starts once when the drag ends.
+    if (swapFormStore.getState().isDragging) {
+      return;
+    }
     const isBackgroundRefresh =
-      quoteRequestKeyRef.current === quoteRequestKey &&
-      canRunQuoteRequest &&
-      !isDraggingSlider;
+      quoteRequestKeyRef.current === quoteRequestKey && canRunQuoteRequest;
     quoteRequestKeyRef.current = quoteRequestKey;
 
     const requestId = beginSwapQuoteCycle({
@@ -870,7 +864,7 @@ export const useTokenPair = ({
     } else {
       markSwapQuoteCycleIdle(requestId);
     }
-  }, [active, quoteRequestKey, canRunQuoteRequest, isDraggingSlider]);
+  }, [active, quoteRequestKey, canRunQuoteRequest]);
 
   // The 20s timer is module-owned; it starts a cycle directly instead of
   // bumping a React atom, so the periodic tick itself renders nothing.
@@ -995,122 +989,41 @@ export const useTokenPair = ({
   }, [active]);
 
   /* slider */
-  const [slider, setSlider] = useState<number>(0);
-
-  const [swapUseSlider, setSwapUseSlider] = useState<boolean>(false);
-
-  const handleSlider100 = useCallback(() => {
-    if (!payToken) {
-      return;
-    }
-
-    setUseGasPrice(false);
-    const fullAmount = tokenAmountBn(payToken);
-    let nextPayAmount = fullAmount.toString(10);
-    if (
-      payTokenIsGasToken &&
-      gasTokenDecimals !== undefined &&
-      normalGasPrice
-    ) {
-      const val = fullAmount.minus(
-        convert18RawToTokenRaw(
-          new BigNumber(gasLimit).times(normalGasPrice),
-          gasTokenDecimals,
-        ).div(new BigNumber(10).pow(gasTokenDecimals)),
-      );
-      if (!val.lt(0)) {
-        setUseGasPrice(true);
+  const resolveAmountForSlider = useCallback(
+    (value: number) => {
+      if (!payToken) {
+        return null;
       }
-      nextPayAmount = val.lt(0) ? fullAmount.toString(10) : val.toString(10);
-    }
-
-    if (nextPayAmount !== payAmount) {
-      clearSwapQuoteList();
-      setPayAmount(nextPayAmount);
-    }
-  }, [
-    payAmount,
-    payToken,
-    payTokenIsGasToken,
-    gasTokenDecimals,
-    gasLimit,
-    normalGasPrice,
-  ]);
-
-  useEffect(() => {
-    if (
-      slider === 100 &&
-      swapUseSlider &&
-      payToken?.amount &&
-      !isGasMarketLoading &&
-      (!isTempoSwapChain || !isTempoGasTokenLoading)
-    ) {
-      handleSlider100();
-    }
-  }, [
-    slider,
-    swapUseSlider,
-    payToken?.amount,
-    isGasMarketLoading,
-    isTempoSwapChain,
-    isTempoGasTokenLoading,
-    handleSlider100,
-  ]);
-
-  const previousSlider = useRef<number>(0);
-
-  const onChangeSlider = useCallback(
-    (v: number, syncAmount?: boolean) => {
-      if (payToken) {
-        setIsDraggingSlider(true);
-        setSwapUseSlider(true);
-        setSlider(v);
-        setUseGasPrice(false);
-
-        if (
-          v !== previousSlider.current &&
-          sliderHapticTriggerNumbers.includes(v)
-        ) {
-          trigger('impactLight', {
-            enableVibrateFallback: true,
-            ignoreAndroidSystemSettings: false,
-          });
-        }
-
-        if (syncAmount) {
-          setIsDraggingSlider(false);
-        }
-
-        previousSlider.current = v;
-
-        if (v === 100) {
-          handleSlider100();
-          return;
-        }
-        const newAmountBn = new BigNumber(v)
-          .div(100)
-          .times(tokenAmountBn(payToken));
-        const isTooSmall = newAmountBn.lt(0.0001);
-        const nextPayAmount = isTooSmall
-          ? newAmountBn.toString(10)
-          : new BigNumber(newAmountBn.toFixed(4, 1)).toString(10);
-        if (nextPayAmount !== payAmount) {
-          clearSwapQuoteList();
-          setPayAmount(nextPayAmount);
-        }
-      }
+      return resolveSliderAmount({
+        balance: tokenAmountBn(payToken),
+        value,
+        isGasToken: payTokenIsGasToken,
+        gasTokenDecimals,
+        normalGasPrice,
+        gasLimit,
+      });
     },
-    [handleSlider100, payAmount, payToken],
+    [gasLimit, gasTokenDecimals, normalGasPrice, payToken, payTokenIsGasToken],
   );
 
   /* slider end*/
 
   useEffect(() => {
-    setPayAmount('');
-    setSlider(0);
-    setSwapUseSlider(false);
-    setIsDraggingSlider(false);
-  }, [userAddress]);
+    formActions.resetAmount();
+  }, [formActions, userAddress]);
+
+  const autoQuoteRefreshPausedRef = useRef(false);
+  const reloadTxRefreshPausedRef = useRef(false);
+
+  // The countdown and its timer are owned by a module-level scheduler; this
+  // hook only publishes/subscribes the current deadline.
+  const quoteRefreshCountdown = useScopedActivityStore(
+    active,
+    quoteRefreshCountdownStore,
+    state => state.countdown,
+    Object.is,
+    { storeLabel: 'swap-quote-refresh-countdown' },
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -1198,10 +1111,8 @@ export const useTokenPair = ({
     gasList,
     passGasPrice,
 
-    isDraggingSlider,
-    slider,
-    swapUseSlider,
-    onChangeSlider,
+    isMaxAmount,
+    resolveSliderAmount: resolveAmountForSlider,
 
     lowCreditToken,
     lowCreditVisible,

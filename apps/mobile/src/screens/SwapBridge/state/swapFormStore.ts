@@ -1,0 +1,133 @@
+import { CHAINS_ENUM } from '@debank/common';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { createStore } from 'zustand/vanilla';
+
+import { swapAmountControl } from './swapAmountControl';
+
+export type SwapAmountSource = 'slider' | 'input' | 'external';
+
+export type SwapFormActions = {
+  setTokens: (input: {
+    chain?: CHAINS_ENUM;
+    payToken?: TokenItem;
+    receiveToken?: TokenItem;
+  }) => void;
+  beginSlider: () => void;
+  setAmountFromInput: (input: { draft: string; slider: number }) => void;
+  endSlider: (input: {
+    draft: string;
+    isMax: boolean;
+    passGasPrice?: boolean;
+  }) => void;
+  commitAmount: () => void;
+  resetAmount: () => void;
+  setSlippage: (value: string) => void;
+  setPassGasPrice: (value: boolean) => void;
+};
+
+export type SwapFormState = {
+  chain: CHAINS_ENUM;
+  payToken?: TokenItem;
+  receiveToken?: TokenItem;
+  /** High-frequency display value (slider / input). */
+  draft: string;
+  /** Low-frequency business value (quote / fee / button / build). */
+  committed: string;
+  source: SwapAmountSource;
+  isDragging: boolean;
+  isMax: boolean;
+  slippage: string;
+  passGasPrice: boolean;
+  actions: SwapFormActions;
+};
+
+const INPUT_COMMIT_DELAY_MS = 300;
+
+export function createSwapFormStore(initial?: {
+  chain?: CHAINS_ENUM;
+  slippage?: string;
+}) {
+  let commitTimer: ReturnType<typeof setTimeout> | null = null;
+  const clearCommitTimer = () => {
+    if (commitTimer) {
+      clearTimeout(commitTimer);
+      commitTimer = null;
+    }
+  };
+
+  return createStore<SwapFormState>()((set, get) => ({
+    chain: initial?.chain ?? CHAINS_ENUM.ETH,
+    payToken: undefined,
+    receiveToken: undefined,
+    draft: '',
+    committed: '',
+    source: 'external',
+    isDragging: false,
+    isMax: false,
+    slippage: initial?.slippage ?? '0.1',
+    passGasPrice: false,
+    actions: {
+      setTokens: input =>
+        set(state => ({
+          chain: input.chain ?? state.chain,
+          payToken: 'payToken' in input ? input.payToken : state.payToken,
+          receiveToken:
+            'receiveToken' in input ? input.receiveToken : state.receiveToken,
+        })),
+      beginSlider: () => {
+        clearCommitTimer();
+        set({
+          source: 'slider',
+          isDragging: true,
+          isMax: false,
+        });
+      },
+      setAmountFromInput: ({ draft, slider }) => {
+        clearCommitTimer();
+        swapAmountControl.value = slider;
+        set({
+          draft,
+          isMax: false,
+          source: 'input',
+          isDragging: false,
+        });
+        commitTimer = setTimeout(() => {
+          commitTimer = null;
+          get().actions.commitAmount();
+        }, INPUT_COMMIT_DELAY_MS);
+      },
+      endSlider: ({ draft, isMax, passGasPrice }) => {
+        clearCommitTimer();
+        set(state => ({
+          draft,
+          committed: draft,
+          isMax,
+          source: 'slider',
+          isDragging: false,
+          passGasPrice: passGasPrice ?? state.passGasPrice,
+        }));
+      },
+      commitAmount: () => {
+        clearCommitTimer();
+        const { draft, committed } = get();
+        if (draft !== committed) {
+          set({ committed: draft });
+        }
+      },
+      resetAmount: () => {
+        clearCommitTimer();
+        swapAmountControl.value = 0;
+        set({
+          draft: '',
+          committed: '',
+          isMax: false,
+          source: 'external',
+          isDragging: false,
+          passGasPrice: false,
+        });
+      },
+      setSlippage: value => set({ slippage: value }),
+      setPassGasPrice: value => set({ passGasPrice: value }),
+    },
+  }));
+}

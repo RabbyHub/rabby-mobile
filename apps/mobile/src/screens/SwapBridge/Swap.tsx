@@ -68,6 +68,8 @@ import {
   type SwapPendingTransactionsControllerRef,
 } from '../Swap/components/SwapPendingTransactionsController';
 import { SwapTokenItem } from '../Swap/components/Token';
+import { SwapAmountCard } from '../Swap/components/SwapAmountCard';
+import { swapFormStore } from './state/swapFormStores';
 import BridgeSwitchBtn from '../Bridge/components/BridgeSwitchBtn';
 import BridgeShowMore from '../Bridge/components/BridgeShowMore';
 import { useSwapRecentToTokens } from '../Swap/hooks/recent';
@@ -311,15 +313,14 @@ const Swap = ({
 
     gasList,
     passGasPrice,
-    slider,
-    onChangeSlider,
+    isMaxAmount,
+    resolveSliderAmount,
 
     lowCreditToken: _lowCreditToken,
     lowCreditVisible,
     setLowCreditToken,
     setLowCreditVisible,
 
-    swapUseSlider,
     clearExpiredTimer,
     setAutoQuoteRefreshPaused,
     setReloadTxRefreshPaused,
@@ -332,6 +333,7 @@ const Swap = ({
     account: currentAccount!,
     active: sceneActive,
   });
+
   const quotePollingPauseReasonsRef = useRef<QuotePollingPauseReasonState>({});
   const setQuotePollingPauseReason = useCallback(
     (reason: string, paused: boolean) => {
@@ -595,9 +597,9 @@ const Swap = ({
   const buildFormSnapshot = useCallback(
     (): SwapFormSnapshot => ({
       amount: payAmount || '',
-      amountMode: slider === 100 ? 'max' : 'exact',
+      amountMode: isMaxAmount ? 'max' : 'exact',
     }),
-    [payAmount, slider],
+    [isMaxAmount, payAmount],
   );
 
   // ===== 签名与提交 =====
@@ -618,13 +620,13 @@ const Swap = ({
   );
   const miniSignGasFeeTooHigh = isSignatureGasFeeTooHigh(signatureGuardFlags);
   const canDirectSign = canProcessSignature(signatureGuardFlags);
-  const miniSignGa = useMemo(
-    () => ({
-      category: 'Swap',
-      source: 'swap',
-      swapUseSlider,
-    }),
-    [swapUseSlider],
+  const getSwapUseSlider = useCallback(
+    () => swapFormStore.getState().source === 'slider',
+    [],
+  );
+  const miniSignGaBase = useMemo(
+    () => ({ category: 'Swap' as const, source: 'swap' as const }),
+    [],
   );
   const checkGasFeeTooHighRef = useRef(true);
   const onChangeCheckGasFeeTooHigh = useCallback((b: boolean) => {
@@ -691,7 +693,7 @@ const Swap = ({
               category: 'Swap',
               source: 'swap',
               trigger: 'home',
-              swapUseSlider,
+              swapUseSlider: getSwapUseSlider(),
             },
           },
           addSwapTxHistoryObj,
@@ -819,7 +821,7 @@ const Swap = ({
               category: 'Swap',
               source: 'swap',
               trigger: 'home',
-              swapUseSlider,
+              swapUseSlider: getSwapUseSlider(),
             },
           },
         );
@@ -1181,7 +1183,7 @@ const Swap = ({
 
         const res = await openDirect({
           txs: txsForSigning,
-          ga: miniSignGa,
+          ga: { ...miniSignGaBase, swapUseSlider: getSwapUseSlider() },
           checkGasFeeTooHigh: checkGasFeeTooHighRef.current,
           ignoreGasFeeTooHigh: p?.ignoreGasFee || false,
         });
@@ -1395,7 +1397,7 @@ const Swap = ({
     onChangeCheckGasFeeTooHigh(true);
     prefetchMiniSigner({
       txs: currentTxs,
-      ga: miniSignGa,
+      ga: { ...miniSignGaBase, swapUseSlider: getSwapUseSlider() },
       checkGasFeeTooHigh: true,
       synGasHeaderInfo: true,
     }).catch(error => {
@@ -1412,9 +1414,10 @@ const Swap = ({
     canShowDirectSubmit,
     currentAccount?.address,
     currentTxs,
+    getSwapUseSlider,
     prefetchMiniSigner,
     closeMiniSigner,
-    miniSignGa,
+    miniSignGaBase,
     shouldPauseMiniSignerEffects,
   ]);
 
@@ -1690,19 +1693,15 @@ const Swap = ({
             </View>
             <View style={styles.swapTokenContainer}>
               <View style={styles.swapTokenCard}>
-                <SwapTokenItem
+                <SwapAmountCard
                   disabled={!isSupportedChain}
                   sceneActive={sceneActive}
-                  inSufficient={inSufficient}
-                  slider={slider}
-                  onChangeSlider={onChangeSlider}
-                  value={payAmount}
                   onValueChange={handlePayAmountChange}
+                  resolveSliderAmount={resolveSliderAmount}
                   token={payToken}
                   onTokenChange={handlePayTokenChange}
                   account={currentAccount}
                   chainId={chainServerId}
-                  type={'from'}
                   excludeTokens={payTokenExcludes}
                 />
               </View>
