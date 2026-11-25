@@ -782,117 +782,124 @@ export const useBridge = (
         aggregatorsList.length > 0 &&
         !bridgeAmountStore.getState().isDragging
       ) {
-        setTokenRefreshId(e => e + 1);
+        try {
+          setTokenRefreshId(e => e + 1);
 
-        setQuotesList(e => e?.map(e => ({ ...e, loading: true })));
+          setQuotesList(e => e?.map(e => ({ ...e, loading: true })));
 
-        const originData: Omit<BridgeQuote, 'tx'>[] = [];
-        const allowanceRequestCache = new Map<string, Promise<string>>();
+          const originData: Omit<BridgeQuote, 'tx'>[] = [];
+          const allowanceRequestCache = new Map<string, Promise<string>>();
 
-        const getQuoteWithApproval = async (
-          quote: Omit<BridgeQuote, 'tx'>,
-        ): Promise<SelectedBridgeQuote | undefined> => {
-          if (currentFetchId !== fetchIdRef.current) {
-            return;
-          }
+          const getQuoteWithApproval = async (
+            quote: Omit<BridgeQuote, 'tx'>,
+          ): Promise<SelectedBridgeQuote | undefined> => {
+            if (currentFetchId !== fetchIdRef.current) {
+              return;
+            }
 
-          const approval = await getBridgeQuoteApproval({
-            fromToken,
-            approveContractId: quote.approve_contract_id,
-            amount,
-            account: currentAccount,
-            allowanceCache: allowanceRequestCache,
-          });
+            const approval = await getBridgeQuoteApproval({
+              fromToken,
+              approveContractId: quote.approve_contract_id,
+              amount,
+              account: currentAccount,
+              allowanceCache: allowanceRequestCache,
+            });
 
-          return {
-            ...quote,
-            loading: false,
-            ...approval,
+            return {
+              ...quote,
+              loading: false,
+              ...approval,
+            };
           };
-        };
 
-        const getQUoteV2 = async () =>
-          await Promise.allSettled(
-            aggregatorsList.map(async bridgeAggregator => {
-              const data = await getBridgeQuoteList(
-                bridgeAggregator.id,
-                {
-                  userAddress,
-                  fromChainId: fromToken.chain,
-                  fromTokenId: fromToken.id,
-                  fromTokenRawAmount: new BigNumber(amount)
-                    .times(10 ** fromToken.decimals)
-                    .toFixed(0, 1)
-                    .toString(),
-                  toChainId: toToken.chain,
-                  toTokenId: toToken.id,
-                  slippage: new BigNumber(slippageObj.slippage)
-                    .div(100)
-                    .toString(10),
-                  feeRate: Number(feeRate),
-                  onError: reportBridgeSdkError,
-                },
-                openapi,
-              ).catch(error => {
-                reportBridgeSdkException(error);
-                return undefined;
-              });
+          const getQUoteV2 = async () =>
+            await Promise.allSettled(
+              aggregatorsList.map(async bridgeAggregator => {
+                const data = await getBridgeQuoteList(
+                  bridgeAggregator.id,
+                  {
+                    userAddress,
+                    fromChainId: fromToken.chain,
+                    fromTokenId: fromToken.id,
+                    fromTokenRawAmount: new BigNumber(amount)
+                      .times(10 ** fromToken.decimals)
+                      .toFixed(0, 1)
+                      .toString(),
+                    toChainId: toToken.chain,
+                    toTokenId: toToken.id,
+                    slippage: new BigNumber(slippageObj.slippage)
+                      .div(100)
+                      .toString(10),
+                    feeRate: Number(feeRate),
+                    onError: reportBridgeSdkError,
+                  },
+                  openapi,
+                ).catch(error => {
+                  reportBridgeSdkException(error);
+                  return undefined;
+                });
 
-              if (data && currentFetchId === fetchIdRef.current) {
-                originData.push(...data);
-              }
+                if (data && currentFetchId === fetchIdRef.current) {
+                  originData.push(...data);
+                }
 
-              const validData =
-                data?.filter(
-                  quote =>
-                    !!quote?.bridge &&
-                    !!quote?.bridge?.id &&
-                    !!quote?.bridge?.logo_url &&
-                    !!quote.bridge.name,
-                ) || [];
+                const validData =
+                  data?.filter(
+                    quote =>
+                      !!quote?.bridge &&
+                      !!quote?.bridge?.id &&
+                      !!quote?.bridge?.logo_url &&
+                      !!quote.bridge.name,
+                  ) || [];
 
-              if (validData.length && currentFetchId === fetchIdRef.current) {
-                scheduleQuoteUpdates(
-                  currentFetchId,
-                  validData.map(quote => ({ ...quote, loading: true })),
-                );
+                if (validData.length && currentFetchId === fetchIdRef.current) {
+                  scheduleQuoteUpdates(
+                    currentFetchId,
+                    validData.map(quote => ({ ...quote, loading: true })),
+                  );
 
-                await Promise.allSettled(
-                  validData.map(async quote => {
-                    const nextQuote = await getQuoteWithApproval(quote);
-                    if (
-                      nextQuote &&
-                      currentFetchId === fetchIdRef.current &&
-                      Number(amount) > 0
-                    ) {
-                      scheduleQuoteUpdates(currentFetchId, [nextQuote]);
-                    }
-                  }),
-                );
-              }
+                  await Promise.allSettled(
+                    validData.map(async quote => {
+                      const nextQuote = await getQuoteWithApproval(quote);
+                      if (
+                        nextQuote &&
+                        currentFetchId === fetchIdRef.current &&
+                        Number(amount) > 0
+                      ) {
+                        scheduleQuoteUpdates(currentFetchId, [nextQuote]);
+                      }
+                    }),
+                  );
+                }
 
-              return data;
-            }),
+                return data;
+              }),
+            );
+
+          await getQUoteV2();
+
+          const data = originData?.filter(
+            quote =>
+              !!quote?.bridge &&
+              !!quote?.bridge?.id &&
+              !!quote?.bridge?.logo_url &&
+              !!quote.bridge.name,
           );
 
-        await getQUoteV2();
+          if (currentFetchId === fetchIdRef.current) {
+            flushPendingQuoteUpdates(currentFetchId);
 
-        const data = originData?.filter(
-          quote =>
-            !!quote?.bridge &&
-            !!quote?.bridge?.id &&
-            !!quote?.bridge?.logo_url &&
-            !!quote.bridge.name,
-        );
-
-        if (currentFetchId === fetchIdRef.current) {
-          flushPendingQuoteUpdates(currentFetchId);
-          setPending(false);
-
-          if (data.length < 1) {
-            setSelectedBridgeQuote(undefined);
+            if (data.length < 1) {
+              setSelectedBridgeQuote(undefined);
+            }
+          }
+        } finally {
+          if (currentFetchId === fetchIdRef.current) {
+            setPending(false);
           }
         }
+      } else {
+        setPending(false);
       }
     }, [
       active,
@@ -922,7 +929,7 @@ export const useBridge = (
     setQuoteRequestId(fetchIdRef.current);
     setQuotesList([]);
     setSelectedBridgeQuote(undefined);
-    setPending(false);
+    setPending(Number(amount) > 0 && canRequestQuote);
   }, [
     active,
     userAddress,
@@ -931,6 +938,7 @@ export const useBridge = (
     fromChain,
     toChain,
     amount,
+    canRequestQuote,
     feeRate,
     slippageObj.slippage,
     cancelPendingQuoteFlush,
