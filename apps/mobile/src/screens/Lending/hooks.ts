@@ -16,7 +16,6 @@ import {
   normalize,
   USD_DECIMALS,
 } from '@aave/math-utils';
-import { ethers } from 'ethers';
 import dayjs from 'dayjs';
 import { useAtom } from 'jotai';
 import { useCallback, useMemo } from 'react';
@@ -182,7 +181,6 @@ export const useSelectedMarket = () => {
 const poolsMap = new Map<
   CustomMarket,
   {
-    provider: ethers.providers.Web3Provider;
     uiPoolDataProvider: UiPoolDataProvider;
     walletBalanceProvider: WalletBalanceProvider;
     pool: Pool;
@@ -202,7 +200,6 @@ const getCachePools = (marketKey?: CustomMarket) => {
   }
   const provider = getProvider(chainInfo.network);
   const newPools = {
-    provider,
     uiPoolDataProvider: new UiPoolDataProvider({
       uiPoolDataProviderAddress:
         selectedMarketData.addresses.UI_POOL_DATA_PROVIDER,
@@ -216,10 +213,6 @@ const getCachePools = (marketKey?: CustomMarket) => {
     }),
     pool: new Pool(provider, {
       POOL: selectedMarketData.addresses.LENDING_POOL,
-      REPAY_WITH_COLLATERAL_ADAPTER:
-        selectedMarketData.addresses.REPAY_WITH_COLLATERAL_ADAPTER,
-      SWAP_COLLATERAL_ADAPTER:
-        selectedMarketData.addresses.SWAP_COLLATERAL_ADAPTER,
       WETH_GATEWAY: selectedMarketData.addresses.WETH_GATEWAY,
       L2_ENCODER: selectedMarketData.addresses.L2_ENCODER,
     }),

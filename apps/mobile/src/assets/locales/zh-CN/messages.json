@@ -3272,12 +3272,7 @@
         "lq": "如果低于 1，可能触发清算。"
       },
       "repayDetail": {
-        "actions": "还款",
-        "tabs": {
-          "collateral": "抵押品",
-          "wallet": "钱包余额"
-        },
-        "repayWith": "还款来源"
+        "actions": "还款"
       },
       "supplyDetail": {
         "actions": "存入",
@@ -3298,7 +3293,6 @@
         "borrowingUnavailable": "当前模式下无法借入该资产。",
         "almostReachedWarning": "该资产的协议借款上限已达 100%，无法继续借入。",
         "almostReachedError": "由于协议借款上限即将达到，可借最大金额受到限制。",
-        "swapDebt": "转换",
         "borrowed": "已借入",
         "noSupplyDesc": "若要借款，您需要先存入资产作为抵押品。",
         "noSupplyPrefix": "没有存款："
@@ -3410,79 +3404,18 @@
         "unavailable": "• 不可用",
         "disableTitle": "禁用",
         "enabled": "• 已启用",
-        "description": "启用 E-Mode 可以最大化您的借款能力，但只能借入所选类别内的资产。",
-        "debtSwapSelector": {
-          "header": {
-            "assets": "代币/余额",
-            "borrow": "我的借款",
-            "apy": "APY"
-          },
-          "title": "选择借款代币"
-        },
-        "collateralSwapSelector": {
-          "header": {
-            "assets": "代币",
-            "collateral": "我的抵押品"
-          },
-          "title": "选择抵押品代币"
-        }
+        "description": "启用 E-Mode 可以最大化您的借款能力，但只能借入所选类别内的资产。"
       },
       "disabled": "已禁用",
-      "debtSwap": {
-        "actions": {
-          "title": "债务转换",
-          "swapTo": "转换为",
-          "select": "选择",
-          "amount": "金额",
-          "borrowed": "已借入"
-        },
-        "overview": {
-          "title": "交易概览",
-          "borrowAPY": "借款 APY",
-          "borrowValueAfter": "转换后借款余额"
-        },
-        "button": {
-          "swap": "转换"
-        },
-        "title": "转换借款头寸",
-        "borrowBalance": "借款余额",
-        "priceImpactTips": "价格影响较高（{{lostValue}}）。由于流动性较低或订单金额较小，该路径的预估结果可能偏离较大。",
-        "lpDangerWarning": "本次转换后，您的健康因子将严重偏低，可能导致清算。请选择其他资产或减少转换金额以降低风险。",
-        "lpRiskWarning": "转换后健康因子偏低，您的头寸将面临更高的清算风险。",
-        "maxLtvWarning": "抵押品不足以覆盖新的借款头寸。您需要保留足够的借款能力才能执行债务转换。"
-      },
       "totalBorrowed": "总借款",
       "netApy": "净 APY",
       "totalSupplied": "总存款",
-      "repayWithCollateral": {
-        "action": {
-          "title": "使用 {{collateral}} 还款"
-        },
-        "overview": {
-          "borrowValueAfter": "还款后借款余额",
-          "collateralValueAfter": "还款后抵押品余额",
-          "title": "交易概览"
-        },
-        "button": {
-          "repay": "还款"
-        },
-        "repayWith": "用于还款的抵押品",
-        "collateralNotEnough": "您的抵押品余额低于所选金额。",
-        "toRepay": "预计还款金额",
-        "insufficientLiquidity": "流动性不足。",
-        "flashLoanDisabled": "出于安全原因，该资产的头寸转换功能已禁用。",
-        "frozenCollateral": "该资产因 Aave 社区决议被冻结。"
-      },
       "repayWithAToken": {
         "header": {
           "assets": "代币",
           "balance": "余额"
         },
-        "title": "选择还款代币",
-        "zeroLtvCollateralTips": "您有以下 LTV = 0 的抵押品。根据抵押品还款规则，需要优先使用这些抵押品还款。"
-      },
-      "signFallback": {
-        "preExecFailedUseFullSign": "模拟失败。这笔交易很可能因 AAVE 错误而失败。"
+        "title": "选择还款代币"
       }
     },
     "address": {

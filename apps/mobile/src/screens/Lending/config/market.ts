@@ -32,16 +32,11 @@ export type MarketDataType = {
   // the network the market operates on
   chainId: ChainId;
   enabledFeatures?: {
-    liquiditySwap?: boolean;
     staking?: boolean;
     governance?: boolean;
     faucet?: boolean;
-    collateralRepay?: boolean;
     incentives?: boolean;
     permissions?: boolean;
-    debtSwitch?: boolean;
-    withdrawAndSwitch?: boolean;
-    switch?: boolean;
     limit?: boolean;
   };
   permitDisabled?: boolean; // intended to be used for testnets
@@ -53,10 +48,6 @@ export type MarketDataType = {
     LENDING_POOL_ADDRESS_PROVIDER: string;
     LENDING_POOL: string;
     WETH_GATEWAY?: string;
-    SWAP_COLLATERAL_ADAPTER?: string;
-    REPAY_WITH_COLLATERAL_ADAPTER?: string;
-    DEBT_SWITCH_ADAPTER?: string;
-    WITHDRAW_SWITCH_ADAPTER?: string;
     FAUCET?: string;
     PERMISSION_MANAGER?: string;
     WALLET_BALANCE_PROVIDER: string;
@@ -106,28 +97,18 @@ export const marketsData: {
     enabledFeatures: {
       governance: true,
       staking: true,
-      liquiditySwap: true,
-      collateralRepay: true,
       incentives: true,
-      withdrawAndSwitch: true,
-      debtSwitch: true,
-      switch: true,
       limit: true,
     },
     addresses: {
       LENDING_POOL_ADDRESS_PROVIDER: AaveV3Ethereum.POOL_ADDRESSES_PROVIDER,
       LENDING_POOL: AaveV3Ethereum.POOL,
       WETH_GATEWAY: AaveV3Ethereum.WETH_GATEWAY,
-      REPAY_WITH_COLLATERAL_ADAPTER:
-        AaveV3Ethereum.REPAY_WITH_COLLATERAL_ADAPTER,
-      SWAP_COLLATERAL_ADAPTER: AaveV3Ethereum.SWAP_COLLATERAL_ADAPTER,
       WALLET_BALANCE_PROVIDER: AaveV3Ethereum.WALLET_BALANCE_PROVIDER,
       UI_POOL_DATA_PROVIDER: '0x2dad8162a989cd99d673de4425bb2298db1e1aa2',
       UI_INCENTIVE_DATA_PROVIDER: AaveV3Ethereum.UI_INCENTIVE_DATA_PROVIDER,
       COLLECTOR: AaveV3Ethereum.COLLECTOR,
       GHO_TOKEN_ADDRESS: AaveV3Ethereum.ASSETS.GHO.UNDERLYING,
-      WITHDRAW_SWITCH_ADAPTER: AaveV3Ethereum.WITHDRAW_SWAP_ADAPTER,
-      DEBT_SWITCH_ADAPTER: AaveV3Ethereum.DEBT_SWAP_ADAPTER,
     },
   },
   [CustomMarket.proto_lido_v3]: {
@@ -139,26 +120,16 @@ export const marketsData: {
     enabledFeatures: {
       governance: true,
       staking: true,
-      liquiditySwap: true,
-      collateralRepay: true,
       incentives: true,
-      withdrawAndSwitch: true,
-      debtSwitch: true,
-      switch: true,
     },
     addresses: {
       LENDING_POOL_ADDRESS_PROVIDER: AaveV3EthereumLido.POOL_ADDRESSES_PROVIDER,
       LENDING_POOL: AaveV3EthereumLido.POOL,
       WETH_GATEWAY: AaveV3EthereumLido.WETH_GATEWAY,
-      REPAY_WITH_COLLATERAL_ADAPTER:
-        AaveV3EthereumLido.REPAY_WITH_COLLATERAL_ADAPTER,
-      SWAP_COLLATERAL_ADAPTER: AaveV3EthereumLido.SWAP_COLLATERAL_ADAPTER,
       WALLET_BALANCE_PROVIDER: AaveV3EthereumLido.WALLET_BALANCE_PROVIDER,
       UI_POOL_DATA_PROVIDER: '0x2dad8162a989cd99d673de4425bb2298db1e1aa2',
       UI_INCENTIVE_DATA_PROVIDER: AaveV3EthereumLido.UI_INCENTIVE_DATA_PROVIDER,
       COLLECTOR: AaveV3Ethereum.COLLECTOR,
-      WITHDRAW_SWITCH_ADAPTER: AaveV3EthereumLido.WITHDRAW_SWAP_ADAPTER,
-      DEBT_SWITCH_ADAPTER: AaveV3EthereumLido.DEBT_SWAP_ADAPTER,
     },
   },
   // v3
@@ -169,11 +140,6 @@ export const marketsData: {
     chainId: ChainId.base,
     enabledFeatures: {
       incentives: true,
-      liquiditySwap: true,
-      withdrawAndSwitch: true,
-      collateralRepay: true,
-      debtSwitch: true,
-      switch: true,
     },
     addresses: {
       LENDING_POOL_ADDRESS_PROVIDER: AaveV3Base.POOL_ADDRESSES_PROVIDER,
@@ -184,10 +150,6 @@ export const marketsData: {
       UI_INCENTIVE_DATA_PROVIDER: AaveV3Base.UI_INCENTIVE_DATA_PROVIDER,
       L2_ENCODER: AaveV3Base.L2_ENCODER,
       COLLECTOR: AaveV3Base.COLLECTOR,
-      REPAY_WITH_COLLATERAL_ADAPTER: AaveV3Base.REPAY_WITH_COLLATERAL_ADAPTER,
-      SWAP_COLLATERAL_ADAPTER: AaveV3Base.SWAP_COLLATERAL_ADAPTER,
-      WITHDRAW_SWITCH_ADAPTER: AaveV3Base.WITHDRAW_SWAP_ADAPTER,
-      DEBT_SWITCH_ADAPTER: AaveV3Base.DEBT_SWAP_ADAPTER,
       GHO_TOKEN_ADDRESS: '0x6bb7a212910682dcfdbd5bcbb3e28fb4e8da10ee',
     },
   },
@@ -198,11 +160,6 @@ export const marketsData: {
     chainId: ChainId.arbitrum_one,
     enabledFeatures: {
       incentives: true,
-      liquiditySwap: true,
-      collateralRepay: true,
-      debtSwitch: true,
-      withdrawAndSwitch: true,
-      switch: true,
       limit: true,
     },
     addresses: {
@@ -214,11 +171,6 @@ export const marketsData: {
       UI_INCENTIVE_DATA_PROVIDER: AaveV3Arbitrum.UI_INCENTIVE_DATA_PROVIDER,
       L2_ENCODER: AaveV3Arbitrum.L2_ENCODER,
       COLLECTOR: AaveV3Arbitrum.COLLECTOR,
-      SWAP_COLLATERAL_ADAPTER: AaveV3Arbitrum.SWAP_COLLATERAL_ADAPTER,
-      REPAY_WITH_COLLATERAL_ADAPTER:
-        AaveV3Arbitrum.REPAY_WITH_COLLATERAL_ADAPTER,
-      DEBT_SWITCH_ADAPTER: AaveV3Arbitrum.DEBT_SWAP_ADAPTER,
-      WITHDRAW_SWITCH_ADAPTER: AaveV3Arbitrum.WITHDRAW_SWAP_ADAPTER,
       GHO_TOKEN_ADDRESS: AaveV3Arbitrum.ASSETS.GHO.UNDERLYING,
     },
   },
@@ -228,26 +180,16 @@ export const marketsData: {
     v3: true,
     chainId: ChainId.avalanche,
     enabledFeatures: {
-      liquiditySwap: true,
       incentives: true,
-      collateralRepay: true,
-      debtSwitch: true,
-      withdrawAndSwitch: true,
-      switch: true,
     },
     addresses: {
       LENDING_POOL_ADDRESS_PROVIDER: AaveV3Avalanche.POOL_ADDRESSES_PROVIDER,
       LENDING_POOL: AaveV3Avalanche.POOL,
       WETH_GATEWAY: AaveV3Avalanche.WETH_GATEWAY,
-      REPAY_WITH_COLLATERAL_ADAPTER:
-        AaveV3Avalanche.REPAY_WITH_COLLATERAL_ADAPTER,
-      SWAP_COLLATERAL_ADAPTER: AaveV3Avalanche.SWAP_COLLATERAL_ADAPTER,
       WALLET_BALANCE_PROVIDER: AaveV3Avalanche.WALLET_BALANCE_PROVIDER,
       UI_POOL_DATA_PROVIDER: '0xFBa4Df643205c5400BC3e05a1E67E0dFaEeeb41F',
       UI_INCENTIVE_DATA_PROVIDER: AaveV3Avalanche.UI_INCENTIVE_DATA_PROVIDER,
       COLLECTOR: AaveV3Avalanche.COLLECTOR,
-      DEBT_SWITCH_ADAPTER: AaveV3Avalanche.DEBT_SWAP_ADAPTER,
-      WITHDRAW_SWITCH_ADAPTER: AaveV3Avalanche.WITHDRAW_SWAP_ADAPTER,
       GHO_TOKEN_ADDRESS: '0xfc421ad3c883bf9e7c4f42de845c4e4405799e73',
     },
   },
@@ -272,13 +214,6 @@ export const marketsData: {
     market: CustomMarket.proto_sonic_v3,
     chainId: ChainId.sonic,
     v3: true,
-    enabledFeatures: {
-      collateralRepay: true,
-      liquiditySwap: true,
-      debtSwitch: true,
-      withdrawAndSwitch: true,
-      switch: true,
-    },
     addresses: {
       LENDING_POOL_ADDRESS_PROVIDER: AaveV3Sonic.POOL_ADDRESSES_PROVIDER,
       LENDING_POOL: AaveV3Sonic.POOL,
@@ -287,10 +222,6 @@ export const marketsData: {
       UI_POOL_DATA_PROVIDER: '0xe28e2c8d240dd5ebd0adcab86fbd79df7a052034',
       UI_INCENTIVE_DATA_PROVIDER: AaveV3Sonic.UI_INCENTIVE_DATA_PROVIDER,
       COLLECTOR: AaveV3Sonic.COLLECTOR,
-      SWAP_COLLATERAL_ADAPTER: AaveV3Sonic.SWAP_COLLATERAL_ADAPTER,
-      REPAY_WITH_COLLATERAL_ADAPTER: AaveV3Sonic.REPAY_WITH_COLLATERAL_ADAPTER,
-      DEBT_SWITCH_ADAPTER: AaveV3Sonic.DEBT_SWAP_ADAPTER,
-      WITHDRAW_SWITCH_ADAPTER: AaveV3Sonic.WITHDRAW_SWAP_ADAPTER,
     },
   },
   [CustomMarket.proto_optimism_v3]: {
@@ -300,11 +231,6 @@ export const marketsData: {
     chainId: ChainId.optimism,
     enabledFeatures: {
       incentives: true,
-      collateralRepay: true,
-      liquiditySwap: true,
-      debtSwitch: true,
-      withdrawAndSwitch: true,
-      switch: true,
     },
     addresses: {
       LENDING_POOL_ADDRESS_PROVIDER: AaveV3Optimism.POOL_ADDRESSES_PROVIDER,
@@ -315,11 +241,6 @@ export const marketsData: {
       UI_INCENTIVE_DATA_PROVIDER: AaveV3Optimism.UI_INCENTIVE_DATA_PROVIDER,
       L2_ENCODER: AaveV3Optimism.L2_ENCODER,
       COLLECTOR: AaveV3Optimism.COLLECTOR,
-      SWAP_COLLATERAL_ADAPTER: AaveV3Optimism.SWAP_COLLATERAL_ADAPTER,
-      REPAY_WITH_COLLATERAL_ADAPTER:
-        AaveV3Optimism.REPAY_WITH_COLLATERAL_ADAPTER,
-      DEBT_SWITCH_ADAPTER: AaveV3Optimism.DEBT_SWAP_ADAPTER,
-      WITHDRAW_SWITCH_ADAPTER: AaveV3Optimism.WITHDRAW_SWAP_ADAPTER,
     },
   },
   [CustomMarket.proto_horizon_v3]: {
@@ -334,14 +255,10 @@ export const marketsData: {
         '0x5D39E06b825C1F2B80bf2756a73e28eFAA128ba0',
       LENDING_POOL: '0xAe05Cd22df81871bc7cC2a04BeCfb516bFe332C8',
       WETH_GATEWAY: '0x973195fB8F67F5B0afe7beDB2A02cec829d89991',
-      // REPAY_WITH_COLLATERAL_ADAPTER: AaveV3EthereumLido.REPAY_WITH_COLLATERAL_ADAPTER,
-      // SWAP_COLLATERAL_ADAPTER: AaveV3EthereumLido.SWAP_COLLATERAL_ADAPTER,
       WALLET_BALANCE_PROVIDER: '0xd8F7829ceB2692C90e418e0963b5Cbcbafc260Bd',
       UI_POOL_DATA_PROVIDER: '0x2dad8162a989cd99d673de4425bb2298db1e1aa2',
       UI_INCENTIVE_DATA_PROVIDER: '0xC5E1717BEafC680E0148DD561591410b69650a5F',
       COLLECTOR: '0x8b8d44751a933f190dde25A69E8cC6F9101b5435',
-      // WITHDRAW_SWITCH_ADAPTER: AaveV3EthereumLido.WITHDRAW_SWAP_ADAPTER,
-      // DEBT_SWITCH_ADAPTER: AaveV3EthereumLido.DEBT_SWAP_ADAPTER,
     },
   },
   [CustomMarket.proto_plasma_v3]: {
@@ -366,26 +283,16 @@ export const marketsData: {
     chainId: ChainId.polygon,
     v3: true,
     enabledFeatures: {
-      liquiditySwap: true,
       incentives: true,
-      collateralRepay: true,
-      debtSwitch: true,
-      withdrawAndSwitch: true,
-      switch: true,
     },
     addresses: {
       LENDING_POOL_ADDRESS_PROVIDER: AaveV3Polygon.POOL_ADDRESSES_PROVIDER,
       LENDING_POOL: AaveV3Polygon.POOL,
       WETH_GATEWAY: AaveV3Polygon.WETH_GATEWAY,
-      REPAY_WITH_COLLATERAL_ADAPTER:
-        AaveV3Polygon.REPAY_WITH_COLLATERAL_ADAPTER,
-      SWAP_COLLATERAL_ADAPTER: AaveV3Polygon.SWAP_COLLATERAL_ADAPTER,
       WALLET_BALANCE_PROVIDER: AaveV3Polygon.WALLET_BALANCE_PROVIDER,
       UI_POOL_DATA_PROVIDER: '0x66E1aBdb06e7363a618D65a910c540dfED23754f',
       UI_INCENTIVE_DATA_PROVIDER: AaveV3Polygon.UI_INCENTIVE_DATA_PROVIDER,
       COLLECTOR: AaveV3Polygon.COLLECTOR,
-      DEBT_SWITCH_ADAPTER: AaveV3Polygon.DEBT_SWAP_ADAPTER,
-      WITHDRAW_SWITCH_ADAPTER: AaveV3Polygon.WITHDRAW_SWAP_ADAPTER,
     },
   },
 
@@ -465,25 +372,14 @@ export const marketsData: {
     market: CustomMarket.proto_gnosis_v3,
     chainId: ChainId.xdai,
     v3: true,
-    enabledFeatures: {
-      liquiditySwap: true,
-      collateralRepay: true,
-      debtSwitch: true,
-      withdrawAndSwitch: true,
-      switch: true,
-    },
     addresses: {
       LENDING_POOL_ADDRESS_PROVIDER: AaveV3Gnosis.POOL_ADDRESSES_PROVIDER,
       LENDING_POOL: AaveV3Gnosis.POOL,
       WETH_GATEWAY: AaveV3Gnosis.WETH_GATEWAY,
-      REPAY_WITH_COLLATERAL_ADAPTER: AaveV3Gnosis.REPAY_WITH_COLLATERAL_ADAPTER,
-      SWAP_COLLATERAL_ADAPTER: AaveV3Gnosis.SWAP_COLLATERAL_ADAPTER,
       WALLET_BALANCE_PROVIDER: AaveV3Gnosis.WALLET_BALANCE_PROVIDER,
       UI_POOL_DATA_PROVIDER: '0x0C6BC4a12039788be08F87e87Cff87FEDbd1D386',
       UI_INCENTIVE_DATA_PROVIDER: AaveV3Gnosis.UI_INCENTIVE_DATA_PROVIDER,
       COLLECTOR: AaveV3Gnosis.COLLECTOR,
-      DEBT_SWITCH_ADAPTER: AaveV3Gnosis.DEBT_SWAP_ADAPTER,
-      WITHDRAW_SWITCH_ADAPTER: AaveV3Gnosis.WITHDRAW_SWAP_ADAPTER,
       GHO_TOKEN_ADDRESS: '0xfc421ad3c883bf9e7c4f42de845c4e4405799e73',
     },
   },
@@ -492,25 +388,14 @@ export const marketsData: {
     market: CustomMarket.proto_bnb_v3,
     chainId: ChainId.bnb,
     v3: true,
-    enabledFeatures: {
-      liquiditySwap: true,
-      collateralRepay: true,
-      debtSwitch: true,
-      withdrawAndSwitch: true,
-      switch: true,
-    },
     addresses: {
       LENDING_POOL_ADDRESS_PROVIDER: AaveV3BNB.POOL_ADDRESSES_PROVIDER,
       LENDING_POOL: AaveV3BNB.POOL,
       WETH_GATEWAY: AaveV3BNB.WETH_GATEWAY,
-      REPAY_WITH_COLLATERAL_ADAPTER: AaveV3BNB.REPAY_WITH_COLLATERAL_ADAPTER,
-      SWAP_COLLATERAL_ADAPTER: AaveV3BNB.SWAP_COLLATERAL_ADAPTER,
       WALLET_BALANCE_PROVIDER: AaveV3BNB.WALLET_BALANCE_PROVIDER,
       UI_POOL_DATA_PROVIDER: '0x68100bD5345eA474D93577127C11F39FF8463e93',
       UI_INCENTIVE_DATA_PROVIDER: AaveV3BNB.UI_INCENTIVE_DATA_PROVIDER,
       COLLECTOR: AaveV3BNB.COLLECTOR,
-      DEBT_SWITCH_ADAPTER: AaveV3BNB.DEBT_SWAP_ADAPTER,
-      WITHDRAW_SWITCH_ADAPTER: AaveV3BNB.WITHDRAW_SWAP_ADAPTER,
     },
   },
   [CustomMarket.proto_scroll_v3]: {
