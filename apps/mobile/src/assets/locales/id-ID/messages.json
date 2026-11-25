@@ -3148,12 +3148,7 @@
         "risky": "Berisiko"
       },
       "repayDetail": {
-        "actions": "Bayar kembali",
-        "tabs": {
-          "collateral": "Jaminan",
-          "wallet": "Saldo dompet"
-        },
-        "repayWith": "Bayar dengan"
+        "actions": "Bayar kembali"
       },
       "supplyDetail": {
         "availableToBorrow": "Tersedia untuk dipinjam",
@@ -3174,7 +3169,6 @@
         "almostReachedError": "Jumlah maksimum yang tersedia untuk dipinjam terbatas karena batas peminjaman protokol sudah hampir tercapai.",
         "borrowingUnavailable": "Aset ini tidak tersedia untuk dipinjam dalam mode saat ini.",
         "almostReachedWarning": "Batas pinjaman protokol adalah 100% untuk aset ini. Pinjaman lebih lanjut tidak tersedia.",
-        "swapDebt": "Tukar",
         "borrowed": "Dipinjam",
         "noSupplyDesc": "Untuk meminjam, Anda perlu menyetor aset sebagai jaminan.",
         "noSupplyPrefix": "Belum ada setoran:"
@@ -3286,79 +3280,18 @@
         "disableTitle": "Nonaktifkan",
         "unavailableTips": "Aset setoran/pinjaman Anda saat ini tidak didukung.",
         "description": "Mengaktifkan E-Mode memungkinkan Anda memaksimalkan daya pinjaman Anda. Namun, pinjaman dibatasi pada aset dalam kategori yang dipilih.",
-        "enabled": "• Diaktifkan",
-        "debtSwapSelector": {
-          "header": {
-            "borrow": "Peminjaman saya",
-            "assets": "Token/Saldo",
-            "apy": "APY"
-          },
-          "title": "Pilih Token Pinjam"
-        },
-        "collateralSwapSelector": {
-          "header": {
-            "assets": "Token",
-            "collateral": "Jaminan Saya"
-          },
-          "title": "Pilih Token Jaminan"
-        }
+        "enabled": "• Diaktifkan"
       },
       "disabled": "DINONAKTIFKAN",
-      "debtSwap": {
-        "actions": {
-          "borrowed": "Dipinjam",
-          "title": "Konversi utang",
-          "select": "Pilih",
-          "amount": "Jumlah",
-          "swapTo": "Konversi ke"
-        },
-        "overview": {
-          "borrowAPY": "APY Pinjaman",
-          "borrowValueAfter": "Saldo pinjaman setelah konversi",
-          "title": "Ikhtisar Transaksi"
-        },
-        "button": {
-          "swap": "Konversi"
-        },
-        "borrowBalance": "Saldo pinjaman",
-        "title": "Konversi posisi pinjaman",
-        "priceImpactTips": "Dampak harga tinggi ({{lostValue}}). Karena likuiditas rendah atau ukuran order kecil, estimasi rute ini dapat menyimpang cukup besar.",
-        "lpDangerWarning": "Setelah pertukaran ini, faktor kesehatan Anda akan sangat rendah dan dapat mengakibatkan likuidasi. Silakan pilih aset lain atau kurangi jumlah pertukaran untuk tetap aman.",
-        "lpRiskWarning": "Faktor kesehatan rendah setelah pertukaran. Posisi Anda akan membawa risiko likuidasi yang lebih tinggi.",
-        "maxLtvWarning": "Jaminan tidak cukup untuk menutupi posisi pinjaman baru. Dompet harus memiliki sisa daya pinjaman untuk melakukan perpindahan utang."
-      },
       "netApy": "APY bersih",
       "totalSupplied": "Total disetor",
       "totalBorrowed": "Total dipinjam",
-      "repayWithCollateral": {
-        "action": {
-          "title": "Bayar kembali dengan {{collateral}}"
-        },
-        "overview": {
-          "borrowValueAfter": "Saldo pinjam setelah dilunasi",
-          "title": "Ikhtisar Transaksi",
-          "collateralValueAfter": "Saldo jaminan setelah pembayaran kembali"
-        },
-        "button": {
-          "repay": "Bayar kembali"
-        },
-        "toRepay": "Jumlah yang diharapkan untuk dilunasi",
-        "collateralNotEnough": "Saldo jaminan Anda lebih rendah dari jumlah yang dipilih.",
-        "repayWith": "Jaminan untuk pelunasan",
-        "insufficientLiquidity": "Likuiditas tidak mencukupi.",
-        "flashLoanDisabled": "Konversi posisi dinonaktifkan untuk aset ini karena alasan keamanan.",
-        "frozenCollateral": "Aset ini dibekukan karena keputusan komunitas Aave."
-      },
       "repayWithAToken": {
         "header": {
           "balance": "Saldo",
           "assets": "Token"
         },
-        "title": "Pilih Token Pembayaran Kembali",
-        "zeroLtvCollateralTips": "Anda memiliki jaminan berikut dengan LTV = 0. Sesuai aturan pelunasan dengan jaminan, Anda harus menggunakan jaminan ini terlebih dahulu untuk melunasi."
-      },
-      "signFallback": {
-        "preExecFailedUseFullSign": "Simulasi Gagal. Transaksi ini kemungkinan besar akan gagal karena kesalahan AAVE."
+        "title": "Pilih Token Pembayaran Kembali"
       }
     },
     "address": {

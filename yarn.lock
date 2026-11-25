@@ -9280,35 +9280,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@paraswap/core@npm:2.2.0":
-  version: 2.2.0
-  resolution: "@paraswap/core@npm:2.2.0"
-  checksum: 10/b481e4b0d0590cafe3a2f0991391fabeb967339a25c11da3769215e95c9495a7b73728b39483ef00f2e1dd6e9dc33ca2467bf0c5b8cc0b5c5f77564d60093ea0
-  languageName: node
-  linkType: hard
-
-"@paraswap/sdk@npm:6.10.0":
-  version: 6.10.0
-  resolution: "@paraswap/sdk@npm:6.10.0"
-  dependencies:
-    "@paraswap/core": "npm:2.2.0"
-    bignumber.js: "npm:^9.0.2"
-    ts-essentials: "npm:^9.1.2"
-  peerDependencies:
-    axios: ">=0.25.0 <2.0.0"
-    ethers: ^5.5.0
-    web3: ^1.7.1
-  peerDependenciesMeta:
-    axios:
-      optional: true
-    ethers:
-      optional: true
-    web3:
-      optional: true
-  checksum: 10/33cebf49a03d50823512fe456d25dc2da65ec5fe9fad3270b6b66cbe85393acff8a43738b89e735f132e42379822482a22561800055b87c1db1bf8c4e2f63ebf
-  languageName: node
-  linkType: hard
-
 "@peculiar/asn1-schema@npm:^2.3.13":
   version: 2.3.15
   resolution: "@peculiar/asn1-schema@npm:2.3.15"
@@ -37851,7 +37822,6 @@ __metadata:
     "@onekeyfe/hd-core": "npm:1.2.7"
     "@onekeyfe/react-native-ble-utils": "patch:@onekeyfe/react-native-ble-utils@npm%3A0.1.9#~/.yarn/patches/@onekeyfe-react-native-ble-utils-npm-0.1.9-thread-safety.patch"
     "@op-engineering/op-sqlite": "npm:15.1.3"
-    "@paraswap/sdk": "npm:6.10.0"
     "@rabby-wallet/base-utils": "workspace:^"
     "@rabby-wallet/biz-utils": "workspace:^"
     "@rabby-wallet/eth-hd-keyring": "npm:4.3.7"
@@ -43669,18 +43639,6 @@ __metadata:
   version: 0.2.0
   resolution: "ts-easing@npm:0.2.0"
   checksum: 10/e67ee862acca3b2e2718e736f31999adcef862d0df76d76a0e138588728d8a87dfec9978556044640bd0e90203590ad88ac2fe8746d0e9959b8d399132315150
-  languageName: node
-  linkType: hard
-
-"ts-essentials@npm:^9.1.2":
-  version: 9.4.2
-  resolution: "ts-essentials@npm:9.4.2"
-  peerDependencies:
-    typescript: ">=4.1.0"
-  peerDependenciesMeta:
-    typescript:
-      optional: true
-  checksum: 10/235b9e86a86569085a414ddd10a7615a84ab127f946fed460b37c691798578f20b11541d3bba65cc8c12a25af81a9e3ba34f1ae4e41c12556725fa0766848cca
   languageName: node
   linkType: hard
 

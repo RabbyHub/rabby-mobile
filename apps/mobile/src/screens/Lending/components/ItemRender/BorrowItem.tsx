@@ -3,7 +3,6 @@ import React, { useMemo } from 'react';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -14,9 +13,8 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 
 import TokenIcon from '../TokenIcon';
-import { getFromToken } from '../../utils/swap';
 import { formatApy, formatListNetWorth } from '../../utils/format';
-import { useLendingSummary, useSelectedMarket } from '../../hooks';
+import { useLendingSummary } from '../../hooks';
 import { formatTokenAmount } from '@/utils/number';
 import { Text } from '@/components/Typography';
 import { openLendingActionPopup } from '../../utils/actionPopup';
@@ -30,12 +28,7 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
-  const { selectedMarketData, chainInfo } = useSelectedMarket();
-  const {
-    iUserSummary: userSummary,
-    formattedPoolReservesAndIncentives,
-    getTargetReserve,
-  } = useLendingSummary();
+  const { iUserSummary: userSummary, getTargetReserve } = useLendingSummary();
 
   const reserve = useMemo(() => {
     return getTargetReserve(underlyingAsset);
@@ -77,42 +70,6 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
       }`,
     };
   }, [reserve]);
-
-  const hasBorrowBalance = useMemo(() => {
-    if (!reserve) {
-      return false;
-    }
-    return reserve?.variableBorrows && reserve.variableBorrows !== '0';
-  }, [reserve]);
-
-  const showDebtSwapButton = useMemo(() => {
-    return (
-      hasBorrowBalance && !!selectedMarketData?.enabledFeatures?.debtSwitch
-    );
-  }, [hasBorrowBalance, selectedMarketData?.enabledFeatures?.debtSwitch]);
-
-  const disableDebtSwapButton = useMemo(() => {
-    const r = formattedPoolReservesAndIncentives.find(item =>
-      isSameAddress(item.underlyingAsset, reserve?.underlyingAsset || ''),
-    );
-    if (!r) {
-      return true;
-    }
-    const disableEModeSwitch =
-      !!userSummary?.userEmodeCategoryId &&
-      formattedPoolReservesAndIncentives.filter(_r =>
-        _r.eModes.find(
-          e => e.id === userSummary?.userEmodeCategoryId && e.borrowingEnabled,
-        ),
-      ).length < 2;
-    return (
-      r.isPaused || !r.isActive || r.symbol === 'stETH' || disableEModeSwitch
-    );
-  }, [
-    formattedPoolReservesAndIncentives,
-    reserve?.underlyingAsset,
-    userSummary?.userEmodeCategoryId,
-  ]);
 
   const disableBorrowButton = useMemo(() => {
     if (
@@ -167,33 +124,6 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
       colors2024,
     });
   };
-  const handleSwapDebt = () => {
-    const r = formattedPoolReservesAndIncentives.find(item =>
-      isSameAddress(item.underlyingAsset, reserve?.underlyingAsset || ''),
-    );
-    if (!r || !userSummary || !chainInfo?.id) {
-      return;
-    }
-    const modalId = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.DEBT_SWAP,
-      allowAndroidHarewareBack: true,
-      bottomSheetModalProps: {
-        enableContentPanningGesture: true,
-        rootViewType: 'View',
-        handleStyle: {
-          backgroundColor: colors2024['neutral-bg-1'],
-        },
-      },
-      fromToken: getFromToken(
-        r,
-        chainInfo?.id,
-        reserve?.variableBorrows || '0',
-      ),
-      onClose: () => {
-        removeGlobalBottomSheetModal2024(modalId);
-      },
-    });
-  };
 
   if (!reserve) {
     return null;
@@ -239,17 +169,6 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
         </View>
 
         <View style={styles.buttonRow}>
-          {showDebtSwapButton && (
-            <TouchableOpacity
-              style={styles.buttonSecondary}
-              activeOpacity={0.8}
-              disabled={disableDebtSwapButton}
-              onPress={handleSwapDebt}>
-              <Text style={styles.buttonSecondaryText}>
-                {t('page.Lending.borrowDetail.swapDebt')}
-              </Text>
-            </TouchableOpacity>
-          )}
           <TouchableOpacity
             style={styles.buttonSecondary}
             activeOpacity={0.8}
