@@ -31,6 +31,7 @@ const MARKETS_HIDDEN_FROM_SELECTOR = new Set<CustomMarket>([
   CustomMarket.proto_zksync_v3,
   CustomMarket.proto_metis_v3,
   CustomMarket.proto_gnosis_v3,
+  CustomMarket.proto_megaeth_v3,
 ]);
 
 const marketList: MarketDataType[] = Object.values(marketsData).filter(
