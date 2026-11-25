@@ -456,6 +456,35 @@ describe('PerpsProInfoPager', () => {
     },
   );
 
+  it('makes only pages with a controls row sticky', () => {
+    render(
+      <PerpsProInfoPager
+        activeTab="positions"
+        contentContainerStyle={{ account: {}, positions: {}, openOrders: {} }}
+        data={data}
+        getActiveScrollOffset={() => 0}
+        indicatorPosition={{ value: 0 } as SharedValue<number>}
+        keepAllTabsMounted
+        onActivateOffset={jest.fn()}
+        onLayout={jest.fn()}
+        onPageDragStart={jest.fn()}
+        onPagePreview={jest.fn()}
+        onPageSelected={jest.fn()}
+        renderItem={({ item }) => <View testID={item.key} />}
+        renderListHeader={tab => <View testID={`header-${tab}`} />}
+        requestedTab={null}
+        stickyHeaderIndices={{ openOrders: [], positions: [1] }}
+        stickyOffset={400}
+      />,
+    );
+    const positions = screen.getByTestId('perps-pro-scroll');
+    expect(positions.props.StickyHeaderComponent).toBeDefined();
+    const openOrders = screen.getByTestId('perps-pro-scroll-openOrders', {
+      includeHiddenElements: true,
+    });
+    expect(openOrders.props.StickyHeaderComponent).toBeUndefined();
+  });
+
   it('keeps current and adjacent virtual lists mounted for swipe preview', () => {
     renderPager();
 

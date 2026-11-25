@@ -38,6 +38,10 @@ import { snapPerpsProTabIndicator } from '../common/PerpsProTabIndicator';
 import { usePerpsProPagerPreviewSession } from '../common/usePerpsProPagerPreviewSession';
 
 import { PERPS_PRO_INFO_TABS } from './perpsProInfoTabOrder';
+import {
+  PerpsProInfoPageTabContext,
+  PerpsProInfoStickyHeader,
+} from './PerpsProInfoStickyHeader';
 import { getPerpsProInfoPagerPreviewPosition } from './perpsProInfoPagerPreview';
 import {
   getPerpsProInfoScrollTarget,
@@ -138,6 +142,8 @@ type PerpsProInfoPagerProps<Row> = {
   renderListHeader: (tab: PerpsProInfoTab, active: boolean) => ReactElement;
   requestedTab: PerpsProInfoTab | null;
   scrollBridge?: PerpsProInfoScrollBridgeController;
+  /** FlatList sticky indices per page (0 is the list header). */
+  stickyHeaderIndices?: Partial<Record<PerpsProInfoTab, number[]>>;
   stickyOffset: number;
   style?: StyleProp<ViewStyle>;
 };
@@ -184,6 +190,7 @@ const PerpsProInfoPagerInner = <Row,>(
     renderListHeader,
     requestedTab,
     scrollBridge,
+    stickyHeaderIndices,
     stickyOffset,
     style,
   }: PerpsProInfoPagerProps<Row>,
@@ -1270,6 +1277,8 @@ const PerpsProInfoPagerInner = <Row,>(
       testID="perps-pro-info-pager">
       {PERPS_PRO_INFO_TABS.map(tab => {
         const active = tab === activeTab;
+        const pageStickyHeaderIndices = stickyHeaderIndices?.[tab];
+        const hasStickyHeader = !!pageStickyHeaderIndices?.length;
         return (
           <View
             accessibilityElementsHidden={!active}
@@ -1280,45 +1289,57 @@ const PerpsProInfoPagerInner = <Row,>(
             style={styles.page}
             testID={`perps-pro-info-page-${tab}`}>
             {preparedTabs.has(tab) ? (
-              <Animated.FlatList
-                ListHeaderComponent={renderListHeader(tab, active)}
-                contentContainerStyle={contentContainerStyle[tab]}
-                data={data[tab] as never}
-                initialNumToRender={6}
-                keyboardShouldPersistTaps="handled"
-                keyExtractor={(item, index) =>
-                  String((item as { key?: string }).key ?? index)
-                }
-                onContentSizeChange={(_width, height) =>
-                  recordContentHeight(tab, height)
-                }
-                onLayout={event => recordViewportHeight(tab, event, active)}
-                onMomentumScrollEnd={event => recordScrollEnd(tab, event)}
-                onScroll={active ? onActiveScroll : undefined}
-                onScrollBeginDrag={
-                  active && nativeVerticalScrollEnabled && scrollBridge
-                    ? () => interruptPerpsProInfoScrollBridge(scrollBridge)
-                    : undefined
-                }
-                onScrollEndDrag={event => recordScrollEnd(tab, event)}
-                ref={list => {
-                  listRefs.current[tab] =
-                    list as unknown as PerpsProInfoListHandle;
-                  if (scrollBridge) {
-                    getPerpsProInfoScrollTarget(scrollBridge, tab)?.ref(
-                      list as never,
-                    );
+              <PerpsProInfoPageTabContext.Provider value={tab}>
+                <Animated.FlatList
+                  ListHeaderComponent={renderListHeader(tab, active)}
+                  StickyHeaderComponent={
+                    hasStickyHeader
+                      ? (PerpsProInfoStickyHeader as never)
+                      : undefined
                   }
-                  applyPendingActiveCorrection(tab);
-                }}
-                renderItem={renderItem}
-                scrollEnabled={active && nativeVerticalScrollEnabled}
-                scrollEventThrottle={16}
-                scrollsToTop={active}
-                showsVerticalScrollIndicator={false}
-                style={styles.list}
-                testID={active ? 'perps-pro-scroll' : `perps-pro-scroll-${tab}`}
-              />
+                  stickyHeaderIndices={
+                    hasStickyHeader ? pageStickyHeaderIndices : undefined
+                  }
+                  contentContainerStyle={contentContainerStyle[tab]}
+                  data={data[tab] as never}
+                  initialNumToRender={6}
+                  keyboardShouldPersistTaps="handled"
+                  keyExtractor={(item, index) =>
+                    String((item as { key?: string }).key ?? index)
+                  }
+                  onContentSizeChange={(_width, height) =>
+                    recordContentHeight(tab, height)
+                  }
+                  onLayout={event => recordViewportHeight(tab, event, active)}
+                  onMomentumScrollEnd={event => recordScrollEnd(tab, event)}
+                  onScroll={active ? onActiveScroll : undefined}
+                  onScrollBeginDrag={
+                    active && nativeVerticalScrollEnabled && scrollBridge
+                      ? () => interruptPerpsProInfoScrollBridge(scrollBridge)
+                      : undefined
+                  }
+                  onScrollEndDrag={event => recordScrollEnd(tab, event)}
+                  ref={list => {
+                    listRefs.current[tab] =
+                      list as unknown as PerpsProInfoListHandle;
+                    if (scrollBridge) {
+                      getPerpsProInfoScrollTarget(scrollBridge, tab)?.ref(
+                        list as never,
+                      );
+                    }
+                    applyPendingActiveCorrection(tab);
+                  }}
+                  renderItem={renderItem}
+                  scrollEnabled={active && nativeVerticalScrollEnabled}
+                  scrollEventThrottle={16}
+                  scrollsToTop={active}
+                  showsVerticalScrollIndicator={false}
+                  style={styles.list}
+                  testID={
+                    active ? 'perps-pro-scroll' : `perps-pro-scroll-${tab}`
+                  }
+                />
+              </PerpsProInfoPageTabContext.Provider>
             ) : null}
           </View>
         );

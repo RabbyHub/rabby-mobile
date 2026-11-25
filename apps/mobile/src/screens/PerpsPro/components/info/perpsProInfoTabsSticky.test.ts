@@ -2,6 +2,7 @@ import { Animated } from 'react-native';
 
 import {
   createPerpsProInfoTabsTranslateY,
+  getPerpsProInfoStickyHeaderOffset,
   getPerpsProInfoSectionMinimumContentHeight,
   getPerpsProInfoTabsNaturalAnchor,
   getPerpsProInfoTabsTop,
@@ -73,5 +74,18 @@ describe('Perps Pro info tabs sticky geometry', () => {
     expect((translateY as Animated.Value).__getValue()).toBe(96);
     marketTranslateY.setValue(0);
     expect((translateY as Animated.Value).__getValue()).toBe(40);
+  });
+});
+describe('getPerpsProInfoStickyHeaderOffset', () => {
+  it('leaves the row in place until the tabs stop above it', () => {
+    // Natural tabs top 300 at scroll 0; the row starts at their bottom.
+    expect(getPerpsProInfoStickyHeaderOffset(300, 344, 0)).toBe(0);
+    expect(getPerpsProInfoStickyHeaderOffset(200, 344, 100)).toBe(0);
+  });
+
+  it('keeps the row under the stuck tabs as the list keeps scrolling', () => {
+    // Tabs stuck at 96 while the list scrolled 260: row stays at 96 + 44.
+    expect(getPerpsProInfoStickyHeaderOffset(96, 344, 260)).toBe(56);
+    expect(344 - 260 + 56).toBe(96 + 44);
   });
 });
