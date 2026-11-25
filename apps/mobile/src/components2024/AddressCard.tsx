@@ -118,6 +118,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
     minHeight: 70,
     borderRadius: 20,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],

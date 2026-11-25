@@ -55,7 +55,7 @@ const clamp = (value: number, min: number, max: number) => {
 };
 
 // Match the existing RNEUI rail and minimum-relative step calculation.
-export const perpsSliderValueAt = (
+export const gestureSliderValueAt = (
   left: number,
   travel: number,
   min: number,
@@ -72,7 +72,7 @@ export const perpsSliderValueAt = (
 };
 
 /** Perps sheet input: native ownership, with the existing horizontal slider geometry. */
-export const PerpsGestureSlider = ({
+export const GestureSlider = ({
   allowTouchTrack = false,
   disabled = false,
   interactive = true,
@@ -271,7 +271,7 @@ export const PerpsGestureSlider = ({
           const initial = position.value;
           active.value = true;
           session.value += 1;
-          position.value = perpsSliderValueAt(
+          position.value = gestureSliderValueAt(
             startLeft.value,
             travel,
             minimumValue,
@@ -299,7 +299,7 @@ export const PerpsGestureSlider = ({
           if (!touch) {
             return;
           }
-          const next = perpsSliderValueAt(
+          const next = gestureSliderValueAt(
             startLeft.value + touch.absoluteX - startX.value,
             travel,
             minimumValue,

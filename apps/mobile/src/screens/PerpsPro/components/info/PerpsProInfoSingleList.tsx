@@ -25,7 +25,7 @@ import type { AnimatedRef, SharedValue } from 'react-native-reanimated';
 import type { PerpsProCollectionPresentation } from '../../model/infoPanelPresentation';
 import { PerpsProOpenOrdersControls } from '../open-orders/PerpsProOpenOrdersControls';
 
-type Category = 'basic' | 'conditional';
+type Category = 'basic' | 'conditional' | 'twap';
 type ControlsProps = React.ComponentProps<typeof PerpsProOpenOrdersControls>;
 export type PerpsProLinkedOrders<Row extends { key: string }> = {
   controls: Omit<ControlsProps, 'onSetCategory'>;
@@ -42,7 +42,10 @@ const SIMPLE_PAGES: readonly LinkedScenePage[] = [
 ];
 const GROUPED_PAGES: readonly LinkedScenePage[] = [
   { key: 'positions' },
-  { key: 'openOrders', children: [{ key: 'basic' }, { key: 'conditional' }] },
+  {
+    key: 'openOrders',
+    children: [{ key: 'basic' }, { key: 'conditional' }, { key: 'twap' }],
+  },
   { key: 'account' },
 ];
 const ignoreMeasure = () => {};
@@ -142,7 +145,8 @@ export const PerpsProInfoSingleList = <Row extends { key: string }>({
   // UI. A zero-count category or a symbol filter never removes a physical leaf.
   const grouped =
     openOrders.presentationByCategory.basic !== 'authoritativeEmpty' ||
-    openOrders.presentationByCategory.conditional !== 'authoritativeEmpty';
+    openOrders.presentationByCategory.conditional !== 'authoritativeEmpty' ||
+    openOrders.presentationByCategory.twap !== 'authoritativeEmpty';
   const activePath = useMemo(
     () => ({
       key: activeTab,
@@ -157,7 +161,9 @@ export const PerpsProInfoSingleList = <Row extends { key: string }>({
     (path: LinkedScenePath) => {
       if (
         path.key === 'openOrders' &&
-        (path.childKey === 'basic' || path.childKey === 'conditional')
+        (path.childKey === 'basic' ||
+          path.childKey === 'conditional' ||
+          path.childKey === 'twap')
       ) {
         onCategoryChange(path.childKey);
       }
@@ -169,7 +175,11 @@ export const PerpsProInfoSingleList = <Row extends { key: string }>({
     (path: LinkedScenePath, context: LinkedScenePageContext) => {
       const tab = path.key as PerpsProInfoTab;
       const category =
-        path.childKey === 'conditional' ? 'conditional' : 'basic';
+        path.childKey === 'conditional'
+          ? 'conditional'
+          : path.childKey === 'twap'
+          ? 'twap'
+          : 'basic';
       const isOrderChild = tab === 'openOrders' && path.childKey !== undefined;
       return (
         <LinkedPerpsRows
@@ -213,7 +223,11 @@ export const PerpsProInfoSingleList = <Row extends { key: string }>({
         <PerpsProOpenOrdersControls
           {...openOrders.controls}
           category={
-            context.childKey === 'conditional' ? 'conditional' : 'basic'
+            context.childKey === 'conditional'
+              ? 'conditional'
+              : context.childKey === 'twap'
+              ? 'twap'
+              : 'basic'
           }
           onSetCategory={context.selectChild}
         />

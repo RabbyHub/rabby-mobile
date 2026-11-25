@@ -23,8 +23,13 @@ import * as Sentry from '@sentry/react-native';
 import { addHexPrefix, stripHexPrefix } from 'ethereumjs-util';
 import { eventBus, EVENTS } from '@/utils/events';
 import { Chain, CHAINS_ENUM, getTestnetChainList } from '@/constant/chains';
+import { isNonPublicProductionEnv } from '@/constant';
+import { captureProviderRequest } from '@/devtools/screenRegistry/requestCapture';
 import * as apisDapp from '../apis/dapp';
-import { waitSignComponentAmounted } from '../utils/signEvent';
+import {
+  cancelSignComponentAmounted,
+  waitSignComponentAmounted,
+} from '../utils/signEvent';
 import { findChain } from '@/utils/chain';
 import { gnosisController } from './gnosisController';
 import { underline2Camelcase } from '../utils/common';
@@ -45,6 +50,7 @@ import {
   getProviderRequestChain,
   normalizeProviderRequestChainId,
 } from './requestContext';
+import { createSigningOperationId } from '../utils/signingOperation';
 
 export const resemblesETHAddress = (str: string): boolean => {
   return str.length === 42;
@@ -53,6 +59,13 @@ export const resemblesETHAddress = (str: string): boolean => {
 const isSignApproval = (type: string) => {
   const SIGN_APPROVALS = ['SignText', 'SignTypedData', 'SignTx'];
   return SIGN_APPROVALS.includes(type);
+};
+
+const TYPED_DATA_METHODS: Record<string, string> = {
+  ethSignTypedData: 'eth_signTypedData',
+  ethSignTypedDataV1: 'eth_signTypedData_v1',
+  ethSignTypedDataV3: 'eth_signTypedData_v3',
+  ethSignTypedDataV4: 'eth_signTypedData_v4',
 };
 
 const lockedOrigins = new Set<string>();
@@ -134,13 +147,16 @@ const flowContext = flow
         try {
           let defaultChain: CHAINS_ENUM | null = null;
           let defaultAccount: Account | undefined = undefined;
-          const autoConnectInfo = await autoConnectServiceApi.autoConnect(
-            origin,
-          );
+          let isAutoConnect = true;
+          const autoConnectInfo =
+            getDappSnapshot(origin)?.isConnected === false
+              ? undefined
+              : await autoConnectServiceApi.autoConnect(origin);
           if (autoConnectInfo) {
             defaultAccount = autoConnectInfo.defaultAccount;
             defaultChain = autoConnectInfo.defaultChain || CHAINS_ENUM.ETH;
           } else if (
+            getDappSnapshot(origin)?.isConnected !== false &&
             isFromMobileInnerDapp &&
             shouldAutoConnect(origin, ctx.request.data.method)
           ) {
@@ -190,10 +206,12 @@ const flowContext = flow
             );
             defaultChain = res.defaultChain;
             defaultAccount = res.defaultAccount;
+            isAutoConnect = false;
           }
           connectOrigins.delete(origin);
           await apisDapp.connect({
             origin,
+            isAutoConnect,
             chainId: defaultChain || CHAINS_ENUM.ETH,
             currentAccount: defaultAccount || getFallbackAccountSnapshot(),
             session: {
@@ -346,7 +364,7 @@ const flowContext = flow
               $ctx: ctx?.request?.data?.$ctx,
               $mobileCtx,
               requestContext: ctx.request.requestContext,
-              method,
+              method: TYPED_DATA_METHODS[mapMethod] || method,
               data: ctx.request.data.params,
               session: { origin, name, icon, $mobileCtx },
             },
@@ -377,7 +395,10 @@ const flowContext = flow
       Reflect.getMetadata('APPROVAL', providerController, mapMethod) || [];
     // // leave here for debug
     // console.debug('[debug] flowContext:: before process request');
-    const { uiRequestComponent, ...rest } = approvalRes || {};
+    const { uiRequestComponent, ...approvalRest } = approvalRes || {};
+    const signingOperationId =
+      approvalRest.signingOperationId || createSigningOperationId();
+    const rest = { ...approvalRest, signingOperationId };
     const {
       session: { origin, $mobileCtx },
     } = request;
@@ -439,6 +460,7 @@ const flowContext = flow
               if (retryType) {
                 setCurrentRequestDeferFnSync(
                   createRequestDeferFn(_approvalRes),
+                  signingOperationId,
                 );
               }
             }
@@ -456,6 +478,7 @@ const flowContext = flow
                   eventBus.emit(EVENTS.SIGN_FINISHED, {
                     success: true,
                     data: result,
+                    signingOperationId,
                   });
                 }
                 return result;
@@ -467,6 +490,7 @@ const flowContext = flow
                   params: {
                     success: false,
                     errorMsg: e?.message || JSON.stringify(e),
+                    signingOperationId,
                   },
                 };
                 if (e.method) {
@@ -491,7 +515,7 @@ const flowContext = flow
     // Safe owner signing registers its own retry fn
     // (apisKeyring.signTypedDataWithUI); ours would only resolve undefined.
     if (!approvalRes?.isGnosis) {
-      setCurrentRequestDeferFnSync(requestDeferFn);
+      setCurrentRequestDeferFnSync(requestDeferFn, signingOperationId);
     }
     // Only the first attempt waits for the waiting UI to mount. Retries are
     // started from that mounted UI, which emits no further mount event.
@@ -500,7 +524,9 @@ const flowContext = flow
       !isAutoPersonalSign &&
       isSignApproval(approvalType) &&
       uiRequestComponent
-        ? waitSignComponentAmounted().then(() => requestDeferFn())
+        ? waitSignComponentAmounted(signingOperationId).then(mounted =>
+            mounted ? requestDeferFn() : undefined,
+          )
         : requestDeferFn();
     async function requestApprovalLoop({
       uiRequestComponent,
@@ -522,11 +548,12 @@ const flowContext = flow
           isUnshift: true,
         });
         if (res?.uiRequestComponent) {
-          return await requestApprovalLoop(res);
+          return await requestApprovalLoop({ ...res, signingOperationId });
         } else {
           return res;
         }
       } catch (e) {
+        cancelSignComponentAmounted(signingOperationId);
         console.error(e);
         throw e;
       }
@@ -587,6 +614,9 @@ async function runRpcFlow(request: ProviderRequest) {
 }
 
 export default async function rpcFlow(request: ProviderRequest) {
+  if (isNonPublicProductionEnv) {
+    void captureProviderRequest(request).catch(() => {});
+  }
   await Promise.all([
     ensureDappServiceReady(),
     ensureNotificationServiceReady(),

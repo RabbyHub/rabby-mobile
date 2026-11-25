@@ -73,6 +73,7 @@ const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     alert: {
       borderRadius: 8,
+      borderCurve: 'continuous',
       paddingHorizontal: 10,
       paddingVertical: 12,
       backgroundColor: colors['red-light'],

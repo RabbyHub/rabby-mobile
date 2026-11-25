@@ -1,4 +1,12 @@
 import {
+  usePerpsTwapRecords,
+  usePerpsTwapSourceState,
+} from '@/hooks/perps/twap/usePerpsTwapStore';
+import {
+  usePerpsTwapSubscriptions,
+  refreshPerpsTwaps,
+} from '@/hooks/perps/twap/usePerpsTwapSubscriptions';
+import {
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -13,6 +21,7 @@ import { usePerpsRuntimeStatus } from '@/hooks/perps/runtime/usePerpsRuntimeStat
 import { getPerpsRuntimeIdentity } from '@/hooks/perps/runtime/perpsRuntimeState';
 import {
   fetchStakingSummaryHttp,
+  getPerpsAccountRuntimeContext,
   isPerpsUserAbstractionReadyForAccount,
   perpsStore,
   usePerpsStore,
@@ -47,6 +56,12 @@ export type PerpsProAccountPanelState =
   | 'error'
   | 'ready';
 
+const marketFactSignature = (market: {
+  name: string;
+  dexId: string;
+  quoteAsset: string;
+}) => `${market.name}\u0000${market.dexId}\u0000${market.quoteAsset}`;
+
 export const usePerpsProInfoPanel = (
   canonicalCoin: string,
   requestedInfoTab: PerpsProInfoTab | null = null,
@@ -59,8 +74,9 @@ export const usePerpsProInfoPanel = (
     useState(false);
   const [hideOtherOpenOrderSymbols, setHideOtherOpenOrderSymbols] =
     useState(false);
-  const [openOrderCategory, setOpenOrderCategory] =
-    useState<Exclude<PerpsOpenOrderCategory, 'unsupported'>>('basic');
+  const [openOrderCategory, setOpenOrderCategory] = useState<
+    Exclude<PerpsOpenOrderCategory, 'unsupported'> | 'twap'
+  >('basic');
 
   const facts = perpsStore(
     useShallow(state => ({
@@ -82,6 +98,49 @@ export const usePerpsProInfoPanel = (
   );
   const pendingFundingCount = perpsStore(state =>
     getPerpsPendingFundingCount(state.localLoadingHistory),
+  );
+  const twapUser = facts.currentAccount?.address;
+  usePerpsTwapSubscriptions(
+    twapUser,
+    sceneActive && runtime.status === 'ready',
+    getPerpsAccountRuntimeContext().generation,
+  );
+  const twapRecords = usePerpsTwapRecords(twapUser);
+  const activeTwaps = usePerpsTwapSourceState(twapUser, 'active');
+  const twapReadiness: 'error' | 'loading' | 'ready' = activeTwaps.error
+    ? 'error'
+    : activeTwaps.ready
+    ? 'ready'
+    : 'loading';
+  const marketFactSignatures = perpsStore(
+    useShallow(state => state.marketData.map(marketFactSignature)),
+  );
+  const marketDataMap = useMemo(() => {
+    const result: Record<string, { coin: string }> = {};
+    for (const signature of marketFactSignatures) {
+      const [coin] = signature.split('\u0000');
+      if (coin) {
+        result[coin] = { coin };
+      }
+    }
+    return result;
+  }, [marketFactSignatures]);
+  const allTwaps = useMemo(
+    () =>
+      Object.values(twapRecords)
+        .filter(order => order.active && !!marketDataMap[order.state.coin])
+        .sort(
+          (a, b) =>
+            b.state.timestamp - a.state.timestamp || b.twapId - a.twapId,
+        ),
+    [twapRecords, marketDataMap],
+  );
+  const twaps = useMemo(
+    () =>
+      hideOtherOpenOrderSymbols
+        ? allTwaps.filter(order => order.state.coin === canonicalCoin)
+        : allTwaps,
+    [allTwaps, canonicalCoin, hideOtherOpenOrderSymbols],
   );
   const accountSelectors = useMemo(createPerpsProAccountSelectors, []);
   // Keep readiness/risk live at the scene. Numeric valuation belongs only to
@@ -240,10 +299,11 @@ export const usePerpsProInfoPanel = (
     }),
     [allOpenOrders, canonicalCoin, hideOtherOpenOrderSymbols],
   );
-  const openOrders = openOrdersByCategory[openOrderCategory];
+  const openOrders =
+    openOrderCategory === 'twap' ? [] : openOrdersByCategory[openOrderCategory];
   const hasAccount = !!facts.currentAccount;
   const openOrderCollectionPresentationByCategory = useMemo<
-    Record<'basic' | 'conditional', PerpsProCollectionPresentation>
+    Record<'basic' | 'conditional' | 'twap', PerpsProCollectionPresentation>
   >(() => {
     const collectionFacts = {
       hasAccount,
@@ -260,6 +320,13 @@ export const usePerpsProInfoPanel = (
         ...collectionFacts,
         visibleCount: openOrdersByCategory.conditional.length,
       }),
+      twap: resolvePerpsProCollectionPresentation({
+        hasAccount,
+        runtimeReady: runtime.status === 'ready',
+        sourceReady: twapReadiness === 'ready',
+        totalCount: allTwaps.length,
+        visibleCount: twaps.length,
+      }),
     };
   }, [
     facts.isOpenOrdersReady,
@@ -267,6 +334,9 @@ export const usePerpsProInfoPanel = (
     hasAccount,
     openOrdersByCategory,
     runtime.status,
+    allTwaps.length,
+    twaps.length,
+    twapReadiness,
   ]);
   const openOrderCommandCandidates = useMemo(
     () => allOpenOrders.filter(order => order.category === openOrderCategory),
@@ -337,9 +407,15 @@ export const usePerpsProInfoPanel = (
       : 'no-account',
     accountState,
     activeInfoTab,
-    allOpenOrdersCount: openOrderCounts.basic + openOrderCounts.conditional,
+    allOpenOrdersCount:
+      openOrderCounts.basic + openOrderCounts.conditional + allTwaps.length,
     allPositionsCount: allPositions.length,
     allPositionsByCoin,
+    twaps,
+    twapCount: allTwaps.length,
+    twapReadiness,
+    retryTwaps: () =>
+      twapUser ? refreshPerpsTwaps(twapUser, 'active') : Promise.resolve(),
     openOrderCollectionPresentation:
       openOrderCollectionPresentationByCategory[openOrderCategory],
     openOrderCollectionPresentationByCategory,

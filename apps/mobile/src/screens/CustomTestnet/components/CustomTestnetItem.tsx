@@ -97,11 +97,13 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     minWidth: 0,
     borderRadius: 12,
+    borderCurve: 'continuous',
     backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-2'],
   },
   item: {
     flexDirection: 'row',
     borderRadius: 12,
+    borderCurve: 'continuous',
     backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-2'],
     paddingHorizontal: 12,
     paddingVertical: 14,

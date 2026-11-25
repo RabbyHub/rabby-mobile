@@ -221,6 +221,7 @@ describe('usePerpsProScene component', () => {
     mockRuntimeStatus = 'initializing';
     hook.rerender({});
 
+    expect(hook.result.current.routeFocused).toBe(true);
     expect(hook.result.current.klineEnabled).toBe(false);
     expect(hook.result.current.realtimeEnabled).toBe(false);
     hook.unmount();
@@ -244,6 +245,7 @@ describe('usePerpsProScene component', () => {
     await waitFor(() => {
       expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC');
     });
+    expect(hook.result.current.routeFocused).toBe(false);
     expect(hook.result.current.klineEnabled).toBe(false);
     expect(hook.result.current.realtimeEnabled).toBe(false);
     hook.unmount();

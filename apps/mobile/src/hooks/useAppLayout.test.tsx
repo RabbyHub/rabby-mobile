@@ -4,12 +4,15 @@ import {
   startWatchLayoutChange,
   svsLayout,
   useSafeAndroidBottomSizes,
+  useCustomHeaderTop,
   useSafeOffTop,
   useSafeSizes,
 } from './useAppLayout';
 
 let mockWindowLayout = { width: 360, height: 700 };
 let mockScreenLayout = { width: 360, height: 760 };
+let mockInsets = { top: 10, bottom: 20, left: 0, right: 0 };
+let mockFoldablePosture = false;
 
 let changeListener:
   | ((payload: {
@@ -35,12 +38,17 @@ jest.mock('react-native-reanimated', () => ({
 }));
 
 jest.mock('react-native-safe-area-context', () => ({
-  useSafeAreaInsets: () => ({
-    top: 10,
-    bottom: 20,
-    left: 0,
-    right: 0,
-  }),
+  useSafeAreaInsets: () => mockInsets,
+}));
+
+// The real package ships untranspiled ESM; only the context is needed here.
+jest.mock('@react-navigation/elements', () => {
+  const React = require('react');
+  return { HeaderHeightContext: React.createContext(undefined) };
+});
+
+jest.mock('@/core/utils/foldableDevice', () => ({
+  isFoldableSideColumnPosture: () => mockFoldablePosture,
 }));
 
 jest.mock('react-native', () => ({
@@ -74,6 +82,8 @@ describe('useAppLayout', () => {
   beforeEach(() => {
     mockWindowLayout = { width: 360, height: 700 };
     mockScreenLayout = { width: 360, height: 760 };
+    mockInsets = { top: 10, bottom: 20, left: 0, right: 0 };
+    mockFoldablePosture = false;
     changeListener = undefined;
     svsLayout.winLayout.value = mockWindowLayout;
     svsLayout.screenLayout.value = mockScreenLayout;
@@ -112,6 +122,7 @@ describe('useAppLayout', () => {
     const { result: safeSizes } = renderHook(() => useSafeSizes());
     expect(safeSizes.current).toEqual({
       safeTop: 10,
+      safeHeaderTop: 10,
       headerHeight: 56,
       safeOffHeader: 66,
       safeOffScreenTop: 750,
@@ -149,5 +160,43 @@ describe('useAppLayout', () => {
         card: 650,
       },
     });
+  });
+
+  it('keeps the raw top and headers unchanged when no side column is present', () => {
+    const { result: safeSizes } = renderHook(() => useSafeSizes());
+    expect(safeSizes.current.safeHeaderTop).toBe(10);
+
+    const { result: headerTop } = renderHook(() => useCustomHeaderTop());
+    expect(headerTop.current).toBe(10);
+
+    mockInsets = { top: 0, bottom: 20, left: 0, right: 0 };
+    const { result: noInsetSizes } = renderHook(() => useSafeSizes());
+    expect(noInsetSizes.current.safeHeaderTop).toBe(0);
+
+    const { result: noInsetHeaderTop } = renderHook(() => useCustomHeaderTop());
+    expect(noInsetHeaderTop.current).toBe(0);
+  });
+
+  it('uses the calibrated header offset on the foldable side-column posture', () => {
+    mockFoldablePosture = true;
+    mockInsets = { top: 0, bottom: 34, left: 0, right: 84 };
+
+    const { result: safeSizes } = renderHook(() => useSafeSizes());
+    // Outer screen: no native header context in this test, so the content
+    // offset falls back to headerAreaHeight + top; the header row itself is
+    // pinned to the calibrated 22pt.
+    expect(safeSizes.current.safeHeaderTop).toBe(22);
+    expect(safeSizes.current.safeOffHeader).toBe(56);
+
+    const { result: headerTop } = renderHook(() => useCustomHeaderTop());
+    expect(headerTop.current).toBe(22);
+  });
+
+  it('prefers the real safe-area top over the foldable offset when it exists', () => {
+    mockFoldablePosture = false;
+    mockInsets = { top: 59, bottom: 34, left: 0, right: 84 };
+
+    const { result: headerTop } = renderHook(() => useCustomHeaderTop());
+    expect(headerTop.current).toBe(59);
   });
 });

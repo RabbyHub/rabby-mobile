@@ -175,6 +175,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   skeletonRow: {
     height: 56,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   tokenItem: {
     minHeight: 56,
@@ -182,6 +183,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderRadius: 8,
+    borderCurve: 'continuous',
     borderWidth: 0.5,
     borderColor: colors2024['neutral-line'],
     backgroundColor: colors2024['neutral-bg-2'],

@@ -1,3 +1,4 @@
+import { withScreenPropsInjection } from '@/devtools/screenRegistry/screenInjection';
 import 'react-native-gesture-handler';
 import React, {
   useCallback,
@@ -149,7 +150,7 @@ export function SingleAddressNavigator() {
       }}>
       <SingleAddressStack.Screen
         name={RootNames.SingleAddressHome}
-        component={RegressionSingleAddressHome}
+        component={withScreenPropsInjection(RegressionSingleAddressHome)}
         options={mergeScreenOptions({
           title: '',
           headerTitle: '',

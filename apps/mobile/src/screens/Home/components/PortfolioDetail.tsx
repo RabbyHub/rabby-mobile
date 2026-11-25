@@ -282,6 +282,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   portfolioType: {
     borderRadius: 4,
+    borderCurve: 'continuous',
     paddingHorizontal: 4,
     paddingVertical: 2,
     height: 20,
@@ -289,7 +290,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   portfolioTypeText: {
     fontSize: 12,
-    fontWeight: '900',
+    fontWeight: '800',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     lineHeight: 16,
@@ -322,6 +323,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   tokenList: {
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 8,
+    borderCurve: 'continuous',
     overflow: 'hidden',
     // marginTop: 12,
     marginBottom: 12,
@@ -415,6 +417,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexWrap: 'wrap',
     marginBottom: 12,
     borderRadius: 6,
+    borderCurve: 'continuous',
   },
   supplementField: {
     width: '50%',
@@ -440,6 +443,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   nftIcon: {
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
   nftIconInfo: {
     marginLeft: 4,
@@ -452,6 +456,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     height: 42,
     borderRadius: 12,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['brand-light-1'],
     display: 'flex',
     alignItems: 'center',

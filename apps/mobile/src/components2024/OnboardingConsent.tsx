@@ -110,6 +110,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   card: {
     padding: 12,
     borderRadius: 12,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-5'],
     gap: 8,
   },

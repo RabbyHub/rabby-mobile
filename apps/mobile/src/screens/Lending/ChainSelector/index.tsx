@@ -22,6 +22,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => {
   return {
     container: {
       borderRadius: 16,
+      borderCurve: 'continuous',
       paddingHorizontal: 16,
       paddingVertical: 13,
       backgroundColor: colors2024['neutral-bg-5'],
@@ -50,6 +51,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       justifyContent: 'center',
       alignItems: 'center',
       borderRadius: 100,
+      borderCurve: 'continuous',
       backgroundColor: isLight
         ? 'rgba(0, 0, 0, 0.1)'
         : colors2024['neutral-line'],

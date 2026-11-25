@@ -51,7 +51,8 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Dimensions, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { Text } from '@/components/Typography';
 import type { ProviderRequestContext } from '@/core/controllers/type';
 
@@ -607,6 +608,7 @@ const getStyles = createGetStyles(colors => {
       paddingHorizontal: 8,
       backgroundColor: colors['neutral-card2'],
       borderRadius: 4,
+      borderCurve: 'continuous',
 
       flexDirection: 'row',
       alignItems: 'center',
@@ -699,7 +701,7 @@ const getStyles = createGetStyles(colors => {
 
     footer: {
       width: '100%',
-      maxWidth: Dimensions.get('window').width,
+      maxWidth: getDimensionsSnapshot('window').width,
       display: 'flex',
       flexDirection: 'row',
       gap: 16,
@@ -740,7 +742,7 @@ const getStyles = createGetStyles(colors => {
     },
     tokenNotFoundFooter: {
       width: '100%',
-      maxWidth: Dimensions.get('window').width,
+      maxWidth: getDimensionsSnapshot('window').width,
       display: 'flex',
       flexDirection: 'row',
       gap: 16,

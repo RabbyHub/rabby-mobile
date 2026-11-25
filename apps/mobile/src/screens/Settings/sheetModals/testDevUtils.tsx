@@ -88,6 +88,7 @@ const getStyle = createGetStyles2024(ctx => {
         ? ctx.colors['neutral-card1']
         : ctx.colors['neutral-bg1'],
       borderRadius: 8,
+      borderCurve: 'continuous',
 
       flexDirection: 'row',
       justifyContent: 'space-between',

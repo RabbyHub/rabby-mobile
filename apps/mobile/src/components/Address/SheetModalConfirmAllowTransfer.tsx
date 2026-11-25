@@ -322,6 +322,7 @@ const getStyles = createGetStyles(colors => {
     },
     inputContainer: {
       borderRadius: 8,
+      borderCurve: 'continuous',
       backgroundColor: colors['neutral-card2'],
 
       height: 52,

@@ -33,7 +33,7 @@ import {
   RcScreenshotReport,
   RcIconCurrency,
   RcNotification,
-  RcWalletConnect,
+  RcScanToConnect,
   RcAutolock,
   RcDataAnalysis,
   RcBugReport,
@@ -498,7 +498,11 @@ function ClearAppCacheSettingItem() {
                     <CustomSkeleton
                       width={64}
                       height={16}
-                      style={{ borderRadius: 8, marginRight: 8 }}
+                      style={{
+                        borderRadius: 8,
+                        borderCurve: 'continuous',
+                        marginRight: 8,
+                      }}
                     />
                   ) : (
                     <AppCacheSizeText
@@ -678,19 +682,11 @@ function SettingsBlocks() {
 
   const settingsBlocks: Record<string, SettingBlock> = (() => {
     return {
-      features: {
-        label: t('page.setting.features'),
+      scanToConnect: {
         items: [
           {
-            label: t('page.setting.manageWallets'),
-            icon: RcManageWallet,
-            onPress: () => {
-              handleWalletsListPress();
-            },
-          },
-          {
-            label: 'WalletConnect',
-            icon: RcWalletConnect,
+            label: t('page.walletConnect.screenTitle'),
+            icon: RcScanToConnect,
             onPress: () => {
               navigation.dispatch(
                 StackActions.push(RootNames.StackSettings, {
@@ -704,6 +700,13 @@ function SettingsBlocks() {
       settings: {
         label: t('page.setting.screenTitle'),
         items: [
+          {
+            label: t('page.setting.manageWallets'),
+            icon: RcManageWallet,
+            onPress: () => {
+              handleWalletsListPress();
+            },
+          },
           {
             label: biometricsComputed.systemAuthSettingsLabel,
             icon: isUsingDevicePasscodeForSettings
@@ -986,6 +989,10 @@ function SettingsBlocks() {
             key={l1key}
             label={block.label}
             style={[
+              idx === 0 &&
+                !block.label && {
+                  marginTop: 8,
+                },
               idx > 0 &&
                 !!block.label && {
                   marginTop: 16,

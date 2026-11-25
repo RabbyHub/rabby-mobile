@@ -38,6 +38,7 @@ import {
   requestRootSceneTarget,
   resolveRootSceneRelease,
   resolveRootSceneDragClaim,
+  shouldPublishRootSceneSettled,
   validateRootSceneKeys,
   type RootScenePagerGestureMode,
 } from './rootScenePagerModel';
@@ -264,7 +265,14 @@ export function RootScenePager(props: RootScenePagerProps) {
           ? current
           : next,
       );
-      if (settled && selectedKey.current !== next.key) {
+      if (
+        settled &&
+        shouldPublishRootSceneSettled(
+          selectedKey.current,
+          latest.current.requestedKey,
+          next.key,
+        )
+      ) {
         selectedKey.current = next.key;
         expectedEcho.current = next.key;
         latest.current.onSettled(next.key);

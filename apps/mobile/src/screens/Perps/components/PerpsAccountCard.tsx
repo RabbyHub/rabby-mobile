@@ -599,6 +599,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   // up as a pale halo around the bottom corners in dark mode.
   cardShadow: {
     borderRadius: 14,
+    borderCurve: 'continuous',
     backgroundColor: isLight ? '#FEFEFE' : 'transparent',
     ...(isLight
       ? {
@@ -616,6 +617,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   // border.
   card: {
     borderRadius: 14,
+    borderCurve: 'continuous',
     borderWidth: 2,
     borderColor: isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.08)',
     backgroundColor: isLight ? '#FEFEFE' : colors2024['neutral-bg-1'],
@@ -669,6 +671,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   valueSkeleton: {
     marginTop: 8,
     borderRadius: 6,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-3'],
@@ -682,6 +685,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   changeSkeleton: {
     borderRadius: 4,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-3'],
@@ -707,6 +711,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   sparklineSkeleton: {
     marginTop: 12,
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-3'],
@@ -733,6 +738,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     // the bottom corners — visible as thin bright arcs in dark mode.
     borderBottomLeftRadius: 12,
     borderBottomRightRadius: 12,
+    borderCurve: 'continuous',
   },
   lowerRow: {
     flexDirection: 'row',
@@ -764,6 +770,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   availableSkeleton: {
     marginTop: 4,
     borderRadius: 4,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-3'],
@@ -784,6 +791,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 36,
     height: 36,
     borderRadius: 10.8,
+    borderCurve: 'continuous',
     backgroundColor: PERPS_BTN_BG,
     alignItems: 'center',
     justifyContent: 'center',
@@ -791,6 +799,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   addFundsBtn: {
     height: 36,
     borderRadius: 10.8,
+    borderCurve: 'continuous',
     backgroundColor: PERPS_BTN_BG,
     paddingHorizontal: 14,
     gap: 2,
@@ -807,12 +816,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   learnCard: {
     borderRadius: 16,
+    borderCurve: 'continuous',
     marginTop: 12,
     backgroundColor: colors2024['neutral-bg-5'],
   },
   learnCardInner: {
     position: 'relative',
     borderRadius: 16,
+    borderCurve: 'continuous',
     alignItems: 'flex-start',
     justifyContent: 'center',
     paddingVertical: 24,
@@ -833,7 +844,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '900',
+    fontWeight: '800',
     color: colors2024['neutral-title-1'],
   },
   learnDesc: {

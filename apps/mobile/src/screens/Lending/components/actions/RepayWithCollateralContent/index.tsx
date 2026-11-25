@@ -1270,6 +1270,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   content: {
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 16,
+    borderCurve: 'continuous',
     paddingVertical: 20,
   },
   slippageContainer: {
@@ -1279,6 +1280,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   },
   tokenContainer: {
     borderRadius: 16,
+    borderCurve: 'continuous',
     padding: 16,
     paddingVertical: 0,
   },
@@ -1307,6 +1309,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     gap: 4,
     backgroundColor: colors2024['neutral-line'],
     borderRadius: 100,
+    borderCurve: 'continuous',
     paddingHorizontal: 4,
     height: 34,
     paddingRight: 8,
@@ -1317,6 +1320,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     padding: 4,
     backgroundColor: colors2024['brand-light-1'],
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   maxButtonText: {
     color: colors2024['brand-default'],
@@ -1422,6 +1426,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     width: 36,
     height: 36,
     borderRadius: 22.5,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-1'],
     justifyContent: 'center',
     alignItems: 'center',

@@ -50,6 +50,7 @@ import type { ProviderRequestContext } from '@/core/controllers/type';
 import { tokenizeSignMessageText } from './signMessageTokenizer';
 import { useSignMessageAddressData } from './useSignMessageAddressData';
 import { SignMessageTagProvider } from './SignMessageHighlighter';
+import { createSigningOperationId } from '@/core/utils/signingOperation';
 
 interface SignTextProps {
   data: string[];
@@ -73,7 +74,7 @@ export const SignText = ({
   account: Account;
 }) => {
   const currentAccount = params.isGnosis ? params.account! : account;
-  const [, resolveApproval, rejectApproval] = useApproval();
+  const [getApproval, resolveApproval, rejectApproval] = useApproval();
   const { t } = useTranslation();
   const { data, session, isGnosis = false } = params;
   const site = getDappSnapshot(session.origin);
@@ -205,6 +206,8 @@ export const SignText = ({
     if (currentAccount?.type === KEYRING_TYPE.HdKeyring) {
       await invokeEnterPassphrase(currentAccount.address);
     }
+
+    if (!(await getApproval())) return;
 
     if (currentAccount?.type && WaitingSignComponent[currentAccount?.type]) {
       resolveApproval({
@@ -352,7 +355,10 @@ export const SignText = ({
       chainId: BigInt(chainId!),
       data: signText,
     });
+    if (!(await getApproval())) return;
+
     if (WaitingSignComponent[account.type]) {
+      const signingOperationId = createSigningOperationId();
       apisKeyring.signTypedDataWithUI(
         account.type,
         account.address,
@@ -360,11 +366,13 @@ export const SignText = ({
         {
           brandName: account.brandName,
           version: 'V4',
+          signingOperationId,
         },
       );
 
       resolveApproval({
         uiRequestComponent: WaitingSignComponent[account.type],
+        signingOperationId,
         $account: currentAccount,
         type: account.type,
         address: account.address,

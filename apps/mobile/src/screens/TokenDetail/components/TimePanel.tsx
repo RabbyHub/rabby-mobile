@@ -106,6 +106,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     height: 24,
     lineHeight: 24,
     borderRadius: 6,
+    borderCurve: 'continuous',
     overflow: 'hidden',
   },
 }));

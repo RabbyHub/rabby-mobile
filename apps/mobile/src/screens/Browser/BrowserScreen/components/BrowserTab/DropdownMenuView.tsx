@@ -59,6 +59,7 @@ export const DropdownMenuView: React.FC<Props> = ({
         collisionPadding={10}
         style={{
           borderRadius: 30,
+          borderCurve: 'continuous',
         }}>
         {menuConfig.iosMenuTitle && (
           <DropdownMenu.Label>{menuConfig.iosMenuTitle}</DropdownMenu.Label>

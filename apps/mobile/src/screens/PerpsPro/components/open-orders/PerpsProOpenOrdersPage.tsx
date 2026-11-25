@@ -16,8 +16,8 @@ import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoun
 import type { PerpsProCollectionPresentation } from '../../model/infoPanelPresentation';
 import { PerpsProOpenOrdersControls } from './PerpsProOpenOrdersControls';
 
-type Category = 'basic' | 'conditional';
-const CATEGORIES: readonly Category[] = ['basic', 'conditional'];
+type Category = 'basic' | 'conditional' | 'twap';
+const CATEGORIES: readonly Category[] = ['basic', 'conditional', 'twap'];
 type ControlsProps = React.ComponentProps<typeof PerpsProOpenOrdersControls>;
 
 type Props<Row extends { key: string }> = {
@@ -74,11 +74,19 @@ export function PerpsProOpenOrdersPage<Row extends { key: string }>({
         ...StyleSheet.flatten(contentStyleByCategory.conditional),
         minHeight: minimumPageHeight,
       },
+      twap: {
+        ...StyleSheet.flatten(contentStyleByCategory.twap),
+        minHeight: minimumPageHeight,
+      },
     }),
     [contentStyleByCategory, minimumPageHeight],
   );
   const renderItemByKey = useMemo(
-    () => ({ basic: renderItem, conditional: renderItem }),
+    () => ({
+      basic: renderItem,
+      conditional: renderItem,
+      twap: renderItem,
+    }),
     [renderItem],
   );
   const requestCategory = useCallback(
@@ -87,7 +95,7 @@ export function PerpsProOpenOrdersPage<Row extends { key: string }>({
   );
   const commitCategory = useCallback(
     (key: string) => {
-      if (key === 'basic' || key === 'conditional') {
+      if (key === 'basic' || key === 'conditional' || key === 'twap') {
         onCategoryChange(key);
       }
     },

@@ -211,6 +211,7 @@ const getStyles = createGetStyles(colors => ({
     borderWidth: 1,
     borderColor: colors['blue-default'],
     borderRadius: 6,
+    borderCurve: 'continuous',
     marginBottom: 20,
   },
   queueGroupHeader: {

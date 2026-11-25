@@ -1,3 +1,7 @@
+jest.mock('@/hooks/perps/twap/usePerpsTwapSubscriptions', () => ({
+  usePerpsTwapSubscriptions: () => {},
+  refreshPerpsTwaps: async () => {},
+}));
 import { act, renderHook } from '@testing-library/react-native';
 
 const mockFetchMarketData = jest.fn();
@@ -70,6 +74,7 @@ jest.mock('@/hooks/perps/runtime/perpsRuntimeState', () => ({
 }));
 
 jest.mock('@/hooks/perps/usePerpsStore', () => ({
+  getPerpsAccountRuntimeContext: () => ({ generation: 1 }),
   fetchStakingSummaryHttp: jest.fn(async () => true),
   isPerpsUserAbstractionReadyForAccount: () => mockUserAbstractionReady,
   perpsStore: Object.assign(
@@ -332,6 +337,7 @@ describe('usePerpsProInfoPanel', () => {
     expect(presentationByCategory).toEqual({
       basic: 'populated',
       conditional: 'populated',
+      twap: 'unresolved',
     });
     expect(hook.result.current.openOrderCollectionPresentation).toBe(
       presentationByCategory.basic,
@@ -369,6 +375,7 @@ describe('usePerpsProInfoPanel', () => {
     expect(btcPresentationByCategory).toEqual({
       basic: 'populated',
       conditional: 'filteredEmpty',
+      twap: 'unresolved',
     });
     expect(
       hook.result.current.openOrderCommandCandidates.map(order => order.key),
@@ -409,7 +416,11 @@ describe('usePerpsProInfoPanel', () => {
     ).toEqual(['conditional-eth']);
     expect(
       hook.result.current.openOrderCollectionPresentationByCategory,
-    ).toEqual({ basic: 'populated', conditional: 'populated' });
+    ).toEqual({
+      basic: 'populated',
+      conditional: 'populated',
+      twap: 'unresolved',
+    });
     expect(hook.result.current.openOrders).toBe(
       hook.result.current.openOrdersByCategory.conditional,
     );
@@ -465,7 +476,11 @@ describe('usePerpsProInfoPanel', () => {
 
       expect(
         hook.result.current.openOrderCollectionPresentationByCategory,
-      ).toEqual({ basic: 'unresolved', conditional: 'unresolved' });
+      ).toEqual({
+        basic: 'unresolved',
+        conditional: 'unresolved',
+        twap: 'unresolved',
+      });
       expect(hook.result.current.openOrderCollectionPresentation).toBe(
         hook.result.current.openOrderCollectionPresentationByCategory.basic,
       );
@@ -479,18 +494,30 @@ describe('usePerpsProInfoPanel', () => {
 
     expect(
       hook.result.current.openOrderCollectionPresentationByCategory,
-    ).toEqual({ basic: 'populated', conditional: 'populated' });
+    ).toEqual({
+      basic: 'populated',
+      conditional: 'populated',
+      twap: 'unresolved',
+    });
 
     act(() => hook.result.current.setHideOtherOpenOrderSymbols(true));
 
     expect(
       hook.result.current.openOrderCollectionPresentationByCategory,
-    ).toEqual({ basic: 'populated', conditional: 'unresolved' });
+    ).toEqual({
+      basic: 'populated',
+      conditional: 'unresolved',
+      twap: 'unresolved',
+    });
     mockPerpsState.isOpenOrdersReady = true;
     hook.rerender({});
     expect(
       hook.result.current.openOrderCollectionPresentationByCategory,
-    ).toEqual({ basic: 'populated', conditional: 'filteredEmpty' });
+    ).toEqual({
+      basic: 'populated',
+      conditional: 'filteredEmpty',
+      twap: 'unresolved',
+    });
   });
 
   it('does not classify unsupported-only raw orders as an authoritative empty account', () => {
@@ -507,7 +534,11 @@ describe('usePerpsProInfoPanel', () => {
     });
     expect(
       hook.result.current.openOrderCollectionPresentationByCategory,
-    ).toEqual({ basic: 'filteredEmpty', conditional: 'filteredEmpty' });
+    ).toEqual({
+      basic: 'filteredEmpty',
+      conditional: 'filteredEmpty',
+      twap: 'unresolved',
+    });
     expect(hook.result.current.openOrderCounts).toEqual({
       basic: 0,
       conditional: 0,
@@ -525,7 +556,11 @@ describe('usePerpsProInfoPanel', () => {
 
     expect(
       hook.result.current.openOrderCollectionPresentationByCategory,
-    ).toEqual({ basic: 'filteredEmpty', conditional: 'filteredEmpty' });
+    ).toEqual({
+      basic: 'filteredEmpty',
+      conditional: 'filteredEmpty',
+      twap: 'unresolved',
+    });
 
     mockPerpsState.openOrders = [];
     hook.rerender({});
@@ -535,6 +570,7 @@ describe('usePerpsProInfoPanel', () => {
     ).toEqual({
       basic: 'authoritativeEmpty',
       conditional: 'authoritativeEmpty',
+      twap: 'unresolved',
     });
     expect(hook.result.current.openOrderCollectionPresentation).toBe(
       'authoritativeEmpty',
@@ -563,7 +599,11 @@ describe('usePerpsProInfoPanel', () => {
     expect(hook.result.current.hideOtherPositionSymbols).toBe(true);
     expect(
       hook.result.current.openOrderCollectionPresentationByCategory,
-    ).toEqual({ basic: 'unresolved', conditional: 'unresolved' });
+    ).toEqual({
+      basic: 'unresolved',
+      conditional: 'unresolved',
+      twap: 'unresolved',
+    });
 
     const nextConditionalOrder = {
       category: 'conditional',
@@ -589,7 +629,11 @@ describe('usePerpsProInfoPanel', () => {
     );
     expect(
       hook.result.current.openOrderCollectionPresentationByCategory,
-    ).toEqual({ basic: 'filteredEmpty', conditional: 'populated' });
+    ).toEqual({
+      basic: 'filteredEmpty',
+      conditional: 'populated',
+      twap: 'unresolved',
+    });
     expect(hook.result.current.openOrderCommandCandidates).toEqual([
       nextConditionalOrder,
     ]);

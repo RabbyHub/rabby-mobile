@@ -341,7 +341,7 @@ function persistAppChainsInBackground(
   appChains: AppChainItem[],
   detail: AppChainPersistDetail,
 ) {
-  void appChainResourceStore
+  appChainResourceStore
     .persistInBackgroundFor(
       ownerAddr.toLowerCase(),
       () => persistAppChains(ownerAddr, appChains),
@@ -492,7 +492,6 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
       queuePendingAtStart,
     });
 
-    // 并发请求
     const results = await Promise.allSettled(
       fetchList.map(address =>
         getAppChainQueue.add<{

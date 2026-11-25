@@ -179,6 +179,14 @@ jest.mock('../components/trade/PerpsProOrderConfirmationSheet', () => ({
   },
 }));
 
+jest.mock('../components/trade/PerpsProTwapOrderConfirmationSheet', () => ({
+  PerpsProTwapOrderConfirmationSheet: () => null,
+}));
+
+jest.mock('../components/trade/PerpsProScaleOrderConfirmationSheet', () => ({
+  PerpsProScaleOrderConfirmationSheet: () => null,
+}));
+
 jest.mock('./PerpsProRealtimeOrderBook', () => ({
   PerpsProRealtimeOrderBook: (props: object) => {
     mockOrderBookProps(props);

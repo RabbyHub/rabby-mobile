@@ -59,6 +59,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     padding: 2,
     borderRadius: 10,
+    borderCurve: 'continuous',
     // dark bg-0 is the bottom bar's own colour, which would hide the track
     backgroundColor: colors2024[isLight ? 'neutral-bg-0' : 'neutral-bg-2'],
   },
@@ -66,6 +67,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 60,
     height: 34,
     borderRadius: 8,
+    borderCurve: 'continuous',
     borderWidth: 1.5,
     borderColor: 'transparent',
     alignItems: 'center',

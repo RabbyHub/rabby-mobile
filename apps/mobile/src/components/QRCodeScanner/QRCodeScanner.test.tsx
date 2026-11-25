@@ -18,6 +18,7 @@ jest.mock('@react-native-community/hooks', () => ({
 }));
 jest.mock('../Text', () => ({ Text: require('react-native').Text }));
 jest.mock('react-native-reanimated', () => ({
+  makeMutable: (value: unknown) => ({ value }),
   __esModule: true,
   default: { View: require('react-native').View },
   interpolate: jest.fn(() => 0),

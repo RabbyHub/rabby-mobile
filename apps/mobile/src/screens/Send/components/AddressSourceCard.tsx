@@ -187,6 +187,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     borderWidth: 0,
     borderRadius: 20,
+    borderCurve: 'continuous',
     padding: 16,
     backgroundColor: colors2024['neutral-bg-1'],
   },
@@ -237,6 +238,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 4,
     paddingVertical: 2,
     borderRadius: 4,
+    borderCurve: 'continuous',
     overflow: 'hidden',
   },
   itemName: {
@@ -253,6 +255,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   walletIcon: {
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   itemNameWrapper: {
     display: 'flex',
@@ -275,15 +278,18 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   loading: {
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   loadingSquare: {
     backgroundColor: colors2024['neutral-bg-4'],
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   editButton: {
     padding: 4.5,
     marginLeft: 6,
     backgroundColor: colors2024['neutral-line'],
     borderRadius: 30,
+    borderCurve: 'continuous',
   },
 }));

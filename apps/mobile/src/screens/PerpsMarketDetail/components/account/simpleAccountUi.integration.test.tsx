@@ -14,7 +14,6 @@ import {
 import {
   Animated,
   BackHandler,
-  Dimensions,
   Keyboard,
   Platform,
   StyleSheet,
@@ -22,12 +21,13 @@ import {
   View,
   type KeyboardEvent,
 } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import {
   BottomSheetModalProvider,
   useBottomSheetModalInternal,
 } from '@gorhom/bottom-sheet';
 import { Portal } from '@gorhom/portal';
-import { PerpsGestureSlider } from '@/components/perps/PerpsGestureSlider';
+import { GestureSlider } from '@/components/GestureSlider';
 import { Text, TextInput } from '@/components/Typography';
 import { CircleSpinnerCC } from '@/components2024/CircleSpinner/CircleSpinnerCC';
 import PositionCancel from '@/assets2024/icons/perps/PerpsSimpleAccount/tpsl-cancel.svg';
@@ -41,6 +41,7 @@ jest.mock('react-native-reanimated', () => {
   const nativeMock = require('react-native-reanimated/mock');
   return {
     ...nativeMock,
+    makeMutable: (value: unknown) => ({ value }),
     // Mirror reactions synchronously on render; frames are not modelled here.
     useAnimatedReaction: (prepare: () => unknown, react: Function) =>
       react(prepare(), null),
@@ -62,6 +63,9 @@ jest.mock('@ledgerhq/react-native-hw-transport-ble', () => ({}));
 jest.mock('@react-navigation/native', () => ({
   createNavigationContainerRef: () => ({ current: null, isReady: () => false }),
   useIsFocused: () => true,
+}));
+jest.mock('@react-navigation/elements', () => ({
+  HeaderHeightContext: require('react').createContext(undefined),
 }));
 jest.mock('@rneui/themed', () => ({
   Text: require('react-native').Text,
@@ -201,7 +205,7 @@ it.each(['simple', 'close', 'leverage', 'order', 'margin'] as const)(
       );
     }
     const ui = render(safe(<ControlledSlider />));
-    const input = ui.UNSAFE_getByType(PerpsGestureSlider);
+    const input = ui.UNSAFE_getByType(GestureSlider);
     const host = input.findAllByType(View).find(node => node.props.onLayout)!;
     act(() =>
       host.props.onLayout({
@@ -455,7 +459,7 @@ it('draws the close progress and points from the thumb UI-thread mirror', () => 
     step: 1,
   };
   const ui = render(safe(<PerpsSlider {...props} value={30} />));
-  const slider = ui.UNSAFE_getByType(PerpsGestureSlider);
+  const slider = ui.UNSAFE_getByType(GestureSlider);
   const progress = slider.props.progressValue;
   // The custom track reads the slider's UI-thread mirror: no React round trip.
   expect(progress).toBeDefined();
@@ -519,7 +523,7 @@ it('draws the close progress and points from the thumb UI-thread mirror', () => 
   // Default sliders keep their own built-in track and no mirror.
   ui.rerender(safe(<PerpsSlider value={30} onValueChange={jest.fn()} />));
   expect(
-    ui.UNSAFE_getByType(PerpsGestureSlider).props.progressValue,
+    ui.UNSAFE_getByType(GestureSlider).props.progressValue,
   ).toBeUndefined();
   expect(ui.queryByTestId('perps-close-progress')).toBeNull();
 });
@@ -548,13 +552,13 @@ it('keeps default slider haptics isolated and gives close a haptic per step', ()
   const ui = render(
     safe(<PerpsSlider value={0} onValueChange={change} step={1} />),
   );
-  expect(
-    ui.UNSAFE_getByType(PerpsGestureSlider).props.minimumTrackTintColor,
-  ).toBe('#50D2C1');
+  expect(ui.UNSAFE_getByType(GestureSlider).props.minimumTrackTintColor).toBe(
+    '#50D2C1',
+  );
   act(() => {
     for (const value of [25, 50, 50, 75, 100]) {
       advanceHapticClock(100);
-      ui.UNSAFE_getByType(PerpsGestureSlider).props.onValueChange(value);
+      ui.UNSAFE_getByType(GestureSlider).props.onValueChange(value);
     }
   });
   expect(trigger).toHaveBeenCalledTimes(2);
@@ -565,7 +569,7 @@ it('keeps default slider haptics isolated and gives close a haptic per step', ()
       <PerpsSlider variant="close" value={0} onValueChange={change} step={1} />,
     ),
   );
-  const slider = ui.UNSAFE_getByType(PerpsGestureSlider);
+  const slider = ui.UNSAFE_getByType(GestureSlider);
   expect(slider.props.step).toBe(1);
   act(() => {
     for (const value of [1, 2, 2, 3, 4]) {
@@ -607,15 +611,11 @@ it.each([
       ),
     );
     expect(trigger).not.toHaveBeenCalled();
-    act(() =>
-      ui.UNSAFE_getByType(PerpsGestureSlider).props.onSlidingStart(initial),
-    );
+    act(() => ui.UNSAFE_getByType(GestureSlider).props.onSlidingStart(initial));
     values.forEach((value, i) => {
       advanceHapticClock(100);
       const before = trigger.mock.calls.length;
-      act(() =>
-        ui.UNSAFE_getByType(PerpsGestureSlider).props.onValueChange(value),
-      );
+      act(() => ui.UNSAFE_getByType(GestureSlider).props.onValueChange(value));
       // A single native event emits at most one pulse, even across many steps.
       expect(trigger.mock.calls.length - before).toBe(pulses[i]);
     });
@@ -637,7 +637,7 @@ it('throttles close step pulses to one per 80ms during a fast drag', () => {
       />,
     ),
   );
-  const slider = ui.UNSAFE_getByType(PerpsGestureSlider);
+  const slider = ui.UNSAFE_getByType(GestureSlider);
   act(() => slider.props.onSlidingStart(0));
   act(() => slider.props.onValueChange(1));
   expect(trigger).toHaveBeenCalledTimes(1);
@@ -667,7 +667,7 @@ it('handles track-tap ordering, controlled resets, and disabled close sliders', 
   };
   const ui = render(safe(<PerpsSlider {...sliderProps} value={100} />));
   act(() => {
-    const slider = ui.UNSAFE_getByType(PerpsGestureSlider);
+    const slider = ui.UNSAFE_getByType(GestureSlider);
     slider.props.onValueChange(24);
     slider.props.onSlidingStart(24);
     slider.props.onValueChange(24);
@@ -679,19 +679,17 @@ it('handles track-tap ordering, controlled resets, and disabled close sliders', 
   ui.rerender(safe(<PerpsSlider {...sliderProps} value={100} />));
   expect(trigger).toHaveBeenCalledTimes(1);
   advanceHapticClock(100);
-  act(() => ui.UNSAFE_getByType(PerpsGestureSlider).props.onValueChange(100));
+  act(() => ui.UNSAFE_getByType(GestureSlider).props.onValueChange(100));
   expect(trigger).toHaveBeenCalledTimes(1);
-  act(() =>
-    ui.UNSAFE_getByType(PerpsGestureSlider).props.onSlidingComplete(100),
-  );
+  act(() => ui.UNSAFE_getByType(GestureSlider).props.onSlidingComplete(100));
   ui.rerender(safe(<PerpsSlider {...sliderProps} value={51} />));
   advanceHapticClock(100);
-  act(() => ui.UNSAFE_getByType(PerpsGestureSlider).props.onValueChange(49));
+  act(() => ui.UNSAFE_getByType(GestureSlider).props.onValueChange(49));
   expect(trigger).toHaveBeenCalledTimes(2);
   ui.rerender(safe(<PerpsSlider {...sliderProps} value={49} disabled />));
   const before = change.mock.calls.length;
   advanceHapticClock(100);
-  act(() => ui.UNSAFE_getByType(PerpsGestureSlider).props.onValueChange(0));
+  act(() => ui.UNSAFE_getByType(GestureSlider).props.onValueChange(0));
   expect(trigger).toHaveBeenCalledTimes(2);
   expect(change).toHaveBeenCalledTimes(before);
 });
@@ -1010,6 +1008,96 @@ it('retains the position portal and gate through fade-out, reopening and unmount
   }
 });
 
+it('releases iOS keyboard layout ownership when the position price input blurs', async () => {
+  const originalOS = Platform.OS;
+  Platform.OS = 'ios';
+  const listeners = new Map<string, (event: KeyboardEvent) => void>();
+  const subscribe = jest
+    .spyOn(Keyboard, 'addListener')
+    .mockImplementation((name, listener) => {
+      listeners.set(name, listener);
+      return { remove: () => listeners.delete(name) };
+    });
+  const metrics = jest.spyOn(Keyboard, 'metrics').mockReturnValue(undefined);
+  const schedule = jest.spyOn(Keyboard, 'scheduleLayoutAnimation');
+  const frame: KeyboardEvent = {
+    duration: 250,
+    easing: 'keyboard',
+    endCoordinates: { screenX: 0, screenY: 400, width: 393, height: 452 },
+  };
+  try {
+    const ui = render(
+      safe(
+        <PerpEditTpSlPriceTag
+          coin="ETH"
+          variant="position"
+          actionType="tp"
+          type="hasPosition"
+          entryPrice={100}
+          markPrice={110}
+          initTpOrSlPrice=""
+          direction="Long"
+          size={1}
+          margin={20}
+          leverage={5}
+          liqPrice={80}
+          pxDecimals={2}
+          szDecimals={3}
+          quoteAsset="USDC"
+          handleSetAutoClose={async () => false}
+          handleCancelAutoClose={async () => {}}
+        />,
+      ),
+    );
+    await act(async () => fireEvent.press(ui.getByText('-')));
+    const input = ui.getByPlaceholderText('$0');
+    const geometry = () =>
+      StyleSheet.flatten(
+        ui.getByTestId('simple-position-tpsl-viewport').props.style,
+      );
+    fireEvent(input, 'focus');
+    fireEvent.changeText(input, '120');
+    const update = listeners.get('keyboardWillChangeFrame')!;
+    act(() => update(frame));
+    expect(geometry().maxHeight).toBe(368);
+    expect(schedule).toHaveBeenCalledTimes(1);
+
+    fireEvent(input, 'blur');
+    const blurredGeometry = geometry();
+    expect(blurredGeometry.maxHeight).toBe(
+      Dimensions.get('window').height - 32,
+    );
+    expect(listeners.size).toBe(0);
+    // Even an event already queued before cleanup must not animate the later
+    // password sheet. Native keyboard frames themselves are not modelled here.
+    for (const screenY of [420, 400, 425]) {
+      act(() =>
+        update({
+          ...frame,
+          endCoordinates: { ...frame.endCoordinates, screenY },
+        }),
+      );
+    }
+    expect(geometry()).toEqual(blurredGeometry);
+    expect(schedule).toHaveBeenCalledTimes(1);
+    expect(ui.getByPlaceholderText('$0')).toBe(input);
+    expect(input.props.value).toBe('$120');
+
+    // Cancelling password entry and refocusing the draft reacquires the live
+    // keyboard frame without remounting the editor or changing its value.
+    metrics.mockReturnValue(frame.endCoordinates);
+    fireEvent(input, 'focus');
+    expect(geometry().maxHeight).toBe(368);
+    expect(listeners.size).toBe(6);
+  } finally {
+    await cleanupAsync();
+    schedule.mockRestore();
+    metrics.mockRestore();
+    subscribe.mockRestore();
+    Platform.OS = originalOS;
+  }
+});
+
 it('corrects the iOS keyboard frame without moving the backdrop or the exiting card', async () => {
   const originalOS = Platform.OS;
   Platform.OS = 'ios';
@@ -1025,18 +1113,19 @@ it('corrects the iOS keyboard frame without moving the backdrop or the exiting c
     safe(
       <SimplePositionTpSlModal
         visible={visible}
+        inputFocused
         modalId={MODAL_GATE_IDS.perpsEditTpSlPrice}>
         <View />
       </SimplePositionTpSlModal>,
     );
-  const screenHeight = Dimensions.get('window').height;
+  const screenHeight = getDimensionsSnapshot('window').height;
   const frame = (screenY: number): KeyboardEvent => ({
     duration: 0,
     easing: 'keyboard',
     endCoordinates: {
       screenX: 0,
       screenY,
-      width: Dimensions.get('window').width,
+      width: getDimensionsSnapshot('window').width,
       height: screenHeight - screenY,
     },
   });

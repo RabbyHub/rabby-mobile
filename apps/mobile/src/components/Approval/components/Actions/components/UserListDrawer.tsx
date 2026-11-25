@@ -51,6 +51,7 @@ const getStyles = (colors: AppColorsVariants) =>
       flexDirection: 'row',
       backgroundColor: colors['neutral-card-1'],
       borderRadius: 6,
+      borderCurve: 'continuous',
       borderWidth: 1,
       borderColor: 'transparent',
     },

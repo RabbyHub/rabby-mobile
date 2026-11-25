@@ -23,7 +23,12 @@ export const TestnetChainLogo = ({
       <View
         style={[
           styles.square,
-          { width: size, height: size, borderRadius: size / 3 },
+          {
+            width: size,
+            height: size,
+            borderRadius: size / 3,
+            borderCurve: 'continuous',
+          },
           props.style,
         ]}>
         <Text style={styles.initials} numberOfLines={1}>

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { useTheme2024 } from '@/hooks/theme';
 import { atom, useAtom } from 'jotai';
 import type { DisplayPoolReserveInfo } from '../type';
@@ -619,13 +620,10 @@ export const ToggleCollateralModal = () => {
   return <ToggleCollateralContent />;
 };
 
-const ScreenWidth = Dimensions.get('screen').width;
-const ScreenHeight = Dimensions.get('screen').height;
-
 const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   modal: {
-    width: ScreenWidth,
-    height: ScreenHeight,
+    width: getDimensionsSnapshot('screen').width,
+    height: getDimensionsSnapshot('screen').height,
     position: 'absolute',
     top: 0,
     left: 0,
@@ -648,6 +646,7 @@ const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     backgroundColor: colors2024['neutral-bg-0'],
     paddingTop: 37,
     borderRadius: 16,
+    borderCurve: 'continuous',
     flexDirection: 'column',
     alignItems: 'center',
   },
@@ -691,6 +690,7 @@ const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     padding: 12,
     paddingHorizontal: 16,
     borderRadius: 6,
+    borderCurve: 'continuous',
     marginTop: 16,
     width: '100%',
   },
@@ -717,6 +717,7 @@ const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 8,
+    borderCurve: 'continuous',
     marginTop: 8,
     marginLeft: 16,
     marginRight: 16,

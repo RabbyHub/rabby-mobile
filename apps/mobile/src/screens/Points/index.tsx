@@ -27,12 +27,13 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
     color: ctx.colors2024['neutral-title-1'],
   },
   banner: {
     borderRadius: 20,
+    borderCurve: 'continuous',
     padding: 20,
     backgroundColor: ctx.isLight
       ? ctx.colors2024['brand-light-1']
@@ -42,7 +43,7 @@ const getStyles = createGetStyles2024(ctx => ({
   bannerTitle: {
     fontSize: 18,
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '900',
+    fontWeight: '800',
     color: ctx.colors2024['neutral-title-1'],
     marginBottom: 8,
   },
@@ -54,6 +55,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   card: {
     borderRadius: 20,
+    borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: ctx.colors2024['neutral-line'],
     backgroundColor: ctx.colors2024['neutral-bg-1'],
@@ -67,7 +69,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   cardTitle: {
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '900',
+    fontWeight: '800',
     fontSize: 16,
     color: ctx.colors2024['neutral-title-1'],
   },
@@ -75,6 +77,7 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 999,
+    borderCurve: 'continuous',
     backgroundColor: ctx.colors2024['brand-light-1'],
   },
   pillText: {
@@ -122,6 +125,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   claimCard: {
     borderRadius: 20,
+    borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: ctx.colors2024['neutral-line'],
     backgroundColor: ctx.colors2024['neutral-bg-1'],
@@ -149,7 +153,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   claimPoints: {
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '900',
+    fontWeight: '800',
     fontSize: 16,
     color: ctx.colors2024['neutral-title-1'],
   },
@@ -159,6 +163,7 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 10,
+    borderCurve: 'continuous',
     backgroundColor: ctx.colors2024['brand-light-1'],
   },
   claimButtonText: {

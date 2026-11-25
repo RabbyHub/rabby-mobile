@@ -15,7 +15,7 @@ import {
   formatUsdValue,
 } from '@/utils/number';
 import BigNumber from 'bignumber.js';
-import { PerpsGestureSlider as Slider } from '@/components/perps/PerpsGestureSlider';
+import { GestureSlider as Slider } from '@/components/GestureSlider';
 
 import type { TokenSelectInst } from './TokenSelect';
 import TokenSelect from './TokenSelect';

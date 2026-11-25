@@ -197,6 +197,23 @@ export function completeRootSceneMotion(
   return createRootSceneMotion(state.target, epoch);
 }
 
+/**
+ * Whether a settled page has to be echoed to the parent.
+ *
+ * It differs from the last settled key during a normal page change, and it also
+ * differs from the outstanding requested key when an interrupted snap returns
+ * to the page it started from: the header already committed to the request, so
+ * the settle has to repair the route even though the pager never left home.
+ */
+export function shouldPublishRootSceneSettled(
+  previousSettled: string,
+  requested: string,
+  settled: string,
+): boolean {
+  'worklet';
+  return previousSettled !== settled || requested !== settled;
+}
+
 /** Includes every page crossed by a direct command; no frame-by-frame JS. */
 export function getRootSceneVisibleRange(
   position: number,

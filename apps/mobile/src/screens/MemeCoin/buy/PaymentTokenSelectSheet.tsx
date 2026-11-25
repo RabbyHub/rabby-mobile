@@ -56,6 +56,7 @@ const SHEET_STYLE = {
   overflow: 'hidden',
   borderTopLeftRadius: 20,
   borderTopRightRadius: 20,
+  borderCurve: 'continuous',
 } as const;
 
 const NO_ANIMATION = { duration: 0 };
@@ -197,7 +198,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     lineHeight: TITLE_HEIGHT,
-    fontWeight: '900',
+    fontWeight: '800',
     color: colors2024['neutral-title-1'],
   },
   list: {
@@ -213,6 +214,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     marginBottom: PAYMENT_ROW_GAP,
     borderRadius: 14,
+    borderCurve: 'continuous',
   },
   footer: {
     marginTop: LIST_BOTTOM,

@@ -325,6 +325,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 12,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-5'],
     paddingHorizontal: 12,
     paddingLeft: 12,

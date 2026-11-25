@@ -98,6 +98,7 @@ const getStyle = createGetStyles2024(ctx => ({
     alignItems: 'center',
     gap: 12,
     borderRadius: 20,
+    borderCurve: 'continuous',
     height: TOKEN_EMPTY_ROW_HIGHT,
     paddingHorizontal: 16,
     overflow: 'hidden',
@@ -107,6 +108,7 @@ const getStyle = createGetStyles2024(ctx => ({
     width: 358,
     height: TOKEN_EMPTY_ROW_HIGHT,
     borderRadius: 24,
+    borderCurve: 'continuous',
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-1']
       : ctx.colors2024['neutral-bg-2'],
@@ -121,12 +123,13 @@ const getStyle = createGetStyles2024(ctx => ({
     alignContent: 'center',
     alignItems: 'center',
     borderRadius: 9.8,
+    borderCurve: 'continuous',
     backgroundColor: ctx.colors2024['brand-light-1'],
   },
   header: {
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '900',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
     marginTop: 30,
@@ -148,6 +151,7 @@ const getStyle = createGetStyles2024(ctx => ({
   card: {
     width: '100%',
     borderRadius: 20,
+    borderCurve: 'continuous',
     display: 'flex',
     justifyContent: 'flex-start',
     flexDirection: 'row',

@@ -1,3 +1,13 @@
+import { useShallow } from 'zustand/react/shallow';
+import {
+  getPerpsTwapAccount,
+  usePerpsTwapRecords,
+  usePerpsTwapSourceState,
+} from '@/hooks/perps/twap/usePerpsTwapStore';
+import {
+  usePerpsTwapSubscriptions,
+  refreshPerpsTwaps,
+} from '@/hooks/perps/twap/usePerpsTwapSubscriptions';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type { WsFill } from '@rabby-wallet/hyperliquid-sdk';
 import type { PerpsFundingJournalEntry } from '@/core/services/perpsService';
@@ -118,12 +128,14 @@ export const usePerpsProHistoryController = (
   );
   const stateRef = useRef(historyState);
   const requestSequencesRef = useRef<Record<PerpsProHistoryTab, number>>({
+    twap: 0,
     funding: 0,
     orders: 0,
     trade: 0,
     transaction: 0,
   });
   const inFlightRequestsRef = useRef<Record<PerpsProHistoryTab, boolean>>({
+    twap: false,
     funding: false,
     orders: false,
     trade: false,
@@ -157,6 +169,46 @@ export const usePerpsProHistoryController = (
     isRuntimeInitialized &&
     sdkSupported;
   const liveEnabled = active && requestEnabled;
+  usePerpsTwapSubscriptions(
+    accountAddress ?? undefined,
+    liveEnabled,
+    accountGeneration,
+  );
+  const [twapRefresh, setTwapRefresh] = useState<{
+    user: string;
+    generation: number;
+  } | null>(null);
+  const twapRecords = usePerpsTwapRecords(accountAddress ?? undefined);
+  const twapHistory = usePerpsTwapSourceState(
+    accountAddress ?? undefined,
+    'history',
+  );
+  const twapMarketKeys = perpsStore(
+    useShallow(state => Object.keys(state.marketDataMap)),
+  );
+  const twapRows = useMemo(() => {
+    const markets = new Set(twapMarketKeys);
+    return Object.values(twapRecords)
+      .filter(
+        order =>
+          !order.active &&
+          markets.has(order.state.coin) &&
+          order.status !== 'activated' &&
+          order.status !== 'waitingForTrigger',
+      )
+      .sort(
+        (a, b) =>
+          (b.endedAt ?? b.eventTime) - (a.endedAt ?? a.eventTime) ||
+          b.twapId - a.twapId,
+      )
+      .map(order => ({
+        kind: 'twap' as const,
+        key: order.key,
+        time: order.endedAt ?? order.eventTime,
+        order,
+      }));
+  }, [twapRecords, twapMarketKeys]);
+
   const guardRef = useRef({
     accountAddress,
     accountGeneration,
@@ -556,6 +608,35 @@ export const usePerpsProHistoryController = (
       latestFills?: Promise<WsFill[]>,
       presentation: RefreshPresentation = 'manual',
     ) => {
+      if (tab === 'twap') {
+        const user = guardRef.current.accountAddress;
+        if (user && guardRef.current.liveEnabled) {
+          const token = {
+            user,
+            generation: guardRef.current.accountGeneration,
+          };
+          const presentationEpoch = guardRef.current.presentationEpoch;
+          setTwapRefresh(token);
+          try {
+            await refreshPerpsTwaps(user, 'history');
+            const guard = guardRef.current;
+            if (
+              presentation === 'manual' &&
+              guard.liveEnabled &&
+              guard.activeTab === tab &&
+              guard.presentationEpoch === presentationEpoch &&
+              guard.accountAddress === token.user &&
+              guard.accountGeneration === token.generation &&
+              getPerpsTwapAccount(user).sources.history.error
+            ) {
+              showToast(refreshFailedMessage, 'error');
+            }
+          } finally {
+            setTwapRefresh(current => (current === token ? null : current));
+          }
+        }
+        return;
+      }
       const current = stateRef.current[tab];
       if (current.refreshing || current.loadingEarlier) {
         return;
@@ -673,6 +754,7 @@ export const usePerpsProHistoryController = (
       const current = stateRef.current[tab];
       if (
         tab === 'orders' ||
+        tab === 'twap' ||
         !current.hasEarlier ||
         current.loadingEarlier ||
         current.refreshing
@@ -777,7 +859,7 @@ export const usePerpsProHistoryController = (
         return;
       }
       const idleTabs = PERPS_PRO_HISTORY_TABS.filter(
-        tab => stateRef.current[tab].status === 'idle',
+        tab => tab !== 'twap' && stateRef.current[tab].status === 'idle',
       );
       if (idleTabs.length === 0) {
         return;
@@ -935,6 +1017,22 @@ export const usePerpsProHistoryController = (
   const presentedHistoryState = useMemo<PerpsProHistoryControllerState>(
     () => ({
       ...historyState,
+      twap: {
+        rows: twapRows,
+        refreshError: twapHistory.error ?? undefined,
+        status: !accountAddress
+          ? 'empty'
+          : twapHistory.ready || twapRows.length > 0
+          ? getPerpsProHistoryRowsStatus(twapRows)
+          : twapHistory.error || !sdkSupported
+          ? 'error'
+          : 'loading',
+        hasEarlier: false,
+        loadingEarlier: false,
+        refreshing:
+          twapRefresh?.user === accountAddress &&
+          twapRefresh?.generation === accountGeneration,
+      },
       transaction: {
         ...historyState.transaction,
         rows: transactionProjection.rows,
@@ -945,7 +1043,16 @@ export const usePerpsProHistoryController = (
             : historyState.transaction.status,
       },
     }),
-    [historyState, transactionProjection.rows],
+    [
+      historyState,
+      transactionProjection.rows,
+      twapRows,
+      twapHistory,
+      sdkSupported,
+      twapRefresh,
+      accountGeneration,
+      accountAddress,
+    ],
   );
 
   return {

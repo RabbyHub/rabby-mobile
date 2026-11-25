@@ -7,7 +7,6 @@ import {
   ThemeColors2024,
 } from './theme';
 import { IS_ANDROID } from '@/core/native/utils';
-import { Dimensions } from 'react-native';
 
 export const BOTTOM_BUTTON_BOTTOM_OFFSET = 36;
 export const BOTTOM_BUTTON_TOP_OFFSET = 12;
@@ -52,8 +51,6 @@ export const ScreenLayouts = {
   dappWebViewNavBottomSheetHeight: 302,
   inConnectedDappWebViewNavBottomSheetHeight: 302 /*  - 120 */,
 };
-const SCREEN_WIDTH = Dimensions.get('window').width - 32;
-export const DEFI_CARD_WIDTH = (SCREEN_WIDTH - 12) / 2;
 export const ASSETS_ITEM_HEIGHT = 68;
 export const ASSETS_ITEM_HEIGHT_NEW = 70;
 export const DEFI_ITEM_HEIGHT = 200;
@@ -168,6 +165,8 @@ export const RootNames = {
   DevUIWalletConnect: 'DevUIWalletConnect',
   DevCapabilityFile: 'DevCapabilityFile',
   DevSwitches: 'DevSwitches',
+  DevScreenInjectionProbe: 'DevScreenInjectionProbe',
+  DevTabsHost: 'DevTabsHost',
   DevPerf: 'DevPerf',
   DebugLogViewer: 'DebugLogViewer',
   StartupPerformanceLogViewer: 'StartupPerformanceLogViewer',
@@ -420,6 +419,8 @@ function makeScreenSpecConfig() {
       [RootNames.DevUIWalletConnect]: bg1Default2024Conf,
       [RootNames.DevCapabilityFile]: bg1Default2024Conf,
       [RootNames.DevSwitches]: bg1Default2024Conf,
+      [RootNames.DevScreenInjectionProbe]: bg1Default2024Conf,
+      [RootNames.DevTabsHost]: bg1Default2024Conf,
       [RootNames.DevPerf]: bg1Default2024Conf,
       [RootNames.DebugLogViewer]: bg1Default2024Conf,
       [RootNames.StartupPerformanceLogViewer]: bg1Default2024Conf,

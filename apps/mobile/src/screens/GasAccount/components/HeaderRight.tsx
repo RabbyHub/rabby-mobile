@@ -1,5 +1,6 @@
 import { RcIconGasAccountHeaderRight } from '@/assets/icons/gas-account';
 import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -24,6 +25,7 @@ export const GasAccountHeader: React.FC<{ showWithdraw: () => void }> = ({
 }) => {
   const color = useThemeColors();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const columnInset = useSystemColumnInset();
   const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const isDark = useGetBinaryMode() === 'dark';
@@ -60,6 +62,14 @@ export const GasAccountHeader: React.FC<{ showWithdraw: () => void }> = ({
       <Tip
         hideArrow
         placement="bottom"
+        // The tooltip library clamps to the window; keep the popover inside the
+        // Duo content area instead of under the system column (QA 1429).
+        displayInsets={{
+          top: 24,
+          bottom: 24,
+          left: 24 + columnInset.left,
+          right: 24 + columnInset.right,
+        }}
         contentStyle={[
           styles.content,
           isDark && { backgroundColor: color['neutral-bg-1'] },
@@ -147,6 +157,7 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     height: 'auto',
     marginLeft: 6,
     borderRadius: 12,
+    borderCurve: 'continuous',
     shadowOpacity: 0,
   },
   optionIcon: {

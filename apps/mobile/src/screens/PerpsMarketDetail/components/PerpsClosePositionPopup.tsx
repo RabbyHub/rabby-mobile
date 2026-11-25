@@ -501,7 +501,12 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => {
       paddingBottom: 24,
     },
     confirmSpacer: { flexGrow: 1 },
-    handle: { width: 50.2, height: 6.3, borderRadius: 3.15 },
+    handle: {
+      width: 50.2,
+      height: 6.3,
+      borderRadius: 3.15,
+      borderCurve: 'continuous',
+    },
     footer: {
       backgroundColor: colors2024['neutral-bg-1'],
       paddingHorizontal: 20,
@@ -520,6 +525,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => {
     amountSection: {
       backgroundColor: colors2024['neutral-bg-2'],
       borderRadius: 20,
+      borderCurve: 'continuous',
       padding: 16,
       marginBottom: 12,
       ...(Platform.OS === 'ios'
@@ -563,6 +569,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => {
     },
     orderTypeCard: {
       borderRadius: 12,
+      borderCurve: 'continuous',
       paddingHorizontal: 16,
       paddingVertical: 4,
     },
@@ -571,6 +578,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => {
       borderWidth: 1,
       borderColor: colors2024['neutral-line'],
       borderRadius: 12,
+      borderCurve: 'continuous',
     },
     orderTypeItem: {
       flexDirection: 'row',
@@ -615,9 +623,11 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => {
     confirmButton: {
       backgroundColor: SIMPLE_ACCOUNT_COLORS.accent,
       borderRadius: 12,
+      borderCurve: 'continuous',
     },
     confirmShadow: {
       borderRadius: 12,
+      borderCurve: 'continuous',
       backgroundColor: SIMPLE_ACCOUNT_COLORS.accent,
       ...(Platform.OS === 'ios'
         ? {

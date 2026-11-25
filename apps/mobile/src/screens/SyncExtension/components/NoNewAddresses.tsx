@@ -55,6 +55,7 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingVertical: 24,
     backgroundColor: ctx.colors2024['neutral-bg-1'],
     borderRadius: 20,
+    borderCurve: 'continuous',
     gap: 20,
   },
   title: {
@@ -70,6 +71,7 @@ const getStyles = createGetStyles2024(ctx => ({
   buttonStyle: {
     height: 48,
     borderRadius: 100,
+    borderCurve: 'continuous',
   },
 
   confirmTitleStyle: {

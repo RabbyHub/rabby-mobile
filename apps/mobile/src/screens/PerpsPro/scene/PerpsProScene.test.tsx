@@ -120,6 +120,24 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ bottom: 34, left: 0, right: 0, top: 0 }),
 }));
 
+jest.mock('../components/twap/PerpsProTwapDetailSheet', () => ({
+  PerpsProTwapDetailSheet: () => null,
+}));
+
+const mockCancelTwapClose = jest.fn();
+const mockCancelTwapConfirm = jest.fn();
+const mockCancelTwapRequest = jest.fn();
+
+jest.mock('./usePerpsProCancelTwap', () => ({
+  usePerpsProCancelTwap: () => ({
+    close: mockCancelTwapClose,
+    command: null,
+    confirm: mockCancelTwapConfirm,
+    pending: false,
+    request: mockCancelTwapRequest,
+  }),
+}));
+
 jest.mock('react-native-reanimated', () => {
   const ReactNative = require('react-native');
   const boundary =
@@ -635,6 +653,14 @@ jest.mock('../components/trade/PerpsProOrderConfirmationSheet', () => ({
   },
 }));
 
+jest.mock('../components/trade/PerpsProTwapOrderConfirmationSheet', () => ({
+  PerpsProTwapOrderConfirmationSheet: () => null,
+}));
+
+jest.mock('../components/trade/PerpsProScaleOrderConfirmationSheet', () => ({
+  PerpsProScaleOrderConfirmationSheet: () => null,
+}));
+
 jest.mock('./PerpsProRealtimeOrderBook', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -810,7 +836,8 @@ const createInfoState = (overrides: Record<string, unknown> = {}) => {
   const openOrders = (overrides.openOrders ?? []) as unknown[];
   const openOrderCategory = (overrides.openOrderCategory ?? 'basic') as
     | 'basic'
-    | 'conditional';
+    | 'conditional'
+    | 'twap';
   const openOrderCollectionPresentation =
     overrides.openOrderCollectionPresentation ??
     (openOrders.length > 0 ? 'populated' : 'unresolved');
@@ -821,6 +848,7 @@ const createInfoState = (overrides: Record<string, unknown> = {}) => {
   const openOrdersByCategory = overrides.openOrdersByCategory ?? {
     basic: openOrderCategory === 'basic' ? openOrders : [],
     conditional: openOrderCategory === 'conditional' ? openOrders : [],
+    twap: [],
   };
   const openOrderCollectionPresentationByCategory =
     overrides.openOrderCollectionPresentationByCategory ?? {
@@ -832,6 +860,7 @@ const createInfoState = (overrides: Record<string, unknown> = {}) => {
         openOrderCategory === 'conditional'
           ? openOrderCollectionPresentation
           : otherPresentation,
+      twap: 'authoritativeEmpty' as const,
     };
   const positions = (overrides.positions ?? []) as unknown[];
   // This suite isolates Scene composition. The real selector/store/activity
@@ -882,6 +911,10 @@ const createInfoState = (overrides: Record<string, unknown> = {}) => {
     openOrderCommandCandidates: [],
     openOrderCounts: { basic: 0, conditional: 0, unsupported: 0 },
     openOrders,
+    twaps: [],
+    twapCount: 0,
+    twapReadiness: 'ready' as const,
+    retryTwaps: jest.fn(),
     pendingFundingCount: 0,
     positionCollectionPresentation:
       overrides.positionCollectionPresentation ??
@@ -1403,7 +1436,7 @@ describe('PerpsProScene market loading states', () => {
       );
       view.rerender(<PerpsProScene {...props} />);
       settleInfoPage(activeInfoTab as InfoTab);
-      expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(5);
+      expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(6);
     }
     expect(mockBboSubscriptions).toHaveLength(1);
     expect(mockBboSubscriptions[0].unsubscribe).not.toHaveBeenCalled();
@@ -1472,7 +1505,7 @@ describe('PerpsProScene market loading states', () => {
       screen.UNSAFE_getByType(PerpsProInfoSingleList).props.renderItemByTab
         .positions,
     ).not.toBe(firstRenderer);
-    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(5);
+    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(6);
   });
 
   it.each(['positions', 'openOrders'] as const)(
@@ -1670,7 +1703,7 @@ describe('PerpsProScene market loading states', () => {
     );
 
     expect(screen.getByTestId('perps-pro-info-list')).toBeOnTheScreen();
-    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(5);
+    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(6);
     expect(screen.getByTestId('perps-pro-trade-section')).toBeTruthy();
     expect(screen.getByTestId('perps-pro-positions-controls')).toBeTruthy();
     expect(screen.queryByTestId('account-skeleton')).toBeNull();
@@ -2968,7 +3001,7 @@ describe('PerpsProScene market loading states', () => {
     // The native list now owns vertical scrolling on Android too; the scene no
     // longer synthesises it with per-frame scrollTo calls.
     expect(scroll.props.scrollEnabled).toBe(true);
-    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(5);
+    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(6);
     expect(getInfoTrack()).toBeOnTheScreen();
     expect(screen.UNSAFE_getAllByType(SceneList)).toHaveLength(1);
     expect(infoTabs.map(tab => getInfoList(tab).props.data)).toHaveLength(3);
@@ -4209,7 +4242,7 @@ describe('PerpsProScene market loading states', () => {
       const track = getInfoTrack();
       const basicList = getInfoList('openOrders');
       expect(screen.UNSAFE_getAllByType(SceneList)).toHaveLength(1);
-      expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(5);
+      expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(6);
       expect(
         screen.getAllByTestId('perps-pro-open-orders-controls'),
       ).toHaveLength(1);

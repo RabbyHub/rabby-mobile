@@ -408,6 +408,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderWidth: 0,
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   paddingLeft: {
     paddingLeft: 16,

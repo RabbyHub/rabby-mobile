@@ -1,7 +1,7 @@
 import React from 'react';
 import { act, render } from '@testing-library/react-native';
 import { AutoShrinkAmountTextInput } from '@/components/AutoShrinkAmountTextInput';
-import { PerpsGestureSlider } from '@/components/perps/PerpsGestureSlider';
+import { GestureSlider } from '@/components/GestureSlider';
 import { SliderBubblePortal } from '../Swap/components/Slider';
 import { SwapTokenItem } from '../Swap/components/Token';
 import BridgeToken from '../Bridge/components/BridgeToken';
@@ -10,10 +10,8 @@ let mockSliderMounts = 0;
 let mockSliderUnmounts = 0;
 
 // Component contract only: native view recycling still needs iOS verification.
-jest.mock('@/components/perps/PerpsGestureSlider', () => ({
-  PerpsGestureSlider: (
-    props: React.ComponentProps<typeof PerpsGestureSlider>,
-  ) => {
+jest.mock('@/components/GestureSlider', () => ({
+  GestureSlider: (props: React.ComponentProps<typeof GestureSlider>) => {
     const ReactModule = require('react');
     const current = ReactModule.useRef(props);
     current.current = props;
@@ -110,7 +108,7 @@ it.each(['swap', 'bridge'] as const)(
 
     for (let cycle = 0; cycle < 2; cycle++) {
       act(() => {
-        ui.UNSAFE_getByType(PerpsGestureSlider).props.onSlidingStart(37);
+        ui.UNSAFE_getByType(GestureSlider).props.onSlidingStart(37);
       });
       expect(ui.UNSAFE_getByType(SliderBubblePortal).props.visible).toBe(true);
       if (scene === 'bridge') {
@@ -120,9 +118,7 @@ it.each(['swap', 'bridge'] as const)(
       ui.rerender(element(false));
       // The track stays visible for the whole pager transition; only the
       // native gesture surface detaches while the scene is inactive.
-      expect(ui.UNSAFE_getByType(PerpsGestureSlider).props.interactive).toBe(
-        false,
-      );
+      expect(ui.UNSAFE_getByType(GestureSlider).props.interactive).toBe(false);
       expect(ui.UNSAFE_getByType(SliderBubblePortal).props.visible).toBe(false);
       expect(mockSliderUnmounts).toBe(0);
       expect(mockSliderMounts).toBe(1);
@@ -133,10 +129,8 @@ it.each(['swap', 'bridge'] as const)(
 
       ui.rerender(element(true));
       expect(mockSliderMounts).toBe(1);
-      expect(ui.UNSAFE_getByType(PerpsGestureSlider).props.interactive).toBe(
-        true,
-      );
-      expect(ui.UNSAFE_getByType(PerpsGestureSlider).props.value).toBe(37);
+      expect(ui.UNSAFE_getByType(GestureSlider).props.interactive).toBe(true);
+      expect(ui.UNSAFE_getByType(GestureSlider).props.value).toBe(37);
       expect(ui.UNSAFE_getByType(SliderBubblePortal).props.visible).toBe(false);
       expect(ui.UNSAFE_getByType(AutoShrinkAmountTextInput)).toBe(input);
       expect(input.props.value).toBe('1.23');

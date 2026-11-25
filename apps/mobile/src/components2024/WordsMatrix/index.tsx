@@ -80,6 +80,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     flexWrap: 'wrap',
     borderRadius: 8,
+    borderCurve: 'continuous',
     gap: 8,
     justifyContent: 'space-between',
     alignItems: 'flex-start',
@@ -97,6 +98,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-2'],
     minWidth: 0,
     borderRadius: 12,
+    borderCurve: 'continuous',
     flexShrink: 0,
 
     position: 'relative',
@@ -112,6 +114,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '47%',
     minWidth: 0,
     borderRadius: 12,
+    borderCurve: 'continuous',
     flexShrink: 0,
 
     position: 'relative',

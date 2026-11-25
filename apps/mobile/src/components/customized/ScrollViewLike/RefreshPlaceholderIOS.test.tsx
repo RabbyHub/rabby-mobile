@@ -1,5 +1,6 @@
 import { act, renderHook } from '@testing-library/react-native';
-import { Dimensions } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
+
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import {
   pulldownRefreshSizes,
@@ -15,6 +16,7 @@ jest.mock('react-native-reanimated', () => ({
   default: { createAnimatedComponent: (component: unknown) => component },
   useSharedValue: (value: unknown) =>
     require('react').useRef({ value }).current,
+  makeMutable: (value: unknown) => ({ value }),
   useAnimatedStyle: (callback: () => object) => callback(),
   interpolate: (
     value: number,
@@ -55,8 +57,12 @@ jest.mock('react-native-gesture-handler', () => ({
         'failOffsetX',
       ]) {
         gesture[name] = (value: any) => {
-          if (name.startsWith('on')) mockCallbacks[name] = value;
-          if (name === 'failOffsetX') mockFailOffsetX(value);
+          if (name.startsWith('on')) {
+            mockCallbacks[name] = value;
+          }
+          if (name === 'failOffsetX') {
+            mockFailOffsetX(value);
+          }
           return gesture;
         };
       }
@@ -202,7 +208,7 @@ it('does not refresh when an active pull is cancelled after crossing the thresho
 it('allows overpull, then settles to the indicator height until refresh finishes', async () => {
   const indicatorHeight = pulldownRefreshSizes.homeHeaderHeight;
   const maxPullHeight =
-    Dimensions.get('screen').height * 0.5 -
+    getDimensionsSnapshot('screen').height * 0.5 -
     HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset;
   let finishRefresh!: () => void;
   const refresh = new Promise<void>(resolve => {

@@ -159,6 +159,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderTopRightRadius: TOP_RADIUS,
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
+    borderCurve: 'continuous',
     overflow: 'visible',
     ...(Platform.OS === 'ios'
       ? {
@@ -174,6 +175,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: PERPS_PRO_KEYBOARD_ACCESSORY_HEIGHT,
     borderTopLeftRadius: TOP_RADIUS,
     borderTopRightRadius: TOP_RADIUS,
+    borderCurve: 'continuous',
     overflow: 'hidden',
   },
   minimum: {

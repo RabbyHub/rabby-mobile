@@ -16,5 +16,11 @@
     "react-native": ">=0.76",
     "react-native-gesture-handler": ">=2",
     "react-native-reanimated": ">=3"
+  },
+  "devDependencies": {
+    "react": "19.1.4",
+    "react-native": "0.81.6",
+    "react-native-gesture-handler": "2.30.0",
+    "react-native-reanimated": "3.19.5"
   }
 }

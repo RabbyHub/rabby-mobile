@@ -192,6 +192,7 @@ const getStyles = createGetStyles(colors => ({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 8,
+    borderCurve: 'continuous',
     flex: 1,
     maxWidth: '100%',
   },

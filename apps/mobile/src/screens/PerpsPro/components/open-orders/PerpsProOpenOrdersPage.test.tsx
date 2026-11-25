@@ -64,7 +64,7 @@ jest.mock('./PerpsProOpenOrdersControls', () => {
           testID: 'unit-orders-controls',
           accessibilityLabel: `${props.category}:${props.basicCount}:${props.conditionalCount}:${props.isCancelAllPending}`,
         },
-        ...(['basic', 'conditional'] as const).map(category =>
+        ...(['basic', 'conditional', 'twap'] as const).map(category =>
           ReactModule.createElement(native.Pressable, {
             key: category,
             testID: `unit-orders-select-${category}`,
@@ -94,6 +94,8 @@ const makeProps = (): PageProps => ({
     conditionalCount: 1,
     hideOtherSymbols: false,
     isCancelAllPending: false,
+    twapCount: 0,
+    onAddTwap: jest.fn(),
     onCancelAll: jest.fn(),
     onToggleHideOtherSymbols: jest.fn(),
   },
@@ -102,14 +104,25 @@ const makeProps = (): PageProps => ({
   rowsByCategory: {
     basic: [{ key: 'basic-order' }],
     conditional: [{ key: 'conditional-order' }],
+    twap: [{ key: 'twap-order' }],
   },
-  presentationByCategory: { basic: 'populated', conditional: 'populated' },
+  presentationByCategory: {
+    basic: 'populated',
+    conditional: 'populated',
+    twap: 'populated',
+  },
   contentStyleByCategory: {
     basic: [
       { minHeight: 900, paddingTop: 20, paddingBottom: 80 },
       { paddingHorizontal: 16 },
     ],
     conditional: {
+      minHeight: 600,
+      paddingTop: 12,
+      paddingBottom: 24,
+      paddingHorizontal: 8,
+    },
+    twap: {
       minHeight: 600,
       paddingTop: 12,
       paddingBottom: 24,
@@ -154,7 +167,7 @@ describe('PerpsProOpenOrdersPage composition (unit)', () => {
     expect(controlsProps()).toMatchObject(props.controls);
     expect(bodyProps()).toMatchObject({
       activeKey: 'basic',
-      keys: ['basic', 'conditional'],
+      keys: ['basic', 'conditional', 'twap'],
       activityEnabled: true,
       interactionEnabled: true,
       identityKey: 'account-a',
@@ -167,6 +180,7 @@ describe('PerpsProOpenOrdersPage composition (unit)', () => {
     expect(bodyProps().scrollOffset).toBe(props.scrollOffset);
     expect(bodyProps().renderItemByKey.basic).toBe(props.renderItem);
     expect(bodyProps().renderItemByKey.conditional).toBe(props.renderItem);
+    expect(bodyProps().renderItemByKey.twap).toBe(props.renderItem);
     expect(bodyProps().indicatorPosition.value).toBe(0);
     expect(bodyProps().gestureActive.value).toBe(false);
     expect(bodyProps().indicatorPosition).not.toBe(props.scrollOffset);
@@ -271,6 +285,12 @@ describe('PerpsProOpenOrdersPage composition (unit)', () => {
         paddingHorizontal: 16,
       },
       conditional: {
+        minHeight: 656,
+        paddingTop: 12,
+        paddingBottom: 24,
+        paddingHorizontal: 8,
+      },
+      twap: {
         minHeight: 656,
         paddingTop: 12,
         paddingBottom: 24,

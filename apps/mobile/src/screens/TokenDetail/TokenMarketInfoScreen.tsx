@@ -29,9 +29,9 @@ import {
   ScrollView,
   StyleSheet,
   View,
-  Dimensions,
   RefreshControl,
 } from 'react-native';
+import { useWindowDimensions } from '@/core/dimensions';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
 import type { TokenChartRef } from './components/TokenPriceChart';
 import { TokenPriceChart } from './components/TokenPriceChart';
@@ -94,8 +94,6 @@ export type RelatedDeFiType = AbstractProject & {
   address: string;
 };
 
-const { width: screenWidth } = Dimensions.get('window');
-
 export const RiskTokenTips = ({ isDanger }: { isDanger?: boolean }) => {
   const { styles, colors2024 } = useTheme2024({
     getStyle,
@@ -131,6 +129,7 @@ export const RiskTokenTips = ({ isDanger }: { isDanger?: boolean }) => {
 };
 
 export const TokenMarketInfoScreen = () => {
+  const { width: screenWidth } = useWindowDimensions();
   const route =
     useRoute<GetRootScreenNavigationProps<'TokenMarketInfo'>['route']>();
   const { token, account, tokenSelectType } = route.params || {};
@@ -326,7 +325,7 @@ export const TokenMarketInfoScreen = () => {
         }}
       />
     );
-  }, [colors2024, isLight, isLoss]);
+  }, [colors2024, isLight, isLoss, screenWidth]);
 
   const renderTabBar = React.useCallback(
     (props: any) => (
@@ -707,6 +706,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
       borderRadius: 16,
+      borderCurve: 'continuous',
       position: 'relative',
       marginTop: 12,
       marginHorizontal: 12,
@@ -750,6 +750,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     btnInnerContainer: {
       borderRadius: 12,
+      borderCurve: 'continuous',
     },
     searchTokenDanger: {
       flex: 1,
@@ -759,6 +760,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       padding: 8,
       backgroundColor: colors2024['red-light-1'],
       borderRadius: 8,
+      borderCurve: 'continuous',
       // marginTop: 12,
     },
     tokenRowContent: {
@@ -774,6 +776,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       padding: 8,
       backgroundColor: colors2024['orange-light-1'],
       borderRadius: 8,
+      borderCurve: 'continuous',
       // marginTop: 12,
     },
 
@@ -821,11 +824,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: colors2024['neutral-body'],
       height: 3,
       borderRadius: 100,
+      borderCurve: 'continuous',
     },
     skeleton: {
       width: '100%',
       height: 200,
       borderRadius: 12,
+      borderCurve: 'continuous',
     },
     klineContainer: {},
   };

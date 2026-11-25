@@ -2,12 +2,19 @@
 import React from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
-import { TextProps } from 'react-native';
-import { DefaultStyle } from 'react-native-reanimated/lib/typescript/hook/commonTypes';
+import Animated, { clamp, useAnimatedStyle } from 'react-native-reanimated';
+import { PixelRatio, StyleSheet, TextProps, View } from 'react-native';
 import { ThemeColors2024 } from '@rabby-wallet/base-utils';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
-import { AnimatedText } from '@/components/Typography';
+import { AnimatedText, Text } from '@/components/Typography';
+
+/**
+ * `plate` — the moving black chip used by the multi-address asset strip.
+ * `fade` — the original per-label colour/background swap used by the
+ * single-address tabs: those labels are packed tightly together, so a chip
+ * sliding between them reads as overlapping rather than travelling.
+ */
+export type CustomLabelVariant = 'plate' | 'fade';
 
 interface CustomLabelProps {
   index: number;
@@ -20,9 +27,94 @@ interface CustomLabelProps {
   inactiveFontWeight?: string;
   activeFontSize?: number;
   inactiveFontSize?: number;
+  variant?: CustomLabelVariant;
   style?: TextProps['style'];
 }
-const CustomLabel = ({
+
+const LABEL_WIDTH = 70;
+// Snap animated offsets to whole device pixels. A translated text layer that
+// lands on sub-pixel offsets is re-rasterised at every step, which reads as a
+// horizontal shimmer/tremble while the row is moving.
+const PIXEL = PixelRatio.get();
+/** Last asset tab; the plate never animates outside the asset range. */
+const MAX_ASSET_INDEX = 3;
+
+function snapToPixel(value: number) {
+  'worklet';
+  return Math.round(value * PIXEL) / PIXEL;
+}
+// Park the plate a hair past the label edge: at exactly `width` its antialiased
+// edge still touches the clip boundary and leaves a 1px seam.
+const PLATE_TRAVEL = LABEL_WIDTH + 1;
+
+/**
+ * One tab label. The active chip (black plate + white text) is a *moving,
+ * clipped* layer instead of a fading one:
+ *
+ *   container ── grey text (static)
+ *     └ mover (width = label, translateX = d * width, overflow hidden)
+ *          ├ black plate
+ *          └ white text (translateX = -d * width, i.e. pinned on screen)
+ *
+ * `d = track - index`, so dragging towards the next tab slides this tab's plate
+ * out to the right and the next tab's plate in from the left; both are clipped
+ * by their own label box, and the gap between labels stays empty, so the plate
+ * reads as if it passes behind the wall between them. The counter-translated
+ * white text keeps its glyphs in place and is only visible where the plate
+ * still covers them — the text turns back to the inactive colour exactly where
+ * the plate has left.
+ *
+ * Only `transform` is animated: no `color`, `backgroundColor`, width or text
+ * prop is written from the worklet.
+ */
+const PlateCustomLabel = ({
+  index,
+  indexDecimal,
+  text,
+  style,
+}: CustomLabelProps) => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+
+  // The plate travels between asset tabs, and also on the overview boundary:
+  // coming from the overview the first label's plate slides in from its own
+  // left edge (offset -1 -> 0 on progress 0 -> 1), exactly like the next label
+  // does on Token -> DeFi. Clamping the track at 1 here used to make the Token
+  // plate pop in fully formed.
+  const plateOffset = (track: number) => {
+    'worklet';
+    return clamp(clamp(track, 0, MAX_ASSET_INDEX) - index, -1, 1);
+  };
+
+  const moverStyle = useAnimatedStyle(() => {
+    const d = plateOffset(indexDecimal.value);
+    return { transform: [{ translateX: snapToPixel(d * PLATE_TRAVEL) }] };
+  });
+  const pinnedTextStyle = useAnimatedStyle(() => {
+    const d = plateOffset(indexDecimal.value);
+    return { transform: [{ translateX: -snapToPixel(d * PLATE_TRAVEL) }] };
+  });
+
+  return (
+    <Animated.View style={styles.container}>
+      <Text style={[styles.label, styles.labelInactive, style]}>{text}</Text>
+      <Animated.View style={[styles.mover, moverStyle]}>
+        <View style={styles.plate} />
+        <Animated.Text
+          allowFontScaling={false}
+          style={[styles.label, styles.labelActive, style, pinnedTextStyle]}>
+          {text}
+        </Animated.Text>
+      </Animated.View>
+    </Animated.View>
+  );
+};
+
+/**
+ * The pre-plate label: each label owns its own rounded background and swaps
+ * colour at the midpoint of the swipe. Kept for the single-address tabs, whose
+ * labels sit directly next to each other.
+ */
+const FadeCustomLabel = ({
   index,
   indexDecimal,
   text,
@@ -30,7 +122,7 @@ const CustomLabel = ({
 }: CustomLabelProps) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
-  const stylez = useAnimatedStyle(() => {
+  const textStyle = useAnimatedStyle(() => {
     return {
       color:
         Math.abs(index - indexDecimal.value) < 0.5
@@ -38,7 +130,7 @@ const CustomLabel = ({
             ? ThemeColors2024.dark['neutral-title-1']
             : ThemeColors2024.light['neutral-title-1']
           : colors2024['neutral-secondary'],
-    } as DefaultStyle;
+    };
   });
   const wrapperStyle = useAnimatedStyle(() => {
     return {
@@ -48,29 +140,64 @@ const CustomLabel = ({
             ? ThemeColors2024.dark['neutral-bg-1']
             : '#FFF'
           : 'transparent',
-    } as DefaultStyle;
+    };
   });
+
   return (
     <Animated.View style={[styles.container, wrapperStyle]}>
-      <AnimatedText style={[styles.label, stylez, style]}>{text}</AnimatedText>
+      <AnimatedText style={[styles.label, textStyle, style]}>
+        {text}
+      </AnimatedText>
     </Animated.View>
   );
 };
 
+const CustomLabel = ({ variant = 'plate', ...props }: CustomLabelProps) =>
+  variant === 'fade' ? (
+    <FadeCustomLabel {...props} />
+  ) : (
+    <PlateCustomLabel {...props} />
+  );
+
 export default CustomLabel;
 
-const getStyles = createGetStyles2024(({ colors2024 }) => ({
+const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     position: 'relative',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     height: HOME_TOP_HEADER_SIZES.headerTabItemHeight,
-    width: 70,
+    width: LABEL_WIDTH,
     paddingLeft: 8,
     paddingRight: 8,
     borderRadius: 8,
+    borderCurve: 'continuous',
     overflow: 'hidden',
+  },
+  // Same box as the label, free to slide; clips both the plate and the text.
+  mover: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: LABEL_WIDTH,
+    height: HOME_TOP_HEADER_SIZES.headerTabItemHeight,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+  },
+  plate: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 8,
+    borderCurve: 'continuous',
+    // Match the pre-plate implementation: the active chip is near-black in
+    // light mode and plain white in dark mode, with the dark active label on
+    // top of it. Using the themed `neutral-bg-1` here made the dark-mode chip
+    // near-black and left the dark active label unreadable.
+    backgroundColor: isLight ? ThemeColors2024.dark['neutral-bg-1'] : '#FFF',
   },
   label: {
     fontSize: 16,
@@ -79,6 +206,16 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     textTransform: 'none',
     textAlign: 'center',
+  },
+  labelInactive: {
     color: colors2024['neutral-secondary'],
   },
+  labelActive: {
+    color: isLight
+      ? ThemeColors2024.dark['neutral-title-1']
+      : ThemeColors2024.light['neutral-title-1'],
+  },
 }));
+
+PlateCustomLabel.displayName = 'PlateCustomLabel';
+FadeCustomLabel.displayName = 'FadeCustomLabel';

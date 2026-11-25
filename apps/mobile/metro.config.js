@@ -2,6 +2,13 @@ const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+const { FileStore } = require('metro-cache');
+
+// Metro's default cache store lives under os.tmpdir(), which on CI is a per-job
+// temporary directory, so the transform cache never survives a run. Point it at
+// a persistent directory when the build asks for one; cacheVersion still
+// invalidates entries when babel/architecture inputs change.
+const metroCacheDir = process.env.RABBY_MOBILE_METRO_CACHE_DIR;
 const { withSentryConfig } = require('@sentry/react-native/metro');
 const { withRozenite } = require('@rozenite/metro');
 const {
@@ -399,6 +406,9 @@ const withPackageExportsDisabled = config => {
  * @type {import('metro-config').MetroConfig}
  */
 const config = {
+  ...(metroCacheDir
+    ? { cacheStores: [new FileStore({ root: metroCacheDir })] }
+    : {}),
   cacheVersion: `${defaultConfig.cacheVersion}:${babelTransformCacheVersion}:react-native-architecture=${reactNativeArchitecture}`,
   projectRoot,
   transformer: {
@@ -457,21 +467,18 @@ const config = {
         };
       }
 
+      // Workspace packages resolve these from the root node_modules while the
+      // app resolves its own copy. Two instances make `Gesture` undefined in
+      // the scene pager, so pin both to the app copy.
       if (
-        /^(react-native-reanimated|react-native-gesture-handler)(\/|$)/.test(
-          moduleName,
-        )
+        moduleName === 'react-native-gesture-handler' ||
+        moduleName === 'react-native-reanimated'
       ) {
-        // Source-linked workspaces must share the app's native peer instance.
-        // Restrict lookup, but let Metro keep its platform extensions and
-        // react-native/mainFields selection instead of using Node's main entry.
         return context.resolveRequest(
           {
             ...context,
-            allowHaste: false,
-            disableHierarchicalLookup: true,
-            nodeModulesPaths: [path.resolve(projectRoot, 'node_modules')],
-            extraNodeModules: {},
+            originPackage: undefined,
+            originModulePath: path.join(projectRoot, 'index.js'),
           },
           moduleName,
           platform,

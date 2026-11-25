@@ -1,3 +1,18 @@
+jest.mock('@/hooks/perps/twap/usePerpsTwapStore', () => {
+  const records = {};
+  return {
+    getPerpsTwapAccount: () => ({ sources: { history: mockTwapHistory } }),
+    usePerpsTwapRecords: () => records,
+    usePerpsTwapSourceState: (_user: string, source: string) =>
+      source === 'history'
+        ? mockTwapHistory
+        : { ready: false, error: 'active offline' },
+  };
+});
+jest.mock('@/hooks/perps/twap/usePerpsTwapSubscriptions', () => ({
+  usePerpsTwapSubscriptions: () => {},
+  refreshPerpsTwaps: (...args: unknown[]) => mockRefreshTwaps(...args),
+}));
 import type {
   UserHistoricalOrders,
   WsFill,
@@ -5,6 +20,8 @@ import type {
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { AppState, InteractionManager } from 'react-native';
 
+const mockRefreshTwaps = jest.fn(async (..._args: unknown[]) => {});
+let mockTwapHistory: { ready: boolean; error: string | null };
 const mockFetchOrders = jest.fn();
 const mockFetchLatestTrades = jest.fn();
 const mockFetchOrderFills = jest.fn();
@@ -139,6 +156,7 @@ describe('usePerpsProHistoryController', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockHistoryListener = null;
+    mockTwapHistory = { ready: true, error: null };
     mockAccountGeneration = 1;
     mockPerpsState.currentPerpsAccount = {
       address: '0x1111111111111111111111111111111111111111',
@@ -187,13 +205,81 @@ describe('usePerpsProHistoryController', () => {
     jest.restoreAllMocks();
   });
 
-  it('preloads all four tabs and distinguishes successful empty results', async () => {
+  it('offers a full retry before the first TWAP history snapshot and preserves an empty snapshot on refresh failure', async () => {
+    mockTwapHistory = { ready: false, error: 'history offline' };
+    const hook = renderHook(() => usePerpsProHistoryController('twap'));
+    await waitFor(() =>
+      expect(hook.result.current.tabState.status).toBe('error'),
+    );
+    await act(async () => {
+      await hook.result.current.refresh();
+    });
+    expect(mockRefreshTwaps).toHaveBeenLastCalledWith(
+      mockPerpsState.currentPerpsAccount.address,
+      'history',
+    );
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.history.refreshFailed',
+      'error',
+    );
+
+    mockTwapHistory = { ready: true, error: 'history offline' };
+    hook.rerender();
+    expect(hook.result.current.tabState).toMatchObject({
+      status: 'empty',
+      rows: [],
+      refreshError: 'history offline',
+    });
+    mockTwapHistory = { ready: true, error: null };
+    hook.rerender();
+    expect(hook.result.current.tabState.status).toBe('empty');
+    expect(hook.result.current.tabState.refreshError).toBeUndefined();
+  });
+
+  it.each(['account', 'hidden', 'tab'] as const)(
+    'does not show a late TWAP refresh toast after changing %s',
+    async transition => {
+      mockTwapHistory = { ready: true, error: null };
+      const hook = renderHook(
+        ({ active }) => usePerpsProHistoryController('twap', active, true),
+        {
+          initialProps: { active: true },
+        },
+      );
+      let finish!: () => void;
+      mockRefreshTwaps.mockImplementationOnce(
+        () =>
+          new Promise(resolve => {
+            finish = resolve;
+          }),
+      );
+      let pending!: Promise<void>;
+      act(() => {
+        pending = hook.result.current.refresh();
+      });
+      if (transition === 'account') {
+        mockAccountGeneration++;
+        hook.rerender({ active: true });
+      }
+      if (transition === 'hidden') hook.rerender({ active: false });
+      if (transition === 'tab')
+        act(() => hook.result.current.setActiveTab('orders'));
+      await act(async () => {
+        mockTwapHistory = { ready: true, error: 'late failure' };
+        finish();
+        await pending;
+      });
+      expect(mockShowToast).not.toHaveBeenCalled();
+    },
+  );
+
+  it('preloads ordinary tabs alongside the shared TWAP source and distinguishes successful empty results', async () => {
     const hook = renderHook(() => usePerpsProHistoryController());
     await waitFor(() => expect(mockFetchOrders).toHaveBeenCalledTimes(1));
     await waitFor(() =>
       expect(
         Object.values(hook.result.current.state).map(state => state.status),
-      ).toEqual(['empty', 'empty', 'empty', 'empty']),
+      ).toEqual(['empty', 'empty', 'empty', 'empty', 'empty']),
     );
     expect(hook.result.current.activeTab).toBe('orders');
     expect(hook.result.current.tabState.hasEarlier).toBe(false);

@@ -2,7 +2,7 @@ import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 // Figma cNPc4bz8P8QBjkPk2huEml / 86719:167816: 12px thumb, 2.35px stroke.
 import RcAmountSliderThumb from '@/assets2024/icons/perps/PerpsProTradeAmountSliderThumb.svg';
 import { Text } from '@/components/Typography';
-import { PerpsGestureSlider as Slider } from '@/components/perps/PerpsGestureSlider';
+import { GestureSlider as Slider } from '@/components/GestureSlider';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo, useState } from 'react';
@@ -51,9 +51,10 @@ const TradeSliderPoint: React.FC<{
 };
 
 export const PerpsProTradeAmountSlider: React.FC<{
+  draggingContainerStyle?: ViewStyle;
   onChange?: (value: number) => void;
   value?: number;
-}> = React.memo(({ onChange, value = 0 }) => {
+}> = React.memo(({ draggingContainerStyle, onChange, value = 0 }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   const [dragging, setDragging] = useState(false);
   const points = useMemo(() => [...TRADE_SLIDER_POINTS], []);
@@ -106,7 +107,7 @@ export const PerpsProTradeAmountSlider: React.FC<{
           ),
         );
       }}
-      style={styles.container}
+      style={[styles.container, dragging && draggingContainerStyle]}
       testID="perps-pro-trade-amount-slider">
       <View
         onLayout={event => {
@@ -205,11 +206,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   track: {
     borderRadius: TRADE_SLIDER_TRACK_HEIGHT / 2,
+    borderCurve: 'continuous',
     height: TRADE_SLIDER_TRACK_HEIGHT,
   },
   trackBase: {
     backgroundColor: colors2024['neutral-line'],
     borderRadius: TRADE_SLIDER_TRACK_HEIGHT / 2,
+    borderCurve: 'continuous',
     height: TRADE_SLIDER_TRACK_HEIGHT,
     left: TRADE_SLIDER_TRACK_INSET,
     overflow: 'hidden',
@@ -238,6 +241,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
     borderColor: colors2024['neutral-line'],
     borderRadius: TRADE_SLIDER_POINT_SIZE / 2,
+    borderCurve: 'continuous',
     borderWidth: TRADE_SLIDER_POINT_BORDER,
     height: TRADE_SLIDER_POINT_SIZE,
     width: TRADE_SLIDER_POINT_SIZE,
@@ -278,6 +282,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     backgroundColor: colors2024['neutral-title-1'],
     borderRadius: 4,
+    borderCurve: 'continuous',
     height: 20,
     justifyContent: 'center',
     width: TRADE_SLIDER_TOOLTIP_WIDTH,

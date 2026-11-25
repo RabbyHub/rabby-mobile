@@ -36,6 +36,7 @@ const getStyles = (colors: AppColorsVariants) =>
       height: 24,
       marginRight: 8,
       borderRadius: 4,
+      borderCurve: 'continuous',
     },
     text: {
       flex: 1,
@@ -48,6 +49,7 @@ const getStyles = (colors: AppColorsVariants) =>
     footer: {
       backgroundColor: colors['neutral-card-2'],
       borderRadius: 6,
+      borderCurve: 'continuous',
     },
     footerItem: {
       flexDirection: 'row',

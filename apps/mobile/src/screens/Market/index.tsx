@@ -294,6 +294,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       backgroundColor: colors2024['neutral-body'],
       height: 3,
       borderRadius: 100,
+      borderCurve: 'continuous',
     },
     content: {
       flex: 1,

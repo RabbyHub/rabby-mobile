@@ -3,34 +3,12 @@ import { TextInput, View } from 'react-native';
 import { act, fireEvent, render, within } from '@testing-library/react-native';
 import type { NativeStackHeaderProps } from '@react-navigation/native-stack';
 import { RootNames } from '@/constant/layout';
-import {
-  nativeBoundary,
-  type PanBoundary,
-} from '@/testUtils/linkedPagerNativeBoundary';
-
-// Real root motion/retention; native animation completion is explicit. Business
-// forms below are spies, so this is a host contract test, not quote integration.
-jest.mock('react-native-gesture-handler', () =>
-  require('@/testUtils/linkedPagerNativeBoundary').createGestureBoundary(),
-);
-jest.mock('react-native-reanimated', () => ({
-  ...require('@/testUtils/linkedPagerNativeBoundary').createReanimatedBoundary(),
-  measure: jest.fn(),
-}));
-jest.mock('react-native-animateable-text', () => require('react-native').Text);
-jest.mock('@/hooks/useRootPagerEnabled', () => ({
-  useRootPagerEnabled: (focused: boolean) => focused,
-}));
 
 const mockSetNavigationOptions = jest.fn();
 const mockRegressionActions = new Map<string, () => Promise<void>>();
 const mockSceneMounts = { swap: 0, bridge: 0 };
-const mockSceneRenders = { swap: 0, bridge: 0 };
 const mockCommittedScenes = new Map<string, boolean>();
 let mockServiceReady = true;
-let idleCallback: IdleRequestCallback | undefined;
-const originalIdle = global.requestIdleCallback;
-const originalCancelIdle = global.cancelIdleCallback;
 
 // Route-scoped navigation boundary for component contracts. Native-stack's
 // provider placement and the actual iOS transition still need device coverage.
@@ -46,6 +24,62 @@ jest.mock('@react-navigation/native', () => {
 });
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 47, bottom: 34, left: 0, right: 0 }),
+}));
+// Component-contract stub: keep every page that has ever been requested mounted
+// (the real track retains them), but only the requested key is at rest. Drag
+// mechanics, back-gesture handoff and native hit testing stay device-only.
+jest.mock('@rabby-wallet/rn-collapsible-scene-view', () => {
+  const ReactModule = require('react');
+  const RNView = require('react-native').View;
+  const RootScenePager = ({
+    keys,
+    requestedKey,
+    renderPage,
+    testID,
+  }: {
+    keys: readonly string[];
+    requestedKey: string;
+    renderPage: (
+      key: string,
+      context: { selected: boolean; interactive: boolean; visible: boolean },
+    ) => React.ReactElement | null;
+    testID?: string;
+  }) => {
+    const seen = ReactModule.useRef<Set<string>>(new Set());
+    seen.current.add(requestedKey);
+    return ReactModule.createElement(
+      RNView,
+      { testID },
+      keys
+        .filter(key => seen.current.has(key))
+        .map(key =>
+          ReactModule.createElement(
+            RNView,
+            {
+              key,
+              style: key === requestedKey ? null : { display: 'none' },
+            },
+            renderPage(key, {
+              selected: key === requestedKey,
+              interactive: true,
+              visible: true,
+            }),
+          ),
+        ),
+    );
+  };
+  return {
+    __esModule: true,
+    RootScenePager,
+    RootScenePagerGestureBlock: ({ children }: { children: unknown }) =>
+      children,
+  };
+});
+jest.mock('@/hooks/useRootPagerEnabled', () => ({
+  useRootPagerEnabled: () => true,
+}));
+jest.mock('@/hooks/useRootScenePagerBackGesture', () => ({
+  useRootScenePagerBackGesture: () => undefined,
 }));
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: Function }) => ({
@@ -125,7 +159,6 @@ function MockScene({
   kind: 'swap' | 'bridge';
   sceneActive: boolean;
 }) {
-  mockSceneRenders[kind] += 1;
   const [value, setValue] = React.useState('');
   React.useEffect(() => {
     mockSceneMounts[kind] += 1;
@@ -195,38 +228,13 @@ function RouteBoundary({
 }
 
 beforeEach(() => {
-  nativeBoundary.reset();
   jest.clearAllMocks();
   mockSceneMounts.swap = 0;
   mockSceneMounts.bridge = 0;
-  mockSceneRenders.swap = 0;
-  mockSceneRenders.bridge = 0;
   mockCommittedScenes.clear();
   mockRegressionActions.clear();
   mockServiceReady = true;
-  idleCallback = undefined;
-  global.requestIdleCallback = jest.fn(callback => {
-    idleCallback = callback;
-    return 1;
-  });
-  global.cancelIdleCallback = jest.fn();
 });
-
-afterEach(() => {
-  jest.restoreAllMocks();
-  global.requestIdleCallback = originalIdle;
-  global.cancelIdleCallback = originalCancelIdle;
-});
-
-const hidden = { includeHiddenElements: true };
-function layoutPagers(view: ReturnType<typeof render>) {
-  for (const viewport of view.getAllByTestId('swap-bridge-root-viewport')) {
-    fireEvent(viewport, 'layout', {
-      nativeEvent: { layout: { x: 0, y: 0, width: 360, height: 700 } },
-    });
-  }
-}
-const settle = () => act(() => nativeBoundary.finishAnimations());
 
 describe('SwapBridge route-owned scenes', () => {
   it.each(['swap', 'bridge'] as const)(
@@ -246,7 +254,7 @@ describe('SwapBridge route-owned scenes', () => {
     },
   );
 
-  it('prepares new route params immediately, activates at settle and retains state', () => {
+  it('uses new route params on their first commit and retains visited scene state', () => {
     const context = routeProps();
     const commits: Map<string, boolean>[] = [];
     const onCommit = () => commits.push(new Map(mockCommittedScenes));
@@ -255,7 +263,6 @@ describe('SwapBridge route-owned scenes', () => {
         <SwapBridgeScreen />
       </RouteBoundary>,
     );
-    layoutPagers(view);
     fireEvent.changeText(view.getByTestId('swap-amount'), '123');
     commits.length = 0;
     const bridgeContext = {
@@ -267,14 +274,7 @@ describe('SwapBridge route-owned scenes', () => {
         <SwapBridgeScreen />
       </RouteBoundary>,
     );
-    expect(mockCommittedScenes).toEqual(
-      new Map([
-        ['swap', true],
-        ['bridge', false],
-      ]),
-    );
-    settle();
-    expect(mockCommittedScenes).toEqual(
+    expect(commits[0]).toEqual(
       new Map([
         ['swap', false],
         ['bridge', true],
@@ -286,7 +286,6 @@ describe('SwapBridge route-owned scenes', () => {
         <SwapBridgeScreen />
       </RouteBoundary>,
     );
-    settle();
     expect(view.getByTestId('swap-amount').props.value).toBe('123');
     expect(
       view.getByTestId('bridge-amount', { includeHiddenElements: true }).props
@@ -295,75 +294,6 @@ describe('SwapBridge route-owned scenes', () => {
     expect(mockSceneMounts).toEqual({ swap: 1, bridge: 1 });
     expect(mockSetNavigationOptions).not.toHaveBeenCalled();
   });
-
-  it('warms the neighboring preview only at idle and never activates it', () => {
-    const view = render(
-      <RouteBoundary context={routeProps()}>
-        <SwapBridgeScreen />
-      </RouteBoundary>,
-    );
-    expect(mockSceneMounts).toEqual({ swap: 1, bridge: 0 });
-    const sourceRenderCount = mockSceneRenders.swap;
-    act(() => idleCallback?.({ didTimeout: false, timeRemaining: () => 12 }));
-    expect(mockSceneMounts).toEqual({ swap: 1, bridge: 1 });
-    expect(mockCommittedScenes.get('bridge')).toBe(false);
-    expect(mockSceneRenders.swap).toBe(sourceRenderCount);
-    expect(view.getByTestId('bridge-scene', hidden)).toBeTruthy();
-  });
-
-  it.each([false, true])(
-    'retains preview forms and publishes only a completed swipe (complete=%s)',
-    complete => {
-      const context = routeProps();
-      const view = render(
-        <RouteBoundary context={context}>
-          <SwapBridgeScreen />
-        </RouteBoundary>,
-      );
-      layoutPagers(view);
-      const gesture = view.getByTestId('swap-bridge-root-pan').props
-        .gesture as PanBoundary;
-      const event = {
-        x: 160,
-        y: 300,
-        absoluteX: 160,
-        absoluteY: 300,
-        translationX: -180,
-        translationY: 0,
-        velocityX: 0,
-      };
-      act(() => {
-        gesture.touchesDown?.(
-          { allTouches: [event], numberOfTouches: 1 },
-          { fail: jest.fn(), activate: jest.fn(), end: jest.fn() },
-        );
-        gesture.handlers.onStart(event);
-        gesture.handlers.onUpdate(event);
-        if (complete) {
-          gesture.handlers.onEnd(event, true);
-        }
-        gesture.handlers.onFinalize(event, complete);
-      });
-      expect(context.navigation.setParams).not.toHaveBeenCalled();
-      expect(mockCommittedScenes.get('swap')).toBe(true);
-      settle();
-      expect(mockSceneMounts).toEqual({ swap: 1, bridge: 1 });
-      expect(mockCommittedScenes).toEqual(
-        new Map([
-          ['swap', !complete],
-          ['bridge', complete],
-        ]),
-      );
-      if (complete) {
-        expect(context.navigation.setParams).toHaveBeenCalledTimes(1);
-        expect(context.navigation.setParams).toHaveBeenCalledWith({
-          activeTab: 'bridge',
-        });
-      } else {
-        expect(context.navigation.setParams).not.toHaveBeenCalled();
-      }
-    },
-  );
 
   it('routes regression tab actions through the same navigation params', async () => {
     const context = routeProps();
@@ -453,7 +383,6 @@ describe('SwapBridge configured header', () => {
         <RouteWithHeader context={second} />
       </>,
     );
-    layoutPagers(view);
     const firstView = within(view.getByTestId('swap-a'));
     const secondView = within(view.getByTestId('swap-b'));
     expect(firstView.queryByTestId('swap-header-actions')).toBeNull();
@@ -485,15 +414,13 @@ describe('SwapBridge configured header', () => {
         />
       </>,
     );
-    settle();
     expect(firstView.getByTestId('swap-header-actions')).toBeTruthy();
     expect(
       firstView.getByTestId('swap-scene').props.accessibilityState.selected,
     ).toBe(true);
     expect(secondView.queryByTestId('swap-header-actions')).toBeNull();
     expect(
-      secondView.getByTestId('swap-scene', hidden).props.accessibilityState
-        .selected,
+      secondView.getByTestId('swap-scene').props.accessibilityState.selected,
     ).toBe(false);
     expect(view.getAllByTestId('account-modal-host')).toHaveLength(1);
     fireEvent.press(firstView.getByText('Swap'));

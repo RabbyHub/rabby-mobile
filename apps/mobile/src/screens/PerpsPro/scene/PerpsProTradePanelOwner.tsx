@@ -23,7 +23,9 @@ import { useTranslation } from 'react-i18next';
 import { triggerPerpsProLightHaptic } from '../components/common/triggerPerpsProLightHaptic';
 import { PerpsProSceneSkeleton } from '../components/loading/PerpsProSceneSkeleton';
 import { PerpsProOrderConfirmationSheet } from '../components/trade/PerpsProOrderConfirmationSheet';
+import { PerpsProScaleOrderConfirmationSheet } from '../components/trade/PerpsProScaleOrderConfirmationSheet';
 import { PerpsProTradeForm } from '../components/trade/PerpsProTradeForm';
+import { PerpsProTwapOrderConfirmationSheet } from '../components/trade/PerpsProTwapOrderConfirmationSheet';
 import {
   getPerpsProColumnLayout,
   PERPS_PRO_MAIN_COLUMN_HEIGHT,
@@ -32,6 +34,7 @@ import type { PerpsProLeverageConfiguration } from '../model/leverage';
 import type { PerpsProMarketDescriptor } from '../model/market';
 import type { PerpsTickOption } from '../model/orderBook';
 import type { PerpsProOrderBookPriceIntent } from '../model/orderBookPriceIntent';
+import type { PerpsProTradeOrderType } from '../model/trade';
 import { PerpsProRealtimeOrderBook } from './PerpsProRealtimeOrderBook';
 import { usePerpsProBboBook } from './usePerpsProBboBook';
 import type { PerpsProLeverageUpdateRequest } from './usePerpsProLeverageUpdate';
@@ -75,6 +78,7 @@ type PerpsProTradePanelOwnerProps = React.PropsWithChildren<{
   precision: PerpsBookPrecision | null;
   realtimeEnabled: boolean;
   ref?: React.Ref<PerpsProTradePanelHandle>;
+  routeFocused: boolean;
   selectedTickOption: PerpsTickOption | null;
   tickOptions: PerpsTickOption[];
   tradeConfigurationReady: boolean;
@@ -89,6 +93,7 @@ type PerpsProTradePanelOwnerProps = React.PropsWithChildren<{
 // needs the refresh command, not the account feed's high-frequency snapshots.
 export type PerpsProTradePanelHandle = {
   refreshActiveAssetData: () => Promise<unknown>;
+  setOrderType: (orderType: PerpsProTradeOrderType) => void;
 };
 
 export const PerpsProTradePanelOwner = React.memo(
@@ -112,6 +117,7 @@ export const PerpsProTradePanelOwner = React.memo(
     precision,
     realtimeEnabled,
     ref,
+    routeFocused,
     selectedTickOption,
     tickOptions,
     tradeConfigurationReady,
@@ -127,9 +133,6 @@ export const PerpsProTradePanelOwner = React.memo(
         contextEnabled: false,
         enabled: activeAssetSubscriptionEnabled,
       });
-    useImperativeHandle(ref, () => ({ refreshActiveAssetData }), [
-      refreshActiveAssetData,
-    ]);
     const bboBook = usePerpsProBboBook({
       coin: market?.canonicalCoin ?? '',
       enabled: realtimeEnabled && tradeConfigurationReady,
@@ -142,6 +145,7 @@ export const PerpsProTradePanelOwner = React.memo(
       bboSessionKey: bboBook.sessionKey,
       bboStatus: bboBook.status,
       executionActive,
+      routeFocused,
       leveragePending,
       market,
       tradeConfigurationReady,
@@ -149,6 +153,14 @@ export const PerpsProTradePanelOwner = React.memo(
       refreshActiveAssetData,
       updateLeverageRequest,
     });
+    useImperativeHandle(
+      ref,
+      () => ({
+        refreshActiveAssetData,
+        setOrderType: trade.setOrderType,
+      }),
+      [refreshActiveAssetData, trade.setOrderType],
+    );
     const [mainColumnHeight, setMainColumnHeight] = useState(
       PERPS_PRO_MAIN_COLUMN_HEIGHT,
     );
@@ -266,16 +278,38 @@ export const PerpsProTradePanelOwner = React.memo(
       </View>
     );
     const confirmation = (
-      <PerpsProOrderConfirmationSheet
-        command={trade.review}
-        estimatedLiquidation={trade.estimatedLiquidation}
-        market={trade.market}
-        onClose={trade.closeReview}
-        onConfirm={trade.confirmReview}
-        onToggleSkip={() => trade.setSkipConfirmation(value => !value)}
-        pending={trade.pending}
-        skipConfirmation={trade.skipConfirmation}
-      />
+      <>
+        <PerpsProOrderConfirmationSheet
+          command={
+            trade.review?.type === 'scaleOrder' ||
+            trade.review?.type === 'twapOrder'
+              ? null
+              : trade.review
+          }
+          estimatedLiquidation={trade.estimatedLiquidation}
+          market={trade.market}
+          onClose={trade.closeReview}
+          onConfirm={trade.confirmReview}
+          onToggleSkip={() => trade.setSkipConfirmation(value => !value)}
+          pending={trade.pending}
+          skipConfirmation={trade.skipConfirmation}
+        />
+        <PerpsProTwapOrderConfirmationSheet
+          command={trade.review?.type === 'twapOrder' ? trade.review : null}
+          onClose={trade.closeReview}
+          onConfirm={trade.confirmReview}
+          onToggleSkip={() => trade.setSkipConfirmation(value => !value)}
+          pending={trade.pending}
+          skipConfirmation={trade.skipConfirmation}
+        />
+        <PerpsProScaleOrderConfirmationSheet
+          onDismissed={trade.onScaleReviewDismissed}
+          command={trade.review?.type === 'scaleOrder' ? trade.review : null}
+          onClose={trade.closeReview}
+          onConfirm={trade.confirmReview}
+          pending={trade.pending}
+        />
+      </>
     );
 
     return (

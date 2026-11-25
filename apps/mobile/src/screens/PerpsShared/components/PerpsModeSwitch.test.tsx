@@ -114,7 +114,7 @@ describe('PerpsModeSwitch', () => {
     ).toMatchObject({
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
-      fontWeight: '900',
+      fontWeight: '800',
       includeFontPadding: false,
       lineHeight: 24,
     });
@@ -328,7 +328,7 @@ describe('PerpsModeSwitch', () => {
     expect(simpleActive).toHaveStyle({ opacity: 0 });
     expect(proActive).toHaveStyle({
       fontFamily: 'SF Pro Rounded',
-      fontWeight: '900',
+      fontWeight: '800',
     });
     expect(proInactive).toHaveStyle({
       fontFamily: 'SF Pro Rounded',

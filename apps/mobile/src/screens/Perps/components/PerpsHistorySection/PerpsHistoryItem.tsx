@@ -168,6 +168,7 @@ export const PerpsHistoryItem = memo(PerpsHistoryItemComponent);
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
     borderRadius: 16,
+    borderCurve: 'continuous',
     paddingVertical: 14,
     paddingHorizontal: 12,
     backgroundColor: isLight
@@ -193,6 +194,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 46,
     height: 46,
     borderRadius: 1000,
+    borderCurve: 'continuous',
     backgroundColor: 'white',
   },
   content: {

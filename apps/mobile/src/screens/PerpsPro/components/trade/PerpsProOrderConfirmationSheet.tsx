@@ -361,12 +361,14 @@ const getStyle = createGetStyles2024(
     details: {
       backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
       borderRadius: 12,
+      borderCurve: 'continuous',
       ...PERPS_PRO_DIALOG_LIST_CARD_PADDING,
       marginTop: 24,
     },
     tpSlDetails: {
       backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
       borderRadius: 12,
+      borderCurve: 'continuous',
       ...PERPS_PRO_DIALOG_LIST_CARD_PADDING,
       marginTop: 8,
     },

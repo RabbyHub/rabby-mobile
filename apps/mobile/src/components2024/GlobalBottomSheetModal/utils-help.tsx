@@ -1,8 +1,11 @@
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
-import { AppColors2024Variants } from '@/constant/theme';
-import type { BottomSheetModalProps } from '@gorhom/bottom-sheet';
+import { AppColors2024Variants, ThemeColors2024 } from '@/constant/theme';
+import type {
+  BottomSheetBackgroundProps,
+  BottomSheetModalProps,
+} from '@gorhom/bottom-sheet';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { BackgroundComponent } from './BackgroundComponent';
 import { CreateParams, MODAL_NAMES } from './types';
@@ -51,6 +54,7 @@ export function makeBottomSheetProps({
       {
         overflow: 'hidden',
         borderRadius: 32,
+        borderCurve: 'continuous',
       },
       inputProps?.style,
     ]),
@@ -77,9 +81,50 @@ export function makeBottomSheetProps({
     }),
   };
 
-  return createParams?.name === MODAL_NAMES.REMOVE_TOKEN_CONFIRM
-    ? { ...baseProps, ...getRemoveTokenConfirmModalProps(colors) }
-    : baseProps;
+  switch (createParams?.name) {
+    case MODAL_NAMES.REMOVE_TOKEN_CONFIRM:
+      return { ...baseProps, ...getRemoveTokenConfirmModalProps(colors) };
+    case MODAL_NAMES.TIP_PRIVACY_POLICY:
+    case MODAL_NAMES.TIP_TERM_OF_USE:
+      return { ...baseProps, ...getLightDocumentModalProps(baseProps) };
+    default:
+      return baseProps;
+  }
+}
+
+const LIGHT_DOCUMENT_BG = ThemeColors2024.light['neutral-bg-1'];
+
+const LightDocumentBackground: React.FC<BottomSheetBackgroundProps> = ({
+  style,
+  pointerEvents,
+}) => (
+  <View
+    style={[style, { backgroundColor: LIGHT_DOCUMENT_BG }]}
+    pointerEvents={pointerEvents}
+  />
+);
+
+/**
+ * The rabby.io docs pages shown in these WebViews only have a light theme, so
+ * keep the sheet chrome light in every app theme to match them.
+ */
+function getLightDocumentModalProps(
+  baseProps: Partial<React.ComponentProps<typeof AppBottomSheetModal>>,
+): Pick<
+  BottomSheetModalProps,
+  'handleStyle' | 'handleIndicatorStyle' | 'backgroundComponent'
+> {
+  return {
+    handleStyle: StyleSheet.flatten([
+      baseProps.handleStyle,
+      { backgroundColor: LIGHT_DOCUMENT_BG },
+    ]),
+    handleIndicatorStyle: StyleSheet.flatten([
+      baseProps.handleIndicatorStyle,
+      { backgroundColor: ThemeColors2024.light['neutral-line'] },
+    ]),
+    backgroundComponent: LightDocumentBackground,
+  };
 }
 
 function getRemoveTokenConfirmModalProps(

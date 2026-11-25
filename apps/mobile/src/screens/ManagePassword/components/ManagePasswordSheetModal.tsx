@@ -481,6 +481,7 @@ const getStyles = createGetStyles(colors => ({
 
   inputContainer: {
     borderRadius: 8,
+    borderCurve: 'continuous',
     height: 56,
   },
   input: {
@@ -517,6 +518,7 @@ const getStyles = createGetStyles(colors => ({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 8,
+    borderCurve: 'continuous',
     flex: 1,
     maxWidth: 170,
   },

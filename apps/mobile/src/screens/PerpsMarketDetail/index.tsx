@@ -758,6 +758,7 @@ const getStyles = createGetStyles2024(ctx => {
         : colors2024['neutral-bg-2'],
       height: 322,
       borderRadius: 20,
+      borderCurve: 'continuous',
     },
   };
 });

@@ -1019,6 +1019,7 @@ const getStyle = createGetStyles2024(
         backgroundColor: colors2024['neutral-bg-5'],
         height: 26,
         borderRadius: 6,
+        borderCurve: 'continuous',
         paddingHorizontal: 8,
       },
       cancelAllText: {
@@ -1032,6 +1033,7 @@ const getStyle = createGetStyles2024(
       tab: {
         alignItems: 'center',
         borderRadius: 120,
+        borderCurve: 'continuous',
         height: 30,
         justifyContent: 'center',
         paddingHorizontal: 12,
@@ -1042,6 +1044,7 @@ const getStyle = createGetStyles2024(
             ? colors2024['neutral-title-1']
             : ThemeColors2024.dark['neutral-bg-0'],
         borderRadius: 6,
+        borderCurve: 'continuous',
       },
       tabText: {
         color: colors2024['neutral-secondary'],
