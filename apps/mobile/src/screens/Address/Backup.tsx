@@ -217,6 +217,7 @@ function Backup(): JSX.Element {
     address,
     type,
     t,
+    navigation,
     invokeEnterPassphrase,
     handleBackupComplete,
     getAuthModalLabels,
