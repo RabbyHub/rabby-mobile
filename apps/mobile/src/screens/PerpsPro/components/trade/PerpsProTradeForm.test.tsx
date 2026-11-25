@@ -146,11 +146,24 @@ jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
 }));
 
-jest.mock('@/components/perps/PerpsGestureSlider', () => ({
-  PerpsGestureSlider: (props: object) => {
+jest.mock('@/components/GestureSlider', () => ({
+  GestureSlider: (props: object) => {
     const ReactModule = require('react');
     const { View } = require('react-native');
     return ReactModule.createElement(View, { ...props, testID: 'rne-slider' });
+  },
+}));
+
+jest.mock('@rabby-wallet/rn-collapsible-scene-view', () => ({
+  RootScenePagerGestureBlock: ({
+    children,
+    ...props
+  }: {
+    children?: unknown;
+  }) => {
+    const ReactModule = require('react');
+    const { View } = require('react-native');
+    return ReactModule.createElement(View, props, children);
   },
 }));
 
@@ -538,7 +551,8 @@ describe('PerpsProTradeForm order matrix', () => {
       />,
     );
     expect(
-      screen.getByTestId('perps-pro-trade-inputs').props.pointerEvents,
+      screen.getByTestId('perps-pro-trade-inputs-root-gesture-block').props
+        .pointerEvents,
     ).toBe('auto');
     fireEvent.press(screen.getByTestId('perps-pro-trade-button-buy'));
     expect(trade.requestReview).toHaveBeenCalledWith('buy');
@@ -554,7 +568,9 @@ describe('PerpsProTradeForm order matrix', () => {
       />,
     );
 
-    expect(screen.getByTestId('perps-pro-trade-inputs').props).toMatchObject({
+    expect(
+      screen.getByTestId('perps-pro-trade-inputs-root-gesture-block').props,
+    ).toMatchObject({
       accessibilityState: { disabled: true },
       pointerEvents: 'none',
     });

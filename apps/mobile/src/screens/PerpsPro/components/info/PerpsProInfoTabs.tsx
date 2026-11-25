@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcIconHistory from '@/assets2024/icons/perps/IconHistoryCC.svg';
 import RcIconPending from '@/assets2024/icons/home/pending.svg';
 import { Text } from '@/components/Typography';
@@ -9,12 +10,14 @@ import {
   Animated,
   Easing,
   Platform,
-  Pressable,
   View,
   type LayoutChangeEvent,
   type StyleProp,
   type TextStyle,
 } from 'react-native';
+// The strip moves via NativeAnimated; native hit testing follows its actual
+// transform without writing delayed JS scroll positions back into Fabric.
+import { Pressable } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import Reanimated, {
   useAnimatedStyle,
@@ -252,8 +255,8 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
         if (!frame || frame.width <= 0) {
           return [];
         }
-        const cap = PERPS_PRO_TAB_TOKENS.indicatorCapInset;
-        layouts.push({ x: frame.x - cap, width: frame.width + cap * 2 });
+        // Figma's round stroke caps extend 1.5px beyond each text edge.
+        layouts.push({ x: frame.x - 1.5, width: frame.width + 3 });
       }
       return layouts;
     }, [tabFrames]);
@@ -303,6 +306,7 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
       <View
         accessibilityRole="tablist"
         onLayout={event => setContainerWidth(event.nativeEvent.layout.width)}
+        pointerEvents="box-none"
         style={styles.container}>
         <View pointerEvents="none" style={styles.divider} />
         {PERPS_PRO_INFO_TABS.map(tab => (
@@ -421,6 +425,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 24,
   },
   pendingCount: {
+    ...PERPS_PRO_NUMBER_STYLE,
     width: '100%',
     color: colors2024['orange-default'],
     fontFamily: 'SF Pro Rounded',

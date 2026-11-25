@@ -105,149 +105,152 @@ const resolveUnderlineCanvas = (
  * screens) draws deterministic dots while keeping each underline exactly as
  * wide as its rendered text line.
  */
-export const PerpsProDottedUnderlineText: React.FC<
-  PerpsProDottedUnderlineTextProps
-> = ({
-  accessibilityLabel,
-  allowNaturalWidth = false,
-  children,
-  containerStyle,
-  multiline = false,
-  numberOfLines = 1,
-  onFirstLineLayout,
-  onPress,
-  style,
-  testID,
-}) => {
-  const { colors2024, styles } = useTheme2024({ getStyle });
-  const [underlineGeometries, setUnderlineGeometries] = useState<
-    readonly PerpsProDottedUnderlineGeometry[]
-  >([]);
-  const flattenedTextStyle = StyleSheet.flatten(style);
-  const fontSize =
-    typeof flattenedTextStyle?.fontSize === 'number'
-      ? flattenedTextStyle.fontSize
-      : PERPS_PRO_DOTTED_UNDERLINE_DEFAULT_FONT_SIZE;
-  const textColor =
-    flattenedTextStyle?.color ?? colors2024['neutral-secondary'];
-  const handleTextLayout = useCallback(
-    (event: TextLayoutEvent) => {
-      const { lines } = event.nativeEvent;
-      const firstLine = lines[0] as
-        | PerpsProDottedUnderlineLineMetrics
-        | undefined;
-      if (firstLine && Number.isFinite(firstLine.width)) {
-        onFirstLineLayout?.({
-          lineCount: lines.length,
-          width: Math.max(firstLine.width, 0),
-          x: Number.isFinite(firstLine.x) ? Math.max(firstLine.x ?? 0, 0) : 0,
-        });
-      }
-      const underlineLines = (
-        multiline ? lines : firstLine ? [firstLine] : []
-      ) as readonly PerpsProDottedUnderlineLineMetrics[];
-      const nextGeometries = underlineLines
-        .map(line =>
-          resolvePerpsProDottedUnderlineGeometry({
-            fontSize,
-            line,
-            minimumStrokeWidth: StyleSheet.hairlineWidth,
-            roundToNearestPixel: PixelRatio.roundToNearestPixel,
-          }),
-        )
-        .filter(geometry => geometry.width > 0);
-      setUnderlineGeometries(currentGeometries =>
-        areUnderlineGeometryListsEqual(currentGeometries, nextGeometries)
-          ? currentGeometries
-          : nextGeometries,
-      );
-    },
-    [fontSize, multiline, onFirstLineLayout],
-  );
+export const PerpsProDottedUnderlineText: React.FC<PerpsProDottedUnderlineTextProps> =
+  React.memo(function PerpsProDottedUnderlineText({
+    accessibilityLabel,
+    allowNaturalWidth = false,
+    children,
+    containerStyle,
+    multiline = false,
+    numberOfLines = 1,
+    onFirstLineLayout,
+    onPress,
+    style,
+    testID,
+  }) {
+    const { colors2024, styles } = useTheme2024({ getStyle });
+    const [underlineGeometries, setUnderlineGeometries] = useState<
+      readonly PerpsProDottedUnderlineGeometry[]
+    >([]);
+    const flattenedTextStyle = StyleSheet.flatten(style);
+    const fontSize =
+      typeof flattenedTextStyle?.fontSize === 'number'
+        ? flattenedTextStyle.fontSize
+        : PERPS_PRO_DOTTED_UNDERLINE_DEFAULT_FONT_SIZE;
+    const textColor =
+      flattenedTextStyle?.color ?? colors2024['neutral-secondary'];
+    const handleTextLayout = useCallback(
+      (event: TextLayoutEvent) => {
+        const { lines } = event.nativeEvent;
+        const firstLine = lines[0] as
+          | PerpsProDottedUnderlineLineMetrics
+          | undefined;
+        if (firstLine && Number.isFinite(firstLine.width)) {
+          onFirstLineLayout?.({
+            lineCount: lines.length,
+            width: Math.max(firstLine.width, 0),
+            x: Number.isFinite(firstLine.x) ? Math.max(firstLine.x ?? 0, 0) : 0,
+          });
+        }
+        const underlineLines = (
+          multiline ? lines : firstLine ? [firstLine] : []
+        ) as readonly PerpsProDottedUnderlineLineMetrics[];
+        const nextGeometries = underlineLines
+          .map(line =>
+            resolvePerpsProDottedUnderlineGeometry({
+              fontSize,
+              line,
+              minimumStrokeWidth: StyleSheet.hairlineWidth,
+              roundToNearestPixel: PixelRatio.roundToNearestPixel,
+            }),
+          )
+          .filter(geometry => geometry.width > 0);
+        setUnderlineGeometries(currentGeometries =>
+          areUnderlineGeometryListsEqual(currentGeometries, nextGeometries)
+            ? currentGeometries
+            : nextGeometries,
+        );
+      },
+      [fontSize, multiline, onFirstLineLayout],
+    );
 
-  const underlineCanvas = useMemo(
-    () => resolveUnderlineCanvas(underlineGeometries),
-    [underlineGeometries],
-  );
+    const underlineCanvas = useMemo(
+      () => resolveUnderlineCanvas(underlineGeometries),
+      [underlineGeometries],
+    );
 
-  const content = (
-    <>
-      <Text
-        numberOfLines={multiline ? undefined : numberOfLines}
-        onTextLayout={handleTextLayout}
-        style={style}>
-        {children}
-      </Text>
-      {underlineCanvas ? (
-        <View
-          pointerEvents="none"
-          style={[
-            styles.underline,
-            {
-              height: underlineCanvas.height,
-              left: underlineCanvas.left,
-              top: underlineCanvas.top,
-              width: underlineCanvas.width,
-            },
-          ]}
-          testID="perps-pro-dotted-underline">
-          <Svg height="100%" pointerEvents="none" width="100%">
-            {underlineGeometries.map(geometry => {
-              const lineY =
-                geometry.canvasTop - underlineCanvas.top + geometry.lineY;
-              return (
-                <Line
-                  key={`${geometry.canvasTop}:${geometry.canvasLeft}:${geometry.width}`}
-                  stroke={textColor}
-                  strokeDasharray={[geometry.dotLength, geometry.dotGap]}
-                  strokeLinecap="round"
-                  strokeWidth={geometry.strokeWidth}
-                  x1={
-                    geometry.canvasLeft - underlineCanvas.left + geometry.lineX1
-                  }
-                  x2={
-                    geometry.canvasLeft - underlineCanvas.left + geometry.lineX2
-                  }
-                  y1={lineY}
-                  y2={lineY}
-                />
-              );
-            })}
-          </Svg>
-        </View>
-      ) : null}
-    </>
-  );
+    const content = (
+      <>
+        <Text
+          numberOfLines={multiline ? undefined : numberOfLines}
+          onTextLayout={handleTextLayout}
+          style={style}>
+          {children}
+        </Text>
+        {underlineCanvas ? (
+          <View
+            pointerEvents="none"
+            style={[
+              styles.underline,
+              {
+                height: underlineCanvas.height,
+                left: underlineCanvas.left,
+                top: underlineCanvas.top,
+                width: underlineCanvas.width,
+              },
+            ]}
+            testID="perps-pro-dotted-underline">
+            <Svg height="100%" pointerEvents="none" width="100%">
+              {underlineGeometries.map(geometry => {
+                const lineY =
+                  geometry.canvasTop - underlineCanvas.top + geometry.lineY;
+                return (
+                  <Line
+                    key={`${geometry.canvasTop}:${geometry.canvasLeft}:${geometry.width}`}
+                    stroke={textColor}
+                    strokeDasharray={[geometry.dotLength, geometry.dotGap]}
+                    strokeLinecap="round"
+                    strokeWidth={geometry.strokeWidth}
+                    x1={
+                      geometry.canvasLeft -
+                      underlineCanvas.left +
+                      geometry.lineX1
+                    }
+                    x2={
+                      geometry.canvasLeft -
+                      underlineCanvas.left +
+                      geometry.lineX2
+                    }
+                    y1={lineY}
+                    y2={lineY}
+                  />
+                );
+              })}
+            </Svg>
+          </View>
+        ) : null}
+      </>
+    );
 
-  return onPress ? (
-    <Pressable
-      accessibilityLabel={accessibilityLabel}
-      accessibilityRole="button"
-      onPress={onPress}
-      style={[
-        styles.container,
-        allowNaturalWidth
-          ? styles.naturalWidthContainer
-          : styles.boundedContainer,
-        containerStyle,
-      ]}
-      testID={testID}>
-      {content}
-    </Pressable>
-  ) : (
-    <View
-      style={[
-        styles.container,
-        allowNaturalWidth
-          ? styles.naturalWidthContainer
-          : styles.boundedContainer,
-        containerStyle,
-      ]}
-      testID={testID}>
-      {content}
-    </View>
-  );
-};
+    return onPress ? (
+      <Pressable
+        accessibilityLabel={accessibilityLabel}
+        accessibilityRole="button"
+        onPress={onPress}
+        style={[
+          styles.container,
+          allowNaturalWidth
+            ? styles.naturalWidthContainer
+            : styles.boundedContainer,
+          containerStyle,
+        ]}
+        testID={testID}>
+        {content}
+      </Pressable>
+    ) : (
+      <View
+        style={[
+          styles.container,
+          allowNaturalWidth
+            ? styles.naturalWidthContainer
+            : styles.boundedContainer,
+          containerStyle,
+        ]}
+        testID={testID}>
+        {content}
+      </View>
+    );
+  });
 
 const getStyle = createGetStyles2024(() => ({
   container: {

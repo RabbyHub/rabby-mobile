@@ -1,7 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { PixelRatio, StyleSheet } from 'react-native';
+import { PixelRatio, StyleSheet, View } from 'react-native';
 import Svg, { Line } from 'react-native-svg';
+
+const mockThemeContext = React.createContext('neutral-secondary');
+const mockComponentRender = jest.fn();
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
@@ -9,7 +12,15 @@ jest.mock('@/components/Typography', () => ({
 
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
-    const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
+    const secondaryColor = require('react').useContext(mockThemeContext);
+    mockComponentRender();
+    const colors2024 = new Proxy(
+      {},
+      {
+        get: (_target, key) =>
+          key === 'neutral-secondary' ? secondaryColor : String(key),
+      },
+    );
     return { colors2024, styles: getStyle({ colors2024 }) };
   },
 }));
@@ -22,6 +33,133 @@ import { PerpsProDottedUnderlineText } from './PerpsProDottedUnderlineText';
 import { resolvePerpsProDottedUnderlineGeometry } from './perpsProDottedUnderlineGeometry';
 
 describe('PerpsProDottedUnderlineText', () => {
+  beforeEach(() => {
+    mockComponentRender.mockClear();
+  });
+
+  it('skips unchanged parent updates after its native underline geometry is measured', () => {
+    const style = { fontSize: 12, color: '#9a9ca9' };
+    const onPress = jest.fn();
+    const Parent = ({ revision }: { revision: number }) => (
+      <View accessibilityLabel={`revision-${revision}`} testID="parent">
+        <PerpsProDottedUnderlineText onPress={onPress} style={style}>
+          PNL
+        </PerpsProDottedUnderlineText>
+      </View>
+    );
+    const view = render(<Parent revision={0} />);
+    fireEvent(screen.getByText('PNL'), 'textLayout', {
+      nativeEvent: { lines: [{ ascender: 11, width: 24, y: 0 }] },
+    });
+    const measuredRenders = mockComponentRender.mock.calls.length;
+    const lineProps = screen.UNSAFE_getByType(Line).props;
+    const textProps = screen.getByText('PNL').props;
+
+    view.rerender(<Parent revision={1} />);
+
+    expect(screen.getByTestId('parent').props.accessibilityLabel).toBe(
+      'revision-1',
+    );
+    expect(mockComponentRender).toHaveBeenCalledTimes(measuredRenders);
+    expect(screen.UNSAFE_getByType(Line).props).toBe(lineProps);
+    expect(screen.getByText('PNL').props).toBe(textProps);
+    fireEvent.press(screen.getByRole('button'));
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('still updates text, styles, handlers and native geometry independently', () => {
+    const onPress = jest.fn();
+    const nextOnPress = jest.fn();
+    const onFirstLineLayout = jest.fn();
+    const nextOnFirstLineLayout = jest.fn();
+    const initialProps = {
+      onPress,
+      onFirstLineLayout,
+      style: { color: '#9a9ca9', fontSize: 12 },
+    };
+    const view = render(
+      <PerpsProDottedUnderlineText {...initialProps}>
+        PNL
+      </PerpsProDottedUnderlineText>,
+    );
+    fireEvent(screen.getByText('PNL'), 'textLayout', {
+      nativeEvent: { lines: [{ ascender: 11, width: 24, y: 0 }] },
+    });
+
+    view.rerender(
+      <PerpsProDottedUnderlineText {...initialProps}>
+        Funding
+      </PerpsProDottedUnderlineText>,
+    );
+    expect(screen.queryByText('PNL')).toBeNull();
+    expect(screen.getByText('Funding')).toBeOnTheScreen();
+
+    const nextStyle = { color: '#ffffff', fontSize: 14 };
+    view.rerender(
+      <PerpsProDottedUnderlineText {...initialProps} style={nextStyle}>
+        Funding
+      </PerpsProDottedUnderlineText>,
+    );
+    expect(StyleSheet.flatten(screen.getByText('Funding').props.style)).toEqual(
+      nextStyle,
+    );
+    expect(screen.UNSAFE_getByType(Line).props.stroke).toBe('#ffffff');
+
+    view.rerender(
+      <PerpsProDottedUnderlineText
+        {...initialProps}
+        onPress={nextOnPress}
+        onFirstLineLayout={nextOnFirstLineLayout}
+        style={nextStyle}>
+        Funding
+      </PerpsProDottedUnderlineText>,
+    );
+    fireEvent.press(screen.getByRole('button'));
+    expect(nextOnPress).toHaveBeenCalledTimes(1);
+    expect(onPress).not.toHaveBeenCalled();
+    const rendersBeforeLayout = mockComponentRender.mock.calls.length;
+    fireEvent(screen.getByText('Funding'), 'textLayout', {
+      nativeEvent: { lines: [{ ascender: 12, width: 72, y: 0 }] },
+    });
+    expect(nextOnFirstLineLayout).toHaveBeenCalledWith({
+      lineCount: 1,
+      width: 72,
+      x: 0,
+    });
+    expect(onFirstLineLayout).toHaveBeenCalledTimes(1);
+    expect(mockComponentRender).toHaveBeenCalledTimes(rendersBeforeLayout + 1);
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-dotted-underline').props.style,
+      ).width,
+    ).toBe(72);
+  });
+
+  it('still receives theme context updates with unchanged props', () => {
+    const label = (
+      <PerpsProDottedUnderlineText>Funding</PerpsProDottedUnderlineText>
+    );
+    const view = render(
+      <mockThemeContext.Provider value="#9a9ca9">
+        {label}
+      </mockThemeContext.Provider>,
+    );
+    fireEvent(screen.getByText('Funding'), 'textLayout', {
+      nativeEvent: { lines: [{ ascender: 11, width: 54, y: 0 }] },
+    });
+    const measuredRenders = mockComponentRender.mock.calls.length;
+    expect(screen.UNSAFE_getByType(Line).props.stroke).toBe('#9a9ca9');
+
+    view.rerender(
+      <mockThemeContext.Provider value="#ffffff">
+        {label}
+      </mockThemeContext.Provider>,
+    );
+
+    expect(mockComponentRender).toHaveBeenCalledTimes(measuredRenders + 1);
+    expect(screen.UNSAFE_getByType(Line).props.stroke).toBe('#ffffff');
+  });
+
   it('keeps tabular text at its declared size and measures its underline', () => {
     const view = render(
       <PerpsProDottedUnderlineText

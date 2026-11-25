@@ -40,20 +40,13 @@ const BUILTIN_SPECS: BuiltinSpec[] = [
   },
 ];
 
-const sortByVolDesc = (list: MarketData[]) =>
-  sortBy(list, item => -(Number(item.dayNtlVlm) || 0));
-
-export function usePerpsGroupedMarketData(params: {
-  marketData: MarketData[];
-  favoriteMarkets: string[];
-  backendCategories: PerpTopTokenCategory[];
-}) {
-  const { marketData, favoriteMarkets, backendCategories } = params;
+export function usePerpsMarketCategoryConfigs(
+  backendCategories: PerpTopTokenCategory[],
+) {
   const { t } = useTranslation();
   const { currentLanguage } = useAppLanguage();
 
-  const volumeSorted = useMemo(() => sortByVolDesc(marketData), [marketData]);
-  const configs = useMemo<PerpsCategoryConfig[]>(
+  return useMemo<PerpsCategoryConfig[]>(
     () => [
       ...BUILTIN_SPECS.map<PerpsCategoryConfig>(b => ({
         id: b.id,
@@ -72,6 +65,19 @@ export function usePerpsGroupedMarketData(params: {
       })),
     ],
     [backendCategories, t, currentLanguage],
+  );
+}
+
+export function usePerpsGroupedMarketData(params: {
+  marketData: MarketData[];
+  favoriteMarkets: string[];
+  backendCategories: PerpTopTokenCategory[];
+}) {
+  const { marketData, favoriteMarkets, backendCategories } = params;
+  const configs = usePerpsMarketCategoryConfigs(backendCategories);
+  const volumeSorted = useMemo(
+    () => sortBy(marketData, item => -(Number(item.dayNtlVlm) || 0)),
+    [marketData],
   );
 
   return useMemo(

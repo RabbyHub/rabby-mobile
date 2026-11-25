@@ -6,7 +6,8 @@ import { FontNames } from '@/core/utils/fonts';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
+import { Pressable } from 'react-native-gesture-handler';
 
 export const PerpsAccountTrigger: React.FC<{
   address?: string;

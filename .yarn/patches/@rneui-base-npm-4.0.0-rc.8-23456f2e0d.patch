@@ -1,3 +1,35 @@
+diff --git a/dist/Skeleton/Skeleton.js b/dist/Skeleton/Skeleton.js
+--- a/dist/Skeleton/Skeleton.js
++++ b/dist/Skeleton/Skeleton.js
+@@ -17,10 +17,13 @@
+     var _b, _c;
+     var { circle, width = '100%', height, animation = 'pulse', style, skeletonStyle, theme = defaultTheme, LinearGradientComponent } = _a, rest = __rest(_a, ["circle", "width", "height", "animation", "style", "skeletonStyle", "theme", "LinearGradientComponent"]);
+     const animationRef = useRef(new Animated.Value(0));
+-    const animationLoop = useRef();
++    const shouldAnimate = animation !== 'none';
+     const [layoutWidth, setLayoutWidth] = React.useState(0);
+     useEffect(() => {
+-        animationLoop.current = Animated.timing(animationRef.current, {
++        if (!shouldAnimate) {
++            return;
++        }
++        const timing = Animated.timing(animationRef.current, {
+             toValue: 2,
+             delay: 400,
+             duration: 1500,
+@@ -30,8 +33,10 @@
+             }),
+         });
+         animationRef.current.setValue(0);
+-        Animated.loop(animationLoop.current).start();
+-    }, []);
++        const loop = Animated.loop(timing);
++        loop.start();
++        return () => loop.stop();
++    }, [shouldAnimate]);
+     return (React.createElement(View, Object.assign({ accessibilityRole: "none", accessibilityLabel: "loading...", accessible: false, testID: "RNE__Skeleton", onLayout: ({ nativeEvent }) => {
+             setLayoutWidth(nativeEvent.layout.width);
+         }, style: [
 diff --git a/dist/Slider/Slider.js b/dist/Slider/Slider.js
 index 87dab6d9ed1366f9f3f33f53a2560917e947c0de..bb3f9550d931c6c7b114092f89aef0396c853b2b 100644
 --- a/dist/Slider/Slider.js

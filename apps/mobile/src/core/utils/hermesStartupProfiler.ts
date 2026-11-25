@@ -1,4 +1,5 @@
 import { NativeModules, Platform, TurboModuleRegistry } from 'react-native';
+import type { Spec as RNHelpersSpec } from '../native/specs/NativeRNHelpers';
 
 type SentryProfilerModule = {
   startProfiling?: (platformProfilers: boolean) => {
@@ -88,11 +89,15 @@ function traceHermesProfilerInstant(name: string) {
     return;
   }
 
-  traceGlobal.nativeTraceBeginSection(
-    TRACE_TAG_REACT,
-    `Rabby:${name}`.slice(0, 110),
-  );
-  traceGlobal.nativeTraceEndSection(TRACE_TAG_REACT);
+  try {
+    traceGlobal.nativeTraceBeginSection(
+      TRACE_TAG_REACT,
+      `Rabby:${name}`.slice(0, 110),
+    );
+    traceGlobal.nativeTraceEndSection(TRACE_TAG_REACT);
+  } catch {
+    // Optional trace annotations must never prevent native profiler cleanup.
+  }
 }
 
 function getSentryProfilerModule(): SentryProfilerModule | null {
@@ -109,6 +114,24 @@ function getSentryProfilerModule(): SentryProfilerModule | null {
   }
 
   return (NativeModules.RNSentry as SentryProfilerModule | undefined) || null;
+}
+
+function getNativeProfilerStopper() {
+  type ProfilerHelpers = Pick<
+    RNHelpersSpec,
+    'androidStopHermesSamplingProfiler'
+  >;
+  try {
+    const helpers = TurboModuleRegistry.get(
+      'RNHelpers',
+    ) as ProfilerHelpers | null;
+    if (helpers) {
+      return helpers;
+    }
+  } catch {
+    // The legacy bridge uses the same native implementation.
+  }
+  return NativeModules.RNHelpers as ProfilerHelpers | undefined;
 }
 
 function sanitizeProfileFilePart(value: string) {
@@ -181,11 +204,44 @@ export function startHermesProfilerSession({
   }
 
   const sentryProfiler = getSentryProfilerModule();
-  if (typeof sentryProfiler?.startProfiling !== 'function') {
+  const nativeStopper = getNativeProfilerStopper();
+  if (
+    typeof sentryProfiler?.startProfiling !== 'function' ||
+    typeof sentryProfiler.stopProfiling !== 'function' ||
+    typeof nativeStopper?.androidStopHermesSamplingProfiler !== 'function'
+  ) {
     console.info('[RabbyHermesProfiler] sentry_profiler_unavailable', {
       label,
     });
     return null;
+  }
+
+  function stopNativeProfilers() {
+    let profile: string | undefined;
+    let androidProfile: unknown;
+    let error: string | undefined;
+    let nativeStopped = false;
+    try {
+      const stopped = sentryProfiler!.stopProfiling!();
+      profile = stopped?.profile;
+      androidProfile = stopped?.androidProfile || stopped?.nativeProfile;
+      error = stopped?.error;
+    } catch (caught) {
+      error = caught instanceof Error ? caught.message : String(caught);
+    } finally {
+      // RN 0.81.6's prebuilt JNI maps disable() to enable(). Sentry calls it
+      // before dumping, so this must run AFTER Sentry, before async file I/O.
+      // Do not release ownership if the native stop cannot be confirmed.
+      try {
+        nativeStopped = nativeStopper!.androidStopHermesSamplingProfiler();
+        if (!nativeStopped) {
+          error = 'Hermes native sampling stop failed';
+        }
+      } catch (caught) {
+        error = caught instanceof Error ? caught.message : String(caught);
+      }
+    }
+    return { profile, androidProfile, error, nativeStopped };
   }
 
   const startedAt = Date.now();
@@ -198,6 +254,7 @@ export function startHermesProfilerSession({
     Math.max(1000, expectedDurationMs) +
     PROFILE_WORKER_DEFER_EXTRA_MS;
 
+  activeProfilerSession = state;
   try {
     traceHermesProfilerInstant(`js.hermes_profile.${label}.start`);
     const started = sentryProfiler.startProfiling(includePlatformProfile);
@@ -206,17 +263,24 @@ export function startHermesProfilerSession({
         label,
         error: started.error || 'unknown',
       });
-      return null;
+      throw new Error(started.error || 'Hermes profiling did not start');
     }
 
-    activeProfilerSession = state;
     setProfilerActiveUntil(activeUntil, deferWorker);
   } catch (error) {
+    // A failed start may have already enabled one of Sentry's native profilers.
+    const cleanup = stopNativeProfilers();
+    if (cleanup.nativeStopped) {
+      activeProfilerSession = null;
+    }
     setProfilerActiveUntil(0, false);
     console.info(
       '[RabbyHermesProfiler] start_throw',
       error instanceof Error ? error.message : String(error),
     );
+    if (cleanup.error) {
+      console.info('[RabbyHermesProfiler] start_cleanup_error', cleanup.error);
+    }
     return null;
   }
 
@@ -231,21 +295,12 @@ export function startHermesProfilerSession({
       }
 
       stopPromise = (async () => {
-        let profile: string | undefined;
-        let androidProfile: unknown;
-        let stopError: string | undefined;
+        let nativeStopped = false;
 
         try {
-          try {
-            traceHermesProfilerInstant(`js.hermes_profile.${label}.stop`);
-            const stopped = sentryProfiler.stopProfiling?.();
-            profile = stopped?.profile;
-            androidProfile =
-              stopped?.androidProfile || stopped?.nativeProfile || undefined;
-            stopError = stopped?.error;
-          } catch (error) {
-            stopError = error instanceof Error ? error.message : String(error);
-          }
+          traceHermesProfilerInstant(`js.hermes_profile.${label}.stop`);
+          const stopped = stopNativeProfilers();
+          nativeStopped = stopped.nativeStopped;
 
           const endedAt = Date.now();
           const result: HermesProfilerSessionResult = {
@@ -253,22 +308,29 @@ export function startHermesProfilerSession({
             startedAt,
             endedAt,
             durationMs: endedAt - startedAt,
-            ...(stopError ? { error: stopError } : {}),
+            ...(stopped.error ? { error: stopped.error } : {}),
           };
 
           try {
             Object.assign(
               result,
-              await persistHermesProfile(profile, androidProfile, filePrefix),
+              await persistHermesProfile(
+                stopped.profile,
+                stopped.androidProfile,
+                filePrefix,
+              ),
             );
           } catch (error) {
-            result.error =
+            const persistError =
               error instanceof Error ? error.message : String(error);
+            result.error = result.error
+              ? `${result.error}; profile persistence: ${persistError}`
+              : persistError;
           }
 
           return result;
         } finally {
-          if (activeProfilerSession === state) {
+          if (nativeStopped && activeProfilerSession === state) {
             activeProfilerSession = null;
           }
           setProfilerActiveUntil(0, false);

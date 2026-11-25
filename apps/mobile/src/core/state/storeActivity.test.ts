@@ -42,6 +42,28 @@ function createTrackedCountStore() {
 }
 
 describe('store activity scope', () => {
+  it('publishes activity transitions synchronously and cleans public listeners', () => {
+    const scope = createStoreActivityScope({ active: true });
+    const observed: boolean[] = [];
+    const unsubscribe = scope.subscribe(() => observed.push(scope.getActive()));
+
+    scope.setActive(false);
+    scope.setActive(false);
+    scope.setActive(true);
+    expect(observed).toEqual([false, true]);
+
+    unsubscribe();
+    scope.setActive(false);
+    expect(observed).toEqual([false, true]);
+
+    const afterDispose = jest.fn();
+    scope.subscribe(afterDispose);
+    scope.dispose();
+    scope.setActive(true);
+    scope.subscribe(afterDispose);
+    expect(afterDispose).not.toHaveBeenCalled();
+  });
+
   it('shares one source subscription across consumers', () => {
     const source = createTrackedCountStore();
     const scope = createStoreActivityScope({ active: true, label: 'home' });

@@ -103,6 +103,7 @@ export const PerpsMarketItem = React.memo(
     // Only re-render when visible data actually changes
     return (
       prev.item.name === next.item.name &&
+      prev.item.displayName === next.item.displayName &&
       prev.item.markPx === next.item.markPx &&
       prev.item.prevDayPx === next.item.prevDayPx &&
       prev.item.dayNtlVlm === next.item.dayNtlVlm &&

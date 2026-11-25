@@ -21,10 +21,12 @@ export const usePerpsProKline = ({
   coin,
   enabled,
   preloadEnabled = enabled,
+  publicationEnabled = true,
 }: {
   coin: string;
   enabled: boolean;
   preloadEnabled?: boolean;
+  publicationEnabled?: boolean;
 }) => {
   // Manual intervals are shared with Simple; a Simple range view keeps Pro
   // on its own 15m default.
@@ -105,6 +107,7 @@ export const usePerpsProKline = ({
     enabled: enabled && preference.hydrated,
     initialSourceCandles: matchingPreload?.candles,
     interval: preference.interval,
+    publicationEnabled,
   });
   const preloadedFeed = useMemo(() => {
     const candles = matchingPreload

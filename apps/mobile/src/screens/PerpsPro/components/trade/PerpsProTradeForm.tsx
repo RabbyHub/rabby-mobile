@@ -1,4 +1,5 @@
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
+import { RootScenePagerGestureBlock } from '@rabby-wallet/rn-collapsible-scene-view';
 import RcIconAvailableAdd from '@/assets2024/icons/perps/PerpsProAvailableAdd.svg';
 import RcIconAvailableSwap from '@/assets2024/icons/perps/PerpsProAvailableSwap.svg';
 import { PERPS_MINI_USD_VALUE } from '@/constant/perps';
@@ -72,6 +73,7 @@ const tifLabels: Record<PerpsProTradeTif, string> = {
 };
 
 type PerpsProTradeFormProps = {
+  sceneActive?: boolean;
   columnLayout?: PerpsProColumnLayout;
   addFundsMode?: 'deposit' | 'swap';
   configurationReady?: boolean;
@@ -80,6 +82,7 @@ type PerpsProTradeFormProps = {
 };
 
 const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
+  sceneActive = true,
   columnLayout,
   addFundsMode = 'deposit',
   configurationReady = true,
@@ -93,7 +96,12 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
   const triggerPriceInputRef = useRef<TextInput>(null);
   const requestReviewRef = useRef(controller.requestReview);
   requestReviewRef.current = controller.requestReview;
-  const dismissKeyboardThen = usePerpsProDismissKeyboard();
+  const dismissKeyboardThen = usePerpsProDismissKeyboard(sceneActive);
+  useEffect(() => {
+    if (!sceneActive) {
+      setSheet(null);
+    }
+  }, [sceneActive]);
   const openSheet = useCallback(
     (nextSheet: Exclude<Sheet, null>) =>
       dismissKeyboardThen(() => setSheet(nextSheet)),
@@ -248,11 +256,11 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
           onPress={() => openSheet('orderType')}
         />
       </View>
-      <View
+      <RootScenePagerGestureBlock
         style={styles.inputGroup}
         pointerEvents={canEditOrder ? 'auto' : 'none'}
         accessibilityState={{ disabled: !canEditOrder }}
-        testID="perps-pro-trade-inputs">
+        testID="perps-pro-trade-inputs-root-gesture-block">
         {form.orderType === 'scale' ? (
           <PerpsProScaleOrderFields
             amountInputRef={amountInputRef}
@@ -400,7 +408,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
             onSelectTime={() => openSheet('duration')}
           />
         ) : null}
-      </View>
+      </RootScenePagerGestureBlock>
       <View
         pointerEvents={canEditOrder ? 'auto' : 'none'}
         style={[
@@ -463,8 +471,10 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
         {controller.attachedTpSlExecutionEnabled &&
         form.orderType !== 'scale' &&
         form.orderType !== 'twap' ? (
-          <PerpsProTpSlFields
-            controller={controller.tpSl}
+          <RootScenePagerGestureBlock testID="perps-pro-trade-tpsl-root-gesture-block">
+            <PerpsProTpSlFields
+              sceneActive={sceneActive}
+              controller={controller.tpSl}
             draft={form.attachedTpSl}
             pxDecimals={market?.marketData.pxDecimals ?? 2}
             quoteAsset={quoteAsset}
@@ -474,12 +484,13 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
                 ? controller.priceFillFeedback.revision
                 : 0
             }
-            tpFillRevision={
-              controller.priceFillFeedback?.field === 'tp'
-                ? controller.priceFillFeedback.revision
-                : 0
-            }
-          />
+              tpFillRevision={
+                controller.priceFillFeedback?.field === 'tp'
+                  ? controller.priceFillFeedback.revision
+                  : 0
+              }
+            />
+          </RootScenePagerGestureBlock>
         ) : null}
         {form.orderType !== 'twap' ? (
           <View style={styles.optionRow}>
@@ -609,6 +620,8 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
         })}
       </View>
 
+      {sceneActive ? (
+        <>
       <PerpsProTwapDurationSheet
         visible={sheet === 'duration' && form.orderType === 'twap'}
         value={form.twapDuration}
@@ -663,6 +676,8 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
         pending={controller.leveragePending}
         visible={configurationReady && sheet === 'leverage'}
       />
+        </>
+      ) : null}
     </View>
   );
 };

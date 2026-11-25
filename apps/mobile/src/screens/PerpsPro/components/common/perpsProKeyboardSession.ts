@@ -172,8 +172,8 @@ export const createPerpsProKeyboardSession = () => {
 
 export const perpsProKeyboardSession = createPerpsProKeyboardSession();
 
-// The main trade inputs are outside the native info list. Reuse that list's
-// existing scroll owner only when the keyboard accessory overlaps an input.
+// The main trade inputs live in the scene list header. Ask that single native
+// scroll owner to move only when the keyboard accessory overlaps an input.
 let scrollTradeBy: ((distance: number) => void) | null = null;
 export const registerPerpsProKeyboardTradeScroll = (
   handler: (distance: number) => void,

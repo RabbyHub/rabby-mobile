@@ -46,4 +46,29 @@ describe('usePerpsProDismissKeyboard', () => {
     act(() => listeners.get('keyboardDidHide')?.());
     expect(action).toHaveBeenCalledTimes(1);
   });
+
+  it('does not run a queued action after its retained scene becomes inactive', () => {
+    const frames: FrameRequestCallback[] = [];
+    jest.spyOn(global, 'requestAnimationFrame').mockImplementation(callback => {
+      frames.push(callback);
+      return frames.length;
+    });
+    const action = jest.fn();
+    const hook = renderHook(
+      ({ enabled }) => usePerpsProDismissKeyboard(enabled),
+      {
+        initialProps: { enabled: true },
+      },
+    );
+    act(() => listeners.get('keyboardDidShow')?.());
+    act(() => hook.result.current(action));
+    act(() => listeners.get('keyboardDidHide')?.());
+    hook.rerender({ enabled: false });
+    hook.rerender({ enabled: true });
+    act(() => frames.forEach(frame => frame(0)));
+    hook.rerender({ enabled: false });
+    act(() => hook.result.current(action));
+    expect(action).not.toHaveBeenCalled();
+    expect(Keyboard.dismiss).toHaveBeenCalledTimes(1);
+  });
 });

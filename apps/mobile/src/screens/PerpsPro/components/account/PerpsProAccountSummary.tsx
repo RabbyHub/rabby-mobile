@@ -20,10 +20,12 @@ import { PerpsProAccountValue } from './PerpsProAccountValue';
 const ACCOUNT_CARD_SHADOW = '0px 5px 20px 0px rgba(0, 0, 0, 0.06)';
 
 interface PerpsProAccountSummaryProps {
-  account: PerpsAccountViewModel;
+  account: Pick<PerpsAccountViewModel, 'primaryValue' | 'unrealizedPnl'> & {
+    assets?: PerpsAccountAssetRow[];
+  };
   onDeposit: () => void;
-  onSwap: (coin: PerpsAccountAssetRow['coin']) => void;
-  onTransfer: (asset: PerpsAccountAssetRow) => void;
+  onSwap?: (coin: PerpsAccountAssetRow['coin']) => void;
+  onTransfer?: (asset: PerpsAccountAssetRow) => void;
   onWithdraw: () => void;
 }
 
@@ -102,9 +104,9 @@ export const PerpsProAccountSummary: React.FC<PerpsProAccountSummaryProps> =
           </Pressable>
         </View>
         <View style={styles.divider} />
-        {account.assets.length ? (
+        {account.assets?.length && onSwap && onTransfer ? (
           <View>
-            {account.assets.map(asset => (
+            {account.assets?.map(asset => (
               <PerpsProAccountAssetRow
                 asset={asset}
                 key={asset.key}

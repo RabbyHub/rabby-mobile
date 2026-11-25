@@ -62,12 +62,12 @@ export const usePerpsBookPrecision = ({
     [marketKey, tickOptions],
   );
 
-  const precision: PerpsBookPrecision | null = selectedTickOption
-    ? {
-        nSigFigs: selectedTickOption.nSigFigs,
-        mantissa: selectedTickOption.mantissa,
-      }
-    : null;
+  const nSigFigs = selectedTickOption?.nSigFigs;
+  const mantissa = selectedTickOption?.mantissa ?? null;
+  const precision = useMemo<PerpsBookPrecision | null>(
+    () => (nSigFigs == null ? null : { nSigFigs, mantissa }),
+    [mantissa, nSigFigs],
+  );
 
   return {
     precision,
