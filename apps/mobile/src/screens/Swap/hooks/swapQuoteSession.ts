@@ -23,6 +23,12 @@ export type SwapQuoteStoreState = {
    * refresh does not re-render the swap screen.
    */
   quoteLoading: boolean;
+  /**
+   * In-place refresh of an already visible quote. Only the submit-button leaf
+   * subscribes to this, so a 20s refresh disables the button without
+   * re-rendering the swap screen.
+   */
+  quoteRefreshing: boolean;
   quoteRequestFinished: boolean;
   quoteRequestId: number;
   activeProvider?: QuoteProvider;
@@ -32,6 +38,7 @@ export type SwapQuoteStoreState = {
 export const swapQuoteStore = zCreate<SwapQuoteStoreState>(() => ({
   quoteList: [],
   quoteLoading: false,
+  quoteRefreshing: false,
   quoteRequestFinished: true,
   quoteRequestId: 0,
   activeProvider: undefined,
@@ -408,6 +415,7 @@ export function beginSwapQuoteCycle({
     swapQuoteStore.setState({
       quoteRequestId: requestId,
       quoteRequestFinished: !willRequest,
+      quoteRefreshing: willRequest,
     });
   } else {
     quoteRefreshEnabled = false;
@@ -417,6 +425,7 @@ export function beginSwapQuoteCycle({
       quoteRequestId: requestId,
       quoteRequestFinished: !willRequest,
       quoteLoading: willRequest,
+      quoteRefreshing: willRequest,
       activeProvider: undefined,
       bestQuoteDex: '',
     });
@@ -457,6 +466,7 @@ export function finishSwapQuoteCycle(id: number) {
   swapQuoteStore.setState({
     quoteRequestFinished: true,
     quoteLoading: false,
+    quoteRefreshing: false,
   });
   emitLifecycle({ type: 'cycle-finished', requestId: id });
   recomputeSelectedProvider();
@@ -475,6 +485,7 @@ export function markSwapQuoteCycleIdle(id: number) {
   swapQuoteStore.setState({
     quoteRequestFinished: true,
     quoteLoading: false,
+    quoteRefreshing: false,
   });
   emitLifecycle({ type: 'cycle-finished', requestId: id });
 }
@@ -483,12 +494,13 @@ export function cancelSwapQuotePendingWork() {
   fetchId += 1;
   cancelPendingQuoteFlush();
   cancelSwapQuoteRequest();
+  swapQuoteStore.setState({ quoteRefreshing: false });
 }
 
 /** Hidden scene: keep the store last-value semantics, only drop the list. */
 export function resetSwapQuoteListOnInactive() {
   cancelPendingQuoteFlush();
-  swapQuoteStore.setState({ quoteList: [] });
+  swapQuoteStore.setState({ quoteList: [], quoteRefreshing: false });
 }
 
 export function clearSwapQuoteSession() {
@@ -499,6 +511,7 @@ export function clearSwapQuoteSession() {
   swapQuoteStore.setState({
     quoteList: [],
     quoteLoading: false,
+    quoteRefreshing: false,
     quoteRequestFinished: true,
     activeProvider: undefined,
     bestQuoteDex: '',
@@ -538,6 +551,16 @@ export function useSwapQuoteLoading(active: boolean) {
     state => state.quoteLoading,
     Object.is,
     { storeLabel: 'swap-quote-loading' },
+  );
+}
+
+export function useSwapQuoteRefreshing(active: boolean) {
+  return useScopedActivityStore(
+    active,
+    swapQuoteStore,
+    state => state.quoteRefreshing,
+    Object.is,
+    { storeLabel: 'swap-quote-refreshing' },
   );
 }
 

@@ -53,6 +53,7 @@ import {
   subscribeSwapQuoteLifecycle,
   useSwapQuoteList,
   useSwapQuoteLoading,
+  useSwapQuoteRefreshing,
 } from '../Swap/hooks/swapQuoteSession';
 import { Button } from '@/components2024/Button';
 import { SignRiskWarning } from '@/components/SignRiskWarning';
@@ -208,6 +209,21 @@ const SwapQuoteListOverlay = React.memo(function SwapQuoteListOverlay({
   const list = useSwapQuoteList(active);
   const loading = useSwapQuoteLoading(active);
   return <QuoteList {...props} list={list} loading={loading} />;
+});
+
+/**
+ * Submit button leaf: an in-place quote refresh must disable the button, but
+ * only this leaf should re-render when that flag flips.
+ */
+const SwapSubmitActionGate = React.memo(function SwapSubmitActionGate({
+  active,
+  render,
+}: {
+  active: boolean;
+  render: (quoteRefreshing: boolean) => React.ReactNode;
+}) {
+  const quoteRefreshing = useSwapQuoteRefreshing(active);
+  return <>{render(quoteRefreshing)}</>;
 });
 
 const Swap = ({
@@ -1795,74 +1811,84 @@ const Swap = ({
                   onToggle={() => setRiskChecked(checked => !checked)}
                 />
               ) : null}
-              {canShowDirectSubmit ? (
-                <DirectSignBtn
-                  ref={directSignBtnRef}
-                  // refresh  risk check
-                  key={`${refreshId}-${chain}-${payToken?.id}-${receiveToken?.id}-${payAmount}-${activeProvider?.quote?.tx?.data}-${isApprove}`}
-                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-                  loading={miniSignLoading}
-                  loadingType="circle"
-                  showTextOnLoading
-                  authTitle={t('page.whitelist.confirmPassword')}
-                  title={btnText}
-                  onFinished={() => handleSwap({ ignoreGasFee: riskChecked })}
-                  disabled={
-                    swapBtnDisabled ||
-                    !canDirectSign ||
-                    miniSignLoading ||
-                    approveTxPending ||
-                    riskConfirmDisabled
-                  }
-                  type={'primary'}
-                  syncUnlockTime
-                  onBeforeAuth={() => {
-                    clearExpiredTimer();
-                    formValuesRef.current.save(buildFormSnapshot());
-                  }}
-                  onCancel={() => {
-                    formValuesRef.current.clear();
-                    refresh(e => e + 1);
-                  }}
-                  onAuthModalDismiss={() => {
-                    formValuesRef.current.clear();
-                  }}
-                  account={currentAccount}
-                  showHardWalletProcess
-                />
-              ) : (
-                <Button
-                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-                  onPress={() => {
-                    if (!isSupportedChain && !externalDapps.length) {
-                      return;
-                    }
-                    if (!isSupportedChain && externalDapps.length > 0) {
-                      setSwapDappOpen(true);
-                      return;
-                    }
-                    if (!activeProvider || slippageChanged) {
-                      refresh(e => e + 1);
+              <SwapSubmitActionGate
+                active={sceneActive}
+                render={quoteRefreshing =>
+                  canShowDirectSubmit ? (
+                    <DirectSignBtn
+                      ref={directSignBtnRef}
+                      // refresh  risk check
+                      key={`${refreshId}-${chain}-${payToken?.id}-${receiveToken?.id}-${payAmount}-${activeProvider?.quote?.tx?.data}-${isApprove}`}
+                      height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                      loading={miniSignLoading}
+                      loadingType="circle"
+                      showTextOnLoading
+                      authTitle={t('page.whitelist.confirmPassword')}
+                      title={btnText}
+                      onFinished={() =>
+                        handleSwap({ ignoreGasFee: riskChecked })
+                      }
+                      disabled={
+                        swapBtnDisabled ||
+                        quoteRefreshing ||
+                        !canDirectSign ||
+                        miniSignLoading ||
+                        approveTxPending ||
+                        riskConfirmDisabled
+                      }
+                      type={'primary'}
+                      syncUnlockTime
+                      onBeforeAuth={() => {
+                        clearExpiredTimer();
+                        formValuesRef.current.save(buildFormSnapshot());
+                      }}
+                      onCancel={() => {
+                        formValuesRef.current.clear();
+                        refresh(e => e + 1);
+                      }}
+                      onAuthModalDismiss={() => {
+                        formValuesRef.current.clear();
+                      }}
+                      account={currentAccount}
+                      showHardWalletProcess
+                    />
+                  ) : (
+                    <Button
+                      height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                      onPress={() => {
+                        if (!isSupportedChain && !externalDapps.length) {
+                          return;
+                        }
+                        if (!isSupportedChain && externalDapps.length > 0) {
+                          setSwapDappOpen(true);
+                          return;
+                        }
+                        if (!activeProvider || slippageChanged) {
+                          refresh(e => e + 1);
 
-                      return;
-                    }
-                    if (activeProvider?.shouldTwoStepApprove) {
-                      setTwoStepApproveModalVisible(true);
-                      return;
-                    }
-                    // gotoSwap();
-                    handleSwap({ ignoreGasFee: riskChecked });
-                  }}
-                  title={btnText}
-                  disabled={
-                    isSupportedChain
-                      ? swapBtnDisabled || riskConfirmDisabled
-                      : externalDapps.length > 0
-                      ? riskConfirmDisabled
-                      : true
-                  }
-                />
-              )}
+                          return;
+                        }
+                        if (activeProvider?.shouldTwoStepApprove) {
+                          setTwoStepApproveModalVisible(true);
+                          return;
+                        }
+                        // gotoSwap();
+                        handleSwap({ ignoreGasFee: riskChecked });
+                      }}
+                      title={btnText}
+                      disabled={
+                        isSupportedChain
+                          ? swapBtnDisabled ||
+                            riskConfirmDisabled ||
+                            quoteRefreshing
+                          : externalDapps.length > 0
+                          ? riskConfirmDisabled || quoteRefreshing
+                          : true
+                      }
+                    />
+                  )
+                }
+              />
             </View>
           </Tip>
         </View>
