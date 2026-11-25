@@ -117,7 +117,7 @@ import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import useTokenList from '@/store/tokens';
 import useProtocol from '@/store/protocols';
 import { isTabsSwiping } from '../../Address/components/MultiAssets/hooks';
-import { BrowserSearchEntry } from '../../Browser/components/BrowserSearchEntry';
+import { BrowserOrPerpsPosition } from './BrowserOrPerpsPosition';
 import { GasAccountBadge } from '../../GasAccount/components/GasAccountBadge';
 import { apisLending } from '../../Lending/hooks';
 import { HomeCenterArea } from '../components/HomeCenterArea';
@@ -1471,7 +1471,7 @@ export const HomeOverview = React.memo(() => {
                     );
                   })}
                 </View>
-                <BrowserSearchEntry />
+                <BrowserOrPerpsPosition />
                 <View
                   style={styles.swipeUpHint}
                   onLayout={swipeUpViewHandlers.onLayout}>
