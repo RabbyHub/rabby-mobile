@@ -613,7 +613,6 @@ export const PerpsProPositionTpSlForm: React.FC<{
                     setAmountFocused(true);
                     beginManualAmountEntry();
                   }}
-                  onPressIn={beginManualAmountEntry}
                   ref={amountInputRef}
                   style={styles.input}
                   testID="perps-pro-position-tpsl-amount"

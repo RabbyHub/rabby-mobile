@@ -547,7 +547,6 @@ export const PerpsProClosePositionSheet: React.FC<{
                           beginAmountEntry(true);
                         }
                       }}
-                      onPressIn={() => beginAmountEntry()}
                       scrollEnabled
                       selection={
                         inputSource === 'manual' && !manualAmount
@@ -572,7 +571,12 @@ export const PerpsProClosePositionSheet: React.FC<{
                       maximumValue={100}
                       minimumValue={0}
                       onSlidingComplete={sliderHaptics.onSlidingComplete}
-                      onSlidingStart={sliderHaptics.onSlidingStart}
+                      onSlidingStart={value => {
+                        // Slider control ends Amount editing, so the next
+                        // Amount focus is what restarts manual entry.
+                        amountInputRef.current?.blur();
+                        sliderHaptics.onSlidingStart(value);
+                      }}
                       onValueChange={value => {
                         const roundedValue = Math.round(value);
                         sliderHaptics.onValueChange(roundedValue);

@@ -202,7 +202,6 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
         onBlur={controller.endAmountEntry}
         onChangeText={controller.setAmount}
         onFocus={controller.beginAmountEntry}
-        onPressIn={controller.beginAmountEntry}
         onToggleUnit={controller.toggleAmountUnit}
         ref={amountInputRef}
         unit={controller.amountUnitLabel}

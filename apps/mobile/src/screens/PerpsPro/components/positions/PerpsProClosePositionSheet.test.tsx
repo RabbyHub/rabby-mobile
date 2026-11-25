@@ -567,9 +567,13 @@ describe('PerpsProClosePositionSheet', () => {
     );
     fireEvent(amount, 'focus');
     expect(screen.getByLabelText('Amount').props.selection).toBeUndefined();
+    fireEvent(screen.getByTestId('close-position-slider'), 'slidingStart', 50);
     fireEvent(screen.getByTestId('close-position-slider'), 'valueChange', 50);
     expect(screen.getByLabelText('Amount').props.value).toBe('50% (≈0.5000)');
+    // A swipe starts with touch-down but never focuses; only focus clears.
     fireEvent(screen.getByLabelText('Amount'), 'pressIn');
+    expect(screen.getByLabelText('Amount').props.value).toBe('50% (≈0.5000)');
+    fireEvent(screen.getByLabelText('Amount'), 'focus');
     expect(screen.getByLabelText('Amount').props.value).toBe('');
     expect(screen.getByTestId('close-position-slider').props.value).toBe(0);
     fireEvent.changeText(amount, '0.25');
@@ -657,7 +661,6 @@ describe('PerpsProClosePositionSheet', () => {
     const amount = screen.getByLabelText('Amount');
     fireEvent(amount, 'focus');
     fireEvent.changeText(amount, '0.25');
-    fireEvent(screen.getByLabelText('Amount'), 'pressIn');
     fireEvent(screen.getByLabelText('Amount'), 'focus');
 
     expect(screen.getByLabelText('Amount').props.value).toBe('0.25');
