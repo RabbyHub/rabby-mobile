@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { getDisplayUserTokenSettingsSync } from '@/hooks/useTokenSettings';
+import { useScopedActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
@@ -49,10 +50,14 @@ const loadUserTokenSettings = () => {
   });
 };
 
-export const useSelectTokensThreadSafe = () => {
+export const useSelectTokensThreadSafe = (active = true) => {
   const { fetchAccounts } = useAccountInfo();
 
-  const userTokenSettings = userTokenSettingsState(s => s);
+  const userTokenSettings = useScopedActivityStore(
+    active,
+    userTokenSettingsState,
+    s => s,
+  );
 
   const fetchAccountsAndTokenSettings = useCallback(async () => {
     fetchAccounts();

@@ -111,11 +111,23 @@ export const useSwapHistory = (enabled = true) => {
     wasEnabledRef.current = enabled;
   }, [enabled, reload]);
 
+  // The refresh path only needs the extra first-page read when the refresh id
+  // or the account changes. The initial mount and the sheet-open transition
+  // are already covered by useInfiniteScroll/reload; running this too would
+  // duplicate the same page request.
+  const enabledRef = useRef(enabled);
+  enabledRef.current = enabled;
+  const didMountRefreshRef = useRef(false);
   const { value } = useAsync(async () => {
-    if (addr && enabled) {
-      return getSwapList(addr, 0, SWAP_HISTORY_PAGE_SIZE);
+    if (!didMountRefreshRef.current) {
+      didMountRefreshRef.current = true;
+      return;
     }
-  }, [addr, refreshSwapTxListCount, enabled]);
+    if (!addr || !enabledRef.current) {
+      return;
+    }
+    return getSwapList(addr, 0, SWAP_HISTORY_PAGE_SIZE);
+  }, [addr, refreshSwapTxListCount]);
 
   useEffect(() => {
     if (value?.list) {

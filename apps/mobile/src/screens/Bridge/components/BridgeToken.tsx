@@ -315,6 +315,7 @@ const BridgeTokenInner = ({
             )} */}
             {isToToken ? (
               <BridgeToTokenSelect
+                sceneActive={sceneActive}
                 fromChainId={fromChainId!}
                 fromTokenId={fromTokenId!}
                 token={token}

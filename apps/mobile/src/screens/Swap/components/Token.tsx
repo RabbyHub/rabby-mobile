@@ -249,6 +249,7 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
           ) : (
             <SwapToTokenSelect
               ref={openTokenModalRef}
+              sceneActive={sceneActive}
               token={token}
               onTokenChange={onTokenSelect}
               accountInScreen={account}

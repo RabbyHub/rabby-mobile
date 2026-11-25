@@ -146,7 +146,7 @@ export const useSelectTokens = ({
   );
 
   const { fetchAccountsAndTokenSettings, userTokenSettings } =
-    useSelectTokensThreadSafe();
+    useSelectTokensThreadSafe(active);
 
   const [tokenLoadCoordinator] = useState(createTokenLoadCoordinator);
 
