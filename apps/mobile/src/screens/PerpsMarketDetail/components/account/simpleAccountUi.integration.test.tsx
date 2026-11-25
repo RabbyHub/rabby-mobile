@@ -14,7 +14,6 @@ import {
 import {
   Animated,
   BackHandler,
-  Dimensions,
   Keyboard,
   Platform,
   StyleSheet,
@@ -553,9 +552,9 @@ it('keeps default slider haptics isolated and gives close a haptic per step', ()
   const ui = render(
     safe(<PerpsSlider value={0} onValueChange={change} step={1} />),
   );
-  expect(ui.UNSAFE_getByType(PerpsGestureSlider).props.minimumTrackTintColor).toBe(
-    '#50D2C1',
-  );
+  expect(
+    ui.UNSAFE_getByType(PerpsGestureSlider).props.minimumTrackTintColor,
+  ).toBe('#50D2C1');
   act(() => {
     for (const value of [25, 50, 50, 75, 100]) {
       advanceHapticClock(100);
@@ -612,11 +611,15 @@ it.each([
       ),
     );
     expect(trigger).not.toHaveBeenCalled();
-    act(() => ui.UNSAFE_getByType(PerpsGestureSlider).props.onSlidingStart(initial));
+    act(() =>
+      ui.UNSAFE_getByType(PerpsGestureSlider).props.onSlidingStart(initial),
+    );
     values.forEach((value, i) => {
       advanceHapticClock(100);
       const before = trigger.mock.calls.length;
-      act(() => ui.UNSAFE_getByType(PerpsGestureSlider).props.onValueChange(value));
+      act(() =>
+        ui.UNSAFE_getByType(PerpsGestureSlider).props.onValueChange(value),
+      );
       // A single native event emits at most one pulse, even across many steps.
       expect(trigger.mock.calls.length - before).toBe(pulses[i]);
     });
@@ -682,7 +685,9 @@ it('handles track-tap ordering, controlled resets, and disabled close sliders', 
   advanceHapticClock(100);
   act(() => ui.UNSAFE_getByType(PerpsGestureSlider).props.onValueChange(100));
   expect(trigger).toHaveBeenCalledTimes(1);
-  act(() => ui.UNSAFE_getByType(PerpsGestureSlider).props.onSlidingComplete(100));
+  act(() =>
+    ui.UNSAFE_getByType(PerpsGestureSlider).props.onSlidingComplete(100),
+  );
   ui.rerender(safe(<PerpsSlider {...sliderProps} value={51} />));
   advanceHapticClock(100);
   act(() => ui.UNSAFE_getByType(PerpsGestureSlider).props.onValueChange(49));
@@ -1066,7 +1071,7 @@ it('releases iOS keyboard layout ownership when the position price input blurs',
     fireEvent(input, 'blur');
     const blurredGeometry = geometry();
     expect(blurredGeometry.maxHeight).toBe(
-      Dimensions.get('window').height - 32,
+      getDimensionsSnapshot('window').height - 32,
     );
     expect(listeners.size).toBe(0);
     // Even an event already queued before cleanup must not animate the later
