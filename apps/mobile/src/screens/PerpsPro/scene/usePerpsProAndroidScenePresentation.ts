@@ -97,6 +97,10 @@ export const usePerpsProAndroidScenePresentation = ({
       transform: [{ translateY: current.headerTranslateY }],
     };
   });
+  // The info lists' sticky controls follow the drawn tabs edge.
+  const infoTabsTranslateY = useDerivedValue(
+    () => geometry.value.infoTabsTranslateY,
+  );
   const infoTabsAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: geometry.value.infoTabsTranslateY }],
   }));
@@ -113,6 +117,7 @@ export const usePerpsProAndroidScenePresentation = ({
   return {
     headerAnimatedStyle,
     infoTabsAnimatedStyle,
+    infoTabsTranslateY,
     marketAnimatedStyle,
     regionAlertAnimatedStyle,
     tradeAnimatedStyle,

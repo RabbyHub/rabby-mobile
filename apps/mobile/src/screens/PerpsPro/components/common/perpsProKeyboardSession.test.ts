@@ -25,6 +25,23 @@ describe('Pro keyboard focus ownership', () => {
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps a pushed route enabled when the covered route blurs late', () => {
+    const session = createPerpsProKeyboardSession();
+    const input = {
+      blur: jest.fn(),
+      isFocused: () => true,
+      measureInWindow: jest.fn(),
+    };
+    session.setEnabled(true, 'perps');
+    session.setEnabled(true, 'detail');
+    session.setEnabled(false, 'perps');
+    session.focus({ id: 'amount', input, minimum: null, scrollTrade: false });
+    // A repeated cleanup from the inactive route must not blur this input.
+    session.setEnabled(false, 'perps');
+    expect(session.getSnapshot()?.id).toBe('amount');
+    expect(input.blur).not.toHaveBeenCalled();
+  });
+
   it.each(['blur', 'disable', 'nativeBlur'] as const)(
     'does not restore a pending input after %s',
     action => {

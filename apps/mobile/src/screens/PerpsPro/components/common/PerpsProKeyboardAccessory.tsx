@@ -7,6 +7,7 @@ import { useIsFocused } from '@react-navigation/native';
 import React, {
   useCallback,
   useEffect,
+  useId,
   useLayoutEffect,
   useRef,
   useState,
@@ -65,10 +66,14 @@ export const PerpsProKeyboardAccessory = () => {
   const overlayRef = useRef<View>(null);
   const dimensions = useWindowDimensions();
   const enabled = routeFocused && foreground;
+  const owner = useId();
   useLayoutEffect(() => {
-    perpsProKeyboardSession.setEnabled(enabled);
-  }, [enabled]);
-  useLayoutEffect(() => () => perpsProKeyboardSession.setEnabled(false), []);
+    perpsProKeyboardSession.setEnabled(enabled, owner);
+  }, [enabled, owner]);
+  useLayoutEffect(
+    () => () => perpsProKeyboardSession.setEnabled(false, owner),
+    [owner],
+  );
   useLayoutEffect(() => {
     const subscription = AppState.addEventListener('change', state =>
       setForeground(state === 'active'),

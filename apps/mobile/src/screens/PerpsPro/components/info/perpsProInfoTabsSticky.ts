@@ -119,3 +119,17 @@ export const createPerpsProInfoTabsTranslateY = ({
     2,
   );
 };
+
+export const getPerpsProInfoStickyHeaderOffset = (
+  tabsTop: number,
+  rowY: number,
+  scrollOffset: number,
+) => {
+  'worklet';
+  // The row's natural place is right below the tabs; once the tabs stop, it
+  // stays under their bottom edge instead of scrolling away.
+  return Math.max(
+    0,
+    tabsTop + PERPS_PRO_INFO_TABS_HEIGHT - rowY + scrollOffset,
+  );
+};

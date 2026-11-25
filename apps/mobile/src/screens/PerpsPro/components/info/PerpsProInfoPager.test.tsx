@@ -456,6 +456,35 @@ describe('PerpsProInfoPager', () => {
     },
   );
 
+  it('makes only pages with a controls row sticky', () => {
+    render(
+      <PerpsProInfoPager
+        activeTab="positions"
+        contentContainerStyle={{ account: {}, positions: {}, openOrders: {} }}
+        data={data}
+        getActiveScrollOffset={() => 0}
+        indicatorPosition={{ value: 0 } as SharedValue<number>}
+        keepAllTabsMounted
+        onActivateOffset={jest.fn()}
+        onLayout={jest.fn()}
+        onPageDragStart={jest.fn()}
+        onPagePreview={jest.fn()}
+        onPageSelected={jest.fn()}
+        renderItem={({ item }) => <View testID={item.key} />}
+        renderListHeader={tab => <View testID={`header-${tab}`} />}
+        requestedTab={null}
+        stickyHeaderIndices={{ openOrders: [], positions: [1] }}
+        stickyOffset={400}
+      />,
+    );
+    const positions = screen.getByTestId('perps-pro-scroll');
+    expect(positions.props.StickyHeaderComponent).toBeDefined();
+    const openOrders = screen.getByTestId('perps-pro-scroll-openOrders', {
+      includeHiddenElements: true,
+    });
+    expect(openOrders.props.StickyHeaderComponent).toBeUndefined();
+  });
+
   it('keeps current and adjacent virtual lists mounted for swipe preview', () => {
     renderPager();
 
@@ -1430,6 +1459,48 @@ describe('PerpsProInfoPager', () => {
     });
     expect(indicatorPosition.value).toBe(0);
     expect(mockWithTiming).not.toHaveBeenCalled();
+  });
+
+  it('keeps a second iOS swipe live when the first selection arrives late', () => {
+    const indicatorPosition = { value: 0 } as SharedValue<number>;
+    const onPageDragStart = jest.fn();
+    const onPageSelected = jest.fn();
+    renderPager({ indicatorPosition, onPageDragStart, onPageSelected });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+    const scroll = (position: number, offset: number) =>
+      fireEvent(pager, 'pageScroll', { nativeEvent: { offset, position } });
+    const drag = () =>
+      fireEvent(pager, 'pageScrollStateChanged', {
+        nativeEvent: { pageScrollState: 'dragging' },
+      });
+
+    drag();
+    scroll(0, 0.7);
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'settling' },
+    });
+    scroll(0, 0.95);
+    // UIKit lets the next drag begin before the first transition finishes.
+    drag();
+    expect(onPageDragStart).toHaveBeenCalledTimes(2);
+    scroll(0, 0.98);
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    expect(onPageSelected.mock.calls.map(call => [call[0]])).toEqual([
+      ['openOrders'],
+    ]);
+
+    scroll(1, 0.4);
+    expect(indicatorPosition.value).toBe(1.4);
+    scroll(1, 0.8);
+    expect(indicatorPosition.value).toBe(1.8);
+
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 2 } });
+    scroll(2, 0);
+    expect(onPageSelected.mock.calls.map(call => [call[0]])).toEqual([
+      ['openOrders'],
+      ['account'],
+    ]);
+    expect(indicatorPosition.value).toBe(2);
   });
 
   it('keeps iOS gesture progress native-owned until the exact final scroll', () => {

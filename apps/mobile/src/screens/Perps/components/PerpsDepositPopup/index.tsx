@@ -95,6 +95,8 @@ import {
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import { useShallow } from 'zustand/shallow';
+import { PerpsProInputAccessory } from '@/screens/PerpsPro/components/common/PerpsProInputAccessory';
+import { usePerpsProKeyboardInput } from '@/screens/PerpsPro/components/common/usePerpsProKeyboardInput';
 
 export type { PerpBridgeHistory } from '@/hooks/perps/funding/types';
 
@@ -247,6 +249,8 @@ export const PerpsDepositPopup: React.FC<{
   tooltipTextStyle,
 }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
+  const inputRef = useRef<React.ElementRef<typeof BottomSheetTextInput>>(null);
+  const keyboard = usePerpsProKeyboardInput(inputRef, { enabled: !!visible });
 
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyle,
@@ -1052,6 +1056,8 @@ export const PerpsDepositPopup: React.FC<{
             <View style={styles.inputContainer}>
               <View style={styles.inputWrapper}>
                 <BottomSheetTextInput
+                  {...keyboard}
+                  ref={inputRef}
                   cursorColor={inputColorProps?.cursorColor}
                   selectionColor={inputColorProps?.selectionColor}
                   keyboardType="numeric"
@@ -1068,6 +1074,9 @@ export const PerpsDepositPopup: React.FC<{
                   value={displayedAmount}
                   onChangeText={setUsdValue}
                   numberOfLines={1}
+                />
+                <PerpsProInputAccessory
+                  nativeID={keyboard.inputAccessoryViewID}
                 />
                 {usdValue ? (
                   <Text style={styles.tokenAmountHint}>
