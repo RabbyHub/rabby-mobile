@@ -225,6 +225,23 @@ const usePerpsDepositTokenIndexStore = zCreate(
   })),
 );
 
+const DEPOSIT_BRIDGE_NAME_MAP: Record<string, string> = {
+  relay: 'Relay',
+  across: 'Across',
+};
+
+const formatDepositBridgeName = (quote?: PerpBridgeQuote | null) => {
+  const bridgeId = quote?.bridge_id?.trim().toLowerCase();
+  if (bridgeId && DEPOSIT_BRIDGE_NAME_MAP[bridgeId]) {
+    return DEPOSIT_BRIDGE_NAME_MAP[bridgeId];
+  }
+  const rawName = quote?.bridge?.name || quote?.bridge_id || '';
+  if (!rawName) {
+    return '';
+  }
+  return rawName.charAt(0).toUpperCase() + rawName.slice(1);
+};
+
 export const PerpsDepositPopup: React.FC<{
   account?: Account | null;
   visible?: boolean;
@@ -989,7 +1006,8 @@ export const PerpsDepositPopup: React.FC<{
                         { fontSize: 12, color: '#fff' },
                         tooltipTextStyle,
                       ]}>
-                      {t('page.perps.PerpsDepositPopup.estReceiveTooltip', {
+                      {t('page.perps.PerpsDepositPopup.estReceiveTooltipV2', {
+                        name: formatDepositBridgeName(bridgeQuote),
                         number: bridgeQuote?.duration || 0,
                       })}
                     </Text>

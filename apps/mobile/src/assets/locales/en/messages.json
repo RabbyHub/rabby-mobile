@@ -2770,6 +2770,7 @@
         "depositBtn": "Deposit",
         "minimumDepositSize": "The minimum deposit amount is $5",
         "estReceiveTooltip": "Cross-chain deposit is processed via LiFi, may incur some slippage. Estimated arrival in {{number}}s.",
+        "estReceiveTooltipV2": "Cross-chain deposit is processed via {{name}}, may incur some slippage. Estimated arrival in {{number}}s.",
         "estReceive": "Est. Receive: {{balance}}",
         "fetchQuoteFailed": "Failed to fetch deposit quote. Please switch token.",
         "insufficientBalance": "Insufficient balance",
