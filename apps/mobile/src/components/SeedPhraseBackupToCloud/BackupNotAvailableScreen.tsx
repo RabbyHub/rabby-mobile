@@ -28,7 +28,8 @@ export const BackupNotAvailableScreen: React.FC<Props> = ({ onConfirm }) => {
     <FooterButtonScreenContainer
       buttonText={t('global.ok')}
       onPressButton={onConfirm}
-      style={styles.root}>
+      style={styles.root}
+      disableColumnInset>
       <BackupIcon
         status="error"
         isGray
