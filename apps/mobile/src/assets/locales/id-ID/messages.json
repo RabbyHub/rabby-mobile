@@ -2864,9 +2864,6 @@
       "closeAllConfirmTitle": "Konfirmasi tutup semua posisi",
       "closeAllConfirmMessage": "Semua posisi terbuka Anda akan ditutup pada harga pasar.",
       "closeAll": "Tutup semua posisi",
-      "assetPage": {
-        "hyperliquidPosition": "Posisi Hyperliquid"
-      },
       "invitePopup": {
         "title": "Hemat Biaya Hyperliquid",
         "activatedFailed": "Aktivasi gagal",
@@ -3095,9 +3092,6 @@
         "isolatedDesc": "Setiap posisi menggunakan marginnya sendiri. Kerugian terbatas pada posisi tersebut, tetapi posisi itu lebih mudah dilikuidasi.",
         "crossDesc": "Semua posisi berbagi margin yang sama. Ini mengurangi kemungkinan satu posisi dilikuidasi, tetapi semua dana cross margin dapat hilang saat pasar bergerak ekstrem.",
         "crossTitle": "Margin Silang"
-      },
-      "guideEntry": {
-        "gotIt": "Mengerti"
       },
       "PerpsAbout": {
         "title": "Tentang"

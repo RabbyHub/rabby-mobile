@@ -33,7 +33,6 @@ export const MODAL_GATE_IDS = {
   perpsAgentsLimit: 'perps-agents-limit',
   perpsDepositToken: 'perps-deposit-token',
   perpsEditTpSlPrice: 'perps-edit-tp-sl-price',
-  perpsGuideEntry: 'perps-guide-entry',
   perpsAutoClose: 'perps-auto-close',
   perpsProEndTwap: 'perps-pro-end-twap',
   perpsProCancelConfirmation: 'perps-pro-cancel-confirmation',

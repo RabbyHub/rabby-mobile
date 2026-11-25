@@ -335,7 +335,6 @@ export interface PerpsServiceStore {
   currentAccount: StoreAccount | null;
   lastUsedAccount: StoreAccount | null;
   hasDoneNewUserProcess: boolean;
-  hasShownPerpsGuidePopup: boolean;
   hasClosedLearnMoreCard: boolean;
   inviteConfig: {
     [address: string]: {
@@ -740,7 +739,6 @@ export class PerpsService extends StoreServiceBase<
         // no clear account, just cache for last used
         lastUsedAccount: null,
         hasDoneNewUserProcess: false,
-        hasShownPerpsGuidePopup: false,
         hasClosedLearnMoreCard: false,
         favoriteMarkets: [],
         selectedKlineInterval: DEFAULT_PERPS_CANDLE_INTERVAL,
@@ -1217,16 +1215,6 @@ export class PerpsService extends StoreServiceBase<
     return this.store.hasDoneNewUserProcess;
   };
 
-  setHasShownPerpsGuidePopup = async (value: boolean) => {
-    this.mutateStore(draft => {
-      draft.hasShownPerpsGuidePopup = value;
-    });
-  };
-
-  getHasShownPerpsGuidePopup = async () => {
-    return this.store.hasShownPerpsGuidePopup;
-  };
-
   setHasClosedLearnMoreCard = async (value: boolean) => {
     this.mutateStore(draft => {
       draft.hasClosedLearnMoreCard = value;
@@ -1589,7 +1577,6 @@ export class PerpsService extends StoreServiceBase<
       draft.agentPreferences = {};
       draft.currentAccount = null;
       draft.lastUsedAccount = null;
-      draft.hasShownPerpsGuidePopup = false;
       draft.hasClosedLearnMoreCard = false;
       draft.hasDoneNewUserProcess = false;
     });

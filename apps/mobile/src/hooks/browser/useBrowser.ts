@@ -34,7 +34,6 @@ import { resolveValFromUpdater } from '@/core/utils/store';
 import { runStartupTask } from '@/core/utils/startupScheduler';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { perfEvents } from '@/core/utils/perf';
-import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 type TabsState = {
   tabs: Tab[];
@@ -256,23 +255,6 @@ function useDisplayedTabs() {
   const displayedTabs = useMemo(() => getDisplayedTabs(tabs), [tabs]);
 
   return { displayedTabs };
-}
-
-export function useHomeDisplayedTabs() {
-  const tabs = useActivityStore(tabsStore, state => state.tabs, Object.is, {
-    storeLabel: 'home-overview-browser-tabs',
-  });
-
-  const homeDisplayedTabs = useMemo(
-    () =>
-      sortBy(
-        getDisplayedTabs(tabs),
-        tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
-      ).slice(0, 4),
-    [tabs],
-  );
-
-  return { homeDisplayedTabs };
 }
 
 export const useBrowserActiveTabState = () => {

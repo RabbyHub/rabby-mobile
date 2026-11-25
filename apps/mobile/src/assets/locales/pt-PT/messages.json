@@ -3151,9 +3151,6 @@
       "closeAll": "Fechar todas as posições",
       "closeAllConfirmMessage": "Todas as suas posições abertas serão fechadas ao preço de mercado.",
       "closeAllConfirmTitle": "Confirmar fecho de todas as posições",
-      "assetPage": {
-        "hyperliquidPosition": "Posição Hyperliquid"
-      },
       "invitePopup": {
         "activateNow": "Ativar agora",
         "title": "Poupe nas taxas da Hyperliquid",
@@ -3382,9 +3379,6 @@
         "isolatedTitle": "Margem isolada",
         "isolatedDesc": "Cada posição usa a sua própria margem. As perdas ficam limitadas a essa posição, mas ela pode ser liquidada com mais facilidade.",
         "crossDesc": "Todas as posições partilham a mesma margem. Isto reduz a probabilidade de uma única posição ser liquidada, mas todos os fundos de margem cruzada podem ser perdidos em movimentos extremos do mercado."
-      },
-      "guideEntry": {
-        "gotIt": "Compreendi"
       },
       "PerpsAbout": {
         "title": "Sobre"

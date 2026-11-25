@@ -10,7 +10,6 @@ function loadPerpsModule({ isUnlocked = true }: { isUnlocked?: boolean } = {}) {
   const mockGetCurrentAccount = jest.fn();
   const mockGetHasClosedLearnMoreCard = jest.fn();
   const mockGetHasDoneNewUserProcess = jest.fn();
-  const mockGetHasShownPerpsGuidePopup = jest.fn();
   const mockGetLastUsedAccount = jest.fn();
   const mockGetSelectedKlineInterval = jest.fn();
   const mockGetSendApproveAfterDeposit = jest.fn();
@@ -29,7 +28,6 @@ function loadPerpsModule({ isUnlocked = true }: { isUnlocked?: boolean } = {}) {
   const mockSetCurrentAccount = jest.fn();
   const mockSetHasClosedLearnMoreCard = jest.fn();
   const mockSetHasDoneNewUserProcess = jest.fn();
-  const mockSetHasShownPerpsGuidePopup = jest.fn();
   const mockSetSelectedKlineInterval = jest.fn();
   const mockSetSendApproveAfterDeposit = jest.fn();
   const mockUpdateAgentWalletPreference = jest.fn();
@@ -64,14 +62,12 @@ function loadPerpsModule({ isUnlocked = true }: { isUnlocked?: boolean } = {}) {
       getCurrentAccount: mockGetCurrentAccount,
       getHasClosedLearnMoreCard: mockGetHasClosedLearnMoreCard,
       getHasDoneNewUserProcess: mockGetHasDoneNewUserProcess,
-      getHasShownPerpsGuidePopup: mockGetHasShownPerpsGuidePopup,
       getLastUsedAccount: mockGetLastUsedAccount,
       getSelectedKlineInterval: mockGetSelectedKlineInterval,
       getSendApproveAfterDeposit: mockGetSendApproveAfterDeposit,
       setCurrentAccount: mockSetCurrentAccount,
       setHasClosedLearnMoreCard: mockSetHasClosedLearnMoreCard,
       setHasDoneNewUserProcess: mockSetHasDoneNewUserProcess,
-      setHasShownPerpsGuidePopup: mockSetHasShownPerpsGuidePopup,
       setSelectedKlineInterval: mockSetSelectedKlineInterval,
       setSendApproveAfterDeposit: mockSetSendApproveAfterDeposit,
       updateAgentWalletPreference: mockUpdateAgentWalletPreference,

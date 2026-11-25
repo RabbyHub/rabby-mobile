@@ -2,11 +2,9 @@ import { useEnsurePerpsRuntime } from '@/hooks/perps/runtime/useEnsurePerpsRunti
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useHideTipsPopup, useIsTipsPopupVisible } from '@/hooks/useTipsPopup';
-import { perpsServiceApi } from '@/core/serviceApi/perps';
-import { IS_IOS } from '@/core/native/utils';
 import { useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
 
 import { RootNames } from '@/constant/layout';
@@ -20,7 +18,6 @@ import { prefetchPerpsProZeroAddressLeverageBaseline } from '../PerpsPro/scene/p
 import { prewarmPerpsProEntryIntent } from '../PerpsPro/scene/perpsProEntryIntent';
 import { usePerpsViewMode } from './hooks/usePerpsViewMode';
 import { PerpsSimpleScreen } from './PerpsSimpleScreen';
-import { PerpsGuideEntryPopup } from './components/PerpsGuideEntryPopup';
 import type { PerpsRegionAlertLayout } from './components/PerpsRegionAlert';
 
 export const PerpsOriginScreen = () => {
@@ -31,7 +28,6 @@ export const PerpsOriginScreen = () => {
       RouteProp<TransactionNavigatorParamList, typeof RootNames.Perps>
     >();
   const navigation = useRabbyAppNavigation();
-  const fromSource = route.params?.fromSource;
   const { hasVisitedPro, hydrated, savingMode, setViewMode, viewMode } =
     usePerpsViewMode();
   const marketDataStatus = perpsStore(state => state.marketDataStatus);
@@ -41,8 +37,6 @@ export const PerpsOriginScreen = () => {
   const proIntentCancelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
-  const hasShownGuideRef = useRef(true);
-  const [showGuideEntryPopup, setShowGuideEntryPopup] = useState(false);
   const portfolioBreakdownVisible = useIsTipsPopupVisible(
     PERPS_PORTFOLIO_BREAKDOWN_TIPS_OWNER,
   );
@@ -50,39 +44,15 @@ export const PerpsOriginScreen = () => {
     PERPS_PORTFOLIO_BREAKDOWN_TIPS_OWNER,
   );
 
-  useEffect(() => {
-    if (IS_IOS || fromSource !== 'homePagePositionList') {
-      return;
-    }
-    void perpsServiceApi
-      .getHasShownPerpsGuidePopup()
-      .then(hasShown => {
-        hasShownGuideRef.current = hasShown;
-      })
-      .catch(error => {
-        console.error('[Perps] read guide popup state failed', error);
-      });
-  }, [fromSource]);
-
   useEffect(
     () =>
       navigation.addListener('beforeRemove', event => {
         if (portfolioBreakdownVisible) {
           event.preventDefault();
           hidePortfolioBreakdown();
-          return;
         }
-        if (
-          IS_IOS ||
-          fromSource !== 'homePagePositionList' ||
-          hasShownGuideRef.current
-        ) {
-          return;
-        }
-        event.preventDefault();
-        setShowGuideEntryPopup(true);
       }),
-    [fromSource, hidePortfolioBreakdown, navigation, portfolioBreakdownVisible],
+    [hidePortfolioBreakdown, navigation, portfolioBreakdownVisible],
   );
 
   useEffect(
@@ -96,15 +66,6 @@ export const PerpsOriginScreen = () => {
     },
     [hidePortfolioBreakdown],
   );
-
-  const closeGuideEntryPopup = useCallback(() => {
-    void perpsServiceApi.setHasShownPerpsGuidePopup(true).catch(error => {
-      console.error('[Perps] persist guide popup state failed', error);
-    });
-    setShowGuideEntryPopup(false);
-    hasShownGuideRef.current = true;
-    navigation.goBack();
-  }, [navigation]);
 
   const cancelProIntent = useCallback(() => {
     if (proIntentCancelTimerRef.current) {
@@ -211,19 +172,13 @@ export const PerpsOriginScreen = () => {
   }
 
   return (
-    <>
-      <PerpsSimpleScreen
-        isModeSwitching={savingMode !== null}
-        onPressInPro={handlePressInPro}
-        onPressOutPro={handlePressOutPro}
-        onRegionAlertLayout={captureRegionAlertLayout}
-        onSwitchToPro={switchToPro}
-        showProNewBadge={!hasVisitedPro}
-      />
-      <PerpsGuideEntryPopup
-        visible={showGuideEntryPopup}
-        onClose={closeGuideEntryPopup}
-      />
-    </>
+    <PerpsSimpleScreen
+      isModeSwitching={savingMode !== null}
+      onPressInPro={handlePressInPro}
+      onPressOutPro={handlePressOutPro}
+      onRegionAlertLayout={captureRegionAlertLayout}
+      onSwitchToPro={switchToPro}
+      showProNewBadge={!hasVisitedPro}
+    />
   );
 };

@@ -2864,9 +2864,6 @@
       "closeAll": "모든 포지션 닫기",
       "closeAllConfirmMessage": "모든 열린 포지션이 시장가로 닫힙니다.",
       "closeAllConfirmTitle": "모든 포지션 닫기 확인",
-      "assetPage": {
-        "hyperliquidPosition": "하이퍼리퀴드 포지션"
-      },
       "invitePopup": {
         "title": "Hyperliquid 수수료 절약하기",
         "description": "Rabby의 코드를 사용하여 활성화하십시오.",
@@ -3095,9 +3092,6 @@
         "isolatedTitle": "격리 마진",
         "crossDesc": "모든 포지션이 같은 마진을 공유합니다. 단일 포지션이 청산될 가능성은 낮아지지만, 극단적인 시장 움직임에서는 모든 교차 마진 자금이 손실될 수 있습니다.",
         "isolatedDesc": "각 포지션은 자체 마진을 사용합니다. 손실은 해당 포지션으로 제한되지만 더 쉽게 청산될 수 있습니다."
-      },
-      "guideEntry": {
-        "gotIt": "알겠어요"
       },
       "PerpsAbout": {
         "title": "소개"
