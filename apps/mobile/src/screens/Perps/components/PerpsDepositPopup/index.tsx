@@ -19,6 +19,7 @@ import {
 import useAsync from 'react-use/lib/useAsync';
 import { Skeleton } from '@rneui/themed';
 import { openapi } from '@/core/request';
+import { validatePerpsDepositBridgeQuote } from '@/core/depositBridgeValidation';
 import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatPerpsUsdValue, formatUsdValue } from '@/utils/number';
@@ -659,6 +660,15 @@ export const PerpsDepositPopup: React.FC<{
             from_token_id: token.id,
             from_token_raw_amount: fromTokenRawAmount,
           });
+          if (controller.signal.aborted) {
+            return;
+          }
+          validatePerpsDepositBridgeQuote(res, {
+            userAddress: account!.address,
+            fromChainId: token.chain,
+            fromTokenId: token.id,
+            fromTokenRawAmount,
+          });
           let tokenApproved = false;
           let allowance = '0';
           const fromChain = findChain({ serverId: token.chain });
@@ -725,21 +735,25 @@ export const PerpsDepositPopup: React.FC<{
             setTxs(targetTxs);
             setBridgeQuote(res);
             setQuoteLoading(false);
+            const historyTx = { ...res.tx };
+            delete (historyTx as { order_data?: unknown }).order_data;
             setCacheBridgeHistory({
               from_chain_id: token.chain,
               from_token_id: token.id,
               from_token_amount: amount,
               to_token_amount: res.to_token_amount,
-              tx: res.tx,
+              tx: historyTx,
             });
           } else {
             setBridgeQuote(null);
+            setCacheBridgeHistory(null);
             setTxs([]);
             setQuoteLoading(false);
           }
         } catch (error) {
           console.error('getPerpBridgeQuote error', error);
           setBridgeQuote(null);
+          setCacheBridgeHistory(null);
           setTxs([]);
           setQuoteLoading(false);
         }
