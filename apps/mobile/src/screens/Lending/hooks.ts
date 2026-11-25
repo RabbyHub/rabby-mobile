@@ -48,7 +48,6 @@ import {
   worker_formatReservesAndIncentives,
   worker_formatUserSummaryAndIncentives,
 } from '@/perfs/workerReq';
-import { StoreApi, UseBoundStore } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
 import { isValidAddress } from '@ethereumjs/util';
 import { nativeToWrapper } from './config/nativeToWrapper';
@@ -522,17 +521,6 @@ async function computeFormattedReservesAndIncentives({
   };
 }
 
-export function useFormattedReservesAtom() {
-  const { lendingDataKey } = useCurrentLendingDataKey();
-  return computedInfoState(
-    useShallow(
-      s =>
-        getComputedInfoByKey(lendingDataKey).formattedReservesAndIncentivesState
-          .formattedReserves,
-    ),
-  );
-}
-
 export function useFormattedPoolReservesAndIncentivesAtom() {
   const { lendingDataKey } = useCurrentLendingDataKey();
   return computedInfoState(
@@ -614,9 +602,6 @@ async function computeIUserSummary({
   return syncResult;
 }
 
-type ExtractStateType<T> = T extends UseBoundStore<StoreApi<infer U>>
-  ? U
-  : never;
 type MappedBalances = Array<{ address: string; amount: string }>;
 
 function computeMappedBalances({
@@ -1249,22 +1234,6 @@ export function useLendingIsLoading() {
   );
 
   return { loading };
-}
-export function useLendingPoolContainer() {
-  const { lendingDataKey } = useCurrentLendingDataKey();
-  const totalLiquidityMarketReferenceCurrency = computedInfoState(
-    useShallow(
-      s =>
-        getComputedInfoByKey(lendingDataKey).iUserSummary
-          ?.totalLiquidityMarketReferenceCurrency || '0',
-    ),
-  );
-  const { loading } = useLendingIsLoading();
-
-  return {
-    totalLiquidityMarketReferenceCurrency,
-    loading,
-  };
 }
 export function useLendingISummary() {
   const { lendingDataKey } = useCurrentLendingDataKey();

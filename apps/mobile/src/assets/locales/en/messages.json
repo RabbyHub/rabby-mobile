@@ -3226,8 +3226,6 @@
           "totalBorrowed": "Total Borrowed"
         },
         "item": {
-          "__skip_translation": ["tvl"],
-          "tvl": "TVL",
           "wrapperToken": "Wrapped token for {{name}}"
         }
       },

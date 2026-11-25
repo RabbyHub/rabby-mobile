@@ -495,10 +495,6 @@ export const marketsData: {
   },
 } as const;
 
-export const findByChainId = (chainId: ChainId) => {
-  return Object.values(marketsData).find(market => market.chainId === chainId);
-};
-
 export const getMarketLogo = (market: CustomMarket) => {
   if (market === CustomMarket.proto_lido_v3) {
     return {

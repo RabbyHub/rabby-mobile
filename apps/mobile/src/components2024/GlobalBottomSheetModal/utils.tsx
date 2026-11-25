@@ -62,8 +62,6 @@ import { ManageEmodeModal } from '@/screens/Lending/modals/ManageEmode';
 import ManageEmodeFullModal from '@/screens/Lending/modals/ManangeEmodeFullModal';
 import SelectCategoryModal from '@/screens/Lending/components/EmodeCategory/SelectCategoryModal';
 import DisableEmodeOverviewModal from '@/screens/Lending/modals/DisableOverViewModal';
-import LendingSupplyList from '@/screens/Lending/components/popups/SupplyList';
-import LendingBorrowList from '@/screens/Lending/components/popups/BorrowList';
 import LendingTokenList from '@/screens/Lending/components/popups/LendingTokenList';
 import { SeedPhraseQrCode } from '../AddressDetail/SeedPhraseQrCode';
 import { LpTokenDescription } from '../LpTokenDescription';
@@ -367,16 +365,6 @@ export const MODAL_CONFIGS = {
   [MODAL_NAMES.SELECT_EMODE_CATEGORY]: {
     snapPoints: ['85%'],
     Component: SelectCategoryModal,
-  },
-  [MODAL_NAMES.LENDING_SUPPLY_LIST]: {
-    snapPoints: [MODAL_MAX_HEIGHT],
-    Component: LendingSupplyList,
-    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
-  },
-  [MODAL_NAMES.LENDING_BORROW_LIST]: {
-    snapPoints: [MODAL_MAX_HEIGHT],
-    Component: LendingBorrowList,
-    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.LENDING_TOKEN_LIST]: {
     snapPoints: [MODAL_MAX_HEIGHT],
