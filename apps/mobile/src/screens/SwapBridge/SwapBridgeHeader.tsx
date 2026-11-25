@@ -44,13 +44,34 @@ function SwapBridgeHeaderTitle({
             hitSlop={8}
             style={styles.headerTab}
             onPress={() => onTabPress(tab.key)}>
-            <Text
-              style={[
-                styles.headerTabText,
-                isActive && styles.headerTabTextActive,
-              ]}>
-              {tab.title}
-            </Text>
+            {/* The active tab grows 17px/700 -> 20px/800. A label box sized by
+                the visible text would resize the whole header row on every tab
+                switch, so each label keeps its own container pinned to the
+                active metrics (same approach as the Perps mode switch). */}
+            <View style={styles.headerTabLabel}>
+              <Text
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                aria-hidden
+                numberOfLines={1}
+                pointerEvents="none"
+                style={[
+                  styles.headerTabText,
+                  styles.headerTabTextActive,
+                  styles.headerTabLabelGhost,
+                ]}>
+                {tab.title}
+              </Text>
+              <Text
+                numberOfLines={1}
+                style={[
+                  styles.headerTabText,
+                  isActive && styles.headerTabTextActive,
+                  styles.headerTabLabelOverlay,
+                ]}>
+                {tab.title}
+              </Text>
+            </View>
           </Pressable>
         );
       })}
@@ -192,6 +213,25 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 20,
     lineHeight: 24,
   },
+  headerTabLabel: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  // Invisible active-metric copy: it is the only child in flow, so the label
+  // box always reserves the widest (active) text size.
+  headerTabLabelGhost: {
+    opacity: 0,
+  },
+  headerTabLabelOverlay: {
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    top: 0,
+  },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -206,6 +246,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     minWidth: 0,
   },
   headerAction: {
+    // SwapHeader renders a 30dp action and BridgeHeader a 32dp one. Without a
+    // shared slot the account chip + history group would shift by the 2dp
+    // difference every time the active page changes.
+    alignItems: 'center',
     flexShrink: 0,
+    justifyContent: 'center',
+    width: 32,
   },
 }));
