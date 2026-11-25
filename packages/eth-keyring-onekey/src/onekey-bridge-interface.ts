@@ -26,6 +26,7 @@ export type OneKeyBridgeInterface = {
   openWalletSession?: CoreApi['openWalletSession'];
   evmGetPublicKey: CoreApi['evmGetPublicKey'];
   getDeviceState: CoreApi['getDeviceState'];
+  setDeviceConnectProtocol?: CoreApi['setDeviceConnectProtocol'];
   receivePin: (params: ReceivePinParams) => void;
   receivePassphrase: (params: ReceivePassphraseParams) => void;
   cancel: CoreApi['cancel'];

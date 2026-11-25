@@ -27,7 +27,7 @@ export default class OneKeyBridge implements OneKeyBridgeInterface {
   private async doInit() {
     const initialized = await HardwareBleSdk.init({
       debug: false,
-      fetchConfig: true,
+      fetchConfig: false,
     });
     if (!initialized) {
       throw new Error('OneKey SDK initialization failed');
@@ -74,6 +74,8 @@ export default class OneKeyBridge implements OneKeyBridgeInterface {
   evmGetPublicKey = HardwareBleSdk.evmGetPublicKey;
 
   getDeviceState = HardwareBleSdk.getDeviceState;
+
+  setDeviceConnectProtocol = HardwareBleSdk.setDeviceConnectProtocol;
 
   receivePin: OneKeyBridgeInterface['receivePin'] = data => {
     HardwareBleSdk.uiResponse({

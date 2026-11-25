@@ -1410,12 +1410,19 @@ export class KeyringService extends RNEventEmitter {
     try {
       return await signed;
     } finally {
-      if (
-        keyring?.type === KEYRING_TYPE.OneKeyKeyring &&
-        keyring?.consumePassphraseStateCleared?.() &&
-        this.isUnlocked()
-      ) {
-        await this.persistAllKeyrings();
+      if (keyring?.type === KEYRING_TYPE.OneKeyKeyring) {
+        const passphraseCleared = Boolean(
+          keyring?.consumePassphraseStateCleared?.(),
+        );
+        const deviceProtocolsChanged = Boolean(
+          keyring?.consumeDeviceProtocolsChanged?.(),
+        );
+        if (
+          (passphraseCleared || deviceProtocolsChanged) &&
+          this.isUnlocked()
+        ) {
+          await this.persistAllKeyrings();
+        }
       }
     }
   }

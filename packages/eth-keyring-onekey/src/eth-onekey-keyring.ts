@@ -25,6 +25,49 @@ const MAX_INDEX = 1000;
 const DELAY_BETWEEN_POPUPS = 1000;
 // HardwareErrorCode.DeviceNotOpenedPassphrase from @onekeyfe/hd-shared
 const DEVICE_NOT_OPENED_PASSPHRASE = 113;
+// HardwareErrorCode.TransportInvalidProtobuf from @onekeyfe/hd-shared
+const TRANSPORT_INVALID_PROTOBUF = 603;
+// HardwareErrorCode.TransportProtocolProbeFailed from newer @onekeyfe/hd-shared
+const TRANSPORT_PROTOCOL_PROBE_FAILED = 604;
+
+type ConnectProtocol = 'V1' | 'V2';
+
+/**
+ * Normalize a device connect id for case-insensitive protocol lookup.
+ *
+ * @param connectId - The raw connect id.
+ * @returns The trimmed lowercase connect id, or undefined when empty.
+ */
+function normalizeConnectId(connectId?: string | null): string | undefined {
+  const normalized = connectId?.trim().toLowerCase();
+  return normalized || undefined;
+}
+
+/**
+ * Whether an SDK failure indicates a bound transport protocol mismatch.
+ *
+ * @param payload - The failed SDK response payload or thrown error.
+ * @param payload.code - The SDK error code.
+ * @param payload.error - The SDK error message.
+ * @param payload.message - The thrown Error message.
+ * @returns True when the stored protocol binding should be cleared and reprobed.
+ */
+function isProtocolMismatchError(payload?: {
+  code?: unknown;
+  error?: unknown;
+  message?: unknown;
+}) {
+  const code = Number(payload?.code);
+  if (
+    code === TRANSPORT_INVALID_PROTOBUF ||
+    code === TRANSPORT_PROTOCOL_PROBE_FAILED
+  ) {
+    return true;
+  }
+  return /protocol mismatch|protocol probe/iu.test(
+    String(payload?.error ?? payload?.message ?? ''),
+  );
+}
 
 /**
  * Normalize a rejection value into an Error with a readable message.
@@ -353,7 +396,11 @@ class OneKeyKeyring extends EventEmitter {
 
   private passphraseStateCleared = false;
 
+  private deviceProtocolsChanged = false;
+
   accountDetails: Record<string, AccountDetail>;
+
+  deviceProtocols: Record<string, ConnectProtocol> = {};
 
   bridge!: OneKeyBridgeInterface;
 
@@ -371,8 +418,9 @@ class OneKeyKeyring extends EventEmitter {
     this.deserialize(opts);
   }
 
-  init() {
-    return this.bridge.init();
+  async init() {
+    await this.bridge.init();
+    this._bindRememberedDeviceProtocols();
   }
 
   _deviceConnectId?: string;
@@ -393,6 +441,7 @@ class OneKeyKeyring extends EventEmitter {
       perPage: this.perPage,
       unlockedAccount: this.unlockedAccount,
       accountDetails: this.accountDetails,
+      deviceProtocols: this.deviceProtocols,
     });
   }
 
@@ -403,7 +452,60 @@ class OneKeyKeyring extends EventEmitter {
     this.perPage = 5;
     this.paths = opts.paths || {};
     this.accountDetails = opts.accountDetails || {};
+    this.deviceProtocols = {};
+    if (opts.deviceProtocols && typeof opts.deviceProtocols === 'object') {
+      for (const [connectId, protocol] of Object.entries(
+        opts.deviceProtocols as Record<string, unknown>,
+      )) {
+        const normalized = normalizeConnectId(connectId);
+        if (normalized && (protocol === 'V1' || protocol === 'V2')) {
+          this.deviceProtocols[normalized] = protocol;
+        }
+      }
+    }
+    this.deviceProtocolsChanged = false;
+    this._bindRememberedDeviceProtocols();
     return Promise.resolve();
+  }
+
+  private _bindRememberedDeviceProtocols() {
+    for (const [connectId, protocol] of Object.entries(this.deviceProtocols)) {
+      this.bridge.setDeviceConnectProtocol?.(connectId, protocol);
+    }
+  }
+
+  private _getRememberedDeviceProtocol(
+    connectId?: string | null,
+  ): ConnectProtocol | undefined {
+    const normalized = normalizeConnectId(connectId);
+    return normalized ? this.deviceProtocols[normalized] : undefined;
+  }
+
+  private _rememberDeviceProtocol(
+    connectId: string | null | undefined,
+    protocol: ConnectProtocol | undefined,
+  ) {
+    const normalized = normalizeConnectId(connectId);
+    if (!normalized || (protocol !== 'V1' && protocol !== 'V2')) {
+      return;
+    }
+    this.bridge.setDeviceConnectProtocol?.(connectId!, protocol);
+    if (this.deviceProtocols[normalized] !== protocol) {
+      this.deviceProtocols[normalized] = protocol;
+      this.deviceProtocolsChanged = true;
+    }
+  }
+
+  private _forgetDeviceProtocol(connectId: string | null | undefined) {
+    const normalized = normalizeConnectId(connectId);
+    if (!normalized) {
+      return;
+    }
+    this.bridge.setDeviceConnectProtocol?.(connectId!, undefined);
+    if (normalized in this.deviceProtocols) {
+      delete this.deviceProtocols[normalized];
+      this.deviceProtocolsChanged = true;
+    }
   }
 
   isUnlocked(): boolean {
@@ -565,6 +667,18 @@ class OneKeyKeyring extends EventEmitter {
   }
 
   /**
+   * Whether the remembered connect-id -> protocol map changed since the last
+   * check.
+   *
+   * @returns True when the caller should persist the keyring.
+   */
+  consumeDeviceProtocolsChanged(): boolean {
+    const changed = this.deviceProtocolsChanged;
+    this.deviceProtocolsChanged = false;
+    return changed;
+  }
+
+  /**
    * Drop the in-memory OneKey session.
    *
    * Called with no argument, this only clears fields. `setDeviceConnectId`
@@ -614,6 +728,64 @@ class OneKeyKeyring extends EventEmitter {
     return undefined;
   }
 
+  private async _readDeviceState(
+    connectId: string,
+    unlockGuard: OneKeyUnlockGuard | undefined,
+    staleFallbackMessage: string,
+  ) {
+    const assertCurrent = () => {
+      if (!unlockGuard) {
+        return;
+      }
+      this._assertSameUnlock(unlockGuard.version, unlockGuard.epoch);
+    };
+    const rememberedProtocol = this._getRememberedDeviceProtocol(connectId);
+    if (rememberedProtocol) {
+      this.bridge.setDeviceConnectProtocol?.(connectId, rememberedProtocol);
+    }
+    let res: Awaited<ReturnType<OneKeyBridgeInterface['getDeviceState']>>;
+    try {
+      res = await this.bridge.getDeviceState(connectId);
+      this._throwStaleSdkFailure(unlockGuard, res, staleFallbackMessage);
+      assertCurrent();
+    } catch (error) {
+      const normalizedError = toError(error);
+      if (
+        !rememberedProtocol ||
+        isCancelledError(normalizedError) ||
+        !isProtocolMismatchError(normalizedError)
+      ) {
+        throw error;
+      }
+      this._forgetDeviceProtocol(connectId);
+      res = await this.bridge.getDeviceState(connectId, {
+        forceProtocolDetection: true,
+      });
+      this._throwStaleSdkFailure(unlockGuard, res, staleFallbackMessage);
+      assertCurrent();
+    }
+
+    if (
+      !res.success &&
+      rememberedProtocol &&
+      !isCancelledError(res.payload) &&
+      isProtocolMismatchError(res.payload)
+    ) {
+      this._forgetDeviceProtocol(connectId);
+      res = await this.bridge.getDeviceState(connectId, {
+        forceProtocolDetection: true,
+      });
+      this._throwStaleSdkFailure(unlockGuard, res, staleFallbackMessage);
+      assertCurrent();
+    }
+
+    if (res.success) {
+      this._rememberDeviceProtocol(connectId, readProtocol(res.payload));
+    }
+
+    return res;
+  }
+
   async trySearchDevice(needCancel = false, unlockGuard?: OneKeyUnlockGuard) {
     const assertCurrent = () => {
       if (!unlockGuard) {
@@ -629,9 +801,11 @@ class OneKeyKeyring extends EventEmitter {
       this.pendingConnectId = this._deviceConnectId;
     }
     const devicePromise = this._deviceConnectId
-      ? this.bridge.getDeviceState(this._deviceConnectId).then(async res => {
-          this._throwStaleSdkFailure(unlockGuard, res, 'searchDevices failed');
-          assertCurrent();
+      ? this._readDeviceState(
+          this._deviceConnectId,
+          unlockGuard,
+          'searchDevices failed',
+        ).then(async res => {
           if (!res.success) {
             // A BLE reconnect issues a new connect id. The stored one then
             // fails lookup; search once and adopt the device that is here.
@@ -701,9 +875,11 @@ class OneKeyKeyring extends EventEmitter {
       // deviceId, so the V2 standard-wallet decision is never made with an
       // unknown value.
       if (connectId && (!deviceId || !deviceStateRead)) {
-        const state = await this.bridge.getDeviceState(connectId);
-        this._throwStaleSdkFailure(unlockGuard, state, 'getDeviceState failed');
-        assertCurrent();
+        const state = await this._readDeviceState(
+          connectId,
+          unlockGuard,
+          'getDeviceState failed',
+        );
         if (!state.success) {
           // A known deviceId is enough to continue; the unlock flow can still
           // fall back to the standard wallet when wallet selection fails.
