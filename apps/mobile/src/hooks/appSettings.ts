@@ -5,6 +5,7 @@ import type { UpdaterOrPartials } from '@/core/utils/store';
 import { resolveValFromUpdater } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
 import * as apisAutoLock from '@/core/apis/autoLock';
 import {
@@ -311,9 +312,17 @@ export function subscribeHomeAssetSelectionSettings(
 }
 
 export function useHomeAssetSelectionSettings() {
-  const persistedTopN = experimentalSettingsStore(state => state.homeAssetTopN);
-  const persistedIncludeWatchAddresses = experimentalSettingsStore(
+  const persistedTopN = useActivityStore(
+    experimentalSettingsStore,
+    state => state.homeAssetTopN,
+    Object.is,
+    { storeLabel: 'home-asset-selection-topn' },
+  );
+  const persistedIncludeWatchAddresses = useActivityStore(
+    experimentalSettingsStore,
     state => state.includeWatchAddressesInHomeAssetSelection,
+    Object.is,
+    { storeLabel: 'home-asset-selection-watch' },
   );
 
   const setTopN = useCallback((value: HomeAssetTopN) => {
