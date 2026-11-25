@@ -1,12 +1,19 @@
 import { openapi } from '@/core/request';
 import type { SwapItem } from '@rabby-wallet/rabby-api/dist/types';
 import useInfiniteScroll from 'ahooks/lib/useInfiniteScroll';
-import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
+import {
+  atom,
+  getDefaultStore,
+  useAtom,
+  useAtomValue,
+  useSetAtom,
+} from 'jotai';
+import { useScopedActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { zCreate } from '@/core/utils/reexports';
 import { uniqBy } from 'lodash';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 import { refreshIdAtom } from './atom';
-import { useInterval, useRequest } from 'ahooks';
 import { swapServiceApi } from '@/core/serviceApi/swap';
 import {
   getTransactionHistoryRecentPendingSnapshot,
@@ -17,7 +24,6 @@ import type {
   SwapTxHistoryItem,
   SendTxHistoryItem,
 } from '@/core/services/transactionHistory';
-import { useTransactionHistoryServiceReady } from '@/core/serviceApi/transactionHistoryHooks';
 const swapTxHistoryVisibleAtom = atom(false);
 
 export const useSwapTxHistoryVisible = () => {
@@ -228,144 +234,173 @@ export const useClearSwapHistoryRedDot = () => {
   }, [currentAccount?.address, setSwapHistoryRedDot]);
 };
 
+type SwapPendingPollerSession = {
+  address: string;
+  remoteTimer?: ReturnType<typeof setTimeout>;
+  localTimer?: ReturnType<typeof setTimeout>;
+};
+
+const swapPendingPollerStore = zCreate<{
+  localPending: SwapTxHistoryItem | SendTxHistoryItem | null;
+}>(() => ({ localPending: null }));
+
+const jotaiStore = getDefaultStore();
+
+const samePending = (
+  left: SwapTxHistoryItem | SendTxHistoryItem | null,
+  right: SwapTxHistoryItem | SendTxHistoryItem | null,
+) => {
+  if (left === right) return true;
+  if (!left || !right) return false;
+  return (
+    left.hash === right.hash &&
+    left.status === right.status &&
+    (left as { updated_at?: number }).updated_at ===
+      (right as { updated_at?: number }).updated_at &&
+    (left as { modified_at?: number }).modified_at ===
+      (right as { modified_at?: number }).modified_at
+  );
+};
+
+function setSwapPendingLocal(
+  next: SwapTxHistoryItem | SendTxHistoryItem | null,
+) {
+  const current = swapPendingPollerStore.getState().localPending;
+  if (samePending(current, next)) return;
+  swapPendingPollerStore.setState({ localPending: next });
+}
+
+let swapPendingPoller: SwapPendingPollerSession | null = null;
+
+async function pollSwapPendingRemote(session: SwapPendingPollerSession) {
+  const data = await openapi.getSwapTradeList({
+    user_addr: session.address,
+    start: '0',
+    limit: '20',
+  });
+  if (swapPendingPoller !== session) return;
+
+  const txData = data?.history_list
+    ?.filter(item => item?.status === 'Pending')
+    .sort((a, b) => b.create_at - a.create_at);
+
+  const openModalTs = await swapServiceApi.getOpenSwapHistoryTs(
+    session.address,
+  );
+  if (swapPendingPoller !== session) return;
+  const ts = data?.history_list
+    ?.filter(item => item?.status !== 'Pending')
+    .sort((a, b) => b.finished_at - a.finished_at);
+  if (openModalTs) {
+    jotaiStore.set(
+      swapHistoryRedDotAtom,
+      Boolean(ts?.[0]?.finished_at > openModalTs / 1000),
+    );
+  } else {
+    await swapServiceApi.setOpenSwapHistoryTs(session.address);
+  }
+  jotaiStore.set(swapPendingTxDataAtom, txData?.[0] || null);
+}
+
+function pollSwapPendingLocal(session: SwapPendingPollerSession) {
+  if (swapPendingPoller !== session) return;
+  const local = swapPendingPollerStore.getState().localPending;
+  if (local) {
+    const next = fetchRefreshLocalData(local, 'swap') as SwapTxHistoryItem;
+    if (next) {
+      setSwapPendingLocal(next);
+      jotaiStore.set(swapHistoryRedDotAtom, true);
+    }
+  }
+  session.localTimer = setTimeout(() => pollSwapPendingLocal(session), 1000);
+}
+
+/** Module-level poller: periodic requests must not live in a React component. */
+export function startSwapPendingPolling(address: string, timer: number) {
+  if (swapPendingPoller?.address === address) return;
+  stopSwapPendingPolling();
+  const session: SwapPendingPollerSession = { address };
+  swapPendingPoller = session;
+  setSwapPendingLocal(fetchLocalSwapPendingTx(address));
+
+  const runRemote = async () => {
+    if (swapPendingPoller !== session) return;
+    try {
+      await pollSwapPendingRemote(session);
+    } catch {
+      // keep the previous snapshot; the next tick retries
+    }
+    if (swapPendingPoller === session) {
+      session.remoteTimer = setTimeout(runRemote, timer);
+    }
+  };
+  void runRemote();
+  session.localTimer = setTimeout(() => pollSwapPendingLocal(session), 1000);
+}
+
+export function stopSwapPendingPolling() {
+  if (!swapPendingPoller) return;
+  clearTimeout(swapPendingPoller.remoteTimer);
+  clearTimeout(swapPendingPoller.localTimer);
+  swapPendingPoller = null;
+}
+
+export function refreshSwapPendingRemote() {
+  if (!swapPendingPoller) return;
+  void pollSwapPendingRemote(swapPendingPoller).catch(() => undefined);
+}
+
+export function refreshSwapPendingLocal() {
+  if (!swapPendingPoller) return;
+  setSwapPendingLocal(fetchLocalSwapPendingTx(swapPendingPoller.address));
+}
+
+export function clearSwapPendingLocal() {
+  setSwapPendingLocal(null);
+}
+
 export const usePollSwapPendingNumber = (timer = 10000, enabled = true) => {
-  const transactionHistoryReady = useTransactionHistoryServiceReady();
-  const [, setTxData] = useAtom(swapPendingTxDataAtom);
-  const [localPendingTxData, setLocalPendingTxData] = useState<
-    SwapTxHistoryItem | SendTxHistoryItem | null
-  >(null);
-  const [, setSwapHistoryRedDot] = useAtom(swapHistoryRedDotAtom);
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
-  const res = useRequest(
-    async () => {
-      if (!enabled) {
-        return null;
-      }
-      const account = currentAccount;
-      if (!account?.address) {
-        return null;
-      }
+  const address = currentAccount?.address;
 
-      const data = await openapi.getSwapTradeList({
-        user_addr: account!.address,
-        start: '0',
-        limit: '20',
-      });
-
-      const txData = data?.history_list
-        ?.filter(item => item?.status === 'Pending')
-        .sort((a, b) => b.create_at - a.create_at);
-
-      const openModalTs = await swapServiceApi.getOpenSwapHistoryTs(
-        account.address,
-      );
-      const ts = data?.history_list
-        ?.filter(item => item?.status !== 'Pending')
-        .sort((a, b) => b.finished_at - a.finished_at);
-      if (openModalTs) {
-        setSwapHistoryRedDot(ts?.[0]?.finished_at > openModalTs / 1000);
-      } else {
-        await swapServiceApi.setOpenSwapHistoryTs(account.address);
-      }
-      // judge if the tx is in local storage todo
-      setTxData(txData?.[0] || null);
-
-      return txData?.[0] || null;
-    },
-    {
-      onSuccess(v) {
-        setTxData(v);
-      },
-      refreshDeps: [currentAccount, enabled],
-    },
-  );
-
-  const timerRef = useRef<NodeJS.Timeout>(undefined);
-
-  const { loading, error, data: value, runAsync } = res;
-
-  const runFetchLocalPendingTx = useCallback(() => {
-    if (enabled && transactionHistoryReady && currentAccount?.address) {
-      const resTx = fetchLocalSwapPendingTx(currentAccount.address);
-      setLocalPendingTxData(resTx);
+  useEffect(() => {
+    if (!enabled || !address) {
+      stopSwapPendingPolling();
+      return;
     }
-  }, [
-    currentAccount?.address,
+    startSwapPendingPolling(address, timer);
+    return () => {
+      stopSwapPendingPolling();
+    };
+  }, [address, enabled, timer]);
+
+  const localPendingTxData = useScopedActivityStore(
     enabled,
-    setLocalPendingTxData,
-    transactionHistoryReady,
-  ]);
-
-  useEffect(() => {
-    runFetchLocalPendingTx();
-  }, [runFetchLocalPendingTx]);
-
-  useInterval(
-    () => {
-      if (localPendingTxData) {
-        const refreshTx = fetchRefreshLocalData(
-          localPendingTxData,
-          'swap',
-        ) as SwapTxHistoryItem;
-        if (refreshTx) {
-          // if (refreshTx.maxGasTx.action?.actionData?.cancelTx) {
-          //   setLocalPendingTxData(null);
-          // } else {
-          setLocalPendingTxData(refreshTx);
-          setSwapHistoryRedDot(true);
-          // }
-        }
-      }
-    },
-    enabled ? 1000 : undefined,
+    swapPendingPollerStore,
+    state => state.localPending,
+    Object.is,
+    { storeLabel: 'swap-pending' },
   );
-
-  const clearLocalPendingTxData = () => {
-    setLocalPendingTxData(null);
-  };
-
-  useEffect(() => {
-    if (enabled && ((!loading && value !== undefined) || error)) {
-      timerRef.current && clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => {
-        runAsync();
-      }, timer);
-    } else if (!enabled) {
-      timerRef.current && clearTimeout(timerRef.current);
-    }
-
-    return () => {
-      timerRef.current && clearTimeout(timerRef.current);
-    };
-  }, [enabled, loading, value, error, timer, runAsync]);
-
-  useEffect(() => {
-    return () => {
-      timerRef.current && clearTimeout(timerRef.current);
-    };
-  }, []);
-
+  const setSwapHistoryRedDot = useSetAtom(swapHistoryRedDotAtom);
   const clearSwapHistoryRedDot = useCallback(async () => {
     setSwapHistoryRedDot(false);
-    const currentTs = await swapServiceApi.getOpenSwapHistoryTs(
-      currentAccount?.address!,
-    );
-    await swapServiceApi.setOpenSwapHistoryTs(currentAccount?.address!);
+    if (!address) return 0;
+    const currentTs = await swapServiceApi.getOpenSwapHistoryTs(address);
+    await swapServiceApi.setOpenSwapHistoryTs(address);
     return currentTs;
-  }, [setSwapHistoryRedDot, currentAccount?.address]);
-
-  useEffect(() => {
-    timerRef.current && clearTimeout(timerRef.current);
-  }, [currentAccount?.address]);
+  }, [address, setSwapHistoryRedDot]);
 
   return {
-    runAsync,
+    runAsync: refreshSwapPendingRemote,
     localPendingTxData,
-    clearLocalPendingTxData,
-    runFetchLocalPendingTx,
+    clearLocalPendingTxData: clearSwapPendingLocal,
+    runFetchLocalPendingTx: refreshSwapPendingLocal,
     setSwapHistoryRedDot,
     clearSwapHistoryRedDot,
+    loading: false,
+    error: undefined,
+    data: localPendingTxData,
   };
 };

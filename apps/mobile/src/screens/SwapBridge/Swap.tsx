@@ -201,6 +201,7 @@ const Swap = ({
   const { t } = useTranslation();
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { safeOffBottom } = useSafeSizes();
+
   const keyboardAwareRef = useRef<KeyboardAwareScrollView>(null);
   const pendingTransactionsRef =
     useRef<SwapPendingTransactionsControllerRef>(null);
