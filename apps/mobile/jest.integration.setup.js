@@ -12,6 +12,37 @@ jest.mock('react-native-haptic-feedback', () => ({
   trigger: jest.fn(),
 }));
 
+/**
+ * Locale detection is a native module; several Perps screens read it while
+ * rendering, so the integration lane needs a stable English/US answer instead
+ * of the TurboModuleRegistry lookup that throws in the Jest environment.
+ */
+jest.mock('react-native-localize', () => ({
+  getLocales: () => [
+    {
+      countryCode: 'US',
+      languageTag: 'en-US',
+      languageCode: 'en',
+      isRTL: false,
+    },
+  ],
+  getCountry: () => 'US',
+  getTimeZone: () => 'Etc/UTC',
+  getCalendar: () => 'gregorian',
+  getTemperatureUnit: () => 'celsius',
+  getFirstWeekDay: () => 1,
+  uses24HourClock: () => true,
+  getNumberFormatSettings: () => ({
+    decimalSeparator: '.',
+    groupingSeparator: ',',
+    decimalSeparator2: '',
+    groupingSeparator2: '',
+  }),
+  findBestLanguageTag: () => ({ languageTag: 'en-US', isRTL: false }),
+  addEventListener: () => {},
+  removeEventListener: () => {},
+}));
+
 jest.mock('react-native-aes-crypto', () => ({
   decrypt: jest.fn(async value => value),
   encrypt: jest.fn(async value => value),
