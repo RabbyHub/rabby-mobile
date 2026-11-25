@@ -12,7 +12,12 @@ import {
 } from 'lightweight-charts/standalone';
 import { attachSimplePriceAxis } from './perps-simple-axis';
 import { createSimpleNativePriceAxis } from './perps-simple-native-axis';
-import { formatTime, formatYTime } from './chart-logic';
+import {
+  formatTime,
+  formatYTime,
+  getPerpsProCrosshairTimeLabelLeft,
+  PERPS_PRO_CROSSHAIR_LABEL_LAYOUT,
+} from './chart-logic';
 import {
   simpleDefaultRange,
   simpleFillMarkers,
@@ -79,7 +84,8 @@ export function createSimpleChart(
     crosshair: {
       mode: CrosshairMode.Magnet,
       horzLine: { visible: false, labelVisible: false },
-      vertLine: { visible: false, labelVisible: true },
+      // The time badge is drawn in DOM to match Pro's crosshair time label.
+      vertLine: { visible: false, labelVisible: false },
     },
     trackingMode: { exitMode: TrackingModeExitMode.OnTouchEnd },
     handleScroll: { vertTouchDrag: false },
@@ -108,6 +114,32 @@ export function createSimpleChart(
     fontFamily,
   });
   host.appendChild(overlay);
+  // Pro crosshair time label (index.tsx proCrosshairTimeLabel): same layout
+  // tokens and selection colors, centered on the time axis below the pane.
+  const timeLabelLayout = PERPS_PRO_CROSSHAIR_LABEL_LAYOUT;
+  const timeLabel = document.createElement('div');
+  timeLabel.dataset.simpleCrosshairTime = '';
+  Object.assign(timeLabel.style, {
+    position: 'absolute',
+    display: 'none',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxSizing: 'border-box',
+    width: 'max-content',
+    height: `${timeLabelLayout.timeHeight}px`,
+    padding: `${timeLabelLayout.paddingVertical}px ${timeLabelLayout.paddingHorizontal}px`,
+    borderRadius: `${timeLabelLayout.borderRadius}px`,
+    fontFamily,
+    fontSize: `${timeLabelLayout.fontSize}px`,
+    fontWeight: `${timeLabelLayout.fontWeight}`,
+    fontVariationSettings: '"wdth" 100',
+    letterSpacing: '0',
+    lineHeight: `${timeLabelLayout.lineHeight}px`,
+    whiteSpace: 'nowrap',
+    pointerEvents: 'none',
+    zIndex: '4',
+  });
+  host.appendChild(timeLabel);
   let identity = '';
   let sequence = -1;
   let config: SimpleChartConfig | null = null;
@@ -254,6 +286,7 @@ export function createSimpleChart(
   });
   function render() {
     overlay.replaceChildren();
+    timeLabel.style.display = 'none';
     if (!config) return;
     const { up: GREEN, down: RED, accent: ACCENT } = config.colors;
     const range = chart.timeScale().getVisibleLogicalRange();
@@ -465,6 +498,36 @@ export function createSimpleChart(
       }
       overlay.appendChild(svg);
     }
+    if (
+      config.style === 'candle' &&
+      selected &&
+      selectedX !== null &&
+      selectedX >= 0 &&
+      selectedX <= paneWidth
+    ) {
+      timeLabel.textContent = formatTime(selected.time);
+      timeLabel.style.background =
+        config.colors.selectionBackground ?? config.colors.entry;
+      timeLabel.style.color =
+        config.colors.selectionText ?? config.colors.contrast;
+      timeLabel.style.visibility = 'hidden';
+      timeLabel.style.display = 'flex';
+      const left = getPerpsProCrosshairTimeLabelLeft(
+        selectedX,
+        timeLabel.offsetWidth,
+        host.clientWidth,
+      );
+      if (left === null) {
+        timeLabel.style.display = 'none';
+      } else {
+        const axisHeight = Math.max(0, host.clientHeight - paneHeight);
+        timeLabel.style.left = `${left}px`;
+        timeLabel.style.top = `${
+          paneHeight + (axisHeight - timeLabelLayout.timeHeight) / 2
+        }px`;
+        timeLabel.style.visibility = 'visible';
+      }
+    }
     const firstVisibleTime = candles[Math.max(0, Math.floor(range.from))]?.time;
     const lastVisibleTime =
       candles[Math.min(candles.length - 1, Math.ceil(range.to))]?.time;
@@ -641,9 +704,8 @@ export function createSimpleChart(
           crosshair: {
             vertLine: {
               visible: false,
-              labelVisible: config.style === 'candle',
+              labelVisible: false,
               color: config.colors.secondary,
-              labelBackgroundColor: config.colors.entry,
             },
           },
         });
