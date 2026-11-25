@@ -48,6 +48,12 @@ import {
 } from '../Swap/hooks';
 import { refreshIdAtom, useRabbyFeeVisible } from '../Swap/hooks/atom';
 import { buildDexSwap, dexSwap } from '../Swap/hooks/swap';
+import {
+  getSwapQuoteListLength,
+  subscribeSwapQuoteLifecycle,
+  useSwapQuoteList,
+  useSwapQuoteLoading,
+} from '../Swap/hooks/swapQuoteSession';
 import { Button } from '@/components2024/Button';
 import { SignRiskWarning } from '@/components/SignRiskWarning';
 import type { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
@@ -172,6 +178,38 @@ function SwapActivationDataProbe({
   return null;
 }
 
+type SwapQuotesSheetProps = Omit<
+  React.ComponentProps<typeof Quotes>,
+  'list' | 'loading'
+> & { active: boolean };
+
+/**
+ * Quote list consumers live below the swap screen so a quote batch only
+ * re-renders the panel that displays it, never the whole page.
+ */
+const SwapQuotesSheet = React.memo(function SwapQuotesSheet({
+  active,
+  ...props
+}: SwapQuotesSheetProps) {
+  const list = useSwapQuoteList(active);
+  const loading = useSwapQuoteLoading(active);
+  return <Quotes {...props} list={list} loading={loading} />;
+});
+
+type SwapQuoteListOverlayProps = Omit<
+  React.ComponentProps<typeof QuoteList>,
+  'list' | 'loading'
+> & { active: boolean };
+
+const SwapQuoteListOverlay = React.memo(function SwapQuoteListOverlay({
+  active,
+  ...props
+}: SwapQuoteListOverlayProps) {
+  const list = useSwapQuoteList(active);
+  const loading = useSwapQuoteLoading(active);
+  return <QuoteList {...props} list={list} loading={loading} />;
+});
+
 const Swap = ({
   isForMultipleAddress = false,
   disableHeaderRight = false,
@@ -250,9 +288,6 @@ const Swap = ({
     closeQuotesList,
     quotesListVisible,
     quoteLoading,
-    allQuotesLoaded,
-    quoteRequestId,
-    quoteList,
 
     currentProvider: activeProvider,
     setActiveProvider,
@@ -806,35 +841,35 @@ const Swap = ({
     finalBuildKey: '',
     manualBuildKey: '',
   });
-  const quoteRequestIdRef = useRef(quoteRequestId);
-  const allQuotesLoadedRef = useRef(allQuotesLoaded);
+  const quoteRequestIdRef = useRef(0);
+  const allQuotesLoadedRef = useRef(false);
 
+  // Quote lifecycle is a module-level event stream instead of React state, so
+  // starting/completing a quote cycle does not re-render the swap screen.
   useEffect(() => {
-    quoteRequestIdRef.current = quoteRequestId;
-  }, [quoteRequestId]);
-
-  useEffect(() => {
-    allQuotesLoadedRef.current = allQuotesLoaded;
-  }, [allQuotesLoaded]);
-
-  useEffect(() => {
-    quoteRequestIdRef.current = quoteRequestId;
-    swapAutoPreExecRef.current = {
-      requestId: quoteRequestId,
-      earlyBuildKey: '',
-      finalBuildKey: '',
-      manualBuildKey: '',
-    };
-    builtSwapTxsKeyRef.current = '';
-    prefetchedSwapTxsKeyRef.current = '';
-    mutateTxs([]);
-    runBuildSwapTxsRef.current = undefined;
-    runBuildSwapTxsKeyRef.current = '';
-    if (buildSwapTxsTimerRef.current) {
-      clearTimeout(buildSwapTxsTimerRef.current);
-      buildSwapTxsTimerRef.current = null;
-    }
-  }, [mutateTxs, quoteRequestId]);
+    return subscribeSwapQuoteLifecycle(event => {
+      if (event.type === 'cycle-start') {
+        quoteRequestIdRef.current = event.requestId;
+        allQuotesLoadedRef.current = false;
+        swapAutoPreExecRef.current = {
+          requestId: event.requestId,
+          earlyBuildKey: '',
+          finalBuildKey: '',
+          manualBuildKey: '',
+        };
+        builtSwapTxsKeyRef.current = '';
+        prefetchedSwapTxsKeyRef.current = '';
+        runBuildSwapTxsRef.current = undefined;
+        runBuildSwapTxsKeyRef.current = '';
+        if (buildSwapTxsTimerRef.current) {
+          clearTimeout(buildSwapTxsTimerRef.current);
+          buildSwapTxsTimerRef.current = null;
+        }
+      } else if (event.type === 'cycle-finished') {
+        allQuotesLoadedRef.current = true;
+      }
+    });
+  }, [mutateTxs]);
 
   const runBuildSwapTxsForKey = useMemoizedFn((buildKey: string) => {
     const buildPromise = runBuildSwapTxs(buildKey);
@@ -1216,7 +1251,7 @@ const Swap = ({
     inSufficient,
     slippageChanged,
     activeProvider,
-    quoteListLength: quoteList.length,
+    getQuoteListLength: getSwapQuoteListLength,
     swapBtnDisabled,
     canShowDirectSubmit,
     shouldTwoStepSwap,
@@ -1279,10 +1314,9 @@ const Swap = ({
       onGasSettingsOpenChange={setGasSettingsQuoteRefreshPaused}
       renderSwapQuotes={onSelect =>
         userAddress && payToken && receiveToken && chain ? (
-          <Quotes
-            list={quoteList}
+          <SwapQuotesSheet
+            active={sceneActive}
             activeName={activeProvider?.name}
-            loading={quoteLoading}
             visible
             onClose={() => undefined}
             userAddress={userAddress}
@@ -1406,13 +1440,15 @@ const Swap = ({
     }
 
     const tracker = swapAutoPreExecRef.current;
-    if (tracker.requestId !== quoteRequestId) {
-      tracker.requestId = quoteRequestId;
+    const currentQuoteRequestId = quoteRequestIdRef.current;
+    if (tracker.requestId !== currentQuoteRequestId) {
+      tracker.requestId = currentQuoteRequestId;
       tracker.earlyBuildKey = '';
       tracker.finalBuildKey = '';
       tracker.manualBuildKey = '';
     }
 
+    const allQuotesLoaded = allQuotesLoadedRef.current;
     const phase = allQuotesLoaded ? 'final' : 'early';
     if (activeProviderIsManualQuote) {
       if (tracker.manualBuildKey === activeProviderBuildKey) {
@@ -1440,7 +1476,7 @@ const Swap = ({
     runBuildSwapTxsKeyRef.current = '';
 
     const scheduledBuildKey = activeProviderBuildKey;
-    const scheduledQuoteRequestId = quoteRequestId;
+    const scheduledQuoteRequestId = currentQuoteRequestId;
     const scheduledIsManualQuote = activeProviderIsManualQuote;
     buildSwapTxsTimerRef.current = setTimeout(() => {
       buildSwapTxsTimerRef.current = null;
@@ -1481,10 +1517,8 @@ const Swap = ({
     activeProviderBuildKey,
     activeProviderCanAutoPreExec,
     activeProviderIsManualQuote,
-    allQuotesLoaded,
     canShowDirectSubmit,
     mutateTxs,
-    quoteRequestId,
     runBuildSwapTxsForKey,
     sceneActive,
     shouldPauseMiniSignerEffects,
@@ -1841,9 +1875,8 @@ const Swap = ({
         />
 
         {userAddress && payToken && receiveToken && chain ? (
-          <QuoteList
-            list={quoteList}
-            loading={quoteLoading}
+          <SwapQuoteListOverlay
+            active={sceneActive}
             visible={quotesListVisible}
             onClose={closeQuotesList}
             userAddress={userAddress}

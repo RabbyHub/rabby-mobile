@@ -39,7 +39,7 @@ type UseSwapFundedRegressionParams = {
   inSufficient: boolean;
   slippageChanged: boolean;
   activeProvider?: QuoteProvider;
-  quoteListLength: number;
+  getQuoteListLength: () => number;
   swapBtnDisabled: boolean;
   canShowDirectSubmit: boolean;
   shouldTwoStepSwap: boolean;
@@ -82,7 +82,7 @@ export function useSwapFundedRegression({
   inSufficient,
   slippageChanged,
   activeProvider,
-  quoteListLength,
+  getQuoteListLength,
   swapBtnDisabled,
   canShowDirectSubmit,
   shouldTwoStepSwap,
@@ -276,7 +276,7 @@ export function useSwapFundedRegression({
       receiveTokenId: receiveToken.id,
       amount: payAmount,
       provider: activeProvider.name,
-      quoteCount: quoteListLength,
+      quoteCount: getQuoteListLength(),
     });
   }, [
     activeProvider?.name,
@@ -285,7 +285,7 @@ export function useSwapFundedRegression({
     inSufficient,
     payAmount,
     payToken,
-    quoteListLength,
+    getQuoteListLength,
     quoteLoading,
     receiveToken,
     regressionBroadcastRequested,
@@ -396,7 +396,7 @@ export function useSwapFundedRegression({
       receiveTokenId: receiveToken.id,
       amount: payAmount,
       provider: activeProvider.name,
-      quoteCount: quoteListLength,
+      quoteCount: getQuoteListLength(),
     });
     handleSwap({ ignoreGasFee: riskChecked || showRiskConfirm });
   }, [
@@ -407,7 +407,7 @@ export function useSwapFundedRegression({
     inSufficient,
     payAmount,
     payToken,
-    quoteListLength,
+    getQuoteListLength,
     quoteLoading,
     receiveToken,
     refresh,

@@ -28,9 +28,13 @@ function stopTimer(session: QuoteRefreshSession) {
 }
 
 function fire(session: QuoteRefreshSession) {
-  if (currentSession !== session) return;
+  if (currentSession !== session) {
+    return;
+  }
   session.timer = undefined;
-  if (session.paused) return;
+  if (session.paused) {
+    return;
+  }
   session.deadline = null;
   quoteRefreshCountdownStore.setState({ countdown: null });
   if (session.shouldFire()) {
@@ -41,6 +45,13 @@ function fire(session: QuoteRefreshSession) {
 function arm(session: QuoteRefreshSession, delay: number) {
   stopTimer(session);
   session.timer = setTimeout(() => fire(session), delay);
+}
+
+function stopCurrentSession() {
+  if (currentSession) {
+    stopTimer(currentSession);
+    currentSession = null;
+  }
 }
 
 /**
@@ -54,7 +65,9 @@ export function scheduleQuoteRefreshSession(input: {
   onFire: () => void;
   shouldFire: () => boolean;
 }) {
-  clearQuoteRefreshSession();
+  // Replace the running session without publishing an intermediate `null`
+  // countdown: every publication re-renders every countdown subscriber.
+  stopCurrentSession();
   const startedAt = Date.now();
   const session: QuoteRefreshSession = {
     deadline: startedAt + input.delay,
@@ -72,17 +85,23 @@ export function scheduleQuoteRefreshSession(input: {
 }
 
 export function pauseQuoteRefreshSession() {
-  if (!currentSession) return;
+  if (!currentSession) {
+    return;
+  }
   currentSession.paused = true;
   stopTimer(currentSession);
 }
 
 export function resumeQuoteRefreshSession() {
   const session = currentSession;
-  if (!session) return;
+  if (!session) {
+    return;
+  }
   session.paused = false;
   const delay = getQuotePollingResumeDelay({ deadline: session.deadline });
-  if (delay === null) return;
+  if (delay === null) {
+    return;
+  }
   if (delay <= 0) {
     fire(session);
     return;
@@ -91,10 +110,7 @@ export function resumeQuoteRefreshSession() {
 }
 
 export function clearQuoteRefreshSession() {
-  if (currentSession) {
-    stopTimer(currentSession);
-    currentSession = null;
-  }
+  stopCurrentSession();
   const state = quoteRefreshCountdownStore.getState();
   if (state.countdown !== null) {
     quoteRefreshCountdownStore.setState({ countdown: null });

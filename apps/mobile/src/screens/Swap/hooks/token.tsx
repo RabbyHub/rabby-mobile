@@ -2,7 +2,7 @@ import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { WrapTokenAddressMap } from '@rabby-wallet/rabby-swap';
 import BigNumber from 'bignumber.js';
-import { atom, useAtomValue, useSetAtom } from 'jotai';
+import { useAtomValue } from 'jotai';
 import {
   useCallback,
   useEffect,
@@ -13,7 +13,6 @@ import {
 } from 'react';
 import { refreshIdAtom } from './atom';
 import { openapi } from '@/core/request';
-import useDebounce from 'react-use/lib/useDebounce';
 import { useAsyncInitializeChainList } from '@/hooks/useChain';
 import {
   getChainDefaultToken,
@@ -22,11 +21,10 @@ import {
 } from '@/constant/swap';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useSwapSettings } from './settings';
-import type { QuoteProvider, TDexQuoteData } from './quote';
+import type { QuoteProvider } from './quote';
 import { useQuoteMethods } from './quote';
 import { formatTokenAmountInput } from '@/utils/number';
 import { getTokenSymbol, isTokenMarketClosed } from '@/utils/token';
-import { useDebounceFn, useRequest } from 'ahooks';
 import { findChainByEnum } from '@/utils/chain';
 import { getSwapAutoSlippageValue, useSlippageStore } from './slippage';
 import { useLowCreditState } from '../components/LowCreditModal';
@@ -34,7 +32,6 @@ import { trigger } from 'react-native-haptic-feedback';
 import { apiProvider } from '@/core/apis';
 import { getGasTokenBalance } from '@/core/apis/transactions';
 import { getSwapGasReserveGasLimit, isSwapWrapToken } from '../utils';
-import { RequestRateLimiter } from './rateLimit';
 import { useFocusEffect } from '@react-navigation/native';
 import { eventBus, EVENTS } from '@/utils/events';
 import type { Account } from '@/core/startupServices/preference';
@@ -56,241 +53,59 @@ import {
   type PersistedSwapSelectionStatus,
 } from './initialSelection';
 import { useSwapService } from '../swapServiceDependencies';
-import { mergeSwapQuoteBatch } from './quoteResultBatch';
 import { useSceneActiveAsync } from '@/screens/SwapBridge/hooks/useSceneActiveAsync';
 import { getRabbyFeeInfo } from './fee';
 import { resolveSwapChainTokens } from './swapChainTokens';
+import {
+  applySwapQuoteProvider,
+  beginSwapQuoteCycle,
+  cancelSwapQuotePendingWork,
+  clearSwapQuoteList,
+  clearSwapQuoteSession,
+  finishSwapQuoteCycle,
+  getSwapQuoteFetchId,
+  isSwapQuoteRefreshEnabled,
+  markSwapQuoteCycleIdle,
+  cancelSwapQuoteRequest,
+  markSwapQuoteRequestLoading,
+  pushSwapQuoteUpdate,
+  scheduleSwapQuoteRequest,
+  setSwapQuoteFetchRunner,
+  resetSwapQuoteListOnInactive,
+  setSwapQuoteRefreshScheduler,
+  setSwapQuoteSelectionContext,
+  useSwapQuoteActiveProvider,
+  requestSwapQuoteRefresh,
+  requestSwapTokenRefresh,
+  setSwapQuoteCycleRunner,
+  subscribeSwapTokenRefresh,
+  useSwapQuoteBestDex,
+  useSwapQuoteLoading,
+} from './swapQuoteSession';
+
+export {
+  EARLY_QUOTE_DISPLAY_MIN_TO_FROM_USD_RATIO,
+  getSwapQuoteScore,
+} from './quoteSelection';
 
 export const enableInsufficientQuote = true;
 
 const sliderHapticTriggerNumbers = [0, 50, 100];
 const SWAP_QUOTE_REFRESH_INTERVAL = 1000 * 20;
-const EARLY_QUOTE_DISPLAY_MIN_TO_FROM_USD_RATIO = 0.03;
 
 const { isSameAddress } = addressUtils;
 
-const tokenRefreshIdAtom = atom(0);
-const useTokenRefreshId = () => useAtomValue(tokenRefreshIdAtom);
-const useSetTokenRefreshId = () => useSetAtom(tokenRefreshIdAtom);
-
-export const getSwapQuoteScore = ({
-  quote,
-  receiveToken,
-  inSufficient,
-  sortIncludeGasFee = true,
-}: {
-  quote: TDexQuoteData;
-  receiveToken: TokenItem;
-  inSufficient: boolean;
-  sortIncludeGasFee?: boolean;
-}) => {
-  if (
-    quote.loading ||
-    !quote.data?.toTokenAmount ||
-    !quote.preExecResult?.isSdkPass
-  ) {
-    return null;
-  }
-
-  const receiveTokenAmount = new BigNumber(quote.data.toTokenAmount).div(
-    10 ** (quote.data.toTokenDecimals || receiveToken.decimals),
-  );
-
-  if (inSufficient || !receiveToken.price || !sortIncludeGasFee) {
-    return receiveTokenAmount;
-  }
-
-  return receiveTokenAmount
-    .times(receiveToken.price)
-    .minus(quote.preExecResult.gasUsdValue || 0);
-};
-
-const getSwapProviderScore = ({
-  provider,
-  receiveToken,
-  inSufficient,
-}: {
-  provider: QuoteProvider;
-  receiveToken: TokenItem;
-  inSufficient: boolean;
-}) => {
-  if (!provider.quote?.toTokenAmount || !provider.preExecResult?.isSdkPass) {
-    return null;
-  }
-
-  const receiveTokenAmount = new BigNumber(provider.quote.toTokenAmount).div(
-    10 ** (provider.quote.toTokenDecimals || receiveToken.decimals),
-  );
-
-  if (inSufficient || !receiveToken.price) {
-    return receiveTokenAmount;
-  }
-
-  return receiveTokenAmount
-    .times(receiveToken.price)
-    .minus(provider.preExecResult.gasUsdValue || 0);
-};
-
-const getTokenUsdValue = ({
-  token,
-  amount,
-}: {
-  token?: TokenItem;
-  amount: string;
-}) => new BigNumber(amount || 0).times(token?.price || 0);
-
-const getSwapQuoteToTokenUsdValue = ({
-  quote,
-  receiveToken,
-}: {
-  quote: TDexQuoteData;
-  receiveToken: TokenItem;
-}) => {
-  if (!quote.data?.toTokenAmount) {
-    return new BigNumber(0);
-  }
-
-  return new BigNumber(quote.data.toTokenAmount)
-    .div(
-      new BigNumber(10).pow(
-        quote.data.toTokenDecimals || receiveToken.decimals,
-      ),
-    )
-    .times(receiveToken.price || 0);
-};
-
-const getSwapProviderToTokenUsdValue = ({
-  provider,
-  receiveToken,
-}: {
-  provider: QuoteProvider;
-  receiveToken: TokenItem;
-}) => {
-  if (!provider.quote?.toTokenAmount) {
-    return new BigNumber(0);
-  }
-
-  return new BigNumber(provider.quote.toTokenAmount)
-    .div(
-      new BigNumber(10).pow(
-        provider.quote.toTokenDecimals || receiveToken.decimals,
-      ),
-    )
-    .times(receiveToken.price || 0);
-};
-
-const canDisplayEarlyQuoteByUsdValue = ({
-  fromToken,
-  fromAmount,
-  toUsdValue,
-}: {
-  fromToken?: TokenItem;
-  fromAmount: string;
-  toUsdValue: BigNumber;
-}) => {
-  const fromUsdValue = getTokenUsdValue({
-    token: fromToken,
-    amount: fromAmount,
-  });
-
-  if (!fromUsdValue.gt(0)) {
-    return true;
-  }
-
-  return toUsdValue.gte(
-    fromUsdValue.times(EARLY_QUOTE_DISPLAY_MIN_TO_FROM_USD_RATIO),
-  );
-};
-
-const canDisplaySwapQuoteBeforeAllQuotesLoaded = ({
-  quote,
-  payToken,
-  payAmount,
-  receiveToken,
-}: {
-  quote: TDexQuoteData;
-  payToken?: TokenItem;
-  payAmount: string;
-  receiveToken: TokenItem;
-}) =>
-  canDisplayEarlyQuoteByUsdValue({
-    fromToken: payToken,
-    fromAmount: payAmount,
-    toUsdValue: getSwapQuoteToTokenUsdValue({ quote, receiveToken }),
-  });
-
-const canDisplaySwapProviderBeforeAllQuotesLoaded = ({
-  provider,
-  payToken,
-  payAmount,
-  receiveToken,
-}: {
-  provider: QuoteProvider;
-  payToken?: TokenItem;
-  payAmount: string;
-  receiveToken: TokenItem;
-}) =>
-  canDisplayEarlyQuoteByUsdValue({
-    fromToken: payToken,
-    fromAmount: payAmount,
-    toUsdValue: getSwapProviderToTokenUsdValue({ provider, receiveToken }),
-  });
-
-const getBestSwapQuote = ({
-  quoteList,
-  receiveToken,
-  inSufficient,
-}: {
-  quoteList: TDexQuoteData[];
-  receiveToken: TokenItem;
-  inSufficient: boolean;
-}) => {
-  return quoteList.reduce<
-    | {
-        quote: TDexQuoteData;
-        score: BigNumber;
-      }
-    | undefined
-  >((best, quote) => {
-    const score = getSwapQuoteScore({ quote, receiveToken, inSufficient });
-    if (!score) {
-      return best;
-    }
-
-    if (!best || score.gt(best.score)) {
-      return { quote, score };
-    }
-
-    return best;
-  }, undefined);
-};
-
-const createSwapQuoteProvider = ({
-  quote,
-  receiveToken,
-}: {
-  quote: TDexQuoteData;
-  receiveToken: TokenItem;
-}): QuoteProvider => {
-  const { preExecResult } = quote;
-
-  return {
-    name: quote.name,
-    quote: quote.data,
-    preExecResult: quote.preExecResult,
-    gasPrice: preExecResult?.gasPrice,
-    shouldApproveToken: !!preExecResult?.shouldApproveToken,
-    shouldTwoStepApprove: !!preExecResult?.shouldTwoStepApprove,
-    error: !preExecResult,
-    halfBetterRate: '',
-    quoteWarning: undefined,
-    actualReceiveAmount:
-      new BigNumber(quote.data?.toTokenAmount || 0)
-        .div(10 ** (quote.data?.toTokenDecimals || receiveToken.decimals))
-        .toString() || '',
-    gasUsd: preExecResult?.gasUsd,
-  };
-};
+const isSameTokenSnapshot = (prev?: TokenItem, next?: TokenItem) =>
+  !!prev &&
+  !!next &&
+  prev.id === next.id &&
+  prev.chain === next.chain &&
+  prev.symbol === next.symbol &&
+  prev.decimals === next.decimals &&
+  prev.price === next.price &&
+  prev.amount === next.amount &&
+  prev.raw_amount_hex_str === next.raw_amount_hex_str &&
+  prev.low_credit_score === next.low_credit_score;
 
 const useTokenInfo = ({
   userAddress,
@@ -303,41 +118,57 @@ const useTokenInfo = ({
   defaultToken?: TokenItem;
   enabled: boolean;
 }) => {
-  const tokenRefreshId = useTokenRefreshId();
   const [token, setToken] = useState<
     (TokenItem & { tokenId?: string }) | undefined
   >(defaultToken);
+  const tokenIdRef = useRef(token?.id);
+  tokenIdRef.current = token?.id;
+  const requestIdRef = useRef(0);
 
-  const { value, loading, error } = useSceneActiveAsync(
-    async () => {
-      if (userAddress && token?.id && chain) {
-        const data = await openapi.getToken(
-          userAddress,
-          findChainByEnum(chain)?.serverId || CHAINS[chain].serverId,
-          token.id,
+  const refreshToken = useCallback(() => {
+    const tokenId = tokenIdRef.current;
+    if (!enabled || !userAddress || !tokenId || !chain) {
+      return;
+    }
+    const requestId = ++requestIdRef.current;
+    openapi
+      .getToken(
+        userAddress,
+        findChainByEnum(chain)?.serverId || CHAINS[chain].serverId,
+        tokenId,
+      )
+      .then(data => {
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
+        const next = { ...data, tokenId };
+        // The periodic refresh usually returns an identical snapshot; keeping
+        // the previous object identity avoids re-rendering the swap screen for
+        // unchanged token data.
+        setToken(prev =>
+          isSameTokenSnapshot(prev, next) ? prev : (next as TokenItem),
         );
-        return { ...data, tokenId: token.id };
-      }
-    },
-    enabled,
-    [tokenRefreshId, userAddress, token?.id, chain],
-  );
+      })
+      .catch(error => {
+        console.error('token info error', chain, tokenId, error);
+      });
+  }, [chain, enabled, userAddress]);
 
-  useDebounce(
-    () => {
-      if (enabled && value && !error && !loading) {
-        setToken(value);
-      }
-    },
-    300,
-    [enabled, value, error, loading],
-  );
+  const refreshTokenRef = useRef(refreshToken);
+  useEffect(() => {
+    refreshTokenRef.current = refreshToken;
+  }, [refreshToken]);
 
   useEffect(() => {
-    if (enabled && error) {
-      console.error('token info error', chain, token?.symbol, token?.id, error);
+    if (!enabled) {
+      return;
     }
-  }, [chain, enabled, error, token?.id, token?.symbol]);
+    refreshToken();
+  }, [enabled, refreshToken, token?.id]);
+
+  useEffect(() => {
+    return subscribeSwapTokenRefresh(() => refreshTokenRef.current());
+  }, []);
 
   return [token, setToken] as const;
 };
@@ -375,8 +206,6 @@ export const useTokenPair = ({
   const swapService = useSwapService();
   const userAddress = account?.address;
   const refreshId = useAtomValue(refreshIdAtom);
-  const setTokenRefreshId = useSetTokenRefreshId();
-  const setRefreshId = useSetAtom(refreshIdAtom);
 
   const [quotesListVisible, setQuotesListVisible] = useState(false);
 
@@ -428,7 +257,6 @@ export const useTokenPair = ({
   );
 
   const [payAmount, setPayAmount] = useState('');
-  const [quoteList, setQuotesList] = useState<TDexQuoteData[]>([]);
 
   const { autoSlippage, setAutoSlippage } = useSlippageStore();
 
@@ -442,13 +270,12 @@ export const useTokenPair = ({
     isSlippageLow,
   } = useSlippage();
 
-  const [currentProvider, setOriActiveProvider] = useState<
-    QuoteProvider | undefined
-  >();
+  const currentProvider = useSwapQuoteActiveProvider(active);
+  const bestQuoteDex = useSwapQuoteBestDex(active);
+  const quoteLoading = useSwapQuoteLoading(active);
 
   const autoQuoteRefreshPausedRef = useRef(false);
   const reloadTxRefreshPausedRef = useRef(false);
-  const enableRefreshRef = useRef(false);
 
   // The countdown and its timer are owned by a module-level scheduler; this
   // hook only publishes/subscribes the current deadline.
@@ -464,23 +291,20 @@ export const useTokenPair = ({
     clearQuoteRefreshSession();
   }, []);
 
-  const scheduleQuoteRefresh = useCallback(
-    (delay: number) => {
-      scheduleQuoteRefreshSession({
-        delay,
-        paused: autoQuoteRefreshPausedRef.current,
-        shouldFire: () =>
-          shouldScheduleQuotePolling({
-            enabled: enableRefreshRef.current,
-            paused: false,
-          }),
-        onFire: () => {
-          setRefreshId(e => e + 1);
-        },
-      });
-    },
-    [setRefreshId],
-  );
+  const scheduleQuoteRefresh = useCallback((delay: number) => {
+    scheduleQuoteRefreshSession({
+      delay,
+      paused: autoQuoteRefreshPausedRef.current,
+      shouldFire: () =>
+        shouldScheduleQuotePolling({
+          enabled: isSwapQuoteRefreshEnabled(),
+          paused: false,
+        }),
+      onFire: () => {
+        requestSwapQuoteRefresh();
+      },
+    });
+  }, []);
 
   const setAutoQuoteRefreshPaused = useCallback((paused: boolean) => {
     if (autoQuoteRefreshPausedRef.current === paused) {
@@ -506,26 +330,18 @@ export const useTokenPair = ({
 
   const setActiveProvider: React.Dispatch<
     React.SetStateAction<QuoteProvider | undefined>
-  > = useCallback(
-    p => {
-      clearExpiredTimer();
+  > = useCallback(p => {
+    applySwapQuoteProvider(p);
+  }, []);
 
-      setOriActiveProvider(pre => {
-        enableRefreshRef.current = p ? true : false;
-        if (typeof p === 'function') {
-          const result = p(pre);
-          enableRefreshRef.current = result ? true : false;
-
-          return result;
-        }
-
-        return p;
-      });
-
-      scheduleQuoteRefresh(SWAP_QUOTE_REFRESH_INTERVAL);
-    },
-    [clearExpiredTimer, scheduleQuoteRefresh],
-  );
+  useEffect(() => {
+    setSwapQuoteRefreshScheduler(() =>
+      scheduleQuoteRefresh(SWAP_QUOTE_REFRESH_INTERVAL),
+    );
+    return () => {
+      setSwapQuoteRefreshScheduler(null);
+    };
+  }, [scheduleQuoteRefresh]);
 
   const [payToken, setPayToken] = useTokenInfo({
     userAddress,
@@ -556,7 +372,7 @@ export const useTokenPair = ({
           token.chain === receiveToken.chain &&
           isSameAddress(token.id, receiveToken.id));
       if (!isSameToken) {
-        setQuotesList([]);
+        clearSwapQuoteList();
       }
       _setReceiveToken(token);
       if (token) {
@@ -568,8 +384,6 @@ export const useTokenPair = ({
     },
     [_setReceiveToken, receiveToken, setLowCreditToken, setLowCreditVisible],
   );
-
-  const [bestQuoteDex, setBestQuoteDex] = useState<string>('');
 
   const switchChain = useCallback(
     (
@@ -807,7 +621,7 @@ export const useTokenPair = ({
       }
       setSwapUseSlider(false);
       if (v !== payAmount) {
-        setQuotesList([]);
+        clearSwapQuoteList();
       }
       setPayAmount(v);
       if (payToken) {
@@ -908,106 +722,54 @@ export const useTokenPair = ({
     }
   }, [autoSlippage, autoSlippageValue, setSlippage]);
 
-  const pendingQuoteUpdatesRef = useRef(new Map<string, TDexQuoteData>());
-  const quoteFlushFrameRef = useRef<number | null>(null);
-  const fetchIdRef = useRef(0);
-
-  const cancelPendingQuoteFlush = useCallback(() => {
-    if (quoteFlushFrameRef.current !== null) {
-      cancelAnimationFrame(quoteFlushFrameRef.current);
-      quoteFlushFrameRef.current = null;
-    }
-    pendingQuoteUpdatesRef.current.clear();
-  }, []);
-
-  const flushPendingQuoteUpdates = useCallback((id: number) => {
-    quoteFlushFrameRef.current = null;
-    if (id !== fetchIdRef.current) {
-      pendingQuoteUpdatesRef.current.clear();
-      return;
-    }
-
-    const updates = Array.from(pendingQuoteUpdatesRef.current.values());
-    pendingQuoteUpdatesRef.current.clear();
-    if (updates.length) {
-      setQuotesList(current => mergeSwapQuoteBatch(current, updates));
-    }
-  }, []);
-
-  const schedulePendingQuoteFlush = useCallback(
-    (id: number) => {
-      if (quoteFlushFrameRef.current !== null) {
-        return;
-      }
-      quoteFlushFrameRef.current = requestAnimationFrame(() => {
-        flushPendingQuoteUpdates(id);
-      });
-    },
-    [flushPendingQuoteUpdates],
-  );
-
-  const setQuote = useCallback(
-    (id: number) => (quote: TDexQuoteData) => {
-      if (id === fetchIdRef.current) {
-        pendingQuoteUpdatesRef.current.set(quote.name, quote);
-        schedulePendingQuoteFlush(id);
-      }
-    },
-    [schedulePendingQuoteFlush],
-  );
-
-  const [quoteRequestId, setQuoteRequestId] = useState(0);
   const { getAllQuotes, validSlippage } = useQuoteMethods();
 
-  const [quoteLoading, setQuoteLoading] = useState(false);
-  const [quoteRequestFinished, setQuoteRequestFinished] = useState(true);
-
-  const rateLimitRef = useRef(new RequestRateLimiter(1000 * 30, 10));
-
-  const [rateLimit, setRateLimit] = useState(false);
   const [isDraggingSlider, setIsDraggingSlider] = useState<boolean>(false);
 
-  const { error: quotesError, runAsync: _runGetAllQuotes } = useRequest(
+  // The request itself runs from the module-owned session (debounce, rate limit
+  // and in-flight bookkeeping), so its loading lifecycle cannot re-render the
+  // swap screen.
+  const quoteFetchRunner = useCallback(
     async (currentFetchId: number) => {
-      if (canRunQuoteRequest && !isDraggingSlider) {
-        setTokenRefreshId(e => e + 1);
-        const limit = rateLimitRef.current?.checkRateLimit();
-        setRateLimit(!!limit);
+      if (!canRunQuoteRequest || isDraggingSlider) {
+        markSwapQuoteCycleIdle(currentFetchId);
+        return;
+      }
 
-        setQuotesList(e =>
-          e.map(q => ({ ...q, loading: true, isBest: false })),
-        );
+      requestSwapTokenRefresh();
+      markSwapQuoteRequestLoading();
 
-        let realSlippage = slippage;
-        if (autoSlippage) {
-          try {
-            const suggestSlippage = await openapi.suggestSlippage({
-              chain_id: findChainByEnum(chain)!.serverId,
-              slippage: Number(slippage || '0.1') / 100 + '',
-              from_token_id: payToken.id,
-              to_token_id: receiveToken.id,
-              from_token_amount: payAmount,
-            });
+      let realSlippage = slippage;
+      if (autoSlippage) {
+        try {
+          const suggestSlippage = await openapi.suggestSlippage({
+            chain_id: findChainByEnum(chain)!.serverId,
+            slippage: Number(slippage || '0.1') / 100 + '',
+            from_token_id: payToken.id,
+            to_token_id: receiveToken.id,
+            from_token_amount: payAmount,
+          });
 
-            console.debug('suggest_slippage', {
-              suggestSlippage,
-              current: slippage || '0.1',
-            });
+          console.debug('suggest_slippage', {
+            suggestSlippage,
+            current: slippage || '0.1',
+          });
 
-            realSlippage = suggestSlippage.suggest_slippage
-              ? new BigNumber(suggestSlippage.suggest_slippage)
-                  .times(100)
-                  .toFixed()
-              : slippage || '0.1';
-            if (currentFetchId === fetchIdRef.current) {
-              setAutoSuggestSlippage(realSlippage);
-            }
-          } catch (error) {
-            console.log('suggest_slippage error', error);
+          realSlippage = suggestSlippage.suggest_slippage
+            ? new BigNumber(suggestSlippage.suggest_slippage)
+                .times(100)
+                .toFixed()
+            : slippage || '0.1';
+          if (currentFetchId === getSwapQuoteFetchId()) {
+            setAutoSuggestSlippage(realSlippage);
           }
+        } catch (error) {
+          console.log('suggest_slippage error', error);
         }
+      }
 
-        return getAllQuotes({
+      try {
+        await getAllQuotes({
           userAddress,
           payToken,
           receiveToken,
@@ -1015,190 +777,134 @@ export const useTokenPair = ({
           chain,
           payAmount,
           fee: feeRate,
-          setQuote: setQuote(currentFetchId),
+          setQuote: quote => pushSwapQuoteUpdate(currentFetchId, quote),
           onFinishedQuote: () => undefined,
           inSufficient,
           account,
         });
-      }
-      return { skipped: true as const };
-    },
-    {
-      manual: true,
-      onFinally(params, data) {
+      } catch (error) {
+        console.error('quotesError', error);
+      } finally {
         // wait for progress animation finish
         setTimeout(() => {
-          if (
-            params[0] !== fetchIdRef.current ||
-            (data != null && 'skipped' in data && data.skipped)
-          ) {
-            return;
-          }
-          flushPendingQuoteUpdates(params[0]);
-          setQuoteRequestFinished(true);
-          setQuoteLoading(false);
+          finishSwapQuoteCycle(currentFetchId);
         }, 300);
-      },
+      }
     },
+    [
+      account,
+      autoSlippage,
+      canRunQuoteRequest,
+      chain,
+      feeRate,
+      getAllQuotes,
+      inSufficient,
+      isDraggingSlider,
+      payAmount,
+      payToken,
+      receiveToken,
+      slippage,
+      userAddress,
+    ],
   );
 
-  const { run: runGetAllQuotes, cancel: cancelGetAllQuotes } = useDebounceFn(
-    _runGetAllQuotes,
-    {
-      wait: rateLimit ? 5000 : 300,
-    },
-  );
+  useEffect(() => {
+    setSwapQuoteFetchRunner(quoteFetchRunner);
+    return () => {
+      setSwapQuoteFetchRunner(null);
+    };
+  }, [quoteFetchRunner]);
 
   useEffect(() => {
     if (active) {
       return;
     }
-    fetchIdRef.current += 1;
-    cancelGetAllQuotes();
-    cancelPendingQuoteFlush();
-  }, [active, cancelGetAllQuotes, cancelPendingQuoteFlush]);
+    cancelSwapQuoteRequest();
+    cancelSwapQuotePendingWork();
+  }, [active]);
 
   useEffect(
     () => () => {
-      cancelPendingQuoteFlush();
+      cancelSwapQuotePendingWork();
     },
-    [cancelPendingQuoteFlush],
+    [],
   );
 
-  useLayoutEffect(() => {
+  // The request key captures every input that invalidates the current quotes.
+  // A change to it starts a fresh cycle (visible data is dropped). A refresh tick
+  // with an unchanged key is a background refresh: the previous quote list and
+  // provider stay visible until the new quotes arrive.
+  const quoteRequestKey = [
+    canRunQuoteRequest ? '1' : '0',
+    canRequestQuote ? '1' : '0',
+    userAddress || '',
+    payToken?.id || '',
+    receiveToken?.id || '',
+    chain,
+    feeRate || '',
+    payAmount,
+    isDraggingSlider ? '1' : '0',
+    slippage,
+    autoSlippage ? '1' : '0',
+  ].join('|');
+  const quoteRequestKeyRef = useRef<string | null>(null);
+
+  const runQuoteCycle = useCallback(() => {
     if (!active) {
-      setQuotesList([]);
+      quoteRequestKeyRef.current = null;
+      resetSwapQuoteListOnInactive();
       return;
     }
-    fetchIdRef.current += 1;
-    cancelPendingQuoteFlush();
-    setQuoteRequestId(fetchIdRef.current);
-    setQuotesList([]);
-    setActiveProvider(undefined);
-    setBestQuoteDex('');
+    const isBackgroundRefresh =
+      quoteRequestKeyRef.current === quoteRequestKey &&
+      canRunQuoteRequest &&
+      !isDraggingSlider;
+    quoteRequestKeyRef.current = quoteRequestKey;
+
+    const requestId = beginSwapQuoteCycle({
+      keepVisibleData: isBackgroundRefresh,
+      willRequest: canRunQuoteRequest,
+    });
     if (canRunQuoteRequest) {
-      setQuoteRequestFinished(false);
-      setQuoteLoading(true);
-      runGetAllQuotes(fetchIdRef.current);
+      scheduleSwapQuoteRequest(requestId);
     } else {
-      setQuoteRequestFinished(true);
-      setQuoteLoading(false);
+      markSwapQuoteCycleIdle(requestId);
     }
-  }, [
-    active,
-    canRunQuoteRequest,
-    canRequestQuote,
-    refreshId,
-    userAddress,
-    payToken?.id,
-    receiveToken?.id,
-    chain,
-    feeRate,
-    payAmount,
-    isDraggingSlider,
-    runGetAllQuotes,
-    setActiveProvider,
-    // auto slippage
-    slippage,
-    autoSlippage,
-    cancelPendingQuoteFlush,
-  ]);
+  }, [active, quoteRequestKey, canRunQuoteRequest, isDraggingSlider]);
+
+  // The 20s timer is module-owned; it starts a cycle directly instead of
+  // bumping a React atom, so the periodic tick itself renders nothing.
+  useEffect(() => {
+    setSwapQuoteCycleRunner(runQuoteCycle);
+    return () => {
+      setSwapQuoteCycleRunner(null);
+    };
+  }, [runQuoteCycle]);
+
+  useLayoutEffect(() => {
+    runQuoteCycle();
+    // `refreshId` is the explicit refresh signal (quote list refresh button).
+  }, [runQuoteCycle, refreshId]);
 
   const canUpdateActiveProvider = canRunQuoteRequest;
 
+  // The quote list lives outside React; the selection recompute runs inside the
+  // session module on every batch and whenever these inputs change.
   useEffect(() => {
-    if (!receiveToken?.id || !canUpdateActiveProvider) {
-      return;
-    }
-
-    const selectableQuoteList = quoteRequestFinished
-      ? quoteList
-      : quoteList.filter(quote =>
-          canDisplaySwapQuoteBeforeAllQuotesLoaded({
-            quote,
-            payToken,
-            payAmount,
-            receiveToken,
-          }),
-        );
-
-    const best = getBestSwapQuote({
-      quoteList: selectableQuoteList,
+    setSwapQuoteSelectionContext({
+      canUpdateActiveProvider,
+      payToken,
       receiveToken,
+      payAmount,
       inSufficient,
     });
-
-    if (!best) {
-      return;
-    }
-
-    setQuoteLoading(false);
-    setBestQuoteDex(best.quote.name);
-
-    const currentProviderScore = currentProvider
-      ? getSwapProviderScore({
-          provider: currentProvider,
-          receiveToken,
-          inSufficient,
-        })
-      : null;
-    const currentProviderLoaded =
-      !!currentProvider &&
-      quoteList.some(
-        quote => !quote.loading && quote.name === currentProvider.name,
-      );
-
-    if (currentProviderLoaded && currentProvider.manualClick) {
-      const canDisplayCurrentProvider =
-        quoteRequestFinished ||
-        canDisplaySwapProviderBeforeAllQuotesLoaded({
-          provider: currentProvider,
-          payToken,
-          payAmount,
-          receiveToken,
-        });
-
-      if (canDisplayCurrentProvider) {
-        return;
-      }
-    }
-
-    if (
-      currentProviderLoaded &&
-      currentProviderScore &&
-      !best.score.gt(currentProviderScore)
-    ) {
-      return;
-    }
-
-    setActiveProvider(
-      createSwapQuoteProvider({
-        quote: best.quote,
-        receiveToken,
-      }),
-    );
-    // ignore receiveToken price update
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    quoteList,
-    inSufficient,
-    setActiveProvider,
     canUpdateActiveProvider,
-    currentProvider,
     payToken,
+    receiveToken,
     payAmount,
-    quoteRequestFinished,
-    receiveToken?.id,
-    receiveToken?.chain,
-    receiveToken?.price,
-    receiveToken?.decimals,
+    inSufficient,
   ]);
-
-  useEffect(() => {
-    if (quotesError) {
-      console.error('quotesError', quotesError);
-    }
-  }, [quotesError]);
 
   const {
     value: slippageValidInfo,
@@ -1254,8 +960,7 @@ export const useTokenPair = ({
   useEffect(() => {
     if (!canRequestQuote) {
       clearExpiredTimer();
-      setQuotesList([]);
-      setActiveProvider(undefined);
+      clearSwapQuoteSession();
     }
   }, [canRequestQuote, clearExpiredTimer, setActiveProvider]);
 
@@ -1320,7 +1025,7 @@ export const useTokenPair = ({
     }
 
     if (nextPayAmount !== payAmount) {
-      setQuotesList([]);
+      clearSwapQuoteList();
       setPayAmount(nextPayAmount);
     }
   }, [
@@ -1390,7 +1095,7 @@ export const useTokenPair = ({
           ? newAmountBn.toString(10)
           : new BigNumber(newAmountBn.toFixed(4, 1)).toString(10);
         if (nextPayAmount !== payAmount) {
-          setQuotesList([]);
+          clearSwapQuoteList();
           setPayAmount(nextPayAmount);
         }
       }
@@ -1420,13 +1125,13 @@ export const useTokenPair = ({
         ) {
           return;
         }
-        setTokenRefreshId(e => e + 1);
+        requestSwapTokenRefresh();
       };
       eventBus.addListener(EVENTS.RELOAD_TX, refresh);
       return () => {
         eventBus.removeListener(EVENTS.RELOAD_TX, refresh);
       };
-    }, [active, setTokenRefreshId]),
+    }, [active]),
   );
 
   const onSetAutoSlippage = useCallback(() => {
@@ -1483,9 +1188,6 @@ export const useTokenPair = ({
     closeQuotesList,
     quotesListVisible,
     quoteLoading,
-    allQuotesLoaded: quoteRequestFinished,
-    quoteRequestId,
-    quoteList,
     currentProvider,
     setActiveProvider,
 
