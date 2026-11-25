@@ -2835,9 +2835,6 @@
       "closeAll": "Tüm pozisyonları kapat",
       "closeAllConfirmMessage": "Tüm açık pozisyonlarınız piyasa fiyatından kapatılacak.",
       "closeAllConfirmTitle": "Tüm pozisyonları kapatmayı onayla",
-      "assetPage": {
-        "hyperliquidPosition": "Hyperliquid Pozisyonu"
-      },
       "invitePopup": {
         "title": "Hyperliquid Ücretlerinden Tasarruf Edin",
         "activatedFailed": "Aktivasyon başarısız oldu",
@@ -3066,9 +3063,6 @@
         "crossTitle": "Çapraz Marj",
         "isolatedDesc": "Her pozisyon kendi marjını kullanır. Kayıplar yalnızca o pozisyonla sınırlıdır, ancak pozisyon daha kolay tasfiye edilebilir.",
         "crossDesc": "Tüm pozisyonlar aynı marjı paylaşır. Bu, tek bir pozisyonun tasfiye edilme olasılığını azaltır; ancak aşırı piyasa hareketlerinde tüm çapraz marj fonları kaybedilebilir."
-      },
-      "guideEntry": {
-        "gotIt": "Tamamdır"
       },
       "PerpsAbout": {
         "title": "Hakkında"

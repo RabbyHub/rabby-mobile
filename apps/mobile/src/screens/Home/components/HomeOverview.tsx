@@ -1,4 +1,3 @@
-import { apisPerps } from '@/core/apis';
 import RcIconDoubleArrowCC from '@/assets2024/icons/common/double-arrow-cc.svg';
 import RcIconApprovalsCC from '@/assets2024/icons/home/IconApprovalsCC.svg';
 import RcIconBridgeCC from '@/assets2024/icons/home/IconBridgeCC.svg';
@@ -110,7 +109,6 @@ import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import useTokenList from '@/store/tokens';
 import useProtocol from '@/store/protocols';
 import { isTabsSwiping } from '../../Address/components/MultiAssets/hooks';
-import { BrowserOrPerpsPosition } from './BrowserOrPerpsPosition';
 import { GasAccountBadge } from '../../GasAccount/components/GasAccountBadge';
 import { apisLending } from '../../Lending/hooks';
 import { HomeCenterArea } from '../components/HomeCenterArea';
@@ -1366,7 +1364,6 @@ export const HomeOverview = React.memo(() => {
         case MultiHomeFeatTitle.Ecosystem:
           break;
         case MultiHomeFeatTitle.Perps:
-          apisPerps.setHasShownPerpsGuidePopup(true);
           void navigateToPerpsHome({
             navigation,
             source: 'home-main',
@@ -1516,7 +1513,6 @@ export const HomeOverview = React.memo(() => {
                     );
                   })}
                 </View>
-                <BrowserOrPerpsPosition />
                 <View
                   style={styles.swipeUpHint}
                   onLayout={swipeUpViewHandlers.onLayout}>

@@ -2985,9 +2985,6 @@
       "closeAll": "全部平仓",
       "closeAllConfirmMessage": "所有未平仓仓位都将按市价平仓。",
       "closeAllConfirmTitle": "确认全部平仓",
-      "assetPage": {
-        "hyperliquidPosition": "Hyperliquid 仓位"
-      },
       "invitePopup": {
         "hyperliquidFee": "Hyperliquid 交易手续费。",
         "title": "在 Hyperliquid 上节省手续费",
@@ -3216,9 +3213,6 @@
         "crossTitle": "全仓保证金",
         "isolatedDesc": "每个仓位使用独立保证金。亏损仅限于该仓位，但更容易被强平。",
         "crossDesc": "所有仓位共用同一保证金。这会降低单个仓位被强平的概率，但在极端行情下，所有全仓保证金都可能亏损。"
-      },
-      "guideEntry": {
-        "gotIt": "明白了"
       },
       "PerpsAbout": {
         "title": "关于"

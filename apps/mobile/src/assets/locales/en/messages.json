@@ -2722,9 +2722,6 @@
       "dappSelect": {
         "title": "Select Perps Provider"
       },
-      "assetPage": {
-        "hyperliquidPosition": "Hyperliquid Position"
-      },
       "PerpsRiskPopup": {
         "liqDistanceTipsShort": "Going up <1>{{distance}}</1> will trigger liquidation.",
         "liqDistanceTipsLong": "Going down <1>{{distance}}</1> will trigger liquidation.",
@@ -3129,9 +3126,6 @@
         "long": "Long",
         "short": "Short",
         "noPermission": "Opening positions is not supported in your region"
-      },
-      "guideEntry": {
-        "gotIt": "Got it"
       },
       "PerpsAutoCloseModal": {
         "takeProfitExpectedPNL": "Take profit expected PNL",
