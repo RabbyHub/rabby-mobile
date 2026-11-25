@@ -119,6 +119,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-create-address'
     | 'debug-open-hd-address'
     | 'debug-set-language'
+    | 'debug-cloud-availability'
     | 'toggle-pager-offset-sampling'
     | 'toggle-home-chrome-bridge'
     | 'debug-import-test-accounts'
@@ -155,6 +156,8 @@ type OnParseUrlAndProcessAction = (payload: {
   debugOpenTargetTab?: 'seedPhrase' | 'privateKey';
   /** Non-production only: force the app language, e.g. `pt-BR`. */
   debugLanguage?: string;
+  /** Non-production only: override cloud backup availability (null = auto). */
+  debugCloudAvailability?: boolean | null;
   /** Non-production only: address seeded by `debug-create-address`. */
   debugAddress?: string;
   /** Non-production only: which seed-phrase address `debug-open-hd-address` opens. */
@@ -540,6 +543,25 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     return {
       type: 'debug-create-address',
       debugAddress: address,
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: mock cloud (iCloud / Google Drive) availability so the
+  // "cloud unavailable" branch can be reproduced on a device.
+  // `?_cmd=debug-cloud-availability&value=unavailable|available|auto`
+  if (
+    rabbyGoCmd === 'debug-cloud-availability' ||
+    target === 'debug-cloud-availability'
+  ) {
+    const rawValue = (urlInfo.searchParams.get('value') || '').toLowerCase();
+    const parsed = ['available', '1', 'true', 'on'].includes(rawValue)
+      ? true
+      : ['unavailable', '0', 'false', 'off'].includes(rawValue)
+      ? false
+      : null;
+    return {
+      type: 'debug-cloud-availability',
+      debugCloudAvailability: parsed,
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -1220,6 +1242,17 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
         }
         void openRabbyGoTarget(target);
       }, `debug-open-${payload.debugOpenTarget}`);
+      break;
+    case 'debug-cloud-availability':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void import('@/core/utils/cloudBackup').then(
+        ({ setDebugCloudAvailabilityOverride }) =>
+          setDebugCloudAvailabilityOverride(
+            payload.debugCloudAvailability ?? null,
+          ),
+      );
       break;
     case 'debug-set-language':
       if (!isNonPublicProductionEnv || !payload.debugLanguage) {
