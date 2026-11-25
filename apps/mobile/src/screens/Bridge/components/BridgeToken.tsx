@@ -24,6 +24,8 @@ import TokenSelect from '@/screens/Swap/components/TokenSelect';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { GestureSlider as Slider } from '@/components/GestureSlider';
+import type { GestureSliderRef } from '@/components/GestureSlider';
+import type { SharedValue } from 'react-native-reanimated';
 import LinearGradient from 'react-native-linear-gradient';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import type { Account } from '@/core/startupServices/preference';
@@ -64,6 +66,10 @@ const BridgeTokenInner = ({
   clearOnDisabled,
   slider,
   onChangeSlider,
+  controlValue,
+  sliderRef,
+  onGestureStart,
+  onGestureComplete,
   onSliderScrollEnabledChange,
 }: {
   clickMaxBtnCount?: number;
@@ -87,6 +93,10 @@ const BridgeTokenInner = ({
   clearOnDisabled?: boolean;
   slider?: number;
   onChangeSlider?: (value: number, syncAmount?: boolean) => void;
+  controlValue?: SharedValue<number>;
+  sliderRef?: React.Ref<GestureSliderRef>;
+  onGestureStart?: () => void;
+  onGestureComplete?: (value: number) => void;
   onSliderScrollEnabledChange?: (enabled: boolean) => void;
 } & (
   | {
@@ -171,25 +181,36 @@ const BridgeTokenInner = ({
       // Move the bubble before the amount update. That update re-renders the
       // page, which is what left the bubble behind the finger.
       bubbleRef.current?.setProgress(_value);
-      onChangeSlider?.(_value);
+      if (!controlValue) {
+        onChangeSlider?.(_value);
+      }
     },
-    [onChangeSlider],
+    [controlValue, onChangeSlider],
   );
 
   const onSlidingStart = useCallback(() => {
     if (!disabled) {
       setIsSliderBubbleVisible(true);
       onSliderScrollEnabledChange?.(false);
+      onGestureStart?.();
     }
-  }, [disabled, onSliderScrollEnabledChange]);
+  }, [disabled, onGestureStart, onSliderScrollEnabledChange]);
 
   const onAfterChangeSlider = useCallback(
     (v: number) => {
-      onChangeSlider?.(v, true);
+      onGestureComplete?.(v);
+      if (!controlValue) {
+        onChangeSlider?.(v, true);
+      }
       setIsSliderBubbleVisible(false);
       onSliderScrollEnabledChange?.(true);
     },
-    [onChangeSlider, onSliderScrollEnabledChange],
+    [
+      controlValue,
+      onChangeSlider,
+      onGestureComplete,
+      onSliderScrollEnabledChange,
+    ],
   );
 
   useEffect(() => {
@@ -223,7 +244,9 @@ const BridgeTokenInner = ({
               collapsable={false}
               style={styles.slider}>
               <Slider
+                ref={sliderRef}
                 key={`${token?.id}-${token?.chain}`}
+                controlValue={controlValue}
                 allowTouchTrack={!disabled}
                 disabled={disabled}
                 interactive={sceneActive}

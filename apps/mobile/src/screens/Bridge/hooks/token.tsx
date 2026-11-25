@@ -18,6 +18,19 @@ import { useRefreshId, useSetQuoteVisible, useSetRefreshId } from './context';
 import { getChainDefaultToken } from '@/constant/swap';
 import { tokenAmountBn } from '@/screens/Swap/utils';
 import {
+  amountToSlider,
+  resolveSliderAmount,
+} from '@/screens/SwapBridge/state/swapFormMath';
+import {
+  bridgeAmountStore,
+  useBridgeAmount,
+} from '../state/bridgeAmountStores';
+import {
+  bridgeQuoteListStore,
+  getBridgeQuoteList as getBridgeQuoteListSnapshot,
+  setBridgeQuoteList,
+} from '../state/bridgeQuoteListStore';
+import {
   bridgeQuoteScore,
   getBestBridgeQuote,
   isSameBridgeQuote,
@@ -32,7 +45,6 @@ import { getGasTokenBalance } from '@/core/apis/transactions';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
-import { useSwapBridgeSlider } from '@/screens/Swap/hooks/slider';
 import { eventBus, EVENTS } from '@/utils/events';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
@@ -45,7 +57,7 @@ import {
   reportBridgeSdkError,
   reportBridgeSdkException,
 } from '@/core/bridgeSdkReport';
-import { convert18RawToTokenRaw, isTempoChain } from '@/utils/tempo';
+import { isTempoChain } from '@/utils/tempo';
 import type { SelectedBridgeQuote } from '../types';
 import { createBridgeInitializationController } from '../bridgeInitialization';
 import { getBridgeQuoteApproval } from '../utils/bridgeApproval';
@@ -264,7 +276,9 @@ export const useBridge = (
     }
   }, [active, setToToken, toChain, toToken]);
 
-  const [amount, setAmount] = useState('');
+  const amount = useBridgeAmount(state => state.committed);
+  const isMaxAmount = useBridgeAmount(state => state.isMax);
+  const bridgeAmountActions = bridgeAmountStore.getState().actions;
 
   const slippageObj = useBridgeSlippage();
 
@@ -389,7 +403,7 @@ export const useBridge = (
     fromChain,
   ]);
 
-  const [quoteList, setQuotesList] = useState<SelectedBridgeQuote[]>([]);
+  const setQuotesList = setBridgeQuoteList;
 
   const stopExpiredTimer = useCallback(() => {
     if (expiredTimer.current) {
@@ -543,29 +557,23 @@ export const useBridge = (
     [chainInfo.serverId],
   );
 
-  const { value: tempoGasTokenInfo, loading: isTempoGasTokenLoading } =
-    useSceneActiveAsync(
-      async () => {
-        if (!currentAccount?.address || !isTempoBridgeChain) {
-          return null;
-        }
+  const { value: tempoGasTokenInfo } = useSceneActiveAsync(
+    async () => {
+      if (!currentAccount?.address || !isTempoBridgeChain) {
+        return null;
+      }
 
-        return getGasTokenBalance({
-          account: currentAccount,
-          address: currentAccount.address,
-          chainId: chainInfo.id,
-        });
-      },
-      active,
-      [
-        currentAccount,
-        currentAccount?.address,
-        chainInfo.id,
-        isTempoBridgeChain,
-      ],
-    );
+      return getGasTokenBalance({
+        account: currentAccount,
+        address: currentAccount.address,
+        chainId: chainInfo.id,
+      });
+    },
+    active,
+    [currentAccount, currentAccount?.address, chainInfo.id, isTempoBridgeChain],
+  );
 
-  const { value: gasList, loading: isGasMarketLoading } = useSceneActiveAsync(
+  const { value: gasList } = useSceneActiveAsync(
     () =>
       apiProvider.gasMarketV2(
         {
@@ -577,7 +585,7 @@ export const useBridge = (
     [chainInfo.serverId, currentAccount],
   );
 
-  const [passGasPrice, setUseGasPrice] = useState(false);
+  const passGasPrice = useBridgeAmount(state => state.passGasPrice);
   const isMaxRef = useRef(false);
   const [clickMaxBtnCount, setClickMaxBtnCount] = useState(0);
 
@@ -638,53 +646,28 @@ export const useBridge = (
     tempoGasTokenInfo?.token.decimals,
   ]);
 
-  const handleSlider100 = useCallback(() => {
-    if (!fromToken) {
-      return;
-    }
-
-    setUseGasPrice(false);
-    const fullAmount = tokenAmountBn(fromToken);
-    if (
-      fromTokenIsGasToken &&
-      gasTokenDecimals !== undefined &&
-      normalGasPrice
-    ) {
-      const val = fullAmount.minus(
-        convert18RawToTokenRaw(
-          new BigNumber(gasLimit).times(normalGasPrice),
-          gasTokenDecimals,
-        ).div(new BigNumber(10).pow(gasTokenDecimals)),
-      );
-      if (!val.lt(0)) {
-        setUseGasPrice(true);
+  const resolveBridgeSliderAmount = useCallback(
+    (value: number) => {
+      if (!fromToken) {
+        return null;
       }
-      setAmount(val.lt(0) ? fullAmount.toString(10) : val.toString(10));
-      return;
-    }
-
-    setAmount(fullAmount.toString(10));
-  }, [
-    fromToken,
-    fromTokenIsGasToken,
-    gasLimit,
-    gasTokenDecimals,
-    normalGasPrice,
-  ]);
-
-  const {
-    onChangeSlider,
-    slider,
-    setSlider,
-    useSlider,
-    setUseSlider,
-    isDraggingSlider,
-    setIsDraggingSlider,
-  } = useSwapBridgeSlider({
-    setAmount,
-    fromToken,
-    handleSlider100,
-  });
+      return resolveSliderAmount({
+        balance: tokenAmountBn(fromToken),
+        value,
+        isGasToken: fromTokenIsGasToken,
+        gasTokenDecimals,
+        normalGasPrice,
+        gasLimit,
+      });
+    },
+    [
+      fromToken,
+      fromTokenIsGasToken,
+      gasLimit,
+      gasTokenDecimals,
+      normalGasPrice,
+    ],
+  );
 
   const handleAmountChange = useCallback(
     (e: string) => {
@@ -692,61 +675,36 @@ export const useBridge = (
       if (!/^\d*(\.\d*)?$/.test(v)) {
         return;
       }
-      if (fromToken) {
-        const slider = v
-          ? Number(
-              new BigNumber(v || 0)
-                .div(fromToken?.amount ? tokenAmountBn(fromToken) : 1)
-                .times(100)
-                .toFixed(0),
-            )
-          : 0;
-        setSlider(slider < 0 ? 0 : slider > 100 ? 100 : slider);
-        if (!fromToken?.amount) {
-          setSlider(0);
-        }
-      }
-      setUseGasPrice(false);
-      setUseSlider(false);
-      setAmount(v);
+      bridgeAmountActions.setAmountFromInput({
+        draft: v,
+        slider: amountToSlider(
+          v,
+          fromToken ? tokenAmountBn(fromToken) : new BigNumber(0),
+        ),
+      });
       if (Number(v) > 0) {
         setPending(true);
       }
     },
-    [fromToken, setSlider, setUseSlider],
+    [bridgeAmountActions, fromToken],
   );
 
   const handleMax = useCallback(() => {
-    setUseGasPrice(false);
-
-    if (fromToken) {
-      isMaxRef.current = true;
-      setUseSlider(true);
-      handleSlider100();
-      setSlider(100);
-      setClickMaxBtnCount(e => e + 1);
+    if (!fromToken) {
+      return;
     }
-  }, [fromToken, handleSlider100, setSlider, setUseSlider]);
-
-  useEffect(() => {
-    if (
-      slider === 100 &&
-      useSlider &&
-      fromToken?.amount &&
-      !isGasMarketLoading &&
-      (!isTempoBridgeChain || !isTempoGasTokenLoading)
-    ) {
-      handleSlider100();
+    isMaxRef.current = true;
+    const resolved = resolveBridgeSliderAmount(100);
+    if (!resolved) {
+      return;
     }
-  }, [
-    slider,
-    useSlider,
-    fromToken?.amount,
-    isGasMarketLoading,
-    isTempoBridgeChain,
-    isTempoGasTokenLoading,
-    handleSlider100,
-  ]);
+    bridgeAmountActions.endSlider({
+      draft: resolved.amount,
+      isMax: true,
+      passGasPrice: resolved.useGasPrice,
+    });
+    setClickMaxBtnCount(e => e + 1);
+  }, [bridgeAmountActions, fromToken, resolveBridgeSliderAmount]);
 
   const fetchIdRef = useRef(0);
   const pendingQuoteUpdatesRef = useRef(new Map<string, SelectedBridgeQuote>());
@@ -760,22 +718,25 @@ export const useBridge = (
     pendingQuoteUpdatesRef.current.clear();
   }, []);
 
-  const flushPendingQuoteUpdates = useCallback((id: number) => {
-    if (quoteFlushFrameRef.current !== null) {
-      cancelAnimationFrame(quoteFlushFrameRef.current);
-      quoteFlushFrameRef.current = null;
-    }
-    if (id !== fetchIdRef.current) {
-      pendingQuoteUpdatesRef.current.clear();
-      return;
-    }
+  const flushPendingQuoteUpdates = useCallback(
+    (id: number) => {
+      if (quoteFlushFrameRef.current !== null) {
+        cancelAnimationFrame(quoteFlushFrameRef.current);
+        quoteFlushFrameRef.current = null;
+      }
+      if (id !== fetchIdRef.current) {
+        pendingQuoteUpdatesRef.current.clear();
+        return;
+      }
 
-    const updates = Array.from(pendingQuoteUpdatesRef.current.values());
-    pendingQuoteUpdatesRef.current.clear();
-    if (updates.length) {
-      setQuotesList(current => mergeBridgeQuoteBatch(current, updates));
-    }
-  }, []);
+      const updates = Array.from(pendingQuoteUpdatesRef.current.values());
+      pendingQuoteUpdatesRef.current.clear();
+      if (updates.length) {
+        setQuotesList(current => mergeBridgeQuoteBatch(current, updates));
+      }
+    },
+    [setQuotesList],
+  );
 
   const scheduleQuoteUpdates = useCallback(
     (id: number, quotes: SelectedBridgeQuote[]) => {
@@ -819,7 +780,7 @@ export const useBridge = (
         toChain &&
         Number(amount) > 0 &&
         aggregatorsList.length > 0 &&
-        !isDraggingSlider
+        !bridgeAmountStore.getState().isDragging
       ) {
         setTokenRefreshId(e => e + 1);
 
@@ -946,7 +907,6 @@ export const useBridge = (
       amount,
       feeRate,
       slippageObj.slippage,
-      isDraggingSlider,
       flushPendingQuoteUpdates,
       scheduleQuoteUpdates,
     ]);
@@ -974,6 +934,7 @@ export const useBridge = (
     feeRate,
     slippageObj.slippage,
     cancelPendingQuoteFlush,
+    setQuotesList,
     setSelectedBridgeQuote,
   ]);
 
@@ -1037,65 +998,75 @@ export const useBridge = (
       return;
     }
 
-    const selectableQuoteList = bridgeQuoteRequestFinished
-      ? quoteList
-      : quoteList.filter(quote =>
-          canDisplayBridgeQuoteBeforeAllQuotesLoaded({
-            quote,
-            fromToken,
-            toToken,
-            amount,
-          }),
+    const runSelection = () => {
+      const quoteList = getBridgeQuoteListSnapshot();
+      const selectableQuoteList = bridgeQuoteRequestFinished
+        ? quoteList
+        : quoteList.filter(quote =>
+            canDisplayBridgeQuoteBeforeAllQuotesLoaded({
+              quote,
+              fromToken,
+              toToken,
+              amount,
+            }),
+          );
+
+      const best = getBestBridgeQuote(selectableQuoteList, toToken);
+      if (!best) {
+        return;
+      }
+
+      const bestQuote = best.quote;
+      if (bestQuote?.bridge_id && bestQuote?.aggregator?.id) {
+        setBestQuoteId(prev =>
+          prev &&
+          prev.bridgeId === bestQuote.bridge_id &&
+          prev.aggregatorId === bestQuote.aggregator.id
+            ? prev
+            : {
+                bridgeId: bestQuote.bridge_id,
+                aggregatorId: bestQuote.aggregator.id,
+              },
         );
 
-    const best = getBestBridgeQuote(selectableQuoteList, toToken);
-    if (!best) {
-      return;
-    }
+        const selectedQuoteLoaded = quoteList.some(
+          quote =>
+            !quote.loading && isSameBridgeQuote(quote, selectedBridgeQuote),
+        );
+        if (selectedQuoteLoaded && selectedBridgeQuote?.manualClick) {
+          const canDisplaySelectedQuote =
+            bridgeQuoteRequestFinished ||
+            canDisplayBridgeQuoteBeforeAllQuotesLoaded({
+              quote: selectedBridgeQuote,
+              fromToken,
+              toToken,
+              amount,
+            });
 
-    const bestQuote = best.quote;
-    if (bestQuote?.bridge_id && bestQuote?.aggregator?.id) {
-      setBestQuoteId({
-        bridgeId: bestQuote.bridge_id,
-        aggregatorId: bestQuote.aggregator.id,
-      });
+          if (canDisplaySelectedQuote) {
+            return;
+          }
+        }
 
-      const selectedQuoteLoaded = quoteList.some(
-        quote =>
-          !quote.loading && isSameBridgeQuote(quote, selectedBridgeQuote),
-      );
-      if (selectedQuoteLoaded && selectedBridgeQuote?.manualClick) {
-        const canDisplaySelectedQuote =
-          bridgeQuoteRequestFinished ||
-          canDisplayBridgeQuoteBeforeAllQuotesLoaded({
-            quote: selectedBridgeQuote,
-            fromToken,
-            toToken,
-            amount,
-          });
+        const shouldUpdateSelectedQuote =
+          !selectedBridgeQuote ||
+          !selectedQuoteLoaded ||
+          best.score.gt(bridgeQuoteScore(selectedBridgeQuote, toToken));
 
-        if (canDisplaySelectedQuote) {
-          return;
+        if (shouldUpdateSelectedQuote) {
+          setSelectedBridgeQuote(bestQuote);
         }
       }
+    };
 
-      const shouldUpdateSelectedQuote =
-        !selectedBridgeQuote ||
-        !selectedQuoteLoaded ||
-        best.score.gt(bridgeQuoteScore(selectedBridgeQuote, toToken));
-
-      if (shouldUpdateSelectedQuote) {
-        setSelectedBridgeQuote(bestQuote);
-      }
-    }
-    // toToken price is needed by the early-display USD guard.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    runSelection();
+    return bridgeQuoteListStore.subscribe(runSelection);
   }, [
     active,
-    quoteList,
     bridgeQuoteRequestFinished,
     fromToken,
     amount,
+    toToken,
     toToken?.id,
     toToken?.price,
     selectedBridgeQuote,
@@ -1133,10 +1104,7 @@ export const useBridge = (
     const canCommit = () => controller.isCurrent(run);
 
     const initializeBridge = async () => {
-      setAmount('');
-      setSlider(0);
-      setUseSlider(false);
-      setIsDraggingSlider(false);
+      bridgeAmountActions.resetAmount();
 
       let effectiveFromChain = latestFromChainRef.current;
       const routeFromChain = navState?.chainEnum
@@ -1276,11 +1244,9 @@ export const useBridge = (
     navState?.tokenId,
     navState?.toChainEnum,
     navState?.toTokenId,
+    bridgeAmountActions,
     setFromToken,
-    setIsDraggingSlider,
-    setSlider,
     setToToken,
-    setUseSlider,
     supportedChains,
     userAddress,
     wrappedSwitchFromChain,
@@ -1290,28 +1256,32 @@ export const useBridge = (
   useEffect(() => {
     setQuotesList([]);
     setSelectedBridgeQuote(undefined);
-  }, [fromToken?.id, toToken?.id, fromChain, toChain, setSelectedBridgeQuote]);
+  }, [
+    fromChain,
+    fromToken?.id,
+    setQuotesList,
+    setSelectedBridgeQuote,
+    toChain,
+    toToken?.id,
+  ]);
 
   useEffect(() => {
     if (active && !canRequestQuote) {
       setQuotesList([]);
       setSelectedBridgeQuote(undefined);
     }
-  }, [active, canRequestQuote, setSelectedBridgeQuote]);
+  }, [active, canRequestQuote, setQuotesList, setSelectedBridgeQuote]);
 
   useEffect(() => {
     if (!enableInsufficientQuote || !amount || Number(amount) === 0) {
       setQuotesList([]);
       setSelectedBridgeQuote(undefined);
     }
-  }, [amount, setSelectedBridgeQuote]);
+  }, [amount, setQuotesList, setSelectedBridgeQuote]);
 
   useEffect(() => {
-    setAmount('');
-    setSlider(0);
-    setUseSlider(false);
-    setIsDraggingSlider(false);
-  }, [fromChain, setIsDraggingSlider, setSlider, setUseSlider]);
+    bridgeAmountActions.resetAmount();
+  }, [bridgeAmountActions, fromChain]);
 
   useFocusEffect(
     useCallback(() => {
@@ -1342,7 +1312,7 @@ export const useBridge = (
 
   const selectedBridgeQuoteLoaded =
     !!selectedBridgeQuote &&
-    quoteList.some(
+    getBridgeQuoteListSnapshot().some(
       quote => !quote.loading && isSameBridgeQuote(quote, selectedBridgeQuote),
     );
   const selectedBridgeQuoteCanDisplay =
@@ -1375,6 +1345,7 @@ export const useBridge = (
     inSufficientCanGetQuote,
     quoteBlockedByClosedMarket,
     amount,
+    isMaxAmount,
     handleAmountChange,
     feeRate,
     feeTier,
@@ -1384,7 +1355,6 @@ export const useBridge = (
     quoteLoading: quoteDisplayLoading,
     allQuotesLoaded: bridgeQuoteRequestFinished,
     quoteRequestId,
-    quoteList,
     setQuotesList,
 
     bestQuoteId,
@@ -1404,7 +1374,6 @@ export const useBridge = (
     quoteRefreshCountdown,
     ...slippageObj,
 
-    onChangeSlider,
-    slider,
+    resolveSliderAmount: resolveBridgeSliderAmount,
   };
 };

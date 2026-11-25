@@ -21,6 +21,10 @@ import { useTranslation } from 'react-i18next';
 import { TwpStepApproveModal } from '@/screens/Swap/components/TwoStepApproveModal';
 import BigNumber from 'bignumber.js';
 import { QuoteList } from './BridgeQuotes';
+import {
+  getBridgeQuoteListLength,
+  useBridgeQuoteList,
+} from '../state/bridgeQuoteListStore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { openapi } from '@/core/request';
 import pRetry, { AbortError } from 'p-retry';
@@ -30,6 +34,7 @@ import { useMemoizedFn, useRequest } from 'ahooks';
 import { useRoute } from '@react-navigation/native';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import BridgeToken from './BridgeToken';
+import { BridgeAmountCard } from './BridgeAmountCard';
 import BridgeSwitchBtn from './BridgeSwitchBtn';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import BridgeShowMore from './BridgeShowMore';
@@ -316,6 +321,19 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   },
 }));
 
+type BridgeQuoteListOverlayProps = Omit<
+  React.ComponentProps<typeof QuoteList>,
+  'list'
+> & { active: boolean };
+
+const BridgeQuoteListOverlay = React.memo(function BridgeQuoteListOverlay({
+  active,
+  ...props
+}: BridgeQuoteListOverlayProps) {
+  const list = useBridgeQuoteList(active);
+  return <QuoteList {...props} list={list} />;
+});
+
 export const BridgeContent = ({
   isForMultipleAddress = false,
   disableHeaderRight = false,
@@ -392,7 +410,6 @@ export const BridgeContent = ({
     quoteLoading: originQuoteLoading,
     allQuotesLoaded,
     quoteRequestId,
-    quoteList,
     setQuotesList,
 
     bestQuoteId,
@@ -425,9 +442,12 @@ export const BridgeContent = ({
     payTokenIsNativeToken,
     inSufficientCanGetQuote,
     quoteBlockedByClosedMarket,
-    slider,
-    onChangeSlider,
+    isMaxAmount,
+    resolveSliderAmount,
   } = useBridge(isForMultipleAddress, { active: sceneActive });
+
+  // Quote batches publish through the store; length is read at render time.
+  const quoteListLength = getBridgeQuoteListLength();
 
   const isRegressionBridgePairMatched = useMemo(() => {
     const params = route.params;
@@ -1072,9 +1092,9 @@ export const BridgeContent = ({
   const buildFormSnapshot = useCallback(
     (): BridgeFormSnapshot => ({
       amount: amount || '',
-      amountMode: slider === 100 ? 'max' : 'exact',
+      amountMode: isMaxAmount ? 'max' : 'exact',
     }),
-    [amount, slider],
+    [amount, isMaxAmount],
   );
 
   useEffect(() => {
@@ -1301,7 +1321,7 @@ export const BridgeContent = ({
     !!toToken &&
     Number(amount) > 0 &&
     !quoteLoading &&
-    !quoteList?.length;
+    !quoteListLength;
   const showStickyInfo = !!fromToken && !!toToken && !noQuote;
   const hideBridgeProgress = amountAvailable || !!selectedBridgeQuote;
   const showClosedMarketTip =
@@ -1314,7 +1334,7 @@ export const BridgeContent = ({
     !amountAvailable ||
     !selectedBridgeQuote ||
     quoteLoading ||
-    !quoteList?.length;
+    !quoteListLength;
 
   useEffect(() => {
     if (
@@ -1328,7 +1348,7 @@ export const BridgeContent = ({
       !amountAvailable ||
       quoteLoading ||
       !selectedBridgeQuote ||
-      !quoteList?.length
+      !quoteListLength
     ) {
       return;
     }
@@ -1348,14 +1368,14 @@ export const BridgeContent = ({
       amount,
       aggregator: selectedBridgeQuote.aggregator.id,
       bridge: selectedBridgeQuote.bridge_id,
-      quoteCount: quoteList.length,
+      quoteCount: quoteListLength,
     });
   }, [
     amount,
     amountAvailable,
     fromToken,
     isRegressionBridgePairMatched,
-    quoteList?.length,
+    quoteListLength,
     quoteLoading,
     regressionScenario,
     sceneActive,
@@ -1379,7 +1399,7 @@ export const BridgeContent = ({
       !canShowDirectSubmit ||
       !amountAvailable ||
       quoteBlockedByClosedMarket ||
-      !quoteList?.length ||
+      !quoteListLength ||
       !selectedBridgeQuoteBuildKey ||
       !selectedBridgeQuoteCanAutoPreExec
     ) {
@@ -1465,7 +1485,7 @@ export const BridgeContent = ({
     canUseMiniTx,
     mutateTxs,
     quoteBlockedByClosedMarket,
-    quoteList?.length,
+    quoteListLength,
     quoteRequestId,
     runBuildBridgeTxsForKey,
     selectedBridgeQuoteBuildKey,
@@ -1732,14 +1752,10 @@ export const BridgeContent = ({
           keyboardOpeningTime={0}>
           <View style={styles.card}>
             <View style={styles.cardContainer}>
-              <BridgeToken
-                type="from"
+              <BridgeAmountCard
                 sceneActive={sceneActive}
-                slider={slider}
-                onChangeSlider={onChangeSlider}
                 disabled={!isSupportedChain}
                 account={currentAccount}
-                inSufficient={inSufficient}
                 chain={fromChain}
                 token={fromToken}
                 isMaxRef={isMaxRef}
@@ -1751,6 +1767,7 @@ export const BridgeContent = ({
                 value={amount}
                 onInputChange={handleBridgeAmountChange}
                 excludeChains={fromTokenExcludeChains}
+                resolveSliderAmount={resolveSliderAmount}
               />
               <BridgeToken
                 type="to"
@@ -1921,8 +1938,8 @@ export const BridgeContent = ({
         />
 
         {fromToken && toToken && Number(amount) > 0 ? (
-          <QuoteList
-            list={quoteList}
+          <BridgeQuoteListOverlay
+            active={sceneActive}
             loading={quoteLoading}
             visible={quoteVisible}
             onClose={() => {
