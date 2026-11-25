@@ -1058,6 +1058,7 @@ export const BridgeContent = ({
   const signatureGuardFlags = useSignatureStoreOf(
     instance,
     selectSignatureGuardFlags,
+    sceneActive,
   );
   const miniSignGasFeeTooHigh = isSignatureGasFeeTooHigh(signatureGuardFlags);
   const canDirectSign = canProcessSignature(signatureGuardFlags);

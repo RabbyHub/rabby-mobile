@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 
 import type { SignatureManager } from './SignatureManager';
 import type { SignatureFlowState } from './types';
@@ -24,11 +24,20 @@ export const useSignatureStore = <T = SignatureFlowState>(
 export const useSignatureStoreOf = <T = SignatureFlowState>(
   instance: SignatureManager,
   selector?: (state: SignatureFlowState) => T,
+  enabled = true,
 ) => {
-  return useSyncExternalStore(
-    instance.subscribe,
-    selector
-      ? () => selector(instance.getState())
-      : (instance.getState as () => T),
+  const subscribe = useCallback(
+    (listener: () => void) =>
+      enabled ? instance.subscribe(listener) : () => {},
+    [enabled, instance],
   );
+  const getSnapshot = useCallback(
+    () =>
+      selector
+        ? selector(instance.getState())
+        : (instance.getState as () => T)(),
+    [instance, selector],
+  );
+
+  return useSyncExternalStore(subscribe, getSnapshot);
 };

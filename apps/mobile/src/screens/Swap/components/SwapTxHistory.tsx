@@ -112,11 +112,13 @@ const ItemSeparator = () => {
 const HistoryList = ({
   onGotoDetail,
   recentShowTime,
+  enabled = true,
 }: {
   onGotoDetail: (txId: string, chain: string) => void;
   recentShowTime: number;
+  enabled?: boolean;
 }) => {
-  const { txList, loading, loadMore, noMore } = useSwapHistory();
+  const { txList, loading, loadMore, noMore } = useSwapHistory(enabled);
   const { t } = useTranslation();
   const { styles, isLight } = useTheme2024({ getStyle });
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
@@ -418,7 +420,13 @@ export const SwapTxHistory = ({
         colors: colors2024,
         linearGradientType: isDarkTheme ? 'bg1' : 'bg0',
       })}>
-      <HistoryList onGotoDetail={goToDetail} recentShowTime={recentShowTime} />
+      {/* Keep the list mounted while the sheet is closed so its data and
+          layout stay warm; only the paged read is gated by visibility. */}
+      <HistoryList
+        onGotoDetail={goToDetail}
+        recentShowTime={recentShowTime}
+        enabled={visible}
+      />
     </AppBottomSheetModal>
   );
 };

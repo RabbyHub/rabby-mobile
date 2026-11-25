@@ -53,7 +53,7 @@ const getSwapList = async (
   };
 };
 
-export const useSwapHistory = () => {
+export const useSwapHistory = (enabled = true) => {
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
@@ -97,15 +97,25 @@ export const useSwapHistory = () => {
         }
         return (data.nextStart ?? 0) >= data.totalCount;
       },
-      manual: !addr,
+      // Keep the previous page while the history sheet is closed; only the
+      // first visible-open reloads it.
+      manual: !addr || !enabled,
     },
   );
 
+  const wasEnabledRef = useRef(enabled);
+  useEffect(() => {
+    if (enabled && !wasEnabledRef.current) {
+      reload();
+    }
+    wasEnabledRef.current = enabled;
+  }, [enabled, reload]);
+
   const { value } = useAsync(async () => {
-    if (addr) {
+    if (addr && enabled) {
       return getSwapList(addr, 0, SWAP_HISTORY_PAGE_SIZE);
     }
-  }, [addr, refreshSwapTxListCount]);
+  }, [addr, refreshSwapTxListCount, enabled]);
 
   useEffect(() => {
     if (value?.list) {

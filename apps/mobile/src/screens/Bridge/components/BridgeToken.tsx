@@ -326,6 +326,7 @@ const BridgeTokenInner = ({
             ) : (
               <TokenSelect
                 deferModalMount
+                sceneActive={sceneActive}
                 // fromChainId={fromChainId!}
                 // fromTokenId={fromTokenId!}
                 accountInScreen={account}

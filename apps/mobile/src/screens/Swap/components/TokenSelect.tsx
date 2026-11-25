@@ -75,6 +75,7 @@ interface TokenSelectProps {
   supportChains?: CHAINS_ENUM[];
   searchPlaceholder?: string;
   deferModalMount?: boolean;
+  sceneActive?: boolean;
 }
 
 type QueryConditions = {
@@ -105,6 +106,7 @@ const TokenSelect = ({
   testID,
   accessibilityLabel,
   deferModalMount = false,
+  sceneActive = true,
   ref,
 }: TokenSelectProps & RNViewProps & { ref?: Ref<TokenSelectInst> }) => {
   const navigation = useNavigation();
@@ -228,6 +230,7 @@ const TokenSelect = ({
     returnTokenObjects: shouldUseTokenObjects,
     skipEmptyChainInit: type === 'bridgeFrom',
     deferInitialRemoteLoad: type === 'send',
+    active: sceneActive && tokenSelectorVisible,
   });
 
   useImperativeHandle(ref, () => ({
@@ -443,12 +446,20 @@ const TokenSelect = ({
 
   useFocusEffect(
     useCallback(() => {
+      if (!sceneActive || !tokenSelectorVisible) {
+        return;
+      }
       (async () => {
         if (currentAccount?.address) {
           fetchUserTokenSettings();
         }
       })();
-    }, [currentAccount?.address, fetchUserTokenSettings]),
+    }, [
+      currentAccount?.address,
+      fetchUserTokenSettings,
+      sceneActive,
+      tokenSelectorVisible,
+    ]),
   );
 
   const unFoldTokenList = useMemo(() => {
