@@ -64,6 +64,7 @@ import { isLimitOrder } from '@/utils/perps';
 import { Text } from '@/components/Typography';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
 import { withWalletUnlock } from '@/utils/walletUnlockGuard';
+import { PerpsProKeyboardAccessory } from '@/screens/PerpsPro/components/common/PerpsProKeyboardAccessory';
 
 export const PerpsMarketDetailScreen = () => {
   const scrollGesture = useMemo(
@@ -460,6 +461,8 @@ export const PerpsMarketDetailScreen = () => {
   return (
     <>
       <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
+        {/* Owns the Done bar of the funding popups' amount inputs. */}
+        <PerpsProKeyboardAccessory />
         {!hasPermission ? <PerpsRegionAlert /> : null}
         {/* Overscroll would expose the page's bg-0 between the bg-1 header
             and chart, so the content stops at the top like Perps Pro. */}

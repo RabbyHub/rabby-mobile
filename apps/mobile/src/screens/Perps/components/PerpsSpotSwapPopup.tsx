@@ -8,6 +8,8 @@ import type { PerpsQuoteAsset } from '@/constant/perps';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import { PerpsProInputAccessory } from '@/screens/PerpsPro/components/common/PerpsProInputAccessory';
+import { usePerpsProKeyboardInput } from '@/screens/PerpsPro/components/common/usePerpsProKeyboardInput';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -97,6 +99,8 @@ export const PerpsSpotSwapPopup: React.FC<{
   onSpotOrder,
 }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
+  const inputRef = useRef<React.ElementRef<typeof BottomSheetTextInput>>(null);
+  const keyboard = usePerpsProKeyboardInput(inputRef, { enabled: !!visible });
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { spotBalancesMap, getSpotBalance } = usePerpsAccount();
@@ -497,6 +501,8 @@ export const PerpsSpotSwapPopup: React.FC<{
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <View style={styles.inputWrapper}>
                   <BottomSheetTextInput
+                    {...keyboard}
+                    ref={inputRef}
                     cursorColor={inputColorProps?.cursorColor}
                     selectionColor={inputColorProps?.selectionColor}
                     keyboardType="numeric"
@@ -515,6 +521,9 @@ export const PerpsSpotSwapPopup: React.FC<{
                     value={amount}
                     onChangeText={setAmount}
                     numberOfLines={1}
+                  />
+                  <PerpsProInputAccessory
+                    nativeID={keyboard.inputAccessoryViewID}
                   />
                 </View>
                 <View style={styles.divider} />

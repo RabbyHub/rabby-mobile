@@ -27,6 +27,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import { ITokenItem } from '@/store/tokens';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import { PerpsProInputAccessory } from '@/screens/PerpsPro/components/common/PerpsProInputAccessory';
+import { usePerpsProKeyboardInput } from '@/screens/PerpsPro/components/common/usePerpsProKeyboardInput';
 import { useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import React, {
@@ -86,6 +88,8 @@ export const PerpsWithdrawPopup: React.FC<{
 }) => {
   const hypeMarkPx = perpsStore(s => s.marketDataMap?.HYPE?.markPx);
   const modalRef = useRef<AppBottomSheetModal>(null);
+  const inputRef = useRef<React.ElementRef<typeof BottomSheetTextInput>>(null);
+  const keyboard = usePerpsProKeyboardInput(inputRef, { enabled: !!visible });
 
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyle,
@@ -373,6 +377,8 @@ export const PerpsWithdrawPopup: React.FC<{
             <View style={styles.inputContainer}>
               <View style={styles.inputWrapper}>
                 <BottomSheetTextInput
+                  {...keyboard}
+                  ref={inputRef}
                   cursorColor={inputColorProps?.cursorColor}
                   selectionColor={inputColorProps?.selectionColor}
                   value={amount}
@@ -387,6 +393,9 @@ export const PerpsWithdrawPopup: React.FC<{
                   ]}
                   placeholderTextColor={colors2024['neutral-info']}
                   placeholder="0"
+                />
+                <PerpsProInputAccessory
+                  nativeID={keyboard.inputAccessoryViewID}
                 />
               </View>
               <View style={styles.divider} />
