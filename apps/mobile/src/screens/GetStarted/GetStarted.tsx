@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, TouchableOpacity } from 'react-native';
-import { getDimensionsSnapshot, useWindowDimensions } from '@/core/dimensions';
+import { useWindowDimensions } from '@/core/dimensions';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -62,8 +62,8 @@ const HeroIllustration = ({ isLight }: { isLight: boolean }) => {
   const animationCompletedRef = useRef(false);
   const rapidTapRef = useRef({ count: 0, lastTappedAt: 0 });
 
-  const { width: SCREEN_WIDTH } = useWindowDimensions();
-  const heroHeight = Math.ceil(SCREEN_WIDTH * HERO_ASPECT_RATIO);
+  const { width: contentWidth } = useWindowDimensions();
+  const heroHeight = Math.ceil(contentWidth * HERO_ASPECT_RATIO);
 
   const handleAnimationTap = useCallback(() => {
     if (!isNonPublicProductionEnv || !animationCompletedRef.current) {
@@ -87,7 +87,11 @@ const HeroIllustration = ({ isLight }: { isLight: boolean }) => {
   }, []);
 
   return (
-    <View style={[styles.heroContainer, { height: heroHeight }]}>
+    <View
+      style={[
+        styles.heroContainer,
+        { width: contentWidth, height: heroHeight },
+      ]}>
       <TouchableOpacity
         activeOpacity={1}
         onPress={handleAnimationTap}
@@ -98,7 +102,10 @@ const HeroIllustration = ({ isLight }: { isLight: boolean }) => {
           // windows (Duo outer screen) the container shrinks below the natural
           // aspect height; a fixed-height Lottie was clipped from the top and
           // its coins overlapped the Rabby Wallet header.
-          style={[styles.heroBackground, { height: '100%' }]}
+          style={[
+            styles.heroBackground,
+            { width: contentWidth + 24, height: '100%' },
+          ]}
           loop={false}
           autoPlay
           onAnimationFinish={() => {
@@ -374,7 +381,6 @@ const getStyle = createGetStyles2024(ctx => ({
     flex: 1,
   },
   heroContainer: {
-    width: getDimensionsSnapshot('window').width,
     flexShrink: 1,
     justifyContent: 'flex-end',
     overflow: 'hidden',
@@ -382,7 +388,6 @@ const getStyle = createGetStyles2024(ctx => ({
   },
   heroBackground: {
     marginLeft: -12,
-    width: getDimensionsSnapshot('window').width + 24,
   },
   textContent: {
     alignItems: 'center',
