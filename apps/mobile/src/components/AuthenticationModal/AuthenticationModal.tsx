@@ -272,7 +272,7 @@ export const AuthenticationModal = ({
   AuthenticationModalProps
 > & { $onUnmount?: () => void }) => {
   const { t } = useTranslation();
-  const { styles, colors } = useThemeStyles(getStyle);
+  const { styles } = useThemeStyles(getStyle);
   const { safeSizes } = useSafeAndroidBottomSizes({
     footerButtonGroupMb: 12,
   });
@@ -557,18 +557,34 @@ export const AuthenticationModal = ({
                   returnKeyLabel={t('global.Confirm')}
                   value={password}
                   onChangeText={setPassword}
-                  placeholderTextColor={colors['neutral-foot']}
                   style={StyleSheet.flatten([
                     styles.input,
                     bioComputed.isBiometricsEnabled && styles.inputWithAddOn,
                     error ? styles.errorInput : {},
                     // makeDebugBorder('yellow')
                   ])}
-                  placeholder={
-                    placeholder ??
-                    t('component.AuthenticationModal.passwordPlaceholder')
-                  }
                 />
+                {/**
+                 * The native placeholder is positioned by the text input's own
+                 * layout, which sits at the bottom of the 48pt box on the Duo
+                 * outer screen (the typed value stays centred). Draw it
+                 * ourselves so one flex centering rule positions it on every
+                 * device.
+                 */}
+                {!password && (
+                  <View
+                    pointerEvents="none"
+                    style={[
+                      styles.placeholderOverlay,
+                      bioComputed.isBiometricsEnabled &&
+                        styles.placeholderOverlayWithAddOn,
+                    ]}>
+                    <Text style={styles.placeholderText}>
+                      {placeholder ??
+                        t('component.AuthenticationModal.passwordPlaceholder')}
+                    </Text>
+                  </View>
+                )}
                 {__DEV__ && bioComputed.isBiometricsEnabled && (
                   <BioButton
                     disabled={hasCheckFailed}
@@ -812,6 +828,22 @@ const getStyle = createGetStyles(colors => {
       paddingVertical: 0,
       paddingHorizontal: 0,
       // ...makeDebugBorder(),
+    },
+    placeholderOverlay: {
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      left: 13,
+      right: 13,
+      justifyContent: 'center',
+    },
+    placeholderOverlayWithAddOn: {
+      right: 60,
+    },
+    placeholderText: {
+      color: colors['neutral-foot'],
+      fontSize: 14,
+      lineHeight: 18,
     },
     input: {
       borderWidth: StyleSheet.hairlineWidth,
