@@ -123,7 +123,6 @@ import { PerpsPnl } from '../components/PerpsPnl';
 import {
   refreshSuccessAndFailList,
   resetFetchHistoryTxCount,
-  useHomeHistoryCount,
   useHomePendingTxCount,
 } from '../hooks/history';
 import type { TabsScrollViewProps } from '@/components/customized/react-native-collapsible-tab-view/ScrollView';
@@ -904,7 +903,7 @@ function DeferredHomeMenuBadge({
   }
 
   if (el.key === MultiHomeFeatTitle.History) {
-    return <HistoryMenuBadge badgeStyle={badgeStyle} />;
+    return <HistoryMenuBadge />;
   }
 
   if (el.key === MultiHomeFeatTitle.Approvals) {
@@ -926,25 +925,11 @@ function DeferredHomeMenuBadge({
   return null;
 }
 
-function HistoryMenuBadge({
-  badgeStyle,
-}: {
-  badgeStyle: React.ComponentProps<typeof BadgeText>['style'];
-}) {
+function HistoryMenuBadge() {
   const pendingTxCount = useHomePendingTxCount();
-  const historyCount = useHomeHistoryCount();
 
-  if (pendingTxCount > 0) {
-    return <HomePendingBadge number={pendingTxCount} />;
-  }
-
-  const badge = historyCount?.fail || historyCount?.success;
-  return badge && badge > 0 ? (
-    <BadgeText
-      count={badge}
-      isSuccess={!historyCount?.fail}
-      style={[badgeStyle]}
-    />
+  return pendingTxCount > 0 ? (
+    <HomePendingBadge number={pendingTxCount} />
   ) : null;
 }
 
