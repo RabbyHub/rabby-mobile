@@ -14,6 +14,7 @@ import {
 import {
   Animated,
   BackHandler,
+  Dimensions,
   Keyboard,
   Platform,
   StyleSheet,
