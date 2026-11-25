@@ -14,6 +14,7 @@ import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import RcIconLock from '@/assets2024/icons/bridge/IconLock.svg';
 // import RcIconDurationCC from '@/assets/icons/bridge/duration.svg';
 import { Text } from '@/components/Typography';
+import { ShimmerBlock } from './ShimmerBlock';
 import { bridgeQuoteEstimatedValueBn } from '../utils/bridgeQuote';
 import {
   formatBridgeDuration,
@@ -118,15 +119,26 @@ export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
               ellipsizeMode="tail">
               {t('page.bridge.via-bridge', { bridge: props.bridge.name })}
             </Text>
-            {props.shouldApproveToken && (
-              <Tip
-                content={t('page.bridge.need-to-approve-token-before-bridge')}>
-                <RcIconLock
-                  color={colors2024['neutral-foot']}
-                  style={styles.icon}
-                />
-              </Tip>
-            )}
+            {/* Approve indicator only exists while it has something to say:
+                shimmer while the check is in flight, lock when approve is
+                required. No reserved width when there is nothing to show. */}
+            {props.approvalLoading || props.shouldApproveToken ? (
+              <View style={styles.approvalSlot}>
+                {props.approvalLoading ? (
+                  <ShimmerBlock size={16} />
+                ) : (
+                  <Tip
+                    content={t(
+                      'page.bridge.need-to-approve-token-before-bridge',
+                    )}>
+                    <RcIconLock
+                      color={colors2024['neutral-foot']}
+                      style={styles.icon}
+                    />
+                  </Tip>
+                )}
+              </View>
+            ) : null}
             {!props.onlyShow && props.isBestQuote && (
               <View style={styles.bestInlineTag}>
                 <Text style={styles.bestInlineTagText}>
@@ -273,6 +285,13 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
   icon: {
     width: 16,
     height: 16,
+  },
+  approvalSlot: {
+    width: 20,
+    height: 20,
+    marginLeft: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tokenAmount: {
     color: colors2024['neutral-body'],

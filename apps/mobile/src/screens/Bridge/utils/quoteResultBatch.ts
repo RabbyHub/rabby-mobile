@@ -1,6 +1,6 @@
 import type { SelectedBridgeQuote } from '../types';
 
-const getBridgeQuoteKey = (quote: SelectedBridgeQuote) =>
+export const getBridgeQuoteKey = (quote: SelectedBridgeQuote) =>
   `${quote.aggregator.id}:${quote.bridge.id}`;
 
 export function mergeBridgeQuoteBatch(

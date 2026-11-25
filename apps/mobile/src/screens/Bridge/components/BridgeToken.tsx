@@ -37,6 +37,7 @@ import {
   type SliderBubbleHandle,
 } from '@/screens/Swap/components/Slider';
 import { Text } from '@/components/Typography';
+import { QuoteFlux } from './QuoteTransition';
 import {
   AutoShrinkAmountText,
   AutoShrinkAmountTextInput,
@@ -71,6 +72,7 @@ const BridgeTokenInner = ({
   onGestureStart,
   onGestureComplete,
   onSliderScrollEnabledChange,
+  valueFluxEnabled,
 }: {
   clickMaxBtnCount?: number;
   handleMax?: () => void;
@@ -98,6 +100,8 @@ const BridgeTokenInner = ({
   onGestureStart?: () => void;
   onGestureComplete?: (value: number) => void;
   onSliderScrollEnabledChange?: (enabled: boolean) => void;
+  /** Breathe the amount text only (not the whole card) when the source changes. */
+  valueFluxEnabled?: boolean;
 } & (
   | {
       type?: 'from';
@@ -292,16 +296,22 @@ const BridgeTokenInner = ({
               style={styles.skeleton}
             />
           ) : isToToken ? (
-            <AutoShrinkAmountText
-              numberOfLines={1}
-              style={StyleSheet.flatten([
-                styles.input,
-                styles.inputLeft,
-                (showNoQuote || !value) && styles.showNoQuoteText,
-                valueLoading && styles.loadingOpacity,
-              ])}>
-              {showNoQuote ? t('page.bridge.no-quote') : value?.toString() || 0}
-            </AutoShrinkAmountText>
+            <QuoteFlux
+              enabled={!!valueFluxEnabled}
+              style={styles.amountFluxWrapper}>
+              <AutoShrinkAmountText
+                numberOfLines={1}
+                style={StyleSheet.flatten([
+                  styles.input,
+                  styles.inputLeft,
+                  (showNoQuote || !value) && styles.showNoQuoteText,
+                  valueLoading && styles.loadingOpacity,
+                ])}>
+                {showNoQuote
+                  ? t('page.bridge.no-quote')
+                  : value?.toString() || 0}
+              </AutoShrinkAmountText>
+            </QuoteFlux>
           ) : (
             <View style={[styles.inputBox]}>
               <AutoShrinkAmountTextInput
@@ -484,6 +494,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     height: 56,
     alignItems: 'center',
+    minWidth: 0,
+  },
+  amountFluxWrapper: {
+    flex: 1,
     minWidth: 0,
   },
   showNoQuoteText: {

@@ -61,7 +61,16 @@ import { isTempoChain } from '@/utils/tempo';
 import type { SelectedBridgeQuote } from '../types';
 import { createBridgeInitializationController } from '../bridgeInitialization';
 import { getBridgeQuoteApproval } from '../utils/bridgeApproval';
-import { mergeBridgeQuoteBatch } from '../utils/quoteResultBatch';
+import {
+  BRIDGE_MOCK_SWITCHES,
+  getMockBridgeQuoteApproval,
+  isBridgeApprovalMockEnabled,
+  resetMockBridgeApprovalCycle,
+} from '../utils/bridgeApprovalMock';
+import {
+  getBridgeQuoteKey,
+  mergeBridgeQuoteBatch,
+} from '../utils/quoteResultBatch';
 import { useSceneActiveAsync } from '@/screens/SwapBridge/hooks/useSceneActiveAsync';
 import { getRabbyFeeInfo } from '@/screens/Swap/hooks/fee';
 
@@ -285,6 +294,10 @@ export const useBridge = (
   const [selectedBridgeQuote, setOriSelectedBridgeQuote] = useState<
     SelectedBridgeQuote | undefined
   >();
+  const selectedBridgeQuoteRef = useRef<SelectedBridgeQuote | undefined>(
+    selectedBridgeQuote,
+  );
+  selectedBridgeQuoteRef.current = selectedBridgeQuote;
 
   const expiredTimer = useRef<NodeJS.Timeout>(undefined);
   const autoQuoteRefreshDeadlineRef = useRef<number | null>(null);
@@ -760,6 +773,103 @@ export const useBridge = (
     [flushPendingQuoteUpdates],
   );
 
+  /**
+   * Applies the (late) approve result of one quote to both the quote list and
+   * the current selection. The selection is patched through the raw setter so
+   * the 20s refresh countdown is not restarted by a mere approval update.
+   */
+  const publishBridgeQuoteApproval = useCallback(
+    (
+      cycleId: number,
+      quote: SelectedBridgeQuote,
+      patch: Partial<SelectedBridgeQuote>,
+    ) => {
+      if (cycleId !== fetchIdRef.current) {
+        return;
+      }
+
+      const nextQuote: SelectedBridgeQuote = {
+        ...quote,
+        loading: false,
+        approvalLoading: false,
+        ...patch,
+      };
+      scheduleQuoteUpdates(cycleId, [nextQuote]);
+
+      // Share the exact same object with the selection so the selector can use
+      // identity to tell "same row" from "row replaced by a fresh result".
+      const currentSelected = selectedBridgeQuoteRef.current;
+      if (currentSelected && isSameBridgeQuote(currentSelected, quote)) {
+        setOriSelectedBridgeQuote(nextQuote);
+      }
+    },
+    [scheduleQuoteUpdates, setOriSelectedBridgeQuote],
+  );
+
+  /**
+   * Drops a quote that turned out to be unusable (the approve result failed).
+   * The callers/results stay exactly the same as if that quote never arrived:
+   * the selector falls back to another quote, or the page shows `no-quote`.
+   */
+  const removeBridgeQuote = useCallback(
+    (quote: SelectedBridgeQuote) => {
+      pendingQuoteUpdatesRef.current.delete(getBridgeQuoteKey(quote));
+      setQuotesList(list =>
+        list.filter(item => !isSameBridgeQuote(item, quote)),
+      );
+    },
+    [setQuotesList],
+  );
+
+  /**
+   * Re-runs the approve check for the selected quote. Reachable only while the
+   * failed quote is kept visible (mock switch `keepFailedQuote`); a real
+   * failure drops the quote and the next refresh cycle re-checks it.
+   */
+  const retrySelectedBridgeQuoteApproval = useCallback(async () => {
+    const quote = selectedBridgeQuoteRef.current;
+    if (!quote || !fromToken?.id || !currentAccount?.address) {
+      return;
+    }
+    if (!(Number(amount) > 0)) {
+      return;
+    }
+
+    const cycleId = fetchIdRef.current;
+    setOriSelectedBridgeQuote({
+      ...quote,
+      approvalLoading: true,
+      approvalError: false,
+    });
+
+    try {
+      const approval = isBridgeApprovalMockEnabled()
+        ? await getMockBridgeQuoteApproval({
+            isRetry: true,
+            quoteKey: getBridgeQuoteKey(quote),
+          })
+        : await getBridgeQuoteApproval({
+            fromToken,
+            approveContractId: quote.approve_contract_id,
+            amount,
+            account: currentAccount,
+            allowanceCache: new Map(),
+          });
+      publishBridgeQuoteApproval(cycleId, quote, {
+        ...approval,
+        approvalError: false,
+      });
+    } catch {
+      publishBridgeQuoteApproval(cycleId, quote, { approvalError: true });
+    }
+  }, [
+    amount,
+    currentAccount,
+    fromToken,
+    publishBridgeQuoteApproval,
+    setOriSelectedBridgeQuote,
+  ]);
+
   const [quoteRequestId, setQuoteRequestId] = useState(0);
   const [{ loading: quoteLoading, error: quotesError }, getQuoteList] =
     useAsyncFn(async () => {
@@ -787,30 +897,29 @@ export const useBridge = (
 
           setQuotesList(e => e?.map(e => ({ ...e, loading: true })));
 
-          const originData: Omit<BridgeQuote, 'tx'>[] = [];
           const allowanceRequestCache = new Map<string, Promise<string>>();
 
-          const getQuoteWithApproval = async (
-            quote: Omit<BridgeQuote, 'tx'>,
-          ): Promise<SelectedBridgeQuote | undefined> => {
-            if (currentFetchId !== fetchIdRef.current) {
-              return;
-            }
+          /**
+           * The approve (allowance) check runs in parallel with the quote
+           * publication, so a quote becomes visible as soon as it arrives and
+           * its approve result is patched in when it settles.
+           */
+          const requestQuoteApproval = (quote: Omit<BridgeQuote, 'tx'>) =>
+            isBridgeApprovalMockEnabled()
+              ? getMockBridgeQuoteApproval({
+                  quoteKey: getBridgeQuoteKey(quote as SelectedBridgeQuote),
+                })
+              : getBridgeQuoteApproval({
+                  fromToken,
+                  approveContractId: quote.approve_contract_id,
+                  amount,
+                  account: currentAccount,
+                  allowanceCache: allowanceRequestCache,
+                });
 
-            const approval = await getBridgeQuoteApproval({
-              fromToken,
-              approveContractId: quote.approve_contract_id,
-              amount,
-              account: currentAccount,
-              allowanceCache: allowanceRequestCache,
-            });
-
-            return {
-              ...quote,
-              loading: false,
-              ...approval,
-            };
-          };
+          if (isBridgeApprovalMockEnabled()) {
+            resetMockBridgeApprovalCycle();
+          }
 
           const getQUoteV2 = async () =>
             await Promise.allSettled(
@@ -839,10 +948,6 @@ export const useBridge = (
                   return undefined;
                 });
 
-                if (data && currentFetchId === fetchIdRef.current) {
-                  originData.push(...data);
-                }
-
                 const validData =
                   data?.filter(
                     quote =>
@@ -853,20 +958,48 @@ export const useBridge = (
                   ) || [];
 
                 if (validData.length && currentFetchId === fetchIdRef.current) {
+                  // Decoupled: every quote is published first, its approve
+                  // (allowance) result is patched in when it settles.
                   scheduleQuoteUpdates(
                     currentFetchId,
-                    validData.map(quote => ({ ...quote, loading: true })),
+                    validData.map(quote => ({
+                      ...quote,
+                      loading: false,
+                      approvalLoading: true,
+                      approvalError: false,
+                    })),
                   );
 
                   await Promise.allSettled(
                     validData.map(async quote => {
-                      const nextQuote = await getQuoteWithApproval(quote);
-                      if (
-                        nextQuote &&
-                        currentFetchId === fetchIdRef.current &&
-                        Number(amount) > 0
-                      ) {
-                        scheduleQuoteUpdates(currentFetchId, [nextQuote]);
+                      const currentQuote = quote as SelectedBridgeQuote;
+                      try {
+                        const approval = await requestQuoteApproval(quote);
+                        publishBridgeQuoteApproval(
+                          currentFetchId,
+                          currentQuote,
+                          { ...approval, approvalError: false },
+                        );
+                      } catch {
+                        if (currentFetchId !== fetchIdRef.current) {
+                          return;
+                        }
+                        if (
+                          isBridgeApprovalMockEnabled() &&
+                          BRIDGE_MOCK_SWITCHES.approval.keepFailedQuote
+                        ) {
+                          // Demo only: keep the failed quote visible so the
+                          // orange banner + retry prototype stays inspectable.
+                          publishBridgeQuoteApproval(
+                            currentFetchId,
+                            currentQuote,
+                            { approvalError: true },
+                          );
+                          return;
+                        }
+                        // A failed approve check makes the quote unusable, so
+                        // treat it exactly like "this quote never arrived".
+                        removeBridgeQuote(currentQuote);
                       }
                     }),
                   );
@@ -878,18 +1011,13 @@ export const useBridge = (
 
           await getQUoteV2();
 
-          const data = originData?.filter(
-            quote =>
-              !!quote?.bridge &&
-              !!quote?.bridge?.id &&
-              !!quote?.bridge?.logo_url &&
-              !!quote.bridge.name,
-          );
-
           if (currentFetchId === fetchIdRef.current) {
             flushPendingQuoteUpdates(currentFetchId);
 
-            if (data.length < 1) {
+            const hasUsableQuote = getBridgeQuoteListSnapshot().some(
+              quote => !quote.loading && !quote.approvalError,
+            );
+            if (!hasUsableQuote) {
               setSelectedBridgeQuote(undefined);
             }
           }
@@ -1019,8 +1147,19 @@ export const useBridge = (
             }),
           );
 
-      const best = getBestBridgeQuote(selectableQuoteList, toToken);
+      const includeFailedQuote =
+        isBridgeApprovalMockEnabled() &&
+        BRIDGE_MOCK_SWITCHES.approval.keepFailedQuote;
+      const best = getBestBridgeQuote(selectableQuoteList, toToken, {
+        includeApprovalError: includeFailedQuote,
+      });
       if (!best) {
+        // Nothing usable in this round (yet). While a soft refresh is still in
+        // flight the current quote stays on screen; only a settled round with
+        // no usable quote behaves like "no quote received".
+        if (bridgeQuoteRequestFinished && selectedBridgeQuote) {
+          setSelectedBridgeQuote(undefined);
+        }
         return;
       }
 
@@ -1037,11 +1176,17 @@ export const useBridge = (
               },
         );
 
-        const selectedQuoteLoaded = quoteList.some(
-          quote =>
-            !quote.loading && isSameBridgeQuote(quote, selectedBridgeQuote),
-        );
-        if (selectedQuoteLoaded && selectedBridgeQuote?.manualClick) {
+        // Identity check: `selectedBridgeQuote` is the exact object published
+        // into the list (approval patches share it), so a different object
+        // means the row was replaced by a fresh quote result.
+        const selectedQuoteInSync =
+          !!selectedBridgeQuote &&
+          quoteList.some(
+            quote =>
+              quote === selectedBridgeQuote &&
+              (!quote.approvalError || includeFailedQuote),
+          );
+        if (selectedQuoteInSync && selectedBridgeQuote?.manualClick) {
           const canDisplaySelectedQuote =
             bridgeQuoteRequestFinished ||
             canDisplayBridgeQuoteBeforeAllQuotesLoaded({
@@ -1058,7 +1203,7 @@ export const useBridge = (
 
         const shouldUpdateSelectedQuote =
           !selectedBridgeQuote ||
-          !selectedQuoteLoaded ||
+          !selectedQuoteInSync ||
           best.score.gt(bridgeQuoteScore(selectedBridgeQuote, toToken));
 
         if (shouldUpdateSelectedQuote) {
@@ -1318,15 +1463,28 @@ export const useBridge = (
     enabled: active,
   });
 
+  const selectedBridgeQuoteEntry = selectedBridgeQuote
+    ? getBridgeQuoteListSnapshot().find(quote =>
+        isSameBridgeQuote(quote, selectedBridgeQuote),
+      )
+    : undefined;
+  // A soft (same-amount) refresh marks every row as `loading` again while the
+  // current quote stays on screen, so `loading` must not make it undisplayable.
+  // Only a row that failed its approve check removes the quote from display.
   const selectedBridgeQuoteLoaded =
     !!selectedBridgeQuote &&
-    getBridgeQuoteListSnapshot().some(
-      quote => !quote.loading && isSameBridgeQuote(quote, selectedBridgeQuote),
-    );
+    !!selectedBridgeQuoteEntry &&
+    !selectedBridgeQuoteEntry.approvalError;
+  /** Background refresh in flight while a quote is already on screen. */
+  const quoteRefreshing =
+    hasPendingBridgeQuote &&
+    !!selectedBridgeQuote &&
+    !!selectedBridgeQuoteEntry;
   const selectedBridgeQuoteCanDisplay =
     !!toToken &&
     selectedBridgeQuoteLoaded &&
     (bridgeQuoteRequestFinished ||
+      quoteRefreshing ||
       canDisplayBridgeQuoteBeforeAllQuotesLoaded({
         quote: selectedBridgeQuote,
         fromToken,
@@ -1335,6 +1493,19 @@ export const useBridge = (
       }));
   const quoteDisplayLoading =
     !selectedBridgeQuoteCanDisplay && hasPendingBridgeQuote;
+  /**
+   * A quote round is still in flight: at least one provider has not settled
+   * yet. It is deliberately independent from "a quote is already on screen":
+   * quotes are published as soon as they arrive (decoupled from the approve
+   * check) and a same-amount refresh keeps the previous quote visible, so
+   * `quoteDisplayLoading` and `quoteRefreshing` are display concerns while this
+   * one means "prices are still being fetched".
+   *
+   * Exposed for UI that wants that exact semantics (e.g. a refresh affordance).
+   * It is not consumed yet; the switch button and the skeletons still use the
+   * display-side flags so their behaviour stays unchanged.
+   */
+  const quoteRoundInFlight = hasPendingBridgeQuote;
 
   return {
     clearExpiredTimer,
@@ -1361,6 +1532,8 @@ export const useBridge = (
 
     openQuotesList,
     quoteLoading: quoteDisplayLoading,
+    quoteRefreshing,
+    quoteRoundInFlight,
     allQuotesLoaded: bridgeQuoteRequestFinished,
     quoteRequestId,
     setQuotesList,
@@ -1377,6 +1550,7 @@ export const useBridge = (
     payTokenIsNativeToken,
 
     setSelectedBridgeQuote,
+    retrySelectedBridgeQuoteApproval,
     setAutoQuoteRefreshPaused,
     setReloadTxRefreshPaused,
     quoteRefreshCountdown,

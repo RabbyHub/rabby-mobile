@@ -6,6 +6,12 @@ export type BridgeAmountSource = 'slider' | 'input' | 'external';
 
 export type BridgeAmountActions = {
   beginSlider: () => void;
+  /**
+   * A slider gesture finished before the from token (balance) was ready: keep
+   * the position and replay the commit once the token arrives. Without this the
+   * gesture is simply lost and never turns into a quote.
+   */
+  deferSlider: (value: number) => void;
   setAmountFromInput: (input: { draft: string; slider: number }) => void;
   endSlider: (input: {
     draft: string;
@@ -22,6 +28,8 @@ export type BridgeAmountState = {
   committed: string;
   source: BridgeAmountSource;
   isDragging: boolean;
+  /** Slider position waiting for the from token to become available. */
+  pendingSlider: number | null;
   isMax: boolean;
   passGasPrice: boolean;
   actions: BridgeAmountActions;
@@ -43,12 +51,26 @@ export function createBridgeAmountStore() {
     committed: '',
     source: 'external',
     isDragging: false,
+    pendingSlider: null,
     isMax: false,
     passGasPrice: false,
     actions: {
       beginSlider: () => {
         clearCommitTimer();
-        set({ source: 'slider', isDragging: true, isMax: false });
+        set({
+          source: 'slider',
+          isDragging: true,
+          isMax: false,
+          pendingSlider: null,
+        });
+      },
+      deferSlider: (value: number) => {
+        clearCommitTimer();
+        set({
+          source: 'slider',
+          isDragging: false,
+          pendingSlider: value,
+        });
       },
       setAmountFromInput: ({ draft, slider }) => {
         clearCommitTimer();
@@ -57,6 +79,7 @@ export function createBridgeAmountStore() {
           draft,
           source: 'input',
           isDragging: false,
+          pendingSlider: null,
           isMax: false,
           passGasPrice: false,
         });
@@ -72,6 +95,7 @@ export function createBridgeAmountStore() {
           committed: draft,
           source: 'slider',
           isDragging: false,
+          pendingSlider: null,
           isMax,
           passGasPrice: passGasPrice ?? state.passGasPrice,
         }));
@@ -91,6 +115,7 @@ export function createBridgeAmountStore() {
           committed: '',
           source: 'external',
           isDragging: false,
+          pendingSlider: null,
           isMax: false,
           passGasPrice: false,
         });

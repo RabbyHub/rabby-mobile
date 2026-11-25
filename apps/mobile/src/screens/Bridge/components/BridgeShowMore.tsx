@@ -25,10 +25,13 @@ import {
   getBridgeDurationColor,
 } from '../utils/duration';
 import { tokenPriceImpact } from '../hooks/token';
-import { AppSwitch } from '@/components';
+import { AppSwitch, Tip } from '@/components';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
+import RcIconLock from '@/assets2024/icons/bridge/IconLock.svg';
+import { ShimmerBlock } from './ShimmerBlock';
+import { QuoteFlux, QuoteSourceSwap } from './QuoteTransition';
 import { formatGasHeaderUsdValue, formatTokenAmount } from '@/utils/number';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import { findChain, findChainByServerID } from '@/utils/chain';
@@ -114,6 +117,11 @@ const BridgeShowMore = ({
   renderSwapQuotes,
   onRefreshSwapQuotes,
   swapQuotesLoading,
+  sourceKey,
+  approvalLoading,
+  approvalError,
+  onRetryApproval,
+  shouldApproveToken,
 }: {
   openQuotesList: () => void;
   sourceName: string;
@@ -155,6 +163,15 @@ const BridgeShowMore = ({
   renderSwapQuotes?: (onSelect: () => void) => React.ReactNode;
   onRefreshSwapQuotes?: () => void;
   swapQuotesLoading?: boolean;
+  /** Identity of the displayed quote, used to fade a provider swap. */
+  sourceKey?: string;
+  /** Reserved approve slot: shimmer while the approve result is unknown. */
+  approvalLoading?: boolean;
+  /** Approve result failed for the current quote (orange warning + retry). */
+  approvalError?: boolean;
+  onRetryApproval?: () => void;
+  /** Approve result is known and requires an approve step (lock icon). */
+  shouldApproveToken?: boolean;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024, colors } = useTheme2024({ getStyle });
@@ -265,6 +282,28 @@ const BridgeShowMore = ({
       const content = (
         <>
           {isBestQuote ? BestQuoteContent : QuoteContent}
+          {/*
+            No reserved width here: the approve slot (shimmer / lock) only
+            exists while there is something to show, so an already-approved
+            quote does not keep an empty gap before the duration.
+          */}
+          {type === 'bridge' && (approvalLoading || shouldApproveToken) ? (
+            <View style={styles.approvalSlot}>
+              {approvalLoading ? (
+                <ShimmerBlock size={16} />
+              ) : (
+                <Tip
+                  content={t(
+                    'page.bridge.need-to-approve-token-before-bridge',
+                  )}>
+                  <RcIconLock
+                    color={colors2024['neutral-foot']}
+                    style={styles.approvalLock}
+                  />
+                </Tip>
+              )}
+            </View>
+          ) : null}
           {type === 'bridge' && (sourceLogo || sourceName) ? (
             <Text style={[styles.sourceName, { color: durationColor }]}>
               {' · '}
@@ -313,7 +352,15 @@ const BridgeShowMore = ({
           ? t('page.bridge.showMore.source')
           : t('page.swap.source')
       }>
-      {sourceSelectorRender()}
+      {/* The loading placeholder stays outside the swap animation: a quote
+          must never cross-fade into/out of a skeleton. */}
+      {quoteLoading ? (
+        <CustomSkeleton style={styles.sourceSkeleton} />
+      ) : (
+        <QuoteSourceSwap triggerKey={sourceKey || ''}>
+          {sourceSelectorRender()}
+        </QuoteSourceSwap>
+      )}
     </ListItem>
   ));
 
@@ -321,17 +368,19 @@ const BridgeShowMore = ({
     <View style={[styles.lossInfo, { marginBottom: 0 }]}>
       <View style={styles.flexRow}>
         <Text style={styles.impactText}>{t('page.bridge.price-impact')}</Text>
-        <TouchableOpacity
-          style={styles.diffBox}
-          onPress={() => setLossImpactOpen(i => !i)}>
-          <Text style={styles.lossAmount}>-{data?.diff}%</Text>
-          <Animated.View
-            style={{
-              transform: [{ rotate: !lossImpactOpen ? '180deg' : '0deg' }],
-            }}>
-            <RcIconBluePolygon color={colors2024['orange-default']} />
-          </Animated.View>
-        </TouchableOpacity>
+        <QuoteFlux enabled={!quoteLoading}>
+          <TouchableOpacity
+            style={styles.diffBox}
+            onPress={() => setLossImpactOpen(i => !i)}>
+            <Text style={styles.lossAmount}>-{data?.diff}%</Text>
+            <Animated.View
+              style={{
+                transform: [{ rotate: !lossImpactOpen ? '180deg' : '0deg' }],
+              }}>
+              <RcIconBluePolygon color={colors2024['orange-default']} />
+            </Animated.View>
+          </TouchableOpacity>
+        </QuoteFlux>
       </View>
 
       <WarningText>
@@ -367,7 +416,25 @@ const BridgeShowMore = ({
       <View style={styles.containerContent}>
         {priceImpactContent}
 
-        {type === 'bridge' && sourceContentRender()}
+        {type === 'bridge' ? sourceContentRender() : null}
+
+        {/*
+          The failure banner is the only place where show-time is still tied to
+          the quote: it renders only after both the approve result failed and the
+          loading state above it (source selector / gas row) has finished, so it
+          never flickers in while the row is still resolving.
+        */}
+        {approvalError && !approvalLoading && !quoteLoading ? (
+          <WarningText style={{ marginTop: 10 }}>
+            {'Approve status failed. '}
+            <Text
+              onPress={onRetryApproval}
+              suppressHighlighting
+              style={styles.approvalRetryLink}>
+              {'Retry'}
+            </Text>
+          </WarningText>
+        ) : null}
 
         {!showSourceFallback && fromToken ? (
           <DirectSignGasInfo
@@ -379,6 +446,7 @@ const BridgeShowMore = ({
             hideGasLevelInSummary
             sourceSelector={swapGasRowSourceSelector}
             fallbackSourceSelector={swapGasRowFallbackSourceSelector}
+            valueFluxEnabled={!quoteLoading}
             onDepositPopupVisibleChange={onDepositPopupVisibleChange}
             onGasSettingsOpenChange={onGasSettingsOpenChange}
             renderSwapQuotes={renderSwapQuotes}
@@ -517,6 +585,7 @@ export const DirectSignGasInfo = ({
   sourceSelector,
   fallbackSourceSelector,
   gasFeeLabel,
+  valueFluxEnabled,
 }: {
   supportDirectSign: boolean;
   loading: boolean;
@@ -537,6 +606,8 @@ export const DirectSignGasInfo = ({
   swapGasQuoteVisible?: boolean;
   onSwapGasQuoteVisibleChange?: (visible: boolean) => void;
   gasFeeLabel?: React.ReactNode;
+  /** Breathe only the gas value (label untouched) when the source changes. */
+  valueFluxEnabled?: boolean;
 } & RNViewProps) => {
   const { t } = useTranslation();
   const resolvedGasFeeLabel =
@@ -1135,6 +1206,7 @@ export const DirectSignGasInfo = ({
           disableAutoGasLevelSwitch: !!manualGasMethod,
           showGasMethodShortcut: false,
           hideGasLevelInSummary,
+          valueFluxEnabled,
           rightPrefix: sourceSelector,
           disabled: false,
           isReady,
@@ -1201,18 +1273,20 @@ export const DirectSignGasInfo = ({
           style={gasFeeListItemStyle}
           innerStyle={gasFeeListItemInnerStyle}>
           <View style={styles.previewValueSlot}>
-            {fallbackSourceSelector ?? sourceSelector}
-            {!loading && noQuote ? (
-              <Text style={styles.noQuotePlaceholder}>-</Text>
-            ) : (
-              <CustomSkeleton
-                style={
-                  hideGasLevelInSummary
-                    ? styles.infoCardGasSkeleton
-                    : styles.gasSkeleton
-                }
-              />
-            )}
+            <QuoteFlux enabled={!!valueFluxEnabled}>
+              {fallbackSourceSelector ?? sourceSelector}
+              {!loading && noQuote ? (
+                <Text style={styles.noQuotePlaceholder}>-</Text>
+              ) : (
+                <CustomSkeleton
+                  style={
+                    hideGasLevelInSummary
+                      ? styles.infoCardGasSkeleton
+                      : styles.gasSkeleton
+                  }
+                />
+              )}
+            </QuoteFlux>
           </View>
         </ListItem>
       )}
@@ -1451,6 +1525,22 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   },
   arrowIcon: {
     transform: [{ rotate: '-90deg' }],
+  },
+  approvalSlot: {
+    width: 20,
+    height: 20,
+    marginLeft: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  approvalLock: {
+    width: 16,
+    height: 16,
+  },
+  // Keep the retry link on the same font as every other WarningText body:
+  // only an underline, no weight/size override.
+  approvalRetryLink: {
+    textDecorationLine: 'underline',
   },
 
   gasAccountTip: {

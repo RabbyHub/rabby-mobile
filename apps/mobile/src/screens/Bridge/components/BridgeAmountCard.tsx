@@ -44,7 +44,9 @@ export const BridgeAmountCard = React.memo(function BridgeAmountCard(
   const source = useBridgeAmount(state => state.source);
   const isDragging = useBridgeAmount(state => state.isDragging);
   const draft = useBridgeAmount(state => state.draft);
+  const pendingSlider = useBridgeAmount(state => state.pendingSlider);
   const actions = bridgeAmountStore.getState().actions;
+  const { resolveSliderAmount, token } = props;
 
   const displayValue = useMemo(() => {
     if (source === 'input') {
@@ -83,20 +85,44 @@ export const BridgeAmountCard = React.memo(function BridgeAmountCard(
     actions.beginSlider();
   }, [actions, sliderValue]);
 
-  const handleGestureComplete = useCallback(
+  const commitSliderValue = useCallback(
     (value: number) => {
-      const resolved = props.resolveSliderAmount(value);
+      const resolved = resolveSliderAmount(value);
       if (!resolved) {
-        return;
+        return false;
       }
       actions.endSlider({
         draft: resolved.amount,
         isMax: value === 100,
         passGasPrice: resolved.useGasPrice,
       });
+      return true;
     },
-    [actions, props],
+    [actions, resolveSliderAmount],
   );
+
+  const handleGestureComplete = useCallback(
+    (value: number) => {
+      // The from token (and its balance) may not be loaded yet when the page is
+      // just opened. The gesture still moves the slider, so remember it instead
+      // of dropping it, and commit it as soon as the token is available.
+      if (!token?.amount) {
+        actions.deferSlider(value);
+        return;
+      }
+      if (!commitSliderValue(value)) {
+        actions.deferSlider(value);
+      }
+    },
+    [actions, commitSliderValue, token?.amount],
+  );
+
+  useEffect(() => {
+    if (pendingSlider === null || !token?.amount) {
+      return;
+    }
+    commitSliderValue(pendingSlider);
+  }, [pendingSlider, token?.amount, commitSliderValue]);
 
   return (
     <BridgeToken
