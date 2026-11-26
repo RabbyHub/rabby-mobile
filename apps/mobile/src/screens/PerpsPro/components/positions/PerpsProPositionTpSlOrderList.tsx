@@ -5,7 +5,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import BigNumber from 'bignumber.js';
 import React, { useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, View, type StyleProp, type TextStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
   PERPS_PRO_DIALOG_TOKENS,
@@ -168,7 +168,8 @@ PerpsProPositionTpSlOrderList.displayName = 'PerpsProPositionTpSlOrderList';
 export const PerpsProPositionTpSlAddButton: React.FC<{
   pending: boolean;
   onAdd: () => void;
-}> = ({ pending, onAdd }) => {
+  textStyle?: StyleProp<TextStyle>;
+}> = ({ pending, onAdd, textStyle }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   return (
@@ -183,7 +184,7 @@ export const PerpsProPositionTpSlAddButton: React.FC<{
         height={16}
         width={16}
       />
-      <Text style={styles.addButtonText}>
+      <Text style={[styles.addButtonText, textStyle]}>
         {t('page.perps.pro.positionTpsl.addButton')}
       </Text>
     </Pressable>
