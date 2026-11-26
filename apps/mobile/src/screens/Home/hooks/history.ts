@@ -1,16 +1,10 @@
 import { debounce } from 'lodash';
 
-import {
-  getTransactionHistoryFailedCountSnapshot,
-  getTransactionHistorySucceedCountSnapshot,
-  transactionHistoryServiceApi,
-} from '@/core/serviceApi/transactionHistory';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { makeAvoidParallelAsyncFunc } from '@/core/utils/concurrency';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { onAppOrmSyncEvents } from '@/databases/sync/_event';
 import { zCreate } from '@/core/utils/reexports';
-import type { UpdaterOrPartials } from '@/core/utils/store';
-import { resolveValFromUpdater } from '@/core/utils/store';
 import { runStartupTask } from '@/core/utils/startupScheduler';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import type { RefLikeObject } from '@/utils/type';
@@ -22,18 +16,10 @@ import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 type HomeHistoryState = {
   pendingTxCount: number;
-  historyCount: {
-    success: number;
-    fail: number;
-  };
 };
 
 const homeHistoryStore = zCreate<HomeHistoryState>(() => ({
   pendingTxCount: 0,
-  historyCount: {
-    success: 0,
-    fail: 0,
-  },
 }));
 
 export function useHomePendingTxCount() {
@@ -43,31 +29,6 @@ export function useHomePendingTxCount() {
     Object.is,
     { storeLabel: 'home-history-badges' },
   );
-}
-
-export function useHomeHistoryCount() {
-  return useActivityStore(
-    homeHistoryStore,
-    state => state.historyCount,
-    Object.is,
-    { storeLabel: 'home-history-badges' },
-  );
-}
-
-function setHistoryCount(
-  valOrFunc: UpdaterOrPartials<HomeHistoryState['historyCount']>,
-) {
-  homeHistoryStore.setState(prev => {
-    const { newVal, changed } = resolveValFromUpdater(
-      prev.historyCount,
-      valOrFunc,
-      { strict: true },
-    );
-
-    if (!changed) return prev;
-
-    return { ...prev, historyCount: newVal };
-  });
 }
 
 export const refreshSuccessAndFailList = makeAvoidParallelAsyncFunc(
@@ -90,18 +51,6 @@ export const refreshSuccessAndFailList = makeAvoidParallelAsyncFunc(
         return transactionHistoryServiceApi.setFailedList(id);
       }),
     );
-
-    const [count, success] = await Promise.all([
-      transactionHistoryServiceApi.getFailedCount(),
-      transactionHistoryServiceApi.getSucceedCount(),
-    ]);
-
-    setHistoryCount({ success, fail: count });
-
-    return {
-      success: success,
-      fail: count,
-    };
   },
 );
 
