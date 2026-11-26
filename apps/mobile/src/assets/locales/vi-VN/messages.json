@@ -2840,6 +2840,7 @@
         "fetchQuoteFailed": "Không thể lấy báo giá gửi tiền. Vui lòng chuyển đổi token.",
         "minimumDepositSize": "Số tiền gửi tối thiểu là 5 đô la.",
         "estReceiveTooltip": "Khoản nạp liên chuỗi được xử lý qua LiFi và có thể phát sinh trượt giá. Thời gian nhận dự kiến là {{number}} giây.",
+        "estReceiveTooltipV2": "Khoản nạp liên chuỗi được xử lý qua {{name}} và có thể phát sinh trượt giá. Thời gian nhận dự kiến là {{number}} giây.",
         "insufficientBalance": "Số dư không đủ"
       },
       "PerpsWithdrawPopup": {
@@ -2988,9 +2989,6 @@
         "title": "Tiết kiệm phí trên Hyperliquid",
         "hyperliquidFee": "Phí giao dịch Hyperliquid.",
         "activatedSuccess": "Đã kích hoạt ưu đãi giảm 4% phí Hyperliquid"
-      },
-      "dappSelect": {
-        "title": "Chọn nhà cung cấp Perps"
       },
       "EnableUnifiedAccount": {
         "title": "Bật Tài khoản Thống nhất",
@@ -3416,20 +3414,6 @@
         "btnCopyAddress": "Sao chép địa chỉ",
         "title": "Nhận tài sản"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "Chọn nhà cung cấp Dự đoán"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableTitle": "Dịch vụ không khả dụng",
-      "serviceUnavailableDesc": "Dịch vụ không được hỗ trợ ở khu vực hiện tại của bạn."
-    },
-    "DAppFrame": {
-      "selectAWallet": "Chọn một ví",
-      "netWorth": "Giá trị ròng",
-      "walletBalance": "Ví/Số dư"
     },
     "meme": {
       "tokenHeader": {

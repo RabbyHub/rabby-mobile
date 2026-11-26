@@ -2723,7 +2723,8 @@
         "estReceive": "Estimasi Terima: {{balance}}",
         "invalidNumber": "Silakan masukkan angka yang valid",
         "fetchQuoteFailed": "Gagal mendapatkan penawaran setoran. Silakan ganti token.",
-        "estReceiveTooltip": "Setoran lintas-rantai diproses melalui LiFi, mungkin mengalami sedikit slippage. Perkiraan tiba dalam {{number}} detik."
+        "estReceiveTooltip": "Setoran lintas-rantai diproses melalui LiFi, mungkin mengalami sedikit slippage. Perkiraan tiba dalam {{number}} detik.",
+        "estReceiveTooltipV2": "Setoran lintas-rantai diproses melalui {{name}}, mungkin mengalami sedikit slippage. Perkiraan tiba dalam {{number}} detik."
       },
       "PerpsWithdrawPopup": {
         "feeTip": "Biaya: $1,00",
@@ -2871,9 +2872,6 @@
         "hyperliquidFee": "Biaya trading Hyperliquid.",
         "activatedSuccess": "4% penghematan biaya Hyperliquid diaktifkan",
         "description": "Gunakan kode Rabby untuk mengaktifkan"
-      },
-      "dappSelect": {
-        "title": "Pilih Penyedia Perps"
       },
       "search": {
         "placeholder": "Cari Perps",
@@ -3299,20 +3297,6 @@
         "btnCopyAddress": "Salin Alamat",
         "title": "Terima aset"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "Pilih Penyedia Prediksi"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableDesc": "Layanan ini tidak didukung di wilayah Anda saat ini.",
-      "serviceUnavailableTitle": "Layanan Tidak Tersedia"
-    },
-    "DAppFrame": {
-      "walletBalance": "Dompet/Saldo",
-      "netWorth": "Kekayaan bersih",
-      "selectAWallet": "Pilih Dompet"
     },
     "meme": {
       "tokenHeader": {

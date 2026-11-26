@@ -2732,7 +2732,8 @@
         "estReceive": "Est. Recevoir : {{balance}}",
         "fetchQuoteFailed": "Échec de la récupération du devis de dépôt. Veuillez changer de jeton.",
         "minimumDepositSize": "Le montant minimum de dépôt est de 5 $.",
-        "estReceiveTooltip": "Le dépôt cross-chain est traité via LiFi, ce qui peut entraîner un certain glissement. Arrivée estimée dans {{number}} secondes."
+        "estReceiveTooltip": "Le dépôt cross-chain est traité via LiFi, ce qui peut entraîner un certain glissement. Arrivée estimée dans {{number}} secondes.",
+        "estReceiveTooltipV2": "Le dépôt cross-chain est traité via {{name}}, ce qui peut entraîner un certain glissement. Arrivée estimée dans {{number}} secondes."
       },
       "PerpsWithdrawPopup": {
         "title": "Retirer",
@@ -2881,9 +2882,6 @@
         "hyperliquidFee": "Frais de trading Hyperliquid.",
         "activatedSuccess": "4 % d'économies sur les frais Hyperliquid activées",
         "description": "Utilisez le code de Rabby pour activer"
-      },
-      "dappSelect": {
-        "title": "Sélectionner le fournisseur de Perps"
       },
       "search": {
         "placeholder": "Rechercher sur Perps",
@@ -3308,20 +3306,6 @@
       "receiveAssets": {
         "btnCopyAddress": "Copier l'adresse",
         "title": "Recevoir des actifs"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableDesc": "Ce service n'est pas pris en charge dans votre région actuelle.",
-      "serviceUnavailableTitle": "Service indisponible"
-    },
-    "DAppFrame": {
-      "netWorth": "Valeur nette",
-      "walletBalance": "Portefeuille/Solde",
-      "selectAWallet": "Sélectionnez un portefeuille"
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "Sélectionner un fournisseur de prévisions"
       }
     },
     "meme": {

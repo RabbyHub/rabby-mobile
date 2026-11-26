@@ -2907,7 +2907,8 @@
         "minimumDepositSize": "El importe mínimo de depósito es de 5 $.",
         "fetchQuoteFailed": "No se pudo obtener la cotización del depósito. Por favor, cambia de token.",
         "estReceive": "Est. Recibir: {{balance}}",
-        "estReceiveTooltip": "El depósito entre cadenas se procesa a través de LiFi, puede incurrir en algún deslizamiento. Llegada estimada en {{number}}s."
+        "estReceiveTooltip": "El depósito entre cadenas se procesa a través de LiFi, puede incurrir en algún deslizamiento. Llegada estimada en {{number}}s.",
+        "estReceiveTooltipV2": "El depósito entre cadenas se procesa a través de {{name}}, puede incurrir en algún deslizamiento. Llegada estimada en {{number}}s."
       },
       "PerpsWithdrawPopup": {
         "withdrawBtn": "Retirar",
@@ -3056,9 +3057,6 @@
         "activatedFailed": "Activación fallida",
         "activatedSuccess": "Ahorros de tarifas Hyperliquid del 4% activados",
         "hyperliquidFee": "Comisiones de trading de Hyperliquid."
-      },
-      "dappSelect": {
-        "title": "Seleccionar proveedor de Perps"
       },
       "search": {
         "placeholder": "Buscar Perps",
@@ -3484,20 +3482,6 @@
         "title": "Recibir activos",
         "btnCopyAddress": "Copiar Dirección"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "Seleccionar Proveedor de Predicción"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableTitle": "Servicio no disponible",
-      "serviceUnavailableDesc": "El servicio no está disponible en su región actual."
-    },
-    "DAppFrame": {
-      "selectAWallet": "Selecciona una cartera",
-      "netWorth": "Valor neto",
-      "walletBalance": "Cartera/Saldo"
     },
     "meme": {
       "tokenHeader": {

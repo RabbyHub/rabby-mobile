@@ -2723,6 +2723,7 @@
         "invalidNumber": "유효한 숫자를 입력해 주세요",
         "fetchQuoteFailed": "입금 견적을 가져오는 데 실패했습니다. 토큰을 전환해 주세요.",
         "estReceiveTooltip": "크로스체인 입금은 LiFi를 통해 처리되며 일부 슬리피지가 발생할 수 있습니다. 예상 도착 시간은 {{number}}초입니다.",
+        "estReceiveTooltipV2": "크로스체인 입금은 {{name}}를 통해 처리되며 일부 슬리피지가 발생할 수 있습니다. 예상 도착 시간은 {{number}}초입니다.",
         "estReceive": "예상 수령액: {{balance}}"
       },
       "PerpsWithdrawPopup": {
@@ -2871,9 +2872,6 @@
         "hyperliquidFee": "하이퍼리퀴드 거래 수수료.",
         "activatedFailed": "활성화 실패",
         "activateNow": "지금 활성화하세요"
-      },
-      "dappSelect": {
-        "title": "무기한 선물 제공자 선택"
       },
       "search": {
         "placeholder": "무기한 선물 검색",
@@ -3299,20 +3297,6 @@
         "title": "자산 받기",
         "btnCopyAddress": "주소 복사"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "예측 제공자 선택"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableTitle": "서비스를 이용할 수 없습니다",
-      "serviceUnavailableDesc": "현재 지역에서는 이 서비스가 지원되지 않습니다."
-    },
-    "DAppFrame": {
-      "netWorth": "순자산",
-      "walletBalance": "지갑/잔액",
-      "selectAWallet": "지갑 선택"
     },
     "meme": {
       "tokenHeader": {

@@ -514,6 +514,9 @@ export const AuthenticationModal = ({
     setBioAuth,
   ]);
 
+  const passwordPrompt =
+    placeholder ?? t('component.AuthenticationModal.passwordPlaceholder');
+
   return (
     <AutoLockView>
       <AppBottomSheetModalTitle style={styles.modalTitle} title={title} />
@@ -554,6 +557,9 @@ export const AuthenticationModal = ({
               <View style={styles.inputWrapper}>
                 <BottomSheetTextInput
                   secureTextEntry
+                  // The visible prompt is drawn as a sibling overlay below, so the
+                  // input itself needs an accessibility label.
+                  accessibilityLabel={passwordPrompt}
                   returnKeyLabel={t('global.Confirm')}
                   value={password}
                   onChangeText={setPassword}
@@ -574,15 +580,15 @@ export const AuthenticationModal = ({
                 {!password && (
                   <View
                     pointerEvents="none"
+                    accessible={false}
+                    accessibilityElementsHidden
+                    importantForAccessibility="no-hide-descendants"
                     style={[
                       styles.placeholderOverlay,
                       bioComputed.isBiometricsEnabled &&
                         styles.placeholderOverlayWithAddOn,
                     ]}>
-                    <Text style={styles.placeholderText}>
-                      {placeholder ??
-                        t('component.AuthenticationModal.passwordPlaceholder')}
-                    </Text>
+                    <Text style={styles.placeholderText}>{passwordPrompt}</Text>
                   </View>
                 )}
                 {__DEV__ && bioComputed.isBiometricsEnabled && (

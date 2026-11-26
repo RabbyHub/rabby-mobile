@@ -2895,7 +2895,8 @@
         "minimumDepositSize": "最低入金金額為 $5",
         "estReceive": "預計收到：{{balance}}",
         "fetchQuoteFailed": "取得入金報價失敗，請切換代幣。",
-        "estReceiveTooltip": "跨鏈入金透過 LiFi 處理，可能產生滑點。預計 {{number}} 秒到帳。"
+        "estReceiveTooltip": "跨鏈入金透過 LiFi 處理，可能產生滑點。預計 {{number}} 秒到帳。",
+        "estReceiveTooltipV2": "跨鏈入金透過 {{name}} 處理，可能產生滑點。預計 {{number}} 秒到帳。"
       },
       "PerpsWithdrawPopup": {
         "amount": "金額",
@@ -3043,9 +3044,6 @@
         "activatedFailed": "啟用失敗",
         "activatedSuccess": "已啟用 4% Hyperliquid 手續費減免",
         "activateNow": "立即啟用"
-      },
-      "dappSelect": {
-        "title": "選擇永續合約服務商"
       },
       "search": {
         "placeholder": "搜尋永續合約",
@@ -3471,20 +3469,6 @@
         "title": "接收資產",
         "btnCopyAddress": "複製地址"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "選擇預測提供者"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableDesc": "此服務在您目前的地區不受支援。",
-      "serviceUnavailableTitle": "服務不可用"
-    },
-    "DAppFrame": {
-      "netWorth": "淨資產",
-      "selectAWallet": "選擇一個錢包",
-      "walletBalance": "錢包/餘額"
     },
     "meme": {
       "tokenHeader": {

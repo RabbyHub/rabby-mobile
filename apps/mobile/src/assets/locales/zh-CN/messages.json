@@ -2873,6 +2873,7 @@
         "estReceive": "预计收到：{{balance}}",
         "minimumDepositSize": "最低充值金额为 $5",
         "estReceiveTooltip": "跨链充值通过 LiFi 处理，可能产生滑点。预计 {{number}} 秒到账。",
+        "estReceiveTooltipV2": "跨链充值通过 {{name}} 处理，可能产生滑点。预计 {{number}} 秒到账。",
         "insufficientBalance": "余额不足"
       },
       "PerpsWithdrawPopup": {
@@ -3021,9 +3022,6 @@
         "description": "使用 Rabby 邀请码启用",
         "activateNow": "立即激活",
         "activatedSuccess": "已启用 4% Hyperliquid 手续费减免"
-      },
-      "dappSelect": {
-        "title": "选择永续合约服务商"
       },
       "search": {
         "placeholder": "搜索永续合约",
@@ -3446,20 +3444,6 @@
         "btnCopyAddress": "复制地址",
         "title": "接收资产"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "选择预测提供商"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableDesc": "该服务在您当前的地区不受支持。",
-      "serviceUnavailableTitle": "服务不可用"
-    },
-    "DAppFrame": {
-      "walletBalance": "钱包/余额",
-      "selectAWallet": "选择一个钱包",
-      "netWorth": "净资产"
     },
     "meme": {
       "tokenHeader": {

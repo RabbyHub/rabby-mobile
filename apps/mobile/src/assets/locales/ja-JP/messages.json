@@ -2773,7 +2773,8 @@
         "invalidNumber": "有効な数値を入力してください。",
         "fetchQuoteFailed": "入金見積もりの取得に失敗しました。トークンを切り替えてください。",
         "estReceive": "推定受取額: {{balance}}",
-        "estReceiveTooltip": "クロスチェーン入金はLiFiを介して処理され、スリッページが発生する可能性があります。到着予定は{{number}}秒です。"
+        "estReceiveTooltip": "クロスチェーン入金はLiFiを介して処理され、スリッページが発生する可能性があります。到着予定は{{number}}秒です。",
+        "estReceiveTooltipV2": "クロスチェーン入金は{{name}}を介して処理され、スリッページが発生する可能性があります。到着予定は{{number}}秒です。"
       },
       "PerpsWithdrawPopup": {
         "insufficientBalance": "残高不足",
@@ -2921,9 +2922,6 @@
         "description": "Rabbyのコードを使うと",
         "activatedSuccess": "Hyperliquidの取引手数料4%割引を有効にしました",
         "activatedFailed": "有効化に失敗しました"
-      },
-      "dappSelect": {
-        "title": "無期限先物プロバイダーを選択"
       },
       "search": {
         "placeholder": "無期限先物を検索",
@@ -3349,20 +3347,6 @@
         "title": "資産を受け取る",
         "btnCopyAddress": "アドレスをコピー"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "予測プロバイダーを選択してください"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableTitle": "サービスは利用できません",
-      "serviceUnavailableDesc": "このサービスは現在の地域ではサポートされていません。"
-    },
-    "DAppFrame": {
-      "selectAWallet": "ウォレットを選択",
-      "walletBalance": "ウォレット/残高",
-      "netWorth": "純資産"
     },
     "meme": {
       "tokenHeader": {

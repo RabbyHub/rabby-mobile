@@ -2160,10 +2160,6 @@
         "title": "Select Chain"
       }
     },
-    "dappPermission": {
-      "serviceUnavailableTitle": "Service Unavailable",
-      "serviceUnavailableDesc": "The service is not supported in your current region."
-    },
     "watchlist": {
       "empty": {
         "title": "No tokens in your watchlist yet"
@@ -3406,11 +3402,6 @@
         "title": "Receive assets",
         "btnCopyAddress": "Copy Address"
       }
-    },
-    "DAppFrame": {
-      "walletBalance": "Wallet/Balance",
-      "netWorth": "Net worth",
-      "selectAWallet": "Select a Wallet"
     },
     "convertDust": {
       "colValueAmount": "Value/Amount",

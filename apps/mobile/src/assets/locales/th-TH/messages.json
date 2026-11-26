@@ -2892,6 +2892,7 @@
         "estReceive": "ประมาณการรับ: {{balance}}",
         "fetchQuoteFailed": "ไม่สามารถดึงการเสนอราคาสำหรับการฝากได้ โปรดเปลี่ยนโทเค็น",
         "estReceiveTooltip": "การฝากข้ามเชนจะดำเนินการผ่าน LiFi อาจมีการเกิด slippage บ้าง เวลาที่คาดว่าจะมาถึงคือ {{number}} วินาที",
+        "estReceiveTooltipV2": "การฝากข้ามเชนจะดำเนินการผ่าน {{name}} อาจมีการเกิด slippage บ้าง เวลาที่คาดว่าจะมาถึงคือ {{number}} วินาที",
         "insufficientBalance": "ยอดคงเหลือไม่เพียงพอ"
       },
       "PerpsWithdrawPopup": {
@@ -3040,9 +3041,6 @@
         "activatedFailed": "การเปิดใช้งานล้มเหลว",
         "activatedSuccess": "เปิดใช้งานการประหยัดค่าธรรมเนียม Hyperliquid 4%",
         "activateNow": "เปิดใช้งานเดี๋ยวนี้"
-      },
-      "dappSelect": {
-        "title": "เลือกผู้ให้บริการ Perps"
       },
       "search": {
         "placeholder": "ค้นหา Perps",
@@ -3468,20 +3466,6 @@
         "btnCopyAddress": "คัดลอกที่อยู่",
         "title": "รับสินทรัพย์"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "เลือกผู้ให้บริการการคาดการณ์"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableTitle": "บริการไม่พร้อมใช้งาน",
-      "serviceUnavailableDesc": "บริการนี้ไม่รองรับในภูมิภาคปัจจุบันของคุณ."
-    },
-    "DAppFrame": {
-      "netWorth": "สินทรัพย์สุทธิ",
-      "selectAWallet": "เลือกกระเป๋าเงิน",
-      "walletBalance": "กระเป๋าเงิน/ยอดเงิน"
     },
     "meme": {
       "tokenHeader": {

@@ -99,4 +99,12 @@
       https://developer.android.com/guide/topics/connectivity/bluetooth-le.html#permissions
     -->
   <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />
+
+  <!-- Google Play infers these as required features and blocks review because they
+       limit distribution to tablets, desktop and Android XR devices:
+       - screen.portrait is implied by MainActivity's screenOrientation="portrait"
+       - wifi is implied by ACCESS_WIFI_STATE merged from @react-native-community/netinfo
+       The app works without either, so declare them optional. The portrait lock is unchanged. -->
+  <uses-feature android:name="android.hardware.screen.portrait" android:required="false" />
+  <uses-feature android:name="android.hardware.wifi" android:required="false" />
 </manifest>

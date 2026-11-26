@@ -90,7 +90,6 @@ import {
   GlobalSecurityTipStubModal,
   GlobalSignerPortal,
   GlobalTipsPopup,
-  InnerDappWebViewPreloadEntry,
   QrCodeModal,
   ToggleCollateralModal,
   UpgradePromptModal,
@@ -432,7 +431,6 @@ function AppNavigationPostUnlockGlobals({ enabled }: { enabled: boolean }) {
   return (
     <>
       <ApprovalTokenDetailSheetModalStub />
-      <InnerDappWebViewPreloadEntry />
       <BottomSheetBrowser />
       <BrowserManagePopup />
       <BrowserFavoritePopup />

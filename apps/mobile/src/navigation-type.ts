@@ -451,7 +451,6 @@ export type TransactionNavigatorParamList = {
   [RootNames.Lending]?: {
     dappId?: string;
   };
-  [RootNames.Prediction]?: {};
 };
 
 export type SettingNavigatorParamList = {

@@ -1434,5 +1434,6 @@ export const useBridge = (
 
     onChangeSlider,
     slider,
+    clearPendingSlider,
   };
 };

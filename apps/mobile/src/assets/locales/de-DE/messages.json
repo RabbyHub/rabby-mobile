@@ -3009,6 +3009,7 @@
         "minimumDepositSize": "Der Mindestbetrag für die Einzahlung beträgt 5 $.",
         "title": "Einzahlen",
         "estReceiveTooltip": "Die Cross-Chain-Einzahlung wird über LiFi abgewickelt und kann Slippage verursachen. Geschätzte Ankunft in {{number}} s.",
+        "estReceiveTooltipV2": "Die Cross-Chain-Einzahlung wird über {{name}} abgewickelt und kann Slippage verursachen. Geschätzte Ankunft in {{number}} s.",
         "fetchQuoteFailed": "Fehler beim Abrufen des Einzahlungspreises. Bitte wechseln Sie das Token."
       },
       "PerpsWithdrawPopup": {
@@ -3157,9 +3158,6 @@
         "description": "Verwenden Sie den Code von Rabby, um zu aktivieren.",
         "activatedSuccess": "4% Hyperliquid-Gebühreneinsparungen aktiviert",
         "title": "Auf Hyperliquid Gebühren sparen"
-      },
-      "dappSelect": {
-        "title": "Wählen Sie Perps-Anbieter"
       },
       "search": {
         "placeholder": "Perps suchen",
@@ -3585,20 +3583,6 @@
         "btnCopyAddress": "Adresse kopieren",
         "title": "Vermögenswerte empfangen"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "Wählen Sie den Vorhersageanbieter aus"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableTitle": "Dienst nicht verfügbar",
-      "serviceUnavailableDesc": "Der Dienst wird in Ihrer aktuellen Region nicht unterstützt."
-    },
-    "DAppFrame": {
-      "netWorth": "Vermögen",
-      "selectAWallet": "Wählen Sie eine Wallet",
-      "walletBalance": "Wallet/Guthaben"
     },
     "meme": {
       "tokenHeader": {

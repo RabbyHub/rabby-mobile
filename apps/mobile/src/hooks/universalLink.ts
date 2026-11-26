@@ -1262,6 +1262,34 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
         setAppLanguage(payload.debugLanguage!),
       );
       break;
+    case 'debug-open-hd-address':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void import('@/core/apis/address').then(async ({ getAllAccounts }) => {
+        const accounts = await getAllAccounts();
+        const hdAccounts = accounts.filter(
+          account => account.type === KEYRING_TYPE.HdKeyring,
+        );
+        if (!hdAccounts.length) {
+          console.warn('[useUniversalLinkOnTop] no seed-phrase address found');
+          return;
+        }
+        const target =
+          payload.debugHdAddressPick === 'random'
+            ? hdAccounts[Math.floor(Math.random() * hdAccounts.length)]
+            : hdAccounts[0];
+
+        navigateDeprecated(RootNames.StackAddress, {
+          screen: RootNames.AddressDetail,
+          params: {
+            address: target.address,
+            type: target.type,
+            brandName: target.brandName,
+          },
+        } as any);
+      });
+      break;
     case 'toggle-pager-offset-sampling':
       if (!isNonPublicProductionEnv) {
         return;
@@ -1310,34 +1338,6 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
         'legacy:',
         debugHomeChromeBridge.legacy,
       );
-      break;
-    case 'debug-open-hd-address':
-      if (!isNonPublicProductionEnv) {
-        return;
-      }
-      void import('@/core/apis/address').then(async ({ getAllAccounts }) => {
-        const accounts = await getAllAccounts();
-        const hdAccounts = accounts.filter(
-          account => account.type === KEYRING_TYPE.HdKeyring,
-        );
-        if (!hdAccounts.length) {
-          console.warn('[useUniversalLinkOnTop] no seed-phrase address found');
-          return;
-        }
-        const target =
-          payload.debugHdAddressPick === 'random'
-            ? hdAccounts[Math.floor(Math.random() * hdAccounts.length)]
-            : hdAccounts[0];
-
-        navigateDeprecated(RootNames.StackAddress, {
-          screen: RootNames.AddressDetail,
-          params: {
-            address: target.address,
-            type: target.type,
-            brandName: target.brandName,
-          },
-        } as any);
-      });
       break;
     case 'regression-scenario':
       handleRegressionScenarioCommand(
