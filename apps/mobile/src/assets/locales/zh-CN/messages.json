@@ -2993,9 +2993,6 @@
         "activateNow": "立即激活",
         "activatedSuccess": "已启用 4% Hyperliquid 手续费减免"
       },
-      "dappSelect": {
-        "title": "选择永续合约服务商"
-      },
       "search": {
         "placeholder": "搜索永续合约",
         "empty": "未找到结果"
@@ -3484,20 +3481,6 @@
         "btnCopyAddress": "复制地址",
         "title": "接收资产"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "选择预测提供商"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableDesc": "该服务在您当前的地区不受支持。",
-      "serviceUnavailableTitle": "服务不可用"
-    },
-    "DAppFrame": {
-      "walletBalance": "钱包/余额",
-      "selectAWallet": "选择一个钱包",
-      "netWorth": "净资产"
     },
     "meme": {
       "tokenHeader": {

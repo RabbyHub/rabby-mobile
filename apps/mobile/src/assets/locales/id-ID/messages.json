@@ -2843,9 +2843,6 @@
         "activatedSuccess": "4% penghematan biaya Hyperliquid diaktifkan",
         "description": "Gunakan kode Rabby untuk mengaktifkan"
       },
-      "dappSelect": {
-        "title": "Pilih Penyedia Perps"
-      },
       "search": {
         "placeholder": "Cari Perps",
         "empty": "Tidak ada hasil ditemukan"
@@ -3337,20 +3334,6 @@
         "btnCopyAddress": "Salin Alamat",
         "title": "Terima aset"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "Pilih Penyedia Prediksi"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableDesc": "Layanan ini tidak didukung di wilayah Anda saat ini.",
-      "serviceUnavailableTitle": "Layanan Tidak Tersedia"
-    },
-    "DAppFrame": {
-      "walletBalance": "Dompet/Saldo",
-      "netWorth": "Kekayaan bersih",
-      "selectAWallet": "Pilih Dompet"
     },
     "meme": {
       "tokenHeader": {

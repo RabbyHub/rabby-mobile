@@ -30,11 +30,6 @@
     }
   },
   "page": {
-    "predict": {
-      "dappSelect": {
-        "title": "Select Predict Provider"
-      }
-    },
     "getStart": {
       "createNewAddress": "Create a new wallet",
       "alreadyHaveAddress": "I already have a wallet",
@@ -2131,10 +2126,6 @@
         "title": "Select Chain"
       }
     },
-    "dappPermission": {
-      "serviceUnavailableTitle": "Service Unavailable",
-      "serviceUnavailableDesc": "The service is not supported in your current region."
-    },
     "watchlist": {
       "empty": {
         "title": "No tokens in your watchlist yet"
@@ -2718,9 +2709,6 @@
           "skipConfirmation": "Don't display double confirmation for TWAP Order again.",
           "averageFilledPrice": "Avg. Filled Price"
         }
-      },
-      "dappSelect": {
-        "title": "Select Perps Provider"
       },
       "PerpsRiskPopup": {
         "liqDistanceTipsShort": "Going up <1>{{distance}}</1> will trigger liquidation.",
@@ -3445,11 +3433,6 @@
         "title": "Receive assets",
         "btnCopyAddress": "Copy Address"
       }
-    },
-    "DAppFrame": {
-      "walletBalance": "Wallet/Balance",
-      "netWorth": "Net worth",
-      "selectAWallet": "Select a Wallet"
     },
     "convertDust": {
       "colValueAmount": "Value/Amount",

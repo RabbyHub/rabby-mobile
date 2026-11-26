@@ -3028,9 +3028,6 @@
         "activatedSuccess": "Ahorros de tarifas Hyperliquid del 4% activados",
         "hyperliquidFee": "Comisiones de trading de Hyperliquid."
       },
-      "dappSelect": {
-        "title": "Seleccionar proveedor de Perps"
-      },
       "search": {
         "placeholder": "Buscar Perps",
         "empty": "No se encontraron resultados"
@@ -3522,20 +3519,6 @@
         "title": "Recibir activos",
         "btnCopyAddress": "Copiar Dirección"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "Seleccionar Proveedor de Predicción"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableTitle": "Servicio no disponible",
-      "serviceUnavailableDesc": "El servicio no está disponible en su región actual."
-    },
-    "DAppFrame": {
-      "selectAWallet": "Selecciona una cartera",
-      "netWorth": "Valor neto",
-      "walletBalance": "Cartera/Saldo"
     },
     "meme": {
       "tokenHeader": {

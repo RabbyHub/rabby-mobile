@@ -86,6 +86,21 @@ const appChainInitStoreStateRef = {
   hasCompleted: false,
 };
 
+const fetchAppChainListOrThrow = async (address: string) => {
+  const { apps, error_apps } = await openapi.getAppChainList(address);
+  if (error_apps?.length) {
+    throw new Error(
+      `getAppChainList returned error_apps for ${address}: ${
+        error_apps
+          .map(item => item.id)
+          .filter(Boolean)
+          .join(',') || error_apps.length
+      }`,
+    );
+  }
+  return apps ?? [];
+};
+
 /**
  * 将 AppChainItem 转换为 IAppChainItem
  */
@@ -506,8 +521,7 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
           });
 
           try {
-            const { apps } = await openapi.getAppChainList(address);
-            const appChains = apps ?? [];
+            const appChains = await fetchAppChainListOrThrow(address);
             const value = appChains.map(toAppChainItem);
             appChainResourceStore.applyRemoteValueFor(
               address,
@@ -648,8 +662,7 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
         trigger: 'getAppChains',
         force,
       });
-      const { apps } = await openapi.getAppChainList(lowerAddress);
-      const appChains = apps ?? [];
+      const appChains = await fetchAppChainListOrThrow(lowerAddress);
 
       const value = appChains.map(toAppChainItem);
       appChainResourceStore.applyRemoteValueFor(
