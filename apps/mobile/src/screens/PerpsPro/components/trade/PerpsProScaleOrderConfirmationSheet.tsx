@@ -261,6 +261,7 @@ const getStyle = createGetStyles2024(
       marginHorizontal: 12,
       padding: 12,
       borderRadius: 12,
+      borderCurve: 'continuous',
     },
     orders: {
       flex: 1,
@@ -270,6 +271,7 @@ const getStyle = createGetStyles2024(
       marginBottom: 32,
       padding: 12,
       borderRadius: 12,
+      borderCurve: 'continuous',
       overflow: 'hidden',
     },
     orderList: { flex: 1 },

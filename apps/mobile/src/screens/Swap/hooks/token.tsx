@@ -205,12 +205,15 @@ export const useSlippage = () => {
 export const useTokenPair = ({
   account,
   active = true,
+  tabSelected = true,
 }: {
   account: Account;
   active?: boolean;
+  tabSelected?: boolean;
 }) => {
   const swapService = useSwapService();
   const userAddress = account?.address;
+
   const refreshId = useAtomValue(refreshIdAtom);
 
   const [quotesListVisible, setQuotesListVisible] = useState(false);
@@ -1024,6 +1027,16 @@ export const useTokenPair = ({
     Object.is,
     { storeLabel: 'swap-quote-refresh-countdown' },
   );
+
+  useEffect(() => {
+    if (tabSelected) {
+      return;
+    }
+    // The scene store owns the amount; reset it while the tab is hidden so the
+    // inactive page does not keep quoting a stale form (see `tabSelected`).
+    formActions.resetAmount();
+    setQuotesListVisible(false);
+  }, [formActions, tabSelected]);
 
   useFocusEffect(
     useCallback(() => {

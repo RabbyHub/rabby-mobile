@@ -1,6 +1,7 @@
 import {
   getPerpsProDialogStyles,
   PERPS_PRO_DIALOG_FIELD,
+  PERPS_PRO_DIALOG_FIELD_RADIUS,
   resolvePerpsProDialogCardBackground,
   resolvePerpsProDialogFieldBackground,
 } from '../common/perpsProDialogVisual';
@@ -340,7 +341,6 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
                           accessibilityLabel={t(
                             'page.perps.pro.openOrders.limitPrice',
                           )}
-                          compact
                           currentValue={`Current ${formatPerpsProPrice(
                             initialLimit,
                             editor.market.pxDecimals,
@@ -531,7 +531,7 @@ const getStyle = createGetStyles2024(
     executionType: {
       width: 100,
       height: PERPS_PRO_DIALOG_FIELD.height,
-      borderRadius: 6,
+      borderRadius: PERPS_PRO_DIALOG_FIELD_RADIUS,
       borderCurve: 'continuous',
       alignItems: 'center',
       justifyContent: 'center',

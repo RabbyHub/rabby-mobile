@@ -3,6 +3,7 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
 
+jest.mock('react-native-linear-gradient', () => require('react-native').View);
 jest.mock('@/assets2024/icons/perps/IconHistoryCC.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -17,6 +18,7 @@ jest.mock('@/assets2024/icons/home/pending.svg', () => {
 });
 
 jest.mock('@/components/Typography', () => ({
+  AnimatedText: require('react-native').Text,
   Text: require('react-native').Text,
 }));
 

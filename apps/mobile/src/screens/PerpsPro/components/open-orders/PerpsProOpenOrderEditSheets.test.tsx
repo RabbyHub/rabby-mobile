@@ -541,14 +541,14 @@ describe('Perps Pro open order edit sheets', () => {
         .filter(style => style?.borderRadius === 12);
       expect(cards).toHaveLength(1);
       expect(cards[0].backgroundColor).toBe(
-        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
+        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-3'],
       );
       expect(cards[0].backgroundColor).not.toBe(background);
       if (!confirmation) {
         const fields = screen
           .UNSAFE_getAllByType(View)
           .map(view => StyleSheet.flatten(view.props.style))
-          .filter(style => style?.borderRadius === 6);
+          .filter(style => style?.borderRadius === 8);
         expect(fields).toHaveLength(kind === 'basic' ? 2 : 4);
         for (const field of fields) {
           expect(field.backgroundColor).toBe(

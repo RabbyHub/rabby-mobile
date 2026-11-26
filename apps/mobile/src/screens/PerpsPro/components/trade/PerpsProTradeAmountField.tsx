@@ -32,7 +32,6 @@ type PerpsProTradeAmountFieldProps = {
   onChangeText?: (value: string) => void;
   onBlur?: () => void;
   onFocus?: () => void;
-  onPressIn?: () => void;
   onToggleUnit?: () => void;
   unit?: string;
   value?: string;
@@ -52,7 +51,6 @@ export const PerpsProTradeAmountField = React.memo(
         onBlur,
         onChangeText,
         onFocus,
-        onPressIn,
         onToggleUnit,
         unit,
         value = '',
@@ -113,7 +111,6 @@ export const PerpsProTradeAmountField = React.memo(
                 setFocused(true);
                 onFocus?.();
               }}
-              onPressIn={onPressIn}
               style={[
                 styles.input,
                 variant === 'compact' && styles.compactHeight,

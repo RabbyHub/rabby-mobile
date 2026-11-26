@@ -97,10 +97,10 @@ describe('PerpsProTransferSheet Figma styles', () => {
     const styles = getStyles(false);
 
     expect(StyleSheet.flatten(styles.directionCard)).toMatchObject({
-      backgroundColor: ThemeColors2024.dark['neutral-bg-2'],
+      backgroundColor: ThemeColors2024.dark['neutral-bg-3'],
     });
     expect(StyleSheet.flatten(styles.amountField)).toMatchObject({
-      backgroundColor: ThemeColors2024.dark['neutral-bg-2'],
+      backgroundColor: ThemeColors2024.dark['neutral-bg-3'],
     });
     expect(StyleSheet.flatten(styles.shortcut)).toMatchObject({
       backgroundColor: ThemeColors2024.dark['neutral-bg-5'],

@@ -19,6 +19,7 @@ import {
   usePerpsTwapRecord,
 } from '@/hooks/perps/twap/usePerpsTwapStore';
 import { loadPerpsTwapFills } from '@/hooks/perps/twap/twapRepository';
+import { hasAllPerpsTwapFills } from '@/hooks/perps/twap/twapReconciliation';
 import { usePerpsProTradeAmountUnit } from '../../scene/usePerpsProTradePreferences';
 import { formatPerpsProDecimal, formatPerpsProTime } from '../../utils/format';
 import { getPerpsProDialogStyles } from '../common/perpsProDialogVisual';
@@ -57,11 +58,27 @@ export const PerpsProTwapDetailSheet = React.memo(
     const [retry, setRetry] = useState(0);
     const loadOrder = useRef(order);
     loadOrder.current = order;
+    const loadedFills = useRef(fills);
+    loadedFills.current = fills;
+    // Live subscriptions may already hold every executed slice; the request
+    // outcome only matters while the visible list is still incomplete.
+    const fillsComplete = hasAllPerpsTwapFills(order, fills);
+    const visibleLoad =
+      fillsComplete && (load === 'loading' || load === 'error')
+        ? 'complete'
+        : load;
     usePerpsProSheetNavigationRegistration({ active: true, dismiss: onClose });
     useEffect(() => {
       modal.current?.present();
     }, []);
     useEffect(() => {
+      if (
+        loadOrder.current.endedAt !== null &&
+        hasAllPerpsTwapFills(loadOrder.current, loadedFills.current)
+      ) {
+        setLoad('complete');
+        return;
+      }
       let valid = true;
       setLoad('loading');
       loadPerpsTwapFills(initial.state.user, loadOrder.current, () => valid)
@@ -180,13 +197,13 @@ export const PerpsProTwapDetailSheet = React.memo(
       </Text>
     );
     const fillStatus =
-      load === 'loading' || load === 'error' ? (
+      visibleLoad === 'loading' || visibleLoad === 'error' ? (
         <Pressable
-          disabled={load === 'loading'}
+          disabled={visibleLoad === 'loading'}
           onPress={() => setRetry(value => value + 1)}
           style={styles.footer}>
           <Text style={styles.footerText}>
-            {t(`page.perps.pro.twap.fills.${load}`)}
+            {t(`page.perps.pro.twap.fills.${visibleLoad}`)}
           </Text>
         </Pressable>
       ) : null;
@@ -222,7 +239,7 @@ export const PerpsProTwapDetailSheet = React.memo(
           )
         }
         ListEmptyComponent={
-          load === 'complete' ? (
+          visibleLoad === 'complete' ? (
             <View style={history && styles.historyTradesSection}>
               <Text style={styles.footerText}>
                 {t('page.perps.pro.twap.noTrades')}
@@ -306,8 +323,9 @@ const getStyle = createGetStyles2024(
       flex: 1,
       marginHorizontal: 12,
       borderRadius: 12,
+      borderCurve: 'continuous',
       overflow: 'hidden',
-      backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-2'],
+      backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-3'],
       marginBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     },
     list: { paddingBottom: 8 },
@@ -316,17 +334,22 @@ const getStyle = createGetStyles2024(
     },
     historyTradesSection: {
       marginHorizontal: 12,
-      backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-2'],
+      backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-3'],
     },
-    historyTradesTop: { borderTopLeftRadius: 12, borderTopRightRadius: 12 },
+    historyTradesTop: {
+      borderTopLeftRadius: 12,
+      borderTopRightRadius: 12,
+      borderCurve: 'continuous',
+    },
     historyTradesBottom: {
       borderBottomLeftRadius: 12,
       borderBottomRightRadius: 12,
+      borderCurve: 'continuous',
       paddingBottom: 8,
     },
     historyFill: {
       paddingHorizontal: 12,
-      backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-2'],
+      backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-3'],
     },
     trades: {
       fontFamily: 'SF Pro Rounded',
@@ -361,6 +384,7 @@ const getStyle = createGetStyles2024(
       paddingHorizontal: 4,
       paddingVertical: 1,
       borderRadius: 4,
+      borderCurve: 'continuous',
       overflow: 'hidden',
     },
     fillTime: {

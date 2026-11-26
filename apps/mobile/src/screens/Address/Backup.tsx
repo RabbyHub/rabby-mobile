@@ -203,6 +203,13 @@ function Backup(): JSX.Element {
             removeGlobalBottomSheetModal2024(id);
             handleBackupComplete();
           },
+          // Cloud (iCloud / Google Drive) unavailable: dismiss the sheet and
+          // go back only. Treating it as success cleared the backup reminder,
+          // so the home "not backed up" banner disappeared (issue 1462).
+          onUnavailable: () => {
+            removeGlobalBottomSheetModal2024(id);
+            navigation.goBack();
+          },
         });
       },
     });
@@ -210,6 +217,7 @@ function Backup(): JSX.Element {
     address,
     type,
     t,
+    navigation,
     invokeEnterPassphrase,
     handleBackupComplete,
     getAuthModalLabels,

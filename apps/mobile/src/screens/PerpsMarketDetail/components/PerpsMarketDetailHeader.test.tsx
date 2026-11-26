@@ -1,22 +1,12 @@
 import React from 'react';
-import { act, fireEvent, render } from '@testing-library/react-native';
+import { act, render } from '@testing-library/react-native';
 import type { StoreApi, UseBoundStore } from 'zustand';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
-import { naviReplace } from '@/utils/navigation';
 import { PerpsMarketDetailHeader } from './PerpsMarketDetailHeader';
-
-jest.mock('@/constant/layout', () => ({
-  RootNames: {
-    StackTransaction: 'StackTransaction',
-    PerpsSearch: 'PerpsSearch',
-  },
-}));
 
 jest.mock('@/hooks/perps/usePerpsStore', () => ({
   perpsStore: require('zustand').create(() => ({ marketDataMap: {} })),
 }));
-
-jest.mock('@/utils/navigation', () => ({ naviReplace: jest.fn() }));
 
 const mockHeaderRender = jest.fn();
 jest.mock('./PerpsHeaderTitle', () => ({
@@ -106,13 +96,9 @@ describe('PerpsMarketDetailHeader', () => {
     });
   });
 
-  it('preserves the existing market selector route', () => {
-    const screen = render(<PerpsMarketDetailHeader market="HYPE" />);
-    fireEvent(screen.getByTestId('market-header'), 'selectCoin');
+  it('leaves market selection to the screen header', () => {
+    render(<PerpsMarketDetailHeader market="HYPE" />);
 
-    expect(naviReplace).toHaveBeenCalledWith('StackTransaction', {
-      screen: 'PerpsSearch',
-      params: { openFromSource: 'marketDetail', initialTab: 'topVolume' },
-    });
+    expect(mockHeaderRender.mock.lastCall?.[0].onSelectCoin).toBeUndefined();
   });
 });

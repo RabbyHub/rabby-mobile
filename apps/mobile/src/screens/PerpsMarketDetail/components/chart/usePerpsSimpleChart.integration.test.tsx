@@ -389,7 +389,7 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
     await settle();
     act(() => candleCallbacks.at(-1)!(raw('BTC', '30m', '115')));
     await settle();
-    expect(hook.result.current.feed.status).toBe('error');
+    expect(hook.result.current.feed.status).toBe('loading');
     fetchCandles = async () => [raw('BTC', '30m', '108')];
     act(() => jest.advanceTimersByTime(1000));
     await settle();

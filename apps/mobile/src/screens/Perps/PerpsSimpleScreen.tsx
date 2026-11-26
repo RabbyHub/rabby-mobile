@@ -49,6 +49,7 @@ import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 import { usePerpsFundingHistoryJournal } from '@/hooks/perps/funding/usePerpsFundingHistoryJournal';
 import { usePerpsRuntimeStatus } from '@/hooks/perps/runtime/usePerpsRuntimeStatus';
+import { PerpsProKeyboardAccessory } from '@/screens/PerpsPro/components/common/PerpsProKeyboardAccessory';
 
 export type PerpsSimpleScreenProps = {
   isModeSwitching: boolean;
@@ -267,6 +268,8 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
   return (
     <>
       <NormalScreenContainer2024 noHeader type={isLight ? 'bg0' : 'bg1'}>
+        {/* Owns the Done bar of the funding popups' amount inputs. */}
+        <PerpsProKeyboardAccessory />
         <PerpsSimpleHeader
           account={currentPerpsAccount}
           isModeSwitching={isModeSwitching}

@@ -187,9 +187,10 @@ describe('PerpsProTransferSheet', () => {
         fontFamily:
           platform === 'android' ? 'SF-Pro-Rounded-Bold' : 'ui-rounded',
         fontSize: 28,
-        height: 76,
         padding: 0,
       });
+      // A blurred iOS field two lines tall wraps a long amount onto line two.
+      expect(style.height).toBe(platform === 'android' ? 76 : 36);
       if (platform === 'android') {
         expect(style.lineHeight).toBeUndefined();
         expect(style).toMatchObject({
@@ -282,10 +283,18 @@ describe('PerpsProTransferSheet', () => {
       />,
     );
 
+    const isSelected = (shortcut: number) =>
+      screen.getByTestId(`perps-pro-transfer-shortcut-${shortcut}`).props
+        .accessibilityState.selected;
     fireEvent.press(screen.getByTestId('perps-pro-transfer-shortcut-0.25'));
     expect(screen.getByTestId('perps-pro-transfer-amount').props.value).toBe(
       '2.52',
     );
+    expect(isSelected(0.25)).toBe(true);
+    expect(isSelected(1)).toBe(false);
+    fireEvent.changeText(screen.getByTestId('perps-pro-transfer-amount'), '3');
+    expect(isSelected(0.25)).toBe(false);
+    fireEvent.press(screen.getByTestId('perps-pro-transfer-shortcut-0.25'));
 
     view.rerender(
       <PerpsProTransferSheet

@@ -24,16 +24,26 @@ import { useTranslation } from 'react-i18next';
 
 import { usePerpsProKeyboardInput } from '../common/usePerpsProKeyboardInput';
 import { PerpsProInputAccessory } from '../common/PerpsProInputAccessory';
-import { PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE } from '../common/perpsProSingleLineInput';
+import {
+  getPerpsProIosSingleLineInputStyle,
+  PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE,
+} from '../common/perpsProSingleLineInput';
 import { formatPerpsProDecimal } from '../../utils/format';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { PERPS_PRO_INPUT_COLOR_PROPS } from '../common/perpsProInputVisual';
 import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
-import { getPerpsProTransferSheetStyles } from './PerpsProTransferSheet.styles';
+import {
+  AMOUNT_INPUT_LINE_HEIGHT,
+  getPerpsProTransferSheetStyles,
+} from './PerpsProTransferSheet.styles';
 
 const SHORTCUTS = [0.25, 0.5, 0.75, 1] as const;
+const AMOUNT_INPUT_IOS_SINGLE_LINE_STYLE = getPerpsProIosSingleLineInputStyle(
+  AMOUNT_INPUT_LINE_HEIGHT,
+);
+type Shortcut = (typeof SHORTCUTS)[number];
 
 const isUnsignedDecimalInput = (value: string) => /^\d*\.?\d*$/.test(value);
 
@@ -48,6 +58,8 @@ export const PerpsProTransferSheet: React.FC<{
   const inputRef = useRef<React.ElementRef<typeof BottomSheetTextInput>>(null);
   const keyboard = usePerpsProKeyboardInput(inputRef, { enabled: visible });
   const [amount, setAmount] = useState('');
+  // Stays on the picked shortcut until the amount is typed over.
+  const [activeShortcut, setActiveShortcut] = useState<Shortcut | null>(null);
   const { colors2024, styles } = useTheme2024({
     getStyle: getPerpsProTransferSheetStyles,
   });
@@ -71,6 +83,7 @@ export const PerpsProTransferSheet: React.FC<{
   useEffect(() => {
     if (visible) {
       setAmount('');
+      setActiveShortcut(null);
       modalRef.current?.present();
     } else {
       modalRef.current?.close();
@@ -155,9 +168,13 @@ export const PerpsProTransferSheet: React.FC<{
                 </Text>
                 <Text style={styles.balance}>{`${t(
                   'page.perps.pro.account.balance',
-                )}:${formatPerpsProDecimal(displayedAvailable, 2)} USDC`}</Text>
+                )}:$${formatPerpsProDecimal(displayedAvailable, 2)}`}</Text>
               </View>
-              <View
+              {/* The input is one line tall on iOS; the field keeps the tap area. */}
+              <Pressable
+                accessible={false}
+                disabled={pending}
+                onPress={() => inputRef.current?.focus()}
                 style={styles.amountField}
                 testID="perps-pro-transfer-amount-field">
                 <BottomSheetTextInput
@@ -169,13 +186,17 @@ export const PerpsProTransferSheet: React.FC<{
                   editable={!pending}
                   keyboardType="decimal-pad"
                   onChangeText={value => {
-                    if (isUnsignedDecimalInput(value)) setAmount(value);
+                    if (isUnsignedDecimalInput(value)) {
+                      setAmount(value);
+                      setActiveShortcut(null);
+                    }
                   }}
                   placeholder="0"
                   placeholderTextColor={colors2024['neutral-foot']}
                   style={[
                     styles.amountInput,
                     PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE,
+                    AMOUNT_INPUT_IOS_SINGLE_LINE_STYLE,
                   ]}
                   testID="perps-pro-transfer-amount"
                   value={amount}
@@ -194,11 +215,15 @@ export const PerpsProTransferSheet: React.FC<{
                   />
                   <Text style={styles.tokenText}>USDC</Text>
                 </View>
-              </View>
+              </Pressable>
               <View style={styles.shortcuts}>
                 {SHORTCUTS.map(shortcut => (
                   <Pressable
                     accessibilityRole="button"
+                    accessibilityState={{
+                      disabled: pending || !hasAvailable,
+                      selected: shortcut === activeShortcut,
+                    }}
                     disabled={pending || !hasAvailable}
                     key={shortcut}
                     onPress={() => {
@@ -211,13 +236,20 @@ export const PerpsProTransferSheet: React.FC<{
                           .decimalPlaces(2, BigNumber.ROUND_DOWN)
                           .toFixed(),
                       );
+                      setActiveShortcut(shortcut);
                     }}
                     style={[
                       styles.shortcut,
+                      shortcut === activeShortcut && styles.shortcutActive,
                       (pending || !hasAvailable) && styles.shortcutDisabled,
                     ]}
                     testID={`perps-pro-transfer-shortcut-${shortcut}`}>
-                    <Text style={styles.shortcutText}>
+                    <Text
+                      style={[
+                        styles.shortcutText,
+                        shortcut === activeShortcut &&
+                          styles.shortcutActiveText,
+                      ]}>
                       {shortcut === 1
                         ? t('page.perps.pro.account.max')
                         : `${shortcut * 100}%`}

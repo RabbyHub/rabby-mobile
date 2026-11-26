@@ -11,6 +11,7 @@ import {
 } from '@/screens/SwapBridge/state/swapFormStores';
 import { swapAmountControl } from '@/screens/SwapBridge/state/swapAmountControl';
 import { tokenAmountBn } from '@/screens/SwapBridge/state/swapFormMath';
+import { shouldReplayPendingSlider } from '@/screens/Swap/hooks/pendingSlider';
 
 import { SwapTokenItem } from './Token';
 
@@ -45,6 +46,7 @@ export const SwapAmountCard = React.memo(function SwapAmountCard(
   const source = useSwapForm(state => state.source);
   const isDragging = useSwapForm(state => state.isDragging);
   const draft = useSwapForm(state => state.draft);
+  const pendingSlider = useSwapForm(state => state.pendingSlider);
   const storeToken = useSwapForm(state => state.payToken);
   const token = storeToken ?? props.token;
   const actions = swapFormStore.getState().actions;
@@ -90,6 +92,14 @@ export const SwapAmountCard = React.memo(function SwapAmountCard(
     (value: number) => {
       const resolved = props.resolveSliderAmount(value);
       if (!resolved) {
+        // The pay token (and its balance) may not be loaded yet when the page
+        // just opened. Keep the gesture, scoped to that token, and commit it as
+        // soon as the token's balance is available.
+        actions.deferSlider({
+          value,
+          tokenId: token?.id,
+          chainId: token?.chain,
+        });
         return;
       }
       actions.endSlider({
@@ -98,8 +108,37 @@ export const SwapAmountCard = React.memo(function SwapAmountCard(
         passGasPrice: resolved.useGasPrice,
       });
     },
-    [actions, props],
+    [actions, props, token?.chain, token?.id],
   );
+
+  // Replay a gesture captured before the balance was ready; a manual amount
+  // typed in the meantime wins and drops the deferred gesture.
+  useEffect(() => {
+    if (!pendingSlider) {
+      return;
+    }
+    if (!token?.amount) {
+      return;
+    }
+    if (source === 'input' && draft) {
+      actions.clearPendingSlider();
+      return;
+    }
+    if (!shouldReplayPendingSlider(pendingSlider, token)) {
+      actions.clearPendingSlider();
+      return;
+    }
+    const resolved = props.resolveSliderAmount(pendingSlider.value);
+    if (!resolved) {
+      actions.clearPendingSlider();
+      return;
+    }
+    actions.endSlider({
+      draft: resolved.amount,
+      isMax: pendingSlider.value === 100,
+      passGasPrice: resolved.useGasPrice,
+    });
+  }, [actions, draft, pendingSlider, props, source, token, token?.amount]);
 
   return (
     <SwapTokenItem

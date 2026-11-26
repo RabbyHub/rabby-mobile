@@ -1288,7 +1288,8 @@
         },
         "notFound": {
           "title": "Appareil non trouvé",
-          "description": "Activez Bluetooth et déverrouillez OneKey"
+          "description": "Activez Bluetooth et déverrouillez OneKey",
+          "retry": "Rechercher à nouveau"
         },
         "inputPin": {
           "title": "Entrez le code PIN",
@@ -1307,6 +1308,23 @@
           "currentDevice": "actuel",
           "title": "Appareils disponibles",
           "description": "Veuillez sélectionner un OneKey pour vous connecter"
+        },
+        "error": {
+          "deviceNotFound": "OneKey introuvable. Assurez-vous qu'il est déverrouillé, que le Bluetooth est activé et qu'il se trouve près de votre téléphone.",
+          "disconnected": "OneKey est déconnecté. Gardez-le déverrouillé et près de votre téléphone, puis réessayez.",
+          "deviceBusy": "OneKey traite une autre demande. Terminez-la ou annulez-la sur l'appareil, puis réessayez.",
+          "passphraseDisabled": "La phrase secrète est désactivée sur l'appareil. Activez-la ou réimportez ce portefeuille.",
+          "firmwareTooOld": "Le firmware de votre OneKey est trop ancien. Mettez-le à jour avec l'application OneKey, puis réessayez.",
+          "bluetoothOff": "Le Bluetooth est désactivé. Activez le Bluetooth, puis réessayez.",
+          "bluetoothPermission": "Rabby n'a pas l'autorisation d'utiliser le Bluetooth. Autorisez le Bluetooth (ou la localisation sur Android 11 et versions antérieures) pour Rabby dans les Réglages, puis réessayez.",
+          "locationServicesDisabled": "Les services de localisation sont désactivés. Activez-les pour rechercher des appareils Bluetooth.",
+          "bluetoothUnsupported": "Le Bluetooth n'est pas pris en charge sur ce téléphone.",
+          "scanFailed": "La recherche Bluetooth a échoué. Veuillez réessayer.",
+          "pairingFailed": "L'appairage Bluetooth a échoué. Acceptez la demande d'appairage sur votre téléphone et sur OneKey, puis réessayez.",
+          "pairingInvalid": "L'appairage Bluetooth n'est plus valide. Oubliez OneKey dans les réglages Bluetooth de votre téléphone, puis appairez-le à nouveau.",
+          "pinInvalid": "Code PIN incorrect. Veuillez réessayer.",
+          "cancelled": "La demande a été annulée.",
+          "openSettings": "Ouvrir les Réglages"
         }
       },
       "keystone": {
@@ -2703,7 +2721,8 @@
         "estReceive": "Est. Recevoir : {{balance}}",
         "fetchQuoteFailed": "Échec de la récupération du devis de dépôt. Veuillez changer de jeton.",
         "minimumDepositSize": "Le montant minimum de dépôt est de 5 $.",
-        "estReceiveTooltip": "Le dépôt cross-chain est traité via LiFi, ce qui peut entraîner un certain glissement. Arrivée estimée dans {{number}} secondes."
+        "estReceiveTooltip": "Le dépôt cross-chain est traité via LiFi, ce qui peut entraîner un certain glissement. Arrivée estimée dans {{number}} secondes.",
+        "estReceiveTooltipV2": "Le dépôt cross-chain est traité via {{name}}, ce qui peut entraîner un certain glissement. Arrivée estimée dans {{number}} secondes."
       },
       "PerpsWithdrawPopup": {
         "title": "Retirer",
@@ -2845,9 +2864,6 @@
       "closeAll": "Clôturer toutes les positions",
       "closeAllConfirmTitle": "Confirmer la clôture de toutes les positions",
       "closeAllConfirmMessage": "Toutes vos positions ouvertes seront clôturées au prix du marché.",
-      "assetPage": {
-        "hyperliquidPosition": "Position Hyperliquid"
-      },
       "invitePopup": {
         "activateNow": "Activez maintenant",
         "title": "Économisez sur les frais de Hyperliquid",
@@ -2855,9 +2871,6 @@
         "hyperliquidFee": "Frais de trading Hyperliquid.",
         "activatedSuccess": "4 % d'économies sur les frais Hyperliquid activées",
         "description": "Utilisez le code de Rabby pour activer"
-      },
-      "dappSelect": {
-        "title": "Sélectionner le fournisseur de Perps"
       },
       "search": {
         "placeholder": "Rechercher sur Perps",
@@ -3077,9 +3090,6 @@
         "crossDesc": "Toutes les positions partagent la même marge. Cela réduit le risque de liquidation d’une position isolée, mais tous les fonds en marge croisée peuvent être perdus lors de mouvements de marché extrêmes.",
         "isolatedDesc": "Chaque position utilise sa propre marge. Les pertes sont limitées à cette position, mais elle peut être liquidée plus facilement."
       },
-      "guideEntry": {
-        "gotIt": "Compris"
-      },
       "PerpsAbout": {
         "title": "À propos"
       }
@@ -3135,12 +3145,7 @@
         "lq": "Si cela descend en dessous de 1, la liquidation pourrait être déclenchée."
       },
       "repayDetail": {
-        "actions": "Rembourser",
-        "tabs": {
-          "collateral": "Garantie",
-          "wallet": "Solde du portefeuille"
-        },
-        "repayWith": "Rembourser avec"
+        "actions": "Rembourser"
       },
       "supplyDetail": {
         "actions": "Déposer",
@@ -3161,7 +3166,6 @@
         "almostReachedError": "Le montant maximum disponible pour emprunter est limité car le plafond d'emprunt du protocole est presque atteint.",
         "borrowingUnavailable": "Cet actif ne peut pas être emprunté dans le mode actuel.",
         "almostReachedWarning": "Le cap d'emprunt du protocole est de 100 % pour cet actif. Emprunts supplémentaires non disponibles.",
-        "swapDebt": "Échanger",
         "borrowed": "Emprunté",
         "noSupplyPrefix": "Aucun dépôt :",
         "noSupplyDesc": "Pour emprunter, vous devez fournir des actifs en tant que garantie."
@@ -3273,99 +3277,24 @@
         "unavailable": "• Indisponible",
         "disableTitle": "Désactiver",
         "description": "Activer le E-Mode vous permet de maximiser votre pouvoir d'emprunt. Cependant, l'emprunt est limité aux actifs de la catégorie sélectionnée.",
-        "title": "Gérer E-Mode",
-        "debtSwapSelector": {
-          "header": {
-            "assets": "Token/solde",
-            "borrow": "Mes emprunts",
-            "apy": "APY"
-          },
-          "title": "Sélectionner le Token d'emprunt"
-        },
-        "collateralSwapSelector": {
-          "header": {
-            "collateral": "Mon collatéral",
-            "assets": "Jeton"
-          },
-          "title": "Sélectionner le jeton de garantie"
-        }
+        "title": "Gérer E-Mode"
       },
       "disabled": "DÉSACTIVÉ",
-      "debtSwap": {
-        "actions": {
-          "amount": "Montant",
-          "swapTo": "Convertir en",
-          "title": "Convertir la dette",
-          "select": "Sélectionnez",
-          "borrowed": "Emprunté"
-        },
-        "overview": {
-          "borrowAPY": "APY d’emprunt",
-          "borrowValueAfter": "Solde emprunté après conversion",
-          "title": "Aperçu des transactions"
-        },
-        "button": {
-          "swap": "Convertir"
-        },
-        "title": "Convertir la position empruntée",
-        "borrowBalance": "Solde emprunté",
-        "lpRiskWarning": "Facteur de santé faible après l'échange. Votre position comportera un risque plus élevé de liquidation.",
-        "priceImpactTips": "Impact de prix élevé ({{lostValue}}). En raison d’une faible liquidité ou d’une petite taille d’ordre, l’estimation de cette route peut s’écarter nettement.",
-        "lpDangerWarning": "Votre facteur de santé après cet échange sera extrêmement bas et pourrait entraîner une liquidation. Veuillez choisir un autre actif ou réduire le montant de l'échange pour rester en sécurité.",
-        "maxLtvWarning": "Fonds de garantie insuffisants pour couvrir la nouvelle position d'emprunt. Le portefeuille doit disposer d'une capacité d'emprunt restante pour effectuer le changement de dette."
-      },
       "totalSupplied": "Total déposé",
       "totalBorrowed": "Total emprunté",
       "netApy": "APY net",
-      "repayWithCollateral": {
-        "overview": {
-          "title": "Aperçu des transactions",
-          "collateralValueAfter": "Solde de collatéral après remboursement",
-          "borrowValueAfter": "Solde d'emprunt après remboursement"
-        },
-        "button": {
-          "repay": "Rembourser"
-        },
-        "repayWith": "Garantie à utiliser pour rembourser",
-        "toRepay": "Montant attendu à rembourser",
-        "collateralNotEnough": "Votre solde de collatéral est inférieur au montant sélectionné.",
-        "action": {
-          "title": "Remboursez avec {{collateral}}"
-        },
-        "insufficientLiquidity": "Liquidité insuffisante.",
-        "flashLoanDisabled": "Pour des raisons de sécurité, la conversion de positions est désactivée pour cet actif.",
-        "frozenCollateral": "Cet actif est gelé en raison d'une décision de la communauté Aave."
-      },
       "repayWithAToken": {
         "header": {
           "assets": "Jeton",
           "balance": "Solde"
         },
-        "title": "Sélectionner le jeton de remboursement",
-        "zeroLtvCollateralTips": "Vous avez les garanties suivantes avec un LTV = 0. Selon les règles de remboursement par garantie, vous devez d’abord utiliser ces garanties pour rembourser."
-      },
-      "signFallback": {
-        "preExecFailedUseFullSign": "Échec de la simulation. Cette transaction est très susceptible d'échouer en raison d'erreurs AAVE."
+        "title": "Sélectionner le jeton de remboursement"
       }
     },
     "address": {
       "receiveAssets": {
         "btnCopyAddress": "Copier l'adresse",
         "title": "Recevoir des actifs"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableDesc": "Ce service n'est pas pris en charge dans votre région actuelle.",
-      "serviceUnavailableTitle": "Service indisponible"
-    },
-    "DAppFrame": {
-      "netWorth": "Valeur nette",
-      "walletBalance": "Portefeuille/Solde",
-      "selectAWallet": "Sélectionnez un portefeuille"
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "Sélectionner un fournisseur de prévisions"
       }
     },
     "meme": {

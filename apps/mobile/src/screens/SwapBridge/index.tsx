@@ -75,10 +75,12 @@ function SwapBridgeActivationProbe({
 // activity reaches this boundary, so pager previews never activate quotes.
 const SwapBridgeRootPage = memo(function SwapBridgeRootPage({
   tab,
+  tabSelected,
   sceneActive,
   isForMultipleAddress,
 }: {
   tab: SwapBridgeTab;
+  tabSelected: boolean;
   sceneActive: boolean;
   isForMultipleAddress: boolean;
 }) {
@@ -107,6 +109,7 @@ const SwapBridgeRootPage = memo(function SwapBridgeRootPage({
       <Component
         disableHeaderRight
         disableAccountSwitcherModal
+        tabSelected={tabSelected}
         sceneActive={sceneActive}
         diagnosticActive={isNonProductionDiagnosticsEnabled && sceneActive}
       />
@@ -236,6 +239,7 @@ function SwapBridgeScreenContent({
       return (
         <SwapBridgeRootPage
           tab={tab}
+          tabSelected={activeTab === tab}
           sceneActive={isSwapBridgeSceneActive({
             activeTab,
             scene: tab,

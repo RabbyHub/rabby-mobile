@@ -193,11 +193,13 @@ const getStyle = createGetStyles2024(
       lineHeight: 16,
       paddingHorizontal: 4,
       borderRadius: 4,
+      borderCurve: 'continuous',
     },
     details: {
       marginTop: 24,
       backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
       borderRadius: 12,
+      borderCurve: 'continuous',
       paddingHorizontal: 16,
       paddingVertical: 8,
     },

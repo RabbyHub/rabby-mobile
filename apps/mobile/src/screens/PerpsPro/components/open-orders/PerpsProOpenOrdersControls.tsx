@@ -8,6 +8,13 @@ import { useTranslation } from 'react-i18next';
 
 import type { PerpsOpenOrderCategory } from '../../model/openOrder';
 import { PerpsProInfoControls } from '../info/PerpsProInfoControls';
+import {
+  PERPS_PRO_INFO_CONTROLS_ROW_HEIGHT,
+  PERPS_PRO_OPEN_ORDERS_CATEGORY_HEIGHT,
+  PERPS_PRO_OPEN_ORDERS_CONTROLS_BOTTOM,
+  PERPS_PRO_OPEN_ORDERS_CONTROLS_ROW_GAP,
+  PERPS_PRO_OPEN_ORDERS_CONTROLS_TOP,
+} from '../info/perpsProInfoTabsSticky';
 
 type VisibleCategory = Exclude<PerpsOpenOrderCategory, 'unsupported'> | 'twap';
 
@@ -54,6 +61,7 @@ export const PerpsProOpenOrdersControls: React.FC<{
           hideOtherSymbols={hideOtherSymbols}
           onAction={category === 'twap' ? onAddTwap ?? (() => {}) : onCancelAll}
           onToggleHideOtherSymbols={onToggleHideOtherSymbols}
+          style={styles.controls}
           testID="perps-pro-open-orders-controls"
         />
         <View style={styles.tabs} testID="perps-pro-open-orders-tabs">
@@ -96,17 +104,30 @@ export const PerpsProOpenOrdersControls: React.FC<{
 PerpsProOpenOrdersControls.displayName = 'PerpsProOpenOrdersControls';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  // Image review spacing: 8pt below the tab divider, 4pt to the chips and
+  // 8pt to the first card.
+  controls: {
+    height:
+      PERPS_PRO_OPEN_ORDERS_CONTROLS_TOP +
+      PERPS_PRO_INFO_CONTROLS_ROW_HEIGHT +
+      PERPS_PRO_OPEN_ORDERS_CONTROLS_ROW_GAP,
+    paddingBottom: PERPS_PRO_OPEN_ORDERS_CONTROLS_ROW_GAP,
+    paddingTop: PERPS_PRO_OPEN_ORDERS_CONTROLS_TOP,
+  },
   tabs: {
     flexDirection: 'row',
     gap: 0,
+    height:
+      PERPS_PRO_OPEN_ORDERS_CATEGORY_HEIGHT +
+      PERPS_PRO_OPEN_ORDERS_CONTROLS_BOTTOM,
     paddingHorizontal: 12,
-    paddingBottom: 12,
+    paddingBottom: PERPS_PRO_OPEN_ORDERS_CONTROLS_BOTTOM,
   },
   tab: {
     alignItems: 'center',
     borderRadius: 8,
     borderCurve: 'continuous',
-    height: 30,
+    height: PERPS_PRO_OPEN_ORDERS_CATEGORY_HEIGHT,
     justifyContent: 'center',
     paddingHorizontal: 12,
   },
@@ -114,11 +135,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     backgroundColor:
       isLight === false
-        ? colors2024['neutral-title-1']
+        ? colors2024['neutral-bg-2']
         : ThemeColors2024.dark['neutral-bg-0'],
     borderRadius: 8,
     borderCurve: 'continuous',
-    height: 30,
+    height: PERPS_PRO_OPEN_ORDERS_CATEGORY_HEIGHT,
     justifyContent: 'center',
     paddingHorizontal: 12,
   },
@@ -130,10 +151,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
   },
   activeText: {
-    color:
-      isLight === false
-        ? colors2024['neutral-bg-0']
-        : ThemeColors2024.dark['neutral-title-1'],
+    // Dark keeps the Light selected copy on the bg-2 chip (Figma 87900:97310).
+    color: ThemeColors2024.dark['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '700',
@@ -150,10 +169,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
-    color:
-      isLight === false
-        ? ThemeColors2024.light['neutral-foot']
-        : ThemeColors2024.dark['neutral-foot'],
+    color: ThemeColors2024.dark['neutral-foot'],
     fontWeight: '400',
   },
 }));

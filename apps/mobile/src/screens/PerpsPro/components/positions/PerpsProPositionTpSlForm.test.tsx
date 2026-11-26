@@ -658,7 +658,6 @@ describe('PerpsProPositionTpSlForm', () => {
           const amount = screen.getByTestId('perps-pro-position-tpsl-amount');
           const prefill = amountUnit === 'base' ? '0.0001' : '8.4';
           expect(amount.props.value).toBe(prefill);
-          fireEvent(amount, 'pressIn');
           fireEvent(amount, 'focus');
           fireEvent.changeText(amount, prefill);
           fireEvent(amount, 'blur');
@@ -944,7 +943,11 @@ describe('PerpsProPositionTpSlForm', () => {
     ).toHaveTextContent(/50%/);
     expect(mockSliderProps.mock.lastCall?.[0]).toMatchObject({ value: 50 });
 
+    // A swipe starts with touch-down but never focuses; only focus clears.
     fireEvent(screen.getByTestId('perps-pro-position-tpsl-amount'), 'pressIn');
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-slider-amount'),
+    ).toHaveTextContent(/50%/);
     fireEvent(screen.getByTestId('perps-pro-position-tpsl-amount'), 'focus');
     expect(mockSliderProps.mock.lastCall?.[0]).toMatchObject({ value: 0 });
     expect(

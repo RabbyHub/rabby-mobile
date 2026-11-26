@@ -14,6 +14,7 @@ import {
 import { bridgeAmountControl } from '../state/bridgeAmountControl';
 import { tokenAmountBn } from '@/screens/SwapBridge/state/swapFormMath';
 import type { SwapSliderResolvedAmount } from '@/screens/Swap/components/SwapAmountCard';
+import { shouldReplayPendingSlider } from '@/screens/Swap/hooks/pendingSlider';
 
 import BridgeToken from './BridgeToken';
 
@@ -106,23 +107,34 @@ export const BridgeAmountCard = React.memo(function BridgeAmountCard(
       // The from token (and its balance) may not be loaded yet when the page is
       // just opened. The gesture still moves the slider, so remember it instead
       // of dropping it, and commit it as soon as the token is available.
+      const pending = {
+        value,
+        tokenId: token?.id,
+        chainId: token?.chain,
+      };
       if (!token?.amount) {
-        actions.deferSlider(value);
+        actions.deferSlider(pending);
         return;
       }
       if (!commitSliderValue(value)) {
-        actions.deferSlider(value);
+        actions.deferSlider(pending);
       }
     },
-    [actions, commitSliderValue, token?.amount],
+    [actions, commitSliderValue, token?.amount, token?.chain, token?.id],
   );
 
   useEffect(() => {
-    if (pendingSlider === null || !token?.amount) {
+    if (!pendingSlider || !token?.amount) {
       return;
     }
-    commitSliderValue(pendingSlider);
-  }, [pendingSlider, token?.amount, commitSliderValue]);
+    if (!shouldReplayPendingSlider(pendingSlider, token)) {
+      actions.clearPendingSlider();
+      return;
+    }
+    if (!commitSliderValue(pendingSlider.value)) {
+      actions.clearPendingSlider();
+    }
+  }, [actions, pendingSlider, token, token?.amount, commitSliderValue]);
 
   return (
     <BridgeToken

@@ -93,6 +93,9 @@ export const formatTimeReadable = (seconds: number) => {
 export const getTimeFromNow = (create_at: number) =>
   formatTimeReadable(Date.now() / 1000 - create_at);
 
+const pluralUnit = (value: number, unit: string) =>
+  value === 1 ? unit : `${unit}s`;
+
 export function fromNow(time: number, currTime?: number, space?: boolean) {
   let successTimeView = '';
   const spaceStr = space ? ' ' : '';
@@ -106,11 +109,11 @@ export function fromNow(time: number, currTime?: number, space?: boolean) {
     flag++;
   }
   if ((h || flag) && flag < 3) {
-    str += `${flag > 0 ? ' ' : ''}${h}${spaceStr}hour`;
+    str += `${flag > 0 ? ' ' : ''}${h}${spaceStr}${pluralUnit(h, 'hour')}`;
     flag++;
   }
   if ((m || flag) && flag < 3) {
-    str += `${flag > 0 ? ' ' : ''}${m}${spaceStr}min`;
+    str += `${flag > 0 ? ' ' : ''}${m}${spaceStr}${pluralUnit(m, 'min')}`;
     flag++;
   }
   if (str) successTimeView = str;
@@ -128,11 +131,11 @@ export function fromNowWithSecs(time: number, currTime?: number) {
     flag++;
   }
   if ((h || flag) && flag < 3) {
-    str += `${flag > 0 ? ' ' : ''}${h}hour`;
+    str += `${flag > 0 ? ' ' : ''}${h}${pluralUnit(h, 'hour')}`;
     flag++;
   }
   if ((m || flag) && flag < 3) {
-    str += `${flag > 0 ? ' ' : ''}${m}min`;
+    str += `${flag > 0 ? ' ' : ''}${m}${pluralUnit(m, 'min')}`;
     flag++;
   }
   if (!d && !h && !m) {

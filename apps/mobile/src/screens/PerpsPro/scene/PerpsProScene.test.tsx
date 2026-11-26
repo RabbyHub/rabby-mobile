@@ -1,4 +1,5 @@
 // These isolated scene tests replace child sheets and action controllers.
+jest.mock('react-native-linear-gradient', () => require('react-native').View);
 jest.mock('../components/twap/PerpsProTwapCard', () => ({
   PerpsProTwapCard: () => null,
 }));
@@ -366,6 +367,7 @@ jest.mock('@/assets2024/icons/perps/PerpsProEmptyDark.svg', () => {
 });
 
 jest.mock('@/components/Typography', () => ({
+  AnimatedText: require('react-native').Text,
   Text: require('react-native').Text,
 }));
 
@@ -2040,6 +2042,26 @@ describe('PerpsProScene market loading states', () => {
       screen.getByTestId('perps-pro-info-tabs-spacer').children,
     ).toHaveLength(0);
     expect(screen.getAllByTestId('perps-pro-info-tab-account')).toHaveLength(1);
+    // Controls are a sticky row of their own page, so they swipe with it.
+    const openOrdersControls = screen.getByTestId(
+      'perps-pro-open-orders-controls',
+      { includeHiddenElements: true },
+    );
+    expect(
+      within(
+        screen.getByTestId('perps-pro-info-page-openOrders', {
+          includeHiddenElements: true,
+        }),
+      ).getByTestId('perps-pro-open-orders-controls', {
+        includeHiddenElements: true,
+      }),
+    ).toBe(openOrdersControls);
+    const rowHeights: unknown[] = [];
+    for (let node = openOrdersControls.parent; node; node = node.parent) {
+      rowHeights.push(StyleSheet.flatten(node.props.style)?.height);
+    }
+    // The row keeps the controls' fixed height on an opaque list background.
+    expect(rowHeights).toContain(74);
   });
 
   it('puts the entire iOS info tab strip inside a native scroll bridge', () => {

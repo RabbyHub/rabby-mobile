@@ -7,6 +7,7 @@ import PagerView, {
 } from 'react-native-pager-view';
 import Animated, {
   runOnJS,
+  runOnUI,
   useEvent,
   useSharedValue,
 } from 'react-native-reanimated';
@@ -173,14 +174,34 @@ export const PerpsProHistoryPager: React.FC<{
     [hideFeeTipsPopup, onChange],
   );
 
-  const startProgrammaticTransition = useCallback(
-    (target: number, origin: number) => {
-      if (!activeRef.current) {
+  const dispatchProgrammaticPageCommand = useCallback(
+    (epoch: number, target: number, animated: boolean) => {
+      if (
+        !mountedRef.current ||
+        !activeRef.current ||
+        pageTransitionEpoch.value !== epoch
+      ) {
         return;
       }
-      const epoch = pageTransitionEpoch.value + 1;
-      const animated = Math.abs(target - origin) === 1;
-      latestDesiredRef.current = { epoch, position: target };
+      if (animated) {
+        pagerRef.current?.setPage(target);
+        return;
+      }
+      pagerRef.current?.setPageWithoutAnimation(target);
+    },
+    [pageTransitionEpoch],
+  );
+
+  // JS writes to shared values land on the UI runtime asynchronously, while
+  // Android's ViewPager2 dispatches selection synchronously inside the native
+  // command. Configure the transition on UI first and only then issue the
+  // command, so its events can never observe the previous idle state.
+  const configureProgrammaticTransitionOnUI = useCallback(
+    (epoch: number, target: number, origin: number, animated: boolean) => {
+      'worklet';
+      if (pageTransitionEpoch.value >= epoch) {
+        return;
+      }
       pageTransitionEpoch.value = epoch;
       settledPagePosition.value = origin;
       transitionKind.value = animated
@@ -193,15 +214,13 @@ export const PerpsProHistoryPager: React.FC<{
       transitionCandidatePosition.value = target;
       transitionStartPosition.value = origin;
       transitionTargetPosition.value = target;
-
-      if (animated) {
-        pagerRef.current?.setPage(target);
-        return;
+      if (!animated) {
+        snapPerpsProTabIndicator(visualPosition, target);
       }
-      snapPerpsProTabIndicator(visualPosition, target);
-      pagerRef.current?.setPageWithoutAnimation(target);
+      runOnJS(dispatchProgrammaticPageCommand)(epoch, target, animated);
     },
     [
+      dispatchProgrammaticPageCommand,
       pageTransitionEpoch,
       settledPagePosition,
       transitionCandidatePosition,
@@ -214,6 +233,24 @@ export const PerpsProHistoryPager: React.FC<{
       transitionTargetPosition,
       visualPosition,
     ],
+  );
+
+  const startProgrammaticTransition = useCallback(
+    (target: number, origin: number) => {
+      if (!activeRef.current) {
+        return;
+      }
+      const epoch = pageTransitionEpoch.value + 1;
+      const animated = Math.abs(target - origin) === 1;
+      latestDesiredRef.current = { epoch, position: target };
+      runOnUI(configureProgrammaticTransitionOnUI)(
+        epoch,
+        target,
+        origin,
+        animated,
+      );
+    },
+    [configureProgrammaticTransitionOnUI, pageTransitionEpoch],
   );
 
   const handleGestureBegan = useCallback(

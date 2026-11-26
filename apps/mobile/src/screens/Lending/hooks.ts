@@ -16,7 +16,6 @@ import {
   normalize,
   USD_DECIMALS,
 } from '@aave/math-utils';
-import { ethers } from 'ethers';
 import dayjs from 'dayjs';
 import { useAtom } from 'jotai';
 import { useCallback, useMemo } from 'react';
@@ -49,7 +48,6 @@ import {
   worker_formatReservesAndIncentives,
   worker_formatUserSummaryAndIncentives,
 } from '@/perfs/workerReq';
-import { StoreApi, UseBoundStore } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
 import { isValidAddress } from '@ethereumjs/util';
 import { nativeToWrapper } from './config/nativeToWrapper';
@@ -182,7 +180,6 @@ export const useSelectedMarket = () => {
 const poolsMap = new Map<
   CustomMarket,
   {
-    provider: ethers.providers.Web3Provider;
     uiPoolDataProvider: UiPoolDataProvider;
     walletBalanceProvider: WalletBalanceProvider;
     pool: Pool;
@@ -202,7 +199,6 @@ const getCachePools = (marketKey?: CustomMarket) => {
   }
   const provider = getProvider(chainInfo.network);
   const newPools = {
-    provider,
     uiPoolDataProvider: new UiPoolDataProvider({
       uiPoolDataProviderAddress:
         selectedMarketData.addresses.UI_POOL_DATA_PROVIDER,
@@ -216,10 +212,6 @@ const getCachePools = (marketKey?: CustomMarket) => {
     }),
     pool: new Pool(provider, {
       POOL: selectedMarketData.addresses.LENDING_POOL,
-      REPAY_WITH_COLLATERAL_ADAPTER:
-        selectedMarketData.addresses.REPAY_WITH_COLLATERAL_ADAPTER,
-      SWAP_COLLATERAL_ADAPTER:
-        selectedMarketData.addresses.SWAP_COLLATERAL_ADAPTER,
       WETH_GATEWAY: selectedMarketData.addresses.WETH_GATEWAY,
       L2_ENCODER: selectedMarketData.addresses.L2_ENCODER,
     }),
@@ -529,17 +521,6 @@ async function computeFormattedReservesAndIncentives({
   };
 }
 
-export function useFormattedReservesAtom() {
-  const { lendingDataKey } = useCurrentLendingDataKey();
-  return computedInfoState(
-    useShallow(
-      s =>
-        getComputedInfoByKey(lendingDataKey).formattedReservesAndIncentivesState
-          .formattedReserves,
-    ),
-  );
-}
-
 export function useFormattedPoolReservesAndIncentivesAtom() {
   const { lendingDataKey } = useCurrentLendingDataKey();
   return computedInfoState(
@@ -621,9 +602,6 @@ async function computeIUserSummary({
   return syncResult;
 }
 
-type ExtractStateType<T> = T extends UseBoundStore<StoreApi<infer U>>
-  ? U
-  : never;
 type MappedBalances = Array<{ address: string; amount: string }>;
 
 function computeMappedBalances({
@@ -1256,22 +1234,6 @@ export function useLendingIsLoading() {
   );
 
   return { loading };
-}
-export function useLendingPoolContainer() {
-  const { lendingDataKey } = useCurrentLendingDataKey();
-  const totalLiquidityMarketReferenceCurrency = computedInfoState(
-    useShallow(
-      s =>
-        getComputedInfoByKey(lendingDataKey).iUserSummary
-          ?.totalLiquidityMarketReferenceCurrency || '0',
-    ),
-  );
-  const { loading } = useLendingIsLoading();
-
-  return {
-    totalLiquidityMarketReferenceCurrency,
-    loading,
-  };
 }
 export function useLendingISummary() {
   const { lendingDataKey } = useCurrentLendingDataKey();

@@ -144,6 +144,7 @@ type SwapProps = PropsForAccountSwitchScreen<{
   disableAccountSwitcherModal?: boolean;
   diagnosticActive?: boolean;
   sceneActive?: boolean;
+  tabSelected?: boolean;
 }>;
 
 function SwapActivationDataProbe({
@@ -234,6 +235,7 @@ const Swap = ({
   disableAccountSwitcherModal = false,
   diagnosticActive = false,
   sceneActive = true,
+  tabSelected = true,
 }: SwapProps) => {
   /** Swap form snapshot for validation during auth */
   interface SwapFormSnapshot {
@@ -332,6 +334,7 @@ const Swap = ({
   } = useTokenPair({
     account: currentAccount!,
     active: sceneActive,
+    tabSelected,
   });
 
   const quotePollingPauseReasonsRef = useRef<QuotePollingPauseReasonState>({});
@@ -545,6 +548,9 @@ const Swap = ({
   // ===== 表单交互 =====
   useEffect(() => {
     setIsSubmitting(false);
+    if (!payAmount) {
+      setLatestQuoteBtnText('');
+    }
   }, [payAmount, payToken?.id, receiveToken?.id, chain]);
   const handlePayAmountChange = useMemoizedFn((value: string) => {
     if (directSignBtnRef.current?.isAuthInProgress()) {
@@ -553,6 +559,8 @@ const Swap = ({
     handleAmountChange(value);
   });
   const handlePayTokenChange = useMemoizedFn((token: TokenItem) => {
+    // An explicit token selection invalidates a deferred slider gesture.
+    swapFormStore.getState().actions.clearPendingSlider();
     const chainItem = findChainByServerID(token.chain);
     const normalSetChainToken = () => {
       if (chainItem?.enum !== chain) {

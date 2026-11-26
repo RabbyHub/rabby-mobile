@@ -6,7 +6,7 @@ import React, { useCallback } from 'react';
 import { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
 
 import { HeaderRightHistoryButton } from './components/HeaderRightHistoryButton';
-import { useHomeHistoryCount, useHomePendingTxCount } from './hooks/history';
+import { useHomePendingTxCount } from './hooks/history';
 
 interface MultiHeaderRightHistoryProps {
   style?: StyleProp<ViewStyle>;
@@ -15,7 +15,6 @@ export const MultiHeaderRightHistory = ({
   style,
 }: MultiHeaderRightHistoryProps) => {
   const pendingTxCount = useHomePendingTxCount();
-  const historyCount = useHomeHistoryCount();
   const { navigation } = useSafeSetNavigationOptions();
 
   const openHistory = useCallback(
@@ -38,7 +37,6 @@ export const MultiHeaderRightHistory = ({
   return (
     <HeaderRightHistoryButton
       pendingTxCount={pendingTxCount}
-      historyCount={historyCount}
       onPress={openHistory}
       style={style}
       rightSpace={0}

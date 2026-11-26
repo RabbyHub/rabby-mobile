@@ -227,7 +227,10 @@ const useToken = (type: 'from' | 'to', active: boolean) => {
 
 export const useBridge = (
   isForMultipleAddress?: boolean,
-  { active = true }: { active?: boolean } = {},
+  {
+    active = true,
+    tabSelected = true,
+  }: { active?: boolean; tabSelected?: boolean } = {},
 ) => {
   const setTokenRefreshId = useSetTokenRefreshId();
 
@@ -718,6 +721,16 @@ export const useBridge = (
     });
     setClickMaxBtnCount(e => e + 1);
   }, [bridgeAmountActions, fromToken, resolveBridgeSliderAmount]);
+
+  useEffect(() => {
+    if (tabSelected) {
+      return;
+    }
+    // The scene store owns the amount; reset it while the tab is hidden so the
+    // inactive page does not keep quoting a stale form (see `tabSelected`).
+    isMaxRef.current = false;
+    bridgeAmountActions.resetAmount();
+  }, [bridgeAmountActions, tabSelected]);
 
   const fetchIdRef = useRef(0);
   const pendingQuoteUpdatesRef = useRef(new Map<string, SelectedBridgeQuote>());

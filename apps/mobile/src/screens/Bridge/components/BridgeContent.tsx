@@ -354,12 +354,14 @@ export const BridgeContent = ({
   disableAccountSwitcherModal = false,
   diagnosticActive = false,
   sceneActive = true,
+  tabSelected = true,
 }: {
   isForMultipleAddress?: boolean;
   disableHeaderRight?: boolean;
   disableAccountSwitcherModal?: boolean;
   diagnosticActive?: boolean;
   sceneActive?: boolean;
+  tabSelected?: boolean;
 }) => {
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
@@ -386,6 +388,13 @@ export const BridgeContent = ({
   const quoteVisible = useQuoteVisible();
 
   const setQuoteVisible = useSetQuoteVisible();
+
+  useEffect(() => {
+    if (tabSelected) {
+      return;
+    }
+    setQuoteVisible(false);
+  }, [setQuoteVisible, tabSelected]);
   const regressionScenario = useRegressionScenario<'SwapBridge'>();
   const regressionScenarioActive = regressionScenario.active;
   const regressionScenarioId = regressionScenario.active
@@ -460,7 +469,7 @@ export const BridgeContent = ({
     quoteBlockedByClosedMarket,
     isMaxAmount,
     resolveSliderAmount,
-  } = useBridge(isForMultipleAddress, { active: sceneActive });
+  } = useBridge(isForMultipleAddress, { active: sceneActive, tabSelected });
 
   // Quote batches publish through the store; length is read at render time.
   const quoteListLength = getBridgeQuoteListLength();

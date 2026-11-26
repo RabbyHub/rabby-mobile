@@ -209,7 +209,7 @@ describe.each(['light', 'dark'] as const)(
         ),
       ).toMatchObject({
         backgroundColor:
-          colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
+          colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-3'],
         borderRadius: 12,
         marginTop: 24,
         paddingHorizontal: 16,
@@ -251,7 +251,7 @@ describe.each(['light', 'dark'] as const)(
         screen.getByTestId('perps-pro-funding-values').props.style,
       );
       expect(backgroundColor).toBe(
-        nextColors[mockIsLight ? 'neutral-bg-1' : 'neutral-bg-2'],
+        nextColors[mockIsLight ? 'neutral-bg-1' : 'neutral-bg-3'],
       );
       expect(backgroundColor).not.toBe(beforeBackground);
       expect(backgroundColor).not.toBe(

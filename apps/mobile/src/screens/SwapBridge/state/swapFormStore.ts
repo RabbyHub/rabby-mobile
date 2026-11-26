@@ -2,6 +2,7 @@ import { CHAINS_ENUM } from '@debank/common';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { createStore } from 'zustand/vanilla';
 
+import type { PendingSliderGesture } from '@/screens/Swap/hooks/pendingSlider';
 import { swapAmountControl } from './swapAmountControl';
 
 export type SwapAmountSource = 'slider' | 'input' | 'external';
@@ -13,6 +14,14 @@ export type SwapFormActions = {
     receiveToken?: TokenItem;
   }) => void;
   beginSlider: () => void;
+  /**
+   * A slider gesture made before the pay token (or its balance) is loaded is
+   * remembered and replayed once that same token's balance exists. It is scoped
+   * to the token it was made on so it can never be replayed onto a different
+   * (possibly funded) token.
+   */
+  deferSlider: (pending: PendingSliderGesture) => void;
+  clearPendingSlider: () => void;
   setAmountFromInput: (input: { draft: string; slider: number }) => void;
   endSlider: (input: {
     draft: string;
@@ -35,6 +44,7 @@ export type SwapFormState = {
   committed: string;
   source: SwapAmountSource;
   isDragging: boolean;
+  pendingSlider: PendingSliderGesture | null;
   isMax: boolean;
   slippage: string;
   passGasPrice: boolean;
@@ -63,6 +73,7 @@ export function createSwapFormStore(initial?: {
     committed: '',
     source: 'external',
     isDragging: false,
+    pendingSlider: null,
     isMax: false,
     slippage: initial?.slippage ?? '0.1',
     passGasPrice: false,
@@ -80,8 +91,18 @@ export function createSwapFormStore(initial?: {
           source: 'slider',
           isDragging: true,
           isMax: false,
+          pendingSlider: null,
         });
       },
+      deferSlider: pending => {
+        clearCommitTimer();
+        set({
+          source: 'slider',
+          isDragging: false,
+          pendingSlider: pending,
+        });
+      },
+      clearPendingSlider: () => set({ pendingSlider: null }),
       setAmountFromInput: ({ draft, slider }) => {
         clearCommitTimer();
         swapAmountControl.value = slider;
@@ -90,6 +111,7 @@ export function createSwapFormStore(initial?: {
           isMax: false,
           source: 'input',
           isDragging: false,
+          pendingSlider: null,
         });
         commitTimer = setTimeout(() => {
           commitTimer = null;
@@ -104,6 +126,7 @@ export function createSwapFormStore(initial?: {
           isMax,
           source: 'slider',
           isDragging: false,
+          pendingSlider: null,
           passGasPrice: passGasPrice ?? state.passGasPrice,
         }));
       },
@@ -123,6 +146,7 @@ export function createSwapFormStore(initial?: {
           isMax: false,
           source: 'external',
           isDragging: false,
+          pendingSlider: null,
           passGasPrice: false,
         });
       },

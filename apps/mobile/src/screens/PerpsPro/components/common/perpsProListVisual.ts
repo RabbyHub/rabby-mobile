@@ -3,22 +3,27 @@ import type { AppColors2024Variants } from '@/constant/theme';
 
 /** Figma list and card specs (cNPc4bz8P8QBjkPk2huEml): history card
  * 86313:138628, position 86609:329983, open orders 86609:327840.
+ * Cards sit flat on the bg-0 info list (Figma 86609:327462).
  */
-export const PERPS_PRO_CARD_SHADOW = '0px 5px 20px 0px rgba(0, 0, 0, 0.08)';
-
-// Dark mode cards use bg-2 without a shadow (design note on 86609:329983).
+// Dark mode cards use bg-3 (Figma 87900:97324).
 export const getPerpsProInfoCardStyle = (
   colors: AppColors2024Variants,
   isLight: boolean | undefined,
 ) =>
   ({
     backgroundColor:
-      colors[isLight === false ? 'neutral-bg-2' : 'neutral-bg-1'],
+      colors[isLight === false ? 'neutral-bg-3' : 'neutral-bg-1'],
     borderRadius: 12,
     borderCurve: 'continuous',
     padding: 12,
-    ...(isLight === false ? null : { boxShadow: PERPS_PRO_CARD_SHADOW }),
   } as const);
+
+/** The info section fades from bg-1 to bg-0 over the lead gap and the tabs
+ * (Figma 86609:327462). Dark bg-0 equals bg-1.
+ */
+export const getPerpsProInfoTabsGradientColors = (
+  colors: AppColors2024Variants,
+) => [colors['neutral-bg-1'], colors['neutral-bg-0']];
 
 /** 30pt label/value rows shared by Pro cards and dialogs. */
 export const getPerpsProListRowStyles = (colors: AppColors2024Variants) =>

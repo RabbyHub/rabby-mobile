@@ -62,8 +62,11 @@ describe('time utils', () => {
 
     expect(fromNow(100, 100)).toBe('1min');
     expect(fromNow(0, 90061, true)).toBe('1 day  1 hour 1 min');
+    expect(fromNow(0, 19 * 60)).toBe('19mins');
+    expect(fromNow(0, 2 * 3600 + 5 * 60)).toBe('2hours 5mins');
     expect(fromNowWithSecs(100, 100)).toBe('0sec');
     expect(fromNowWithSecs(0, 90061)).toBe('1day  1hour 1min');
+    expect(fromNowWithSecs(0, 2 * 3600 + 19 * 60)).toBe('2hours 19mins');
   });
 
   it('calcGasEstimated and formatTimestamp preserve current branching behavior', () => {

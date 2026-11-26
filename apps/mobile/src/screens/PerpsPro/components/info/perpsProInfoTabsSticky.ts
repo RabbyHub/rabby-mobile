@@ -8,6 +8,33 @@ export const PERPS_PRO_INFO_SECTION_TOP_GAP = 20;
 export const PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT =
   PERPS_PRO_INFO_SECTION_TOP_GAP + PERPS_PRO_INFO_TABS_HEIGHT;
 export const PERPS_PRO_INFO_SECTION_BOTTOM_PADDING = 36;
+// The bg-1 → bg-0 band spans the lead gap and the tabs. The sticky tabs start
+// their gradient above themselves so they continue the in-list band exactly.
+export const PERPS_PRO_INFO_TABS_GRADIENT_START = {
+  x: 0,
+  y: -PERPS_PRO_INFO_SECTION_TOP_GAP / PERPS_PRO_INFO_TABS_HEIGHT,
+};
+// Same x as the start keeps the band vertical; the library's default end
+// (x 0.5) would slant it across the strip.
+export const PERPS_PRO_INFO_TABS_GRADIENT_END = { x: 0, y: 1 };
+
+// The controls below the tabs stick with them, so their heights are fixed:
+// Positions keeps 12pt around the 24pt row (Figma 87900:107683); Open Orders
+// uses 8pt above the row, 4pt to the 30pt category chips and 8pt below.
+export const PERPS_PRO_INFO_CONTROLS_ROW_HEIGHT = 24;
+export const PERPS_PRO_POSITIONS_CONTROLS_INSET = 12;
+export const PERPS_PRO_POSITIONS_CONTROLS_HEIGHT =
+  PERPS_PRO_POSITIONS_CONTROLS_INSET * 2 + PERPS_PRO_INFO_CONTROLS_ROW_HEIGHT;
+export const PERPS_PRO_OPEN_ORDERS_CONTROLS_TOP = 8;
+export const PERPS_PRO_OPEN_ORDERS_CONTROLS_ROW_GAP = 4;
+export const PERPS_PRO_OPEN_ORDERS_CATEGORY_HEIGHT = 30;
+export const PERPS_PRO_OPEN_ORDERS_CONTROLS_BOTTOM = 8;
+export const PERPS_PRO_OPEN_ORDERS_CONTROLS_HEIGHT =
+  PERPS_PRO_OPEN_ORDERS_CONTROLS_TOP +
+  PERPS_PRO_INFO_CONTROLS_ROW_HEIGHT +
+  PERPS_PRO_OPEN_ORDERS_CONTROLS_ROW_GAP +
+  PERPS_PRO_OPEN_ORDERS_CATEGORY_HEIGHT +
+  PERPS_PRO_OPEN_ORDERS_CONTROLS_BOTTOM;
 
 export const getPerpsProInfoTabsNaturalAnchor = ({
   leadInHeight,
@@ -90,5 +117,19 @@ export const createPerpsProInfoTabsTranslateY = ({
   return Animated.divide(
     Animated.add(Animated.add(naturalTop, marketBottom), absoluteDifference),
     2,
+  );
+};
+
+export const getPerpsProInfoStickyHeaderOffset = (
+  tabsTop: number,
+  rowY: number,
+  scrollOffset: number,
+) => {
+  'worklet';
+  // The row's natural place is right below the tabs; once the tabs stop, it
+  // stays under their bottom edge instead of scrolling away.
+  return Math.max(
+    0,
+    tabsTop + PERPS_PRO_INFO_TABS_HEIGHT - rowY + scrollOffset,
   );
 };

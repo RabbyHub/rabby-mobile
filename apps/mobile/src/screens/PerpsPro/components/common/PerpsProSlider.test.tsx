@@ -6,6 +6,14 @@ jest.mock('@/assets2024/icons/perps/PerpsProDialogSliderPoint.svg', () => {
       testID: 'dialog-slider-point-svg',
     });
 });
+jest.mock('@/assets2024/icons/perps/PerpsProTradeAmountSliderThumb.svg', () => {
+  const ReactModule = require('react');
+  return (props: object) =>
+    ReactModule.createElement(require('react-native').View, {
+      ...props,
+      testID: 'order-slider-thumb-svg',
+    });
+});
 jest.mock('@/assets2024/icons/perps/PerpsProLeverageThumb.svg', () => {
   const ReactModule = require('react');
   return (props: object) =>
@@ -354,9 +362,17 @@ describe('order dialog slider coordinates', () => {
           width: 8,
           height: 8,
           fill: 'neutral-bg-1',
-          color: index * 25 <= value ? 'neutral-title-1' : 'neutral-info',
+          color: index * 25 <= value ? 'neutral-title-1' : 'neutral-line',
         }),
       );
+      // Figma 87936:196187: 12px thumb on the same 4..width-4 rail.
+      expect(thumb).toMatchObject({ height: 12, width: 12 });
+      expect(screen.getByTestId('order-slider-thumb-svg').props).toMatchObject({
+        fill: 'neutral-bg-1',
+        height: 12,
+        stroke: 'neutral-title-1',
+        width: 12,
+      });
     },
   );
 });

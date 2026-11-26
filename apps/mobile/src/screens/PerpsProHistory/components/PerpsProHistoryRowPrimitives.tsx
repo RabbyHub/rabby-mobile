@@ -138,7 +138,7 @@ const value = (color: string) => ({
   textAlign: 'right' as const,
 });
 
-// Figma 86313:138628.
+// Figma 86313:138628; My trades cards drop the Trade card shadow.
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   row: {
     ...getPerpsProInfoCardStyle(colors2024, isLight),

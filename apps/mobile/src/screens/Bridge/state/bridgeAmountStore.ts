@@ -1,5 +1,6 @@
 import { createStore } from 'zustand/vanilla';
 
+import type { PendingSliderGesture } from '@/screens/Swap/hooks/pendingSlider';
 import { bridgeAmountControl } from './bridgeAmountControl';
 
 export type BridgeAmountSource = 'slider' | 'input' | 'external';
@@ -9,9 +10,11 @@ export type BridgeAmountActions = {
   /**
    * A slider gesture finished before the from token (balance) was ready: keep
    * the position and replay the commit once the token arrives. Without this the
-   * gesture is simply lost and never turns into a quote.
+   * gesture is simply lost and never turns into a quote. It is scoped to the
+   * token it was made on so it can never be replayed onto a different one.
    */
-  deferSlider: (value: number) => void;
+  deferSlider: (pending: PendingSliderGesture) => void;
+  clearPendingSlider: () => void;
   setAmountFromInput: (input: { draft: string; slider: number }) => void;
   endSlider: (input: {
     draft: string;
@@ -29,7 +32,7 @@ export type BridgeAmountState = {
   source: BridgeAmountSource;
   isDragging: boolean;
   /** Slider position waiting for the from token to become available. */
-  pendingSlider: number | null;
+  pendingSlider: PendingSliderGesture | null;
   isMax: boolean;
   passGasPrice: boolean;
   actions: BridgeAmountActions;
@@ -64,14 +67,15 @@ export function createBridgeAmountStore() {
           pendingSlider: null,
         });
       },
-      deferSlider: (value: number) => {
+      deferSlider: pending => {
         clearCommitTimer();
         set({
           source: 'slider',
           isDragging: false,
-          pendingSlider: value,
+          pendingSlider: pending,
         });
       },
+      clearPendingSlider: () => set({ pendingSlider: null }),
       setAmountFromInput: ({ draft, slider }) => {
         clearCommitTimer();
         bridgeAmountControl.value = slider;

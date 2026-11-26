@@ -1,6 +1,8 @@
 import {
   getPerpsProDialogActionStyles,
-  PERPS_PRO_DIALOG_LABELED_FIELD,
+  getPerpsProDialogFieldUnitStyle,
+  PERPS_PRO_DIALOG_FIELD,
+  PERPS_PRO_DIALOG_FIELD_RADIUS,
   resolvePerpsProDialogCardBackground,
   resolvePerpsProDialogFieldBackground,
   PERPS_PRO_DIALOG_TOKENS,
@@ -611,7 +613,6 @@ export const PerpsProPositionTpSlForm: React.FC<{
                     setAmountFocused(true);
                     beginManualAmountEntry();
                   }}
-                  onPressIn={beginManualAmountEntry}
                   ref={amountInputRef}
                   style={styles.input}
                   testID="perps-pro-position-tpsl-amount"
@@ -765,10 +766,10 @@ const getStyle = createGetStyles2024(
         colors2024,
         isLight,
       ),
-      borderRadius: 6,
+      borderRadius: PERPS_PRO_DIALOG_FIELD_RADIUS,
       borderCurve: 'continuous',
       flex: 1,
-      height: PERPS_PRO_DIALOG_LABELED_FIELD.height,
+      height: PERPS_PRO_DIALOG_FIELD.height,
       justifyContent: 'center',
       minWidth: 0,
       position: 'relative',
@@ -781,7 +782,7 @@ const getStyle = createGetStyles2024(
       left: 12,
       lineHeight: 12,
       position: 'absolute',
-      top: PERPS_PRO_DIALOG_LABELED_FIELD.labelTop,
+      top: PERPS_PRO_DIALOG_FIELD.labelTop,
     },
     amountPlaceholder: {
       color: colors2024['neutral-info'],
@@ -791,7 +792,7 @@ const getStyle = createGetStyles2024(
       left: 12,
       lineHeight: 20,
       position: 'absolute',
-      top: (PERPS_PRO_DIALOG_LABELED_FIELD.height - 20) / 2,
+      top: (PERPS_PRO_DIALOG_FIELD.height - 20) / 2,
     },
     input: {
       ...PERPS_PRO_NUMBER_STYLE,
@@ -799,24 +800,20 @@ const getStyle = createGetStyles2024(
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
-      height: PERPS_PRO_DIALOG_LABELED_FIELD.height,
+      height: PERPS_PRO_DIALOG_FIELD.height,
       includeFontPadding: false,
       lineHeight: 18,
       paddingHorizontal: 12,
       paddingRight: 72,
-      ...PERPS_PRO_DIALOG_LABELED_FIELD.inputPadding,
+      ...PERPS_PRO_DIALOG_FIELD.inputPadding,
       textAlignVertical: 'center',
     },
-    // Figma 86609:331066: 16pt Medium unit centered in the 56pt field.
+    // Figma 87936:196185: the unit is centered in the field.
     inputUnit: {
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      fontWeight: '500',
-      lineHeight: 20,
+      ...getPerpsProDialogFieldUnitStyle(colors2024),
       position: 'absolute',
       right: 12,
-      top: (PERPS_PRO_DIALOG_LABELED_FIELD.height - 20) / 2,
+      top: (PERPS_PRO_DIALOG_FIELD.height - 18) / 2,
     },
     duplicateBox: {
       backgroundColor: colors2024['orange-light-1'],
@@ -846,7 +843,9 @@ const getStyle = createGetStyles2024(
       lineHeight: 16,
     },
     amountSection: { marginTop: 20 },
-    slider: { marginTop: 10 },
+    // Figma 87936:196124: the 18pt slider row starts 20pt below the amount
+    // field and the hint 12pt below it; the 40pt touch box is centered on it.
+    slider: { marginTop: 6 },
     sliderAmountValue: {
       ...PERPS_PRO_NUMBER_STYLE,
       right: 72,
@@ -857,10 +856,10 @@ const getStyle = createGetStyles2024(
       left: 12,
       lineHeight: 18,
       position: 'absolute',
-      top: PERPS_PRO_DIALOG_LABELED_FIELD.valueTop,
+      top: PERPS_PRO_DIALOG_FIELD.valueTop,
     },
     amountAvailable: {
-      marginTop: 8,
+      marginTop: -2,
       color: colors2024['neutral-foot'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,
