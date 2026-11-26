@@ -114,16 +114,17 @@ export function createSecurePreferenceStorage(
     const envelope = raw === null ? undefined : parseRecord(raw);
     if (
       envelope?.version !== FORMAT_VERSION ||
-      typeof envelope.payload !== 'string' ||
-      typeof envelope.hmac !== 'string' ||
-      !hmacPattern.test(envelope.hmac) ||
-      !matchesMac(mac(name, envelope.payload), envelope.hmac)
+      typeof envelope.payload !== 'string'
     ) {
       return undefined;
     }
+    const authenticated =
+      typeof envelope.hmac === 'string' &&
+      hmacPattern.test(envelope.hmac) &&
+      matchesMac(mac(name, envelope.payload), envelope.hmac);
     const snapshot = parseRecord(envelope.payload);
     if (snapshot && isValidPreference(name, snapshot)) {
-      return { snapshot, payload: envelope.payload };
+      return { snapshot, payload: envelope.payload, authenticated };
     }
     return undefined;
   }
@@ -167,10 +168,13 @@ export function createSecurePreferenceStorage(
       const raw = disk.read(recordKey(name));
       if (raw === null) {
         missing.push(name);
-      } else if (
-        installation !== 'initializing' ||
-        readProtected(name, raw)?.payload !== DEFAULT_PAYLOAD
-      ) {
+        continue;
+      }
+      if (installation !== 'initializing') {
+        return;
+      }
+      const record = readProtected(name, raw);
+      if (!record?.authenticated || record.payload !== DEFAULT_PAYLOAD) {
         return;
       }
     }
@@ -259,16 +263,21 @@ export function createSecurePreferenceStorage(
       stage = 'record-read';
       const raw = disk.read(recordKey(name));
       stage = raw === null ? 'record-missing' : 'record-verify';
-      const verified = readProtected(name, raw);
-      if (verified) {
-        state.snapshot = verified.snapshot;
-        state.committedPayload = verified.payload;
+      const record = readProtected(name, raw);
+      if (record) {
+        state.snapshot = record.snapshot;
+        state.committedPayload = record.payload;
+      }
+      if (record?.authenticated) {
         try {
           recordInstallation();
         } catch {
           // Existing authenticated records still protect this installation.
         }
         cleanLegacy(name);
+      } else if (record) {
+        // Signature failures are reported without blocking usable settings.
+        onIssue?.({ name, kind: 'damaged', stage });
       } else {
         setIssue(name, state, 'damaged', stage);
       }
