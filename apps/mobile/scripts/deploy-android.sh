@@ -306,6 +306,16 @@ fi
 cp $android_export_target $deployment_local_dir/$apk_name
 
 android_16kb_check_mode="${RABBY_MOBILE_ANDROID_16KB_CHECK:-warn}"
+# Sign-only packages are shipped, so 16 KB page-size support is a gate there:
+# never let it degrade to "warn". "off" stays available as an explicit,
+# loud emergency opt-out.
+if [ "$RABBY_MOBILE_SIGN_ONLY" == "true" ] || [ -n "$RABBY_MOBILE_SIGN_ONLY_APK" ]; then
+  if [ "$android_16kb_check_mode" == "off" ]; then
+    echo "[deploy-android] WARNING: 16KB page-size check is disabled for a sign-only package" >&2
+  else
+    android_16kb_check_mode="strict"
+  fi
+fi
 android_16kb_report_json="$deployment_local_dir/android-16kb-page-size.json"
 android_16kb_report_text="$deployment_local_dir/android-16kb-page-size.txt"
 if [[ "$version_bundle_suffix" =~ .*\.apk ]] && [ "$android_16kb_check_mode" != "off" ]; then
