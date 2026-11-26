@@ -20,6 +20,11 @@ import * as SecretVault from '@/core/utils/secretVault';
 
 interface Props {
   onDone: () => void;
+  /**
+   * Called when cloud backup cannot start (e.g. iCloud unavailable).
+   * Must NOT clear the backup reminder or navigate back as a success.
+   */
+  onUnavailable?: () => void;
   delaySetPassword?: boolean;
   /** Seed phrase for existing user backup (from authentication) */
   seedPhraseData?: string;
@@ -29,6 +34,7 @@ interface Props {
 
 export const SeedPhraseBackupToCloud: React.FC<Props> = ({
   onDone,
+  onUnavailable,
   delaySetPassword,
   seedPhraseData: externalSeedPhrase,
   skipKeyringCreation = false,
@@ -151,10 +157,10 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
         toast.error(
           t('page.newAddress.seedPhrase.backupErrorCloudNotAvailable'),
         );
-        onDone();
+        (onUnavailable || onDone)();
       }
     });
-  }, [onDone, t]);
+  }, [onDone, onUnavailable, t]);
 
   return (
     <View>

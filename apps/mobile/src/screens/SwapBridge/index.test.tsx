@@ -155,9 +155,11 @@ jest.mock('../Swap/swapServiceDependencies', () => ({
 function MockScene({
   kind,
   sceneActive,
+  tabSelected,
 }: {
   kind: 'swap' | 'bridge';
   sceneActive: boolean;
+  tabSelected: boolean;
 }) {
   const [value, setValue] = React.useState('');
   React.useEffect(() => {
@@ -172,6 +174,7 @@ function MockScene({
   return (
     <View
       testID={`${kind}-scene`}
+      accessibilityValue={{ text: tabSelected ? 'selected-tab' : 'other-tab' }}
       accessibilityState={{ selected: sceneActive }}>
       <TextInput
         testID={`${kind}-amount`}
@@ -280,6 +283,13 @@ describe('SwapBridge route-owned scenes', () => {
         ['bridge', true],
       ]),
     );
+    expect(view.getByTestId('bridge-scene').props.accessibilityValue.text).toBe(
+      'selected-tab',
+    );
+    expect(
+      view.getByTestId('swap-scene', { includeHiddenElements: true }).props
+        .accessibilityValue.text,
+    ).toBe('other-tab');
     fireEvent.changeText(view.getByTestId('bridge-amount'), '456');
     view.rerender(
       <RouteBoundary context={context}>
@@ -287,6 +297,13 @@ describe('SwapBridge route-owned scenes', () => {
       </RouteBoundary>,
     );
     expect(view.getByTestId('swap-amount').props.value).toBe('123');
+    expect(view.getByTestId('swap-scene').props.accessibilityValue.text).toBe(
+      'selected-tab',
+    );
+    expect(
+      view.getByTestId('bridge-scene', { includeHiddenElements: true }).props
+        .accessibilityValue.text,
+    ).toBe('other-tab');
     expect(
       view.getByTestId('bridge-amount', { includeHiddenElements: true }).props
         .value,
@@ -389,6 +406,9 @@ describe('SwapBridge configured header', () => {
     expect(
       firstView.getByTestId('swap-scene').props.accessibilityState.selected,
     ).toBe(false);
+    expect(
+      firstView.getByTestId('swap-scene').props.accessibilityValue.text,
+    ).toBe('selected-tab');
     expect(secondView.getByTestId('bridge-header-actions')).toBeTruthy();
     expect(
       secondView.getByTestId('bridge-scene').props.accessibilityState.selected,

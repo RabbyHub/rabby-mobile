@@ -34,6 +34,8 @@ import useAsync from 'react-use/lib/useAsync';
 import { useUnmount } from 'ahooks';
 import { Text } from '@/components/Typography';
 import { useRetryMinPending } from '@/components/Approval/hooks/useRetryMinPending';
+import { apiOneKey } from '@/core/apis';
+import { getOneKeyErrorMessage } from '@/utils/onekeyError';
 
 interface ApprovalParams {
   address: string;
@@ -123,31 +125,47 @@ export const OneKeyHardwareWaiting = ({
     undefined,
   );
 
+  // Mirrors connectStatus for the unmount handler.
+  const waitingOnDeviceRef = useRef(true);
+
+  const releaseDevice = () => {
+    // The device may still show the confirmation screen; release it so it
+    // does not stay busy for the next request.
+    if (waitingOnDeviceRef.current) {
+      waitingOnDeviceRef.current = false;
+      apiOneKey.cancel();
+    }
+  };
+
   const handleCancel = () => {
     operationActiveRef.current = false;
     cancelRef.current = true;
+    releaseDevice();
     rejectApproval('user cancel');
   };
 
   useUnmount(() => {
     if (!cancelRef.current) {
+      releaseDevice();
       rejectApproval('user cancel');
     }
   });
 
-  const [isRetrying, setIsRetrying] = React.useState(false);
+  const retryingRef = useRef(false);
 
   const { markRetryStarted, afterMinPending } = useRetryMinPending();
 
   const handleRetry = async (showToast = true) => {
-    if (isRetrying) {
-      return;
-    }
     if (connectStatus === APPROVAL_STATUS_MAP.SUBMITTING) {
       toast.success(t('page.signFooterBar.ledger.resubmited'));
       return;
     }
-    setIsRetrying(true);
+    // One hardware sign at a time: a second tap while the device is still
+    // working would start another sign (device busy / double confirm).
+    if (retryingRef.current || connectStatus === APPROVAL_STATUS_MAP.WAITING) {
+      return;
+    }
+    retryingRef.current = true;
 
     setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
     markRetryStarted();
@@ -175,7 +193,6 @@ export const OneKeyHardwareWaiting = ({
     if (showToast) {
       toast.success(t('page.signFooterBar.ledger.resent'));
     }
-    setIsRetrying(false);
   };
 
   const init = async () => {
@@ -203,6 +220,7 @@ export const OneKeyHardwareWaiting = ({
     if (!operationActiveRef.current) return;
 
     eventBus.addListener(EVENTS.COMMON_HARDWARE.REJECTED, async data => {
+      retryingRef.current = false;
       setErrorMessage(data);
       setConnectStatus(APPROVAL_STATUS_MAP.REJECTED);
     });
@@ -213,6 +231,7 @@ export const OneKeyHardwareWaiting = ({
       params.signingOperationId,
       () => operationActiveRef.current,
       async data => {
+        retryingRef.current = false;
         if (data.success) {
           let sig = data.data;
           setResult(sig);
@@ -257,7 +276,16 @@ export const OneKeyHardwareWaiting = ({
           );
           afterMinPending(() => {
             setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
-            setErrorMessage(data.errorMsg || '');
+            setErrorMessage(
+              getOneKeyErrorMessage(
+                data.errorCode !== undefined
+                  ? { code: data.errorCode, message: data.errorMsg }
+                  : data.errorMsg,
+                t,
+              ) ||
+                data.errorMsg ||
+                '',
+            );
           });
         }
       },
@@ -299,6 +327,13 @@ export const OneKeyHardwareWaiting = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signFinishedData, isClickDone]);
+
+  React.useEffect(() => {
+    waitingOnDeviceRef.current = connectStatus === APPROVAL_STATUS_MAP.WAITING;
+    if (connectStatus !== APPROVAL_STATUS_MAP.WAITING) {
+      retryingRef.current = false;
+    }
+  }, [connectStatus]);
 
   React.useEffect(() => {
     setVisible(true);

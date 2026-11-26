@@ -258,21 +258,14 @@ function useDisplayedTabs() {
   return { displayedTabs };
 }
 
-export function useHomeDisplayedTabs() {
-  const tabs = useActivityStore(tabsStore, state => state.tabs, Object.is, {
-    storeLabel: 'home-overview-browser-tabs',
+const selectDisplayedTabsCount = (state: TabsState) =>
+  getDisplayedTabs(state.tabs).length;
+
+/** How many tabs the tab manager lists. Re-renders only when that count changes. */
+export function useDisplayedTabsCount() {
+  return useActivityStore(tabsStore, selectDisplayedTabsCount, Object.is, {
+    storeLabel: 'home-dapp-drawer-tabs-count',
   });
-
-  const homeDisplayedTabs = useMemo(
-    () =>
-      sortBy(
-        getDisplayedTabs(tabs),
-        tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
-      ).slice(0, 4),
-    [tabs],
-  );
-
-  return { homeDisplayedTabs };
 }
 
 export const useBrowserActiveTabState = () => {

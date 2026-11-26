@@ -6,7 +6,6 @@ import type { PerpsMarketMarginMode, PerpsQuoteAsset } from '@/constant/perps';
 import {
   PERPS_MAX_NTL_VALUE,
   COLLATERAL_TOKEN_TO_QUOTE,
-  DEFAULT_TOP_ASSET,
 } from '@/constant/perps';
 import type {
   Meta,
@@ -62,23 +61,6 @@ export const getHyperliquidCoinLogoUrl = (coin: string) => {
     return '';
   }
   return `https://app.hyperliquid.xyz/coins/${iconKey}.svg`;
-};
-
-// Logo fallback when marketDataMap hasn't loaded: bundled DeBank PNG first
-// (reachable in degraded networks where HL's domain isn't), HL svg last.
-let defaultTopAssetLogoMap: Record<string, string> | null = null;
-
-export const getFallbackCoinLogoUrl = (coin: string) => {
-  if (!defaultTopAssetLogoMap) {
-    const map: Record<string, string> = {};
-    DEFAULT_TOP_ASSET.forEach(asset => {
-      if (asset.full_logo_url) {
-        map[asset.name] = asset.full_logo_url;
-      }
-    });
-    defaultTopAssetLogoMap = map;
-  }
-  return defaultTopAssetLogoMap[coin] || getHyperliquidCoinLogoUrl(coin);
 };
 
 /**

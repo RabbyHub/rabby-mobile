@@ -4,6 +4,8 @@ import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { FlatList, RefreshControl, View } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
+import { getMainnetChainList } from '@/constant/chains';
+import { DEFAULT_CHAIN_LIST } from '@/constant/default-chain-data';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { Button } from '@/components2024/Button';
@@ -16,6 +18,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 
 import { ChainSelector } from './ChainSelector';
+import { CustomMarket } from './config/market';
 import wrapperToken from './config/wrapperToken';
 import { API_ETH_MOCK_ADDRESS } from './utils/constant';
 import { assetCanBeBorrowedByUser } from './utils/borrow';
@@ -68,7 +71,8 @@ type MyAssetItem =
 const MyAssetHome: React.FC = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const { chainEnum, marketKey } = useSelectedMarket();
+  const { chainEnum, marketKey, selectedMarketData, setMarketKey } =
+    useSelectedMarket();
   const { reserves } = useLendingRemoteData();
   const { loading: isFetching } = useLendingIsLoading();
   const { fetchData } = useFetchLendingData();
@@ -259,8 +263,26 @@ const MyAssetHome: React.FC = () => {
   );
 
   React.useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (!isFocused) {
+      return;
+    }
+    let active = true;
+    fetchData().finally(() => {
+      const chains = getMainnetChainList();
+      // Only a synced list can tell us that the backend dropped a chain.
+      if (
+        active &&
+        chains !== DEFAULT_CHAIN_LIST &&
+        selectedMarketData &&
+        !chains.some(chain => chain.id === selectedMarketData.chainId)
+      ) {
+        setMarketKey(CustomMarket.proto_mainnet_v3);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [fetchData, isFocused, selectedMarketData, setMarketKey]);
 
   const findReserveByTokenAddress = useCallback(
     (tokenAddress: string) => {

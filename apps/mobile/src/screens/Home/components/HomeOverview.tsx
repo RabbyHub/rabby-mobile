@@ -1,4 +1,3 @@
-import { apisPerps } from '@/core/apis';
 import RcIconDoubleArrowCC from '@/assets2024/icons/common/double-arrow-cc.svg';
 import RcIconApprovalsCC from '@/assets2024/icons/home/IconApprovalsCC.svg';
 import RcIconBridgeCC from '@/assets2024/icons/home/IconBridgeCC.svg';
@@ -110,7 +109,6 @@ import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import useTokenList from '@/store/tokens';
 import useProtocol from '@/store/protocols';
 import { isTabsSwiping } from '../../Address/components/MultiAssets/hooks';
-import { BrowserOrPerpsPosition } from './BrowserOrPerpsPosition';
 import { GasAccountBadge } from '../../GasAccount/components/GasAccountBadge';
 import { apisLending } from '../../Lending/hooks';
 import { HomeCenterArea } from '../components/HomeCenterArea';
@@ -123,7 +121,6 @@ import { PerpsPnl } from '../components/PerpsPnl';
 import {
   refreshSuccessAndFailList,
   resetFetchHistoryTxCount,
-  useHomeHistoryCount,
   useHomePendingTxCount,
 } from '../hooks/history';
 import type { TabsScrollViewProps } from '@/components/customized/react-native-collapsible-tab-view/ScrollView';
@@ -904,7 +901,7 @@ function DeferredHomeMenuBadge({
   }
 
   if (el.key === MultiHomeFeatTitle.History) {
-    return <HistoryMenuBadge badgeStyle={badgeStyle} />;
+    return <HistoryMenuBadge />;
   }
 
   if (el.key === MultiHomeFeatTitle.Approvals) {
@@ -926,25 +923,11 @@ function DeferredHomeMenuBadge({
   return null;
 }
 
-function HistoryMenuBadge({
-  badgeStyle,
-}: {
-  badgeStyle: React.ComponentProps<typeof BadgeText>['style'];
-}) {
+function HistoryMenuBadge() {
   const pendingTxCount = useHomePendingTxCount();
-  const historyCount = useHomeHistoryCount();
 
-  if (pendingTxCount > 0) {
-    return <HomePendingBadge number={pendingTxCount} />;
-  }
-
-  const badge = historyCount?.fail || historyCount?.success;
-  return badge && badge > 0 ? (
-    <BadgeText
-      count={badge}
-      isSuccess={!historyCount?.fail}
-      style={[badgeStyle]}
-    />
+  return pendingTxCount > 0 ? (
+    <HomePendingBadge number={pendingTxCount} />
   ) : null;
 }
 
@@ -1024,9 +1007,9 @@ export const HomeOverview = React.memo(() => {
           icon: RcIconPerps,
         },
         {
-          key: MultiHomeFeatTitle.MemeCoin,
-          title: t('page.home.services.meme'),
-          icon: RcIconMemeCoinCC,
+          key: MultiHomeFeatTitle.Lending,
+          title: t('page.home.services.lending'),
+          icon: RcIconLending,
         },
         {
           key: MultiHomeFeatTitle.GasAccount,
@@ -1067,9 +1050,9 @@ export const HomeOverview = React.memo(() => {
           icon: RcIconConvertDustCC,
         },
         {
-          key: MultiHomeFeatTitle.Lending,
-          title: t('page.home.services.lending'),
-          icon: RcIconLending,
+          key: MultiHomeFeatTitle.MemeCoin,
+          title: t('page.home.services.meme'),
+          icon: RcIconMemeCoinCC,
         },
       ].filter(Boolean) as {
         key: MultiHomeFeatTitle;
@@ -1366,7 +1349,6 @@ export const HomeOverview = React.memo(() => {
         case MultiHomeFeatTitle.Ecosystem:
           break;
         case MultiHomeFeatTitle.Perps:
-          apisPerps.setHasShownPerpsGuidePopup(true);
           void navigateToPerpsHome({
             navigation,
             source: 'home-main',
@@ -1516,7 +1498,6 @@ export const HomeOverview = React.memo(() => {
                     );
                   })}
                 </View>
-                <BrowserOrPerpsPosition />
                 <View
                   style={styles.swipeUpHint}
                   onLayout={swipeUpViewHandlers.onLayout}>

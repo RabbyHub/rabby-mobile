@@ -22,7 +22,10 @@ import {
 } from '@/constant/swap';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useSwapSettings } from './settings';
-import { type PendingSliderGesture, shouldReplayPendingSlider } from './slider';
+import {
+  type PendingSliderGesture,
+  shouldReplayPendingSlider,
+} from './pendingSlider';
 import type { QuoteProvider, TDexQuoteData } from './quote';
 import { useQuoteMethods } from './quote';
 import { formatTokenAmountInput } from '@/utils/number';
@@ -364,9 +367,11 @@ export const useSlippage = () => {
 export const useTokenPair = ({
   account,
   active = true,
+  tabSelected = true,
 }: {
   account: Account;
   active?: boolean;
+  tabSelected?: boolean;
 }) => {
   const swapService = useSwapService();
   const userAddress = account?.address;
@@ -383,16 +388,6 @@ export const useTokenPair = ({
   const clearPendingSlider = useCallback(() => {
     pendingSliderRef.current = null;
   }, []);
-
-  useEffect(() => {
-    const tokenKey = payToken?.id ? `${payToken.chain}:${payToken.id}` : '';
-    const previousKey = lastPayTokenKeyRef.current;
-    lastPayTokenKeyRef.current = tokenKey;
-    if (!previousKey || previousKey === tokenKey) {
-      return;
-    }
-    pendingSliderRef.current = null;
-  }, [payToken?.chain, payToken?.id]);
   const refreshId = useAtomValue(refreshIdAtom);
   const setTokenRefreshId = useSetTokenRefreshId();
   const setRefreshId = useSetAtom(refreshIdAtom);
@@ -605,6 +600,17 @@ export const useTokenPair = ({
     defaultToken: defaultSelectedToToken,
     enabled: active,
   });
+
+  useEffect(() => {
+    const tokenKey = payToken?.id ? `${payToken.chain}:${payToken.id}` : '';
+    const previousKey = lastPayTokenKeyRef.current;
+    lastPayTokenKeyRef.current = tokenKey;
+    if (!previousKey || previousKey === tokenKey) {
+      return;
+    }
+    // An explicit token/chain change invalidates a deferred slider gesture.
+    pendingSliderRef.current = null;
+  }, [payToken?.chain, payToken?.id]);
 
   const {
     lowCreditToken,
@@ -1422,6 +1428,7 @@ export const useTokenPair = ({
 
   useEffect(() => {
     if (
+      tabSelected &&
       slider === 100 &&
       swapUseSlider &&
       payToken?.amount &&
@@ -1431,6 +1438,7 @@ export const useTokenPair = ({
       handleSlider100();
     }
   }, [
+    tabSelected,
     slider,
     swapUseSlider,
     payToken?.amount,
@@ -1522,6 +1530,18 @@ export const useTokenPair = ({
     setSwapUseSlider(false);
     setIsDraggingSlider(false);
   }, [userAddress]);
+
+  useEffect(() => {
+    if (tabSelected) {
+      return;
+    }
+    setPayAmount('');
+    setSlider(0);
+    setSwapUseSlider(false);
+    setIsDraggingSlider(false);
+    setUseGasPrice(false);
+    setQuotesListVisible(false);
+  }, [tabSelected]);
 
   useFocusEffect(
     useCallback(() => {

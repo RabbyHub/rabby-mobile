@@ -30,11 +30,6 @@
     }
   },
   "page": {
-    "predict": {
-      "dappSelect": {
-        "title": "Select Predict Provider"
-      }
-    },
     "getStart": {
       "createNewAddress": "Create a new wallet",
       "alreadyHaveAddress": "I already have a wallet",
@@ -1270,7 +1265,8 @@
         },
         "notFound": {
           "title": "Device Not Found",
-          "description": "Turn on Bluetooth and unlock OneKey"
+          "description": "Turn on Bluetooth and unlock OneKey",
+          "retry": "Search again"
         },
         "select": {
           "title": "Available Devices",
@@ -1285,6 +1281,23 @@
           "title": "Enter PIN",
           "description": "Enter the PIN code according to the number layout displayed on the device screen",
           "onDevice": "Enter PIN code on device"
+        },
+        "error": {
+          "deviceNotFound": "OneKey not found. Make sure it is unlocked, Bluetooth is on and it is close to your phone.",
+          "disconnected": "OneKey disconnected. Keep it unlocked and close to your phone, then try again.",
+          "deviceBusy": "OneKey is busy with another request. Finish or cancel it on the device, then try again.",
+          "passphraseDisabled": "Passphrase is turned off on the device. Turn it on, or re-import this wallet.",
+          "firmwareTooOld": "Your OneKey firmware is too old. Update it with the OneKey app, then try again.",
+          "bluetoothOff": "Bluetooth is off. Turn on Bluetooth and try again.",
+          "bluetoothPermission": "Rabby does not have permission to use Bluetooth. Allow Bluetooth (or Location on Android 11 and earlier) for Rabby in Settings, then try again.",
+          "locationServicesDisabled": "Location services are off. Turn them on to search for Bluetooth devices.",
+          "bluetoothUnsupported": "Bluetooth is not supported on this phone.",
+          "scanFailed": "Bluetooth search failed. Please try again.",
+          "pairingFailed": "Bluetooth pairing failed. Accept the pairing request on your phone and OneKey, then try again.",
+          "pairingInvalid": "The Bluetooth pairing is no longer valid. Forget OneKey in your phone's Bluetooth settings, then pair it again.",
+          "pinInvalid": "Incorrect PIN. Please try again.",
+          "cancelled": "The request was cancelled.",
+          "openSettings": "Open Settings"
         }
       },
       "keystone": {
@@ -2131,10 +2144,6 @@
         "title": "Select Chain"
       }
     },
-    "dappPermission": {
-      "serviceUnavailableTitle": "Service Unavailable",
-      "serviceUnavailableDesc": "The service is not supported in your current region."
-    },
     "watchlist": {
       "empty": {
         "title": "No tokens in your watchlist yet"
@@ -2719,12 +2728,6 @@
           "averageFilledPrice": "Avg. Filled Price"
         }
       },
-      "dappSelect": {
-        "title": "Select Perps Provider"
-      },
-      "assetPage": {
-        "hyperliquidPosition": "Hyperliquid Position"
-      },
       "PerpsRiskPopup": {
         "liqDistanceTipsShort": "Going up <1>{{distance}}</1> will trigger liquidation.",
         "liqDistanceTipsLong": "Going down <1>{{distance}}</1> will trigger liquidation.",
@@ -2770,6 +2773,7 @@
         "depositBtn": "Deposit",
         "minimumDepositSize": "The minimum deposit amount is $5",
         "estReceiveTooltip": "Cross-chain deposit is processed via LiFi, may incur some slippage. Estimated arrival in {{number}}s.",
+        "estReceiveTooltipV2": "Cross-chain deposit is processed via {{name}}, may incur some slippage. Estimated arrival in {{number}}s.",
         "estReceive": "Est. Receive: {{balance}}",
         "fetchQuoteFailed": "Failed to fetch deposit quote. Please switch token.",
         "insufficientBalance": "Insufficient balance",
@@ -3130,9 +3134,6 @@
         "short": "Short",
         "noPermission": "Opening positions is not supported in your region"
       },
-      "guideEntry": {
-        "gotIt": "Got it"
-      },
       "PerpsAutoCloseModal": {
         "takeProfitExpectedPNL": "Take profit expected PNL",
         "stopLossExpectedPNL": "Stop loss expected PNL",
@@ -3226,8 +3227,6 @@
           "totalBorrowed": "Total Borrowed"
         },
         "item": {
-          "__skip_translation": ["tvl"],
-          "tvl": "TVL",
           "wrapperToken": "Wrapped token for {{name}}"
         }
       },
@@ -3243,12 +3242,7 @@
         "risky": "Risky"
       },
       "repayDetail": {
-        "actions": "Repay",
-        "repayWith": "Repay with",
-        "tabs": {
-          "wallet": "Wallet balance",
-          "collateral": "Collateral"
-        }
+        "actions": "Repay"
       },
       "supplyDetail": {
         "actions": "Supply",
@@ -3289,7 +3283,6 @@
       },
       "borrowDetail": {
         "actions": "Borrow",
-        "swapDebt": "Swap",
         "borrowed": "Borrowed",
         "noSupplyPrefix": "No supply: ",
         "noSupplyDesc": "To borrow, you need to supply assets as collateral.",
@@ -3347,8 +3340,7 @@
         "header": {
           "assets": "Token",
           "balance": "Balance"
-        },
-        "zeroLtvCollateralTips": "You have following LTV = 0 collaterals and thus can only repay with these collaterals first according to collateral repay rules. "
+        }
       },
       "manageEmode": {
         "__skip_translation": ["emode"],
@@ -3376,21 +3368,6 @@
           "desc": "All borrow positions outside of this category must be closed to enable this category.",
           "placeholder": "Select"
         },
-        "debtSwapSelector": {
-          "title": "Select Borrow Token",
-          "header": {
-            "assets": "Token/Balance",
-            "apy": "APY",
-            "borrow": "My borrows"
-          }
-        },
-        "collateralSwapSelector": {
-          "title": "Select Collateral Token",
-          "header": {
-            "assets": "Token",
-            "collateral": "My collateral"
-          }
-        },
         "overview": {
           "title": "Asset category",
           "row": {
@@ -3399,51 +3376,6 @@
             "borrowable": "Borrowable"
           }
         }
-      },
-      "debtSwap": {
-        "title": "Swap Borrow Position",
-        "borrowBalance": "Borrow balance",
-        "actions": {
-          "title": "Debt Swap",
-          "amount": "Amount",
-          "borrowed": "Borrowed",
-          "swapTo": "Swap to",
-          "select": "Select"
-        },
-        "overview": {
-          "title": "Transaction Overview",
-          "borrowAPY": "Borrow apy",
-          "borrowValueAfter": "Borrow balance after swap"
-        },
-        "button": {
-          "swap": "Swap"
-        },
-        "priceImpactTips": "High price impact ({{lostValue}}). This route may return more due to low liquidity or small order size.",
-        "maxLtvWarning": "Insufficient collateral to cover new borrow position. Wallet must have borrowing power remaining to perform debt switch.",
-        "lpRiskWarning": "Low health factor after swap. Your position will carry a higher risk of liquidation.",
-        "lpDangerWarning": "Your health factor after this swap will be critically low and may result in liquidation. Please choose a different asset or reduce the swap amount to stay safe."
-      },
-      "repayWithCollateral": {
-        "toRepay": "Expected amount to repay",
-        "repayWith": "Collateral to repay with",
-        "action": {
-          "title": "Repay with {{collateral}}"
-        },
-        "collateralNotEnough": "Your collateral balance is lower than the selected amount.",
-        "insufficientLiquidity": "Insufficient liquidity.",
-        "flashLoanDisabled": "Position swaps are disabled for this asset due to security reasons.",
-        "frozenCollateral": "This asset is frozen due to an Aave community decision.",
-        "overview": {
-          "title": "Transaction Overview",
-          "borrowValueAfter": "Borrow balance after repay",
-          "collateralValueAfter": "Collateral balance after repay"
-        },
-        "button": {
-          "repay": "Repay"
-        }
-      },
-      "signFallback": {
-        "preExecFailedUseFullSign": "Simulation Failed. This transaction is very likely to fail due to AAVE errors."
       }
     },
     "address": {
@@ -3451,11 +3383,6 @@
         "title": "Receive assets",
         "btnCopyAddress": "Copy Address"
       }
-    },
-    "DAppFrame": {
-      "walletBalance": "Wallet/Balance",
-      "netWorth": "Net worth",
-      "selectAWallet": "Select a Wallet"
     },
     "convertDust": {
       "colValueAmount": "Value/Amount",

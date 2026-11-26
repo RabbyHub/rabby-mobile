@@ -1511,7 +1511,25 @@
         },
         "notFound": {
           "description": "블루투스를 켜고 OneKey 잠금을 해제하세요.",
-          "title": "디바이스를 찾을 수 없습니다."
+          "title": "디바이스를 찾을 수 없습니다.",
+          "retry": "다시 검색"
+        },
+        "error": {
+          "deviceNotFound": "OneKey를 찾을 수 없습니다. 기기의 잠금이 해제되어 있고 Bluetooth가 켜져 있으며 휴대폰 가까이에 있는지 확인하세요.",
+          "disconnected": "OneKey 연결이 끊어졌습니다. 기기의 잠금을 해제한 상태로 휴대폰 가까이에 두고 다시 시도하세요.",
+          "deviceBusy": "OneKey가 다른 요청을 처리하고 있습니다. 기기에서 완료하거나 취소한 후 다시 시도하세요.",
+          "passphraseDisabled": "기기에서 암호 구문이 꺼져 있습니다. 암호 구문을 켜거나 이 지갑을 다시 가져오세요.",
+          "firmwareTooOld": "OneKey 펌웨어가 너무 오래되었습니다. OneKey 앱으로 업데이트한 후 다시 시도하세요.",
+          "bluetoothOff": "Bluetooth가 꺼져 있습니다. Bluetooth를 켠 후 다시 시도하세요.",
+          "bluetoothPermission": "Rabby에 Bluetooth 사용 권한이 없습니다. 설정에서 Rabby의 Bluetooth(Android 11 이하에서는 위치) 권한을 허용한 후 다시 시도하세요.",
+          "locationServicesDisabled": "위치 서비스가 꺼져 있습니다. Bluetooth 기기를 검색하려면 위치 서비스를 켜세요.",
+          "bluetoothUnsupported": "이 휴대폰은 Bluetooth를 지원하지 않습니다.",
+          "scanFailed": "Bluetooth 검색에 실패했습니다. 다시 시도하세요.",
+          "pairingFailed": "Bluetooth 페어링에 실패했습니다. 휴대폰과 OneKey에서 페어링 요청을 수락한 후 다시 시도하세요.",
+          "pairingInvalid": "Bluetooth 페어링 정보가 더 이상 유효하지 않습니다. 휴대폰의 Bluetooth 설정에서 OneKey 등록을 해제한 후 다시 페어링하세요.",
+          "pinInvalid": "PIN이 올바르지 않습니다. 다시 시도하세요.",
+          "cancelled": "요청이 취소되었습니다.",
+          "openSettings": "설정 열기"
         }
       },
       "hd": {
@@ -2694,6 +2712,7 @@
         "invalidNumber": "유효한 숫자를 입력해 주세요",
         "fetchQuoteFailed": "입금 견적을 가져오는 데 실패했습니다. 토큰을 전환해 주세요.",
         "estReceiveTooltip": "크로스체인 입금은 LiFi를 통해 처리되며 일부 슬리피지가 발생할 수 있습니다. 예상 도착 시간은 {{number}}초입니다.",
+        "estReceiveTooltipV2": "크로스체인 입금은 {{name}}를 통해 처리되며 일부 슬리피지가 발생할 수 있습니다. 예상 도착 시간은 {{number}}초입니다.",
         "estReceive": "예상 수령액: {{balance}}"
       },
       "PerpsWithdrawPopup": {
@@ -2835,9 +2854,6 @@
       "closeAll": "모든 포지션 닫기",
       "closeAllConfirmMessage": "모든 열린 포지션이 시장가로 닫힙니다.",
       "closeAllConfirmTitle": "모든 포지션 닫기 확인",
-      "assetPage": {
-        "hyperliquidPosition": "하이퍼리퀴드 포지션"
-      },
       "invitePopup": {
         "title": "Hyperliquid 수수료 절약하기",
         "description": "Rabby의 코드를 사용하여 활성화하십시오.",
@@ -2845,9 +2861,6 @@
         "hyperliquidFee": "하이퍼리퀴드 거래 수수료.",
         "activatedFailed": "활성화 실패",
         "activateNow": "지금 활성화하세요"
-      },
-      "dappSelect": {
-        "title": "무기한 선물 제공자 선택"
       },
       "search": {
         "placeholder": "무기한 선물 검색",
@@ -3067,9 +3080,6 @@
         "crossDesc": "모든 포지션이 같은 마진을 공유합니다. 단일 포지션이 청산될 가능성은 낮아지지만, 극단적인 시장 움직임에서는 모든 교차 마진 자금이 손실될 수 있습니다.",
         "isolatedDesc": "각 포지션은 자체 마진을 사용합니다. 손실은 해당 포지션으로 제한되지만 더 쉽게 청산될 수 있습니다."
       },
-      "guideEntry": {
-        "gotIt": "알겠어요"
-      },
       "PerpsAbout": {
         "title": "소개"
       }
@@ -3125,12 +3135,7 @@
         "lq": "1 이하로 떨어지면 청산이 발생할 수 있습니다."
       },
       "repayDetail": {
-        "actions": "상환",
-        "tabs": {
-          "collateral": "담보",
-          "wallet": "지갑 잔액"
-        },
-        "repayWith": "상환 수단"
+        "actions": "상환"
       },
       "supplyDetail": {
         "actions": "예치",
@@ -3151,7 +3156,6 @@
         "borrowingUnavailable": "현재 모드에서는 이 자산을 빌릴 수 없습니다.",
         "almostReachedWarning": "이 자산에 대한 프로토콜 대출 한도가 100%입니다. 추가 대출이 불가능합니다.",
         "almostReachedError": "대출할 수 있는 최대 금액은 프로토콜 대출 한도가 거의 도달했기 때문에 제한됩니다.",
-        "swapDebt": "스왑",
         "borrowed": "차입액",
         "noSupplyPrefix": "예치 없음:",
         "noSupplyDesc": "빌리려면 담보로 자산을 제공해야 합니다."
@@ -3263,79 +3267,18 @@
         "description": "E-모드를 활성화하면 대출 능력을 극대화할 수 있습니다. 그러나 대출은 선택한 카테고리 내의 자산으로 제한됩니다.",
         "unavailableTips": "귀하의 기존 대출/차입 자산은 지원되지 않습니다.",
         "enabled": "• 활성화됨",
-        "title": "E-모드 관리",
-        "debtSwapSelector": {
-          "header": {
-            "assets": "토큰/잔액",
-            "borrow": "내 차입",
-            "apy": "APY"
-          },
-          "title": "대출 토큰 선택"
-        },
-        "collateralSwapSelector": {
-          "header": {
-            "collateral": "내 담보",
-            "assets": "토큰"
-          },
-          "title": "담보 토큰 선택"
-        }
+        "title": "E-모드 관리"
       },
       "disabled": "비활성화됨",
-      "debtSwap": {
-        "actions": {
-          "swapTo": "전환 대상",
-          "borrowed": "차입됨",
-          "amount": "금액",
-          "title": "부채 전환",
-          "select": "선택하세요"
-        },
-        "overview": {
-          "borrowAPY": "차입 APY",
-          "title": "거래 개요",
-          "borrowValueAfter": "전환 후 차입 잔액"
-        },
-        "button": {
-          "swap": "전환"
-        },
-        "borrowBalance": "차입 잔액",
-        "title": "차입 포지션 전환",
-        "lpDangerWarning": "이 스왑 후 귀하의 건강 지수가 심각하게 낮아져 청산이 발생할 수 있습니다. 안전을 위해 다른 자산을 선택하거나 스왑 금액을 줄여 주십시오.",
-        "priceImpactTips": "가격 영향이 큽니다({{lostValue}}). 유동성이 낮거나 주문 규모가 작아 이 경로의 예상 결과가 크게 달라질 수 있습니다.",
-        "lpRiskWarning": "스왑 후 낮은 건강 지수. 귀하의 포지션은 청산 위험이 더 높습니다.",
-        "maxLtvWarning": "새 차입 포지션을 감당할 담보가 부족합니다. 부채를 전환하려면 지갑에 남은 차입 한도가 있어야 합니다."
-      },
       "totalSupplied": "총 예치액",
       "totalBorrowed": "총 차입금",
       "netApy": "순 APY",
-      "repayWithCollateral": {
-        "action": {
-          "title": "{{collateral}}로 상환하기"
-        },
-        "overview": {
-          "collateralValueAfter": "대출 상환 후 담보 잔고",
-          "title": "거래 개요",
-          "borrowValueAfter": "상환 후 차입 잔액"
-        },
-        "button": {
-          "repay": "상환"
-        },
-        "repayWith": "상환에 사용할 담보",
-        "collateralNotEnough": "귀하의 담보 잔액이 선택한 금액보다 낮습니다.",
-        "toRepay": "상환 예상 금액",
-        "insufficientLiquidity": "유동성이 부족합니다.",
-        "flashLoanDisabled": "보안상의 이유로 이 자산에 대한 포지션 전환이 비활성화되어 있습니다.",
-        "frozenCollateral": "이 자산은 Aave 커뮤니티 결정으로 인해 동결되었습니다."
-      },
       "repayWithAToken": {
         "header": {
           "balance": "잔고",
           "assets": "토큰"
         },
-        "title": "상환 토큰 선택",
-        "zeroLtvCollateralTips": "다음 LTV = 0 담보가 있습니다. 담보 상환 규칙에 따라 먼저 이 담보들로 상환해야 합니다."
-      },
-      "signFallback": {
-        "preExecFailedUseFullSign": "시뮬레이션 실패. 이 거래는 AAVE 오류로 인해 실패할 가능성이 높습니다."
+        "title": "상환 토큰 선택"
       }
     },
     "address": {
@@ -3343,20 +3286,6 @@
         "title": "자산 받기",
         "btnCopyAddress": "주소 복사"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "예측 제공자 선택"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableTitle": "서비스를 이용할 수 없습니다",
-      "serviceUnavailableDesc": "현재 지역에서는 이 서비스가 지원되지 않습니다."
-    },
-    "DAppFrame": {
-      "netWorth": "순자산",
-      "walletBalance": "지갑/잔액",
-      "selectAWallet": "지갑 선택"
     },
     "meme": {
       "tokenHeader": {

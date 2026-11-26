@@ -80,6 +80,7 @@ import { updateExpiredTime } from '@/databases/sync/utils';
 import { assertProviderRequest } from '../utils/assertProviderRequest';
 import {
   findShadowedBuiltinType,
+  hasInvalidTypedDataValue,
   parseTypedDataJson,
 } from '../utils/typedDataTypes';
 import type { ProviderRequest } from './type';
@@ -483,6 +484,9 @@ const signTypedDataVlidation = (
     throw ethErrors.rpc.invalidParams(
       `types should not redefine built-in type: ${shadowedType}`,
     );
+  }
+  if (hasInvalidTypedDataValue(jsonData)) {
+    throw ethErrors.rpc.invalidParams('invalid typed data');
   }
   if (!isInternalDappSnapshot(session.origin)) {
     const currentChain =
@@ -1064,6 +1068,16 @@ class ProviderController extends BaseController {
         typeof e === 'object'
           ? { message: e.message }
           : ({ message: e } as any);
+      // 107 and 109 both say "Device interrupted". Mini-sign skips the nonce
+      // bump only when the SDK code is still on the error.
+      if (e && typeof e === 'object') {
+        if (e.code !== undefined) {
+          errObj.code = e.code;
+        }
+        if (e.errorCode !== undefined) {
+          errObj.errorCode = e.errorCode;
+        }
+      }
       errObj.method = EVENTS.COMMON_HARDWARE.REJECTED;
 
       throw errObj;

@@ -8,9 +8,6 @@ const mockUseEnsurePerpsRuntime = jest.fn();
 const mockPrefetchBaseline = jest.fn();
 const mockCancelEntryIntent = jest.fn();
 const mockPrewarmEntryIntent = jest.fn(() => mockCancelEntryIntent);
-const mockGetHasShownPerpsGuidePopup = jest.fn(async () => true);
-const mockSetHasShownPerpsGuidePopup = jest.fn(async () => undefined);
-const mockGoBack = jest.fn();
 const mockHidePortfolioBreakdown = jest.fn();
 const mockRemoveBeforeRemoveListener = jest.fn();
 const mockAddListener = jest.fn(
@@ -25,9 +22,6 @@ const mockAddListener = jest.fn(
 let mockRuntimeMounts = 0;
 let mockRuntimeUnmounts = 0;
 let mockMarketDataStatus: 'idle' | 'success' = 'idle';
-let mockRouteParams:
-  | { fromSource?: 'homePagePositionList'; market?: string }
-  | undefined;
 const mockNavigationListeners = new Map<
   string,
   (event: { preventDefault: () => void }) => void
@@ -43,32 +37,18 @@ let mockViewModeState = {
 };
 
 jest.mock('@react-navigation/native', () => ({
-  useRoute: () => ({ params: mockRouteParams }),
+  useRoute: () => ({ params: undefined }),
 }));
 
 jest.mock('@/hooks/navigation', () => ({
   useRabbyAppNavigation: () => ({
     addListener: mockAddListener,
-    goBack: mockGoBack,
   }),
 }));
 
 jest.mock('@/hooks/useTipsPopup', () => ({
   useHideTipsPopup: () => mockHidePortfolioBreakdown,
   useIsTipsPopupVisible: () => mockPortfolioBreakdownVisible,
-}));
-
-jest.mock('@/core/native/utils', () => ({
-  IS_IOS: false,
-}));
-
-jest.mock('@/core/serviceApi/perps', () => ({
-  perpsServiceApi: {
-    getHasShownPerpsGuidePopup: (...args: unknown[]) =>
-      mockGetHasShownPerpsGuidePopup(...args),
-    setHasShownPerpsGuidePopup: (...args: unknown[]) =>
-      mockSetHasShownPerpsGuidePopup(...args),
-  },
 }));
 
 jest.mock('@/hooks/perps/usePerpsStore', () => {
@@ -162,26 +142,6 @@ jest.mock('./PerpsSimpleScreen', () => {
   };
 });
 
-jest.mock('./components/PerpsGuideEntryPopup', () => {
-  const ReactModule = require('react');
-  const { Pressable } = require('react-native');
-  return {
-    PerpsGuideEntryPopup: ({
-      onClose,
-      visible,
-    }: {
-      onClose?: () => void;
-      visible?: boolean;
-    }) =>
-      visible
-        ? ReactModule.createElement(Pressable, {
-            onPress: onClose,
-            testID: 'perps-guide-entry-popup',
-          })
-        : null,
-  };
-});
-
 jest.mock('../PerpsPro', () => {
   const ReactModule = require('react');
   const { Pressable, Text, View } = require('react-native');
@@ -220,7 +180,6 @@ describe('PerpsOriginScreen', () => {
     mockRuntimeMounts = 0;
     mockRuntimeUnmounts = 0;
     mockMarketDataStatus = 'idle';
-    mockRouteParams = undefined;
     mockNavigationListeners.clear();
     mockPortfolioBreakdownVisible = false;
     mockViewModeState = {
@@ -375,29 +334,6 @@ describe('PerpsOriginScreen', () => {
     expect(mockSetViewMode).not.toHaveBeenCalled();
   });
 
-  it('preserves the Android Home-position return guide on the Simple underlay', async () => {
-    mockRouteParams = { fromSource: 'homePagePositionList' };
-    mockGetHasShownPerpsGuidePopup.mockResolvedValueOnce(false);
-    mockViewModeState = {
-      ...mockViewModeState,
-      hydrated: true,
-      viewMode: 'simple',
-    };
-    const screen = render(<PerpsOriginScreen />);
-
-    await act(async () => undefined);
-
-    const preventDefault = jest.fn();
-    act(() => {
-      mockNavigationListeners.get('beforeRemove')?.({ preventDefault });
-    });
-
-    expect(preventDefault).toHaveBeenCalledTimes(1);
-    fireEvent.press(screen.getByTestId('perps-guide-entry-popup'));
-    expect(mockSetHasShownPerpsGuidePopup).toHaveBeenCalledWith(true);
-    expect(mockGoBack).toHaveBeenCalledTimes(1);
-  });
-
   it('dismisses the owned Portfolio breakdown before removing the route', () => {
     mockPortfolioBreakdownVisible = true;
     mockViewModeState = {
@@ -413,7 +349,6 @@ describe('PerpsOriginScreen', () => {
 
     expect(preventDefault).toHaveBeenCalledTimes(1);
     expect(mockHidePortfolioBreakdown).toHaveBeenCalledTimes(1);
-    expect(mockGoBack).not.toHaveBeenCalled();
   });
 
   it('cleans up the owned Portfolio breakdown on route blur and unmount', () => {
