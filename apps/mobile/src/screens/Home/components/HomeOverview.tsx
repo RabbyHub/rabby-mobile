@@ -93,6 +93,7 @@ import {
   getPullThreshold,
   getScrollContainerPb,
   homeDrawerAnimateMutable,
+  impactOnFloorSwitch,
   SCROLLABLE_STATUS,
   THRESHOLD_PERCENT,
   shouldHoldFirstFloorAtEnd,
@@ -501,7 +502,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
             hasOverThreshold() &&
             event.translationY < 0
           ) {
-            !startValues.value.hasImpactOnPandown && runOnJS(triggerImpact)();
+            !startValues.value.hasImpactOnPandown && impactOnFloorSwitch();
             startValues.value.hasImpactOnPandown = true;
           }
         }
@@ -533,7 +534,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
                 scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
               },
             );
-            !hasImpactOnPandown && runOnJS(triggerImpact)();
+            !hasImpactOnPandown && impactOnFloorSwitch();
           } else {
             translateY.value = withTiming(0, undefined, () => {
               scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;

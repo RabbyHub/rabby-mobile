@@ -16,7 +16,6 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Extrapolate,
   interpolate,
-  runOnJS,
   runOnUI,
   scrollTo,
   useAnimatedProps,
@@ -44,6 +43,7 @@ import {
   SCROLLABLE_STATUS,
   homeDrawerAnimateMutable,
   getScrollContainerPb,
+  impactOnFloorSwitch,
 } from '../../hooks/useHomeDrawerAnimate';
 import { triggerImpact } from '@/utils/common';
 import RcIconEmpty from '@/assets/icons/dapp/dapp-favorite-empty.svg';
@@ -298,7 +298,7 @@ export const HomeDappDrawer: React.FC<{
                 });
                 handleScrollBack();
 
-                runOnJS(triggerImpact)();
+                impactOnFloorSwitch();
               } else {
                 translateY.value = withTiming(-height, undefined, () => {
                   scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
@@ -331,7 +331,7 @@ export const HomeDappDrawer: React.FC<{
                 });
                 handleScrollBack();
 
-                runOnJS(triggerImpact)();
+                impactOnFloorSwitch();
               } else {
                 translateY.value = withTiming(-height, undefined, () => {
                   scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;

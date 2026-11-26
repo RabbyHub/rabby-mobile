@@ -2,7 +2,12 @@ import { IS_ANDROID } from '@/core/native/utils';
 
 import { Platform } from 'react-native';
 import { svsLayout } from '@/hooks/useAppLayout';
-import { makeMutable, useAnimatedStyle } from 'react-native-reanimated';
+import { triggerImpact } from '@/utils/common';
+import {
+  makeMutable,
+  runOnJS,
+  useAnimatedStyle,
+} from 'react-native-reanimated';
 
 export const SCROLLABLE_STATUS = {
   LOCKED: 'LOCKED',
@@ -75,6 +80,22 @@ export const homeDrawerAnimateMutable = {
    */
   drawerTabPosition: makeMutable(0),
 };
+
+const { editingFloorTravel } = homeDrawerAnimateMutable;
+
+/**
+ * The tap felt when a swipe switches floors: far enough up from the Home to
+ * open the second floor, or far enough down from it to go back. Not while
+ * the feature cards are edited: the two floors are then one page, and moving
+ * along it does not switch anything.
+ */
+export function impactOnFloorSwitch() {
+  'worklet';
+  if (editingFloorTravel.value > 0) {
+    return;
+  }
+  runOnJS(triggerImpact)();
+}
 
 /** The two floors never travel less than this share of the screen. */
 const MIN_FLOOR_TRAVEL_RATIO = 0.35;
