@@ -44,6 +44,13 @@ const INIT_FORM_DATA = __DEV__
       enableDataAnalysis: true,
     };
 
+/**
+ * New users must set their own password to finish onboarding. While false,
+ * the biometric-only shortcut (which stores an auto-generated password) is
+ * never offered, even when biometrics are available.
+ */
+const ENABLE_BIOMETRIC_ONLY_ONBOARDING = false;
+
 export interface PasswordFormValues {
   password: string;
   confirmPassword: string;
@@ -112,7 +119,10 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({
     computed: { defaultTypeLabel, couldSetupBiometrics, isFaceID },
   } = useBiometrics({ autoFetch: true });
 
-  const isBiometricMode = couldSetupBiometrics && !showPasswordFallback;
+  const isBiometricMode =
+    ENABLE_BIOMETRIC_ONLY_ONBOARDING &&
+    couldSetupBiometrics &&
+    !showPasswordFallback;
 
   const mergedInitialValues = {
     ...INIT_FORM_DATA,
