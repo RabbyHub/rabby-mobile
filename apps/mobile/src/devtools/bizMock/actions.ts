@@ -327,6 +327,13 @@ export async function runBizMockAction(
     if (action.action === 'approval.rejectAll') {
       setAllowAnyApproval(false);
       rejectAllNotificationApprovalsSync();
+      // `rejectAllApprovals` clears the queue but keeps the notification
+      // window id, so the sheet stays on screen. `clear` removes that window.
+      try {
+        await notificationServiceApi.clear();
+      } catch {
+        // The service may already be empty.
+      }
       try {
         const { closeApprovalPopup } = await import('@/hooks/useApprovalPopup');
         closeApprovalPopup();
