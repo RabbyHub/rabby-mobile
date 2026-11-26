@@ -12,6 +12,8 @@ const BUILD_REQUEST_CODES = new Set([
   'BRIDGE_BACKEND_QUOTE_REQUEST_FAILED',
 ]);
 
+type BridgeDepositSource = 'perps_deposit' | 'gas_account_deposit';
+
 const isBuildRequestReport = (report: BridgeErrorReport) => {
   const codes = [
     report.error_code,
@@ -20,7 +22,10 @@ const isBuildRequestReport = (report: BridgeErrorReport) => {
   return codes.length > 0 && codes.every(code => BUILD_REQUEST_CODES.has(code));
 };
 
-export const createBridgeSdkSentryEvent = (value: unknown) => {
+export const createBridgeSdkSentryEvent = (
+  value: unknown,
+  source?: unknown,
+) => {
   const report = toBridgeErrorReport(value);
   if (!report || isBuildRequestReport(report)) {
     return null;
@@ -35,6 +40,9 @@ export const createBridgeSdkSentryEvent = (value: unknown) => {
     bridge_error_code: report.error_code,
     bridge_stage: report.stage,
   };
+  if (source === 'perps_deposit' || source === 'gas_account_deposit') {
+    tags.bridge_source = source;
+  }
   Object.entries({
     bridge_aggregator: primary.aggregatorId,
     bridge_chain: primary.chainId,
@@ -62,13 +70,19 @@ export const createBridgeSdkSentryEvent = (value: unknown) => {
   };
 };
 
-export const reportBridgeSdkError = (report: BridgeErrorReport) => {
+export const reportBridgeSdkError = (
+  report: BridgeErrorReport,
+  source?: BridgeDepositSource,
+) => {
   try {
-    const event = createBridgeSdkSentryEvent(report);
+    const event = createBridgeSdkSentryEvent(report, source);
     if (event) {
       // beforeSend rebuilds the payload after Sentry's default depth normalization.
       Sentry.captureEvent(event, {
-        data: { bridge_sdk_report: event.extra.bridge_sdk_report },
+        data: {
+          bridge_sdk_report: event.extra.bridge_sdk_report,
+          bridge_source: source,
+        },
       });
     }
   } catch {

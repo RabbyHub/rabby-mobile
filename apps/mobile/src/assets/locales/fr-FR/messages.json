@@ -2721,7 +2721,8 @@
         "estReceive": "Est. Recevoir : {{balance}}",
         "fetchQuoteFailed": "Échec de la récupération du devis de dépôt. Veuillez changer de jeton.",
         "minimumDepositSize": "Le montant minimum de dépôt est de 5 $.",
-        "estReceiveTooltip": "Le dépôt cross-chain est traité via LiFi, ce qui peut entraîner un certain glissement. Arrivée estimée dans {{number}} secondes."
+        "estReceiveTooltip": "Le dépôt cross-chain est traité via LiFi, ce qui peut entraîner un certain glissement. Arrivée estimée dans {{number}} secondes.",
+        "estReceiveTooltipV2": "Le dépôt cross-chain est traité via {{name}}, ce qui peut entraîner un certain glissement. Arrivée estimée dans {{number}} secondes."
       },
       "PerpsWithdrawPopup": {
         "title": "Retirer",

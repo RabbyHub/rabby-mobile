@@ -2884,7 +2884,8 @@
         "minimumDepositSize": "最低入金金額為 $5",
         "estReceive": "預計收到：{{balance}}",
         "fetchQuoteFailed": "取得入金報價失敗，請切換代幣。",
-        "estReceiveTooltip": "跨鏈入金透過 LiFi 處理，可能產生滑點。預計 {{number}} 秒到帳。"
+        "estReceiveTooltip": "跨鏈入金透過 LiFi 處理，可能產生滑點。預計 {{number}} 秒到帳。",
+        "estReceiveTooltipV2": "跨鏈入金透過 {{name}} 處理，可能產生滑點。預計 {{number}} 秒到帳。"
       },
       "PerpsWithdrawPopup": {
         "amount": "金額",

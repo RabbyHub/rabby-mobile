@@ -9,6 +9,7 @@ import {
   buildGasAccountBridgeTxs,
   buildTopUpGasAccount,
   fetchGasAccountBridgeQuote,
+  getGasAccountBridgeRawAmount,
   topUpGasAccount,
 } from '@/core/apis/gasAccount';
 import { sendRequest } from '@/core/apis/sendRequest';
@@ -251,6 +252,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
     null,
   );
   const [quoteAmountValue, setQuoteAmountValue] = useState<number | null>(null);
+  const [quoteRawAmount, setQuoteRawAmount] = useState<string | null>(null);
   const [bridgeQuoteError, setBridgeQuoteError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showEstimateTip, setShowEstimateTip] = useState(false);
@@ -336,6 +338,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
   const resetBridgeQuoteState = useCallback(() => {
     setBridgeQuote(null);
     setQuoteAmountValue(null);
+    setQuoteRawAmount(null);
     setBridgeQuoteError('');
     setQuoteLoading(false);
   }, []);
@@ -537,12 +540,20 @@ const GasAccountDepositTokenFormInner: React.FC<{
       resetBridgeQuoteState();
       setQuoteLoading(true);
 
-      fetchGasAccountBridgeQuote({
-        token: selectedToken,
-        account: selectedOwnerAccount,
-        usdValue: amountValue,
-      })
-        .then(quote => {
+      Promise.resolve()
+        .then(() => {
+          const rawAmount = getGasAccountBridgeRawAmount({
+            token: selectedToken,
+            usdValue: amountValue,
+          });
+          return fetchGasAccountBridgeQuote({
+            token: selectedToken,
+            account: selectedOwnerAccount,
+            usdValue: amountValue,
+            fromTokenRawAmount: rawAmount,
+          }).then(quote => ({ quote, rawAmount }));
+        })
+        .then(({ quote, rawAmount }) => {
           if (quoteReqIdRef.current !== requestId) {
             return;
           }
@@ -568,6 +579,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
           isSelectingDefaultQuoteRef.current = false;
           setBridgeQuote(quote);
           setQuoteAmountValue(amountValue);
+          setQuoteRawAmount(rawAmount);
         })
         .catch(error => {
           if (quoteReqIdRef.current !== requestId) {
@@ -725,6 +737,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
           account: selectedOwnerAccount,
           quote: bridgeQuote,
           usdValue: amountValue,
+          fromTokenRawAmount: quoteRawAmount || undefined,
         });
 
         let lastHash = '';
@@ -860,6 +873,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
     onWaitDepositResult,
     openDirectOrFallbackToUI,
     quoteAmountValue,
+    quoteRawAmount,
     selectedOwnerAccount,
     selectedToken,
     sendBridgeTxsDirectly,

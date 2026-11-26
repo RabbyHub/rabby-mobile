@@ -2976,7 +2976,8 @@
         "invalidNumber": "Introduza um número válido",
         "estReceive": "Receção est.: {{balance}}",
         "minimumDepositSize": "O montante mínimo de depósito é $5",
-        "estReceiveTooltip": "O depósito entre redes é processado através da LiFi e pode sofrer slippage. Chegada estimada em {{number}} s."
+        "estReceiveTooltip": "O depósito entre redes é processado através da LiFi e pode sofrer slippage. Chegada estimada em {{number}} s.",
+        "estReceiveTooltipV2": "O depósito entre redes é processado através da {{name}} e pode sofrer slippage. Chegada estimada em {{number}} s."
       },
       "PerpsWithdrawPopup": {
         "amount": "Quantidade",
