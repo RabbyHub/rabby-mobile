@@ -22,7 +22,17 @@ export type BizMockAction =
     }
   | { action: 'screen.resetToHome' }
   | { action: 'modal.close' }
-  | { action: 'state.dump'; name?: string };
+  | { action: 'state.dump'; name?: string }
+  | { action: 'account.importFromFile'; file?: string }
+  | { action: 'account.select'; address: string }
+  | {
+      action: 'approval.injectFromFile';
+      file: string;
+      component?: string;
+      origin?: string;
+    }
+  | { action: 'approval.rejectAll' }
+  | { action: 'env.setScreenE2E'; enabled: boolean };
 
 export type BizMockMeta = {
   runId?: string;
@@ -222,6 +232,75 @@ export function parseBizMockAction(
       action: {
         action: 'state.dump',
         name: readString(urlInfo.searchParams.get('name'), 80),
+      },
+    };
+  }
+
+  if (command === 'account.importFromFile') {
+    return {
+      matched: true,
+      meta,
+      action: {
+        action: 'account.importFromFile',
+        file: readString(urlInfo.searchParams.get('file'), 128),
+      },
+    };
+  }
+
+  if (command === 'account.select') {
+    const address = readString(urlInfo.searchParams.get('address'), 128);
+    if (!address) {
+      return {
+        matched: true,
+        meta,
+        error: {
+          code: 'missing-param',
+          message: 'address is required for account.select',
+        },
+      };
+    }
+    return {
+      matched: true,
+      meta,
+      action: { action: 'account.select', address },
+    };
+  }
+
+  if (command === 'approval.injectFromFile') {
+    const file = readString(urlInfo.searchParams.get('file'), 128);
+    if (!file) {
+      return {
+        matched: true,
+        meta,
+        error: {
+          code: 'missing-param',
+          message: 'file is required for approval.injectFromFile',
+        },
+      };
+    }
+    return {
+      matched: true,
+      meta,
+      action: {
+        action: 'approval.injectFromFile',
+        file,
+        component: readString(urlInfo.searchParams.get('component'), 64),
+        origin: readString(urlInfo.searchParams.get('origin'), 512),
+      },
+    };
+  }
+
+  if (command === 'approval.rejectAll') {
+    return { matched: true, meta, action: { action: 'approval.rejectAll' } };
+  }
+
+  if (command === 'env.setScreenE2E') {
+    return {
+      matched: true,
+      meta,
+      action: {
+        action: 'env.setScreenE2E',
+        enabled: readBoolean(urlInfo.searchParams.get('enabled')),
       },
     };
   }

@@ -37,6 +37,17 @@ export type TestAccountsEntry =
   | { kind: 'privateKey'; value: string; note: string }
   | { kind: 'mnemonic'; value: string; note: string };
 
+export type TestAccountsImportResult = {
+  ok: boolean;
+  code?: string;
+  imported: number;
+  privateKeys: number;
+  mnemonics: number;
+  rejected: number;
+  failed: number;
+  addresses: string[];
+};
+
 /**
  * The runner can only drop the seed file in the app-owned directory:
  * - iOS Simulator: `<app container>/Documents/kpi-test-accounts.txt`
@@ -102,14 +113,25 @@ export function parseTestAccountsFile(raw: string): {
   return { entries, rejected };
 }
 
-export async function runTestAccountsImport(options: { path: string }) {
+export async function runTestAccountsImport(options: {
+  path: string;
+}): Promise<TestAccountsImportResult> {
   const startedAt = Date.now();
   const marker = '[debug-import-test-accounts]';
+  const emptyResult = {
+    ok: false,
+    imported: 0,
+    privateKeys: 0,
+    mnemonics: 0,
+    rejected: 0,
+    failed: 0,
+    addresses: [] as string[],
+  };
 
   const path = resolveTestAccountsPath(options.path);
   if (!path) {
     console.error(`${marker} rejected_path`);
-    return;
+    return { ...emptyResult, code: 'rejected-path' };
   }
 
   // Authenticate before touching the file: a link must not be able to read or
@@ -120,7 +142,7 @@ export async function runTestAccountsImport(options: { path: string }) {
     console.error(
       `${marker} unlock_failed error=${(error as Error)?.message || error}`,
     );
-    return;
+    return { ...emptyResult, code: 'unlock-failed' };
   }
 
   let raw: string;
@@ -130,7 +152,7 @@ export async function runTestAccountsImport(options: { path: string }) {
     console.error(
       `${marker} read_failed error=${(error as Error)?.message || error}`,
     );
-    return;
+    return { ...emptyResult, code: 'read-failed' };
   }
 
   // The file carries secrets; drop it as soon as it is in memory.
@@ -150,6 +172,7 @@ export async function runTestAccountsImport(options: { path: string }) {
 
   let imported = 0;
   let failed = 0;
+  const addresses: string[] = [];
 
   const { importPrivateKey } = await import('@/core/apis/privateKey');
   const { generateKeyringWithMnemonic, activeAndPersistAccountsByMnemonics } =
@@ -157,7 +180,8 @@ export async function runTestAccountsImport(options: { path: string }) {
 
   for (const entry of privateKeyEntries) {
     try {
-      await importPrivateKey(entry.value);
+      const accounts = await importPrivateKey(entry.value);
+      addresses.push(...accounts.map(account => account.address));
       imported += 1;
     } catch (error) {
       const reason = (error as Error)?.message || String(error);
@@ -199,6 +223,11 @@ export async function runTestAccountsImport(options: { path: string }) {
           true,
         );
       }
+      addresses.push(
+        ...importedAccounts.map(
+          (account: { address: string }) => account.address,
+        ),
+      );
       imported += 1;
     } catch (error) {
       failed += 1;
@@ -229,4 +258,15 @@ export async function runTestAccountsImport(options: { path: string }) {
       Date.now() - startedAt
     }`,
   );
+
+  return {
+    ok: failed === 0,
+    code: failed === 0 ? undefined : 'partial-failure',
+    imported,
+    privateKeys: privateKeyEntries.length,
+    mnemonics: mnemonicEntries.length,
+    rejected,
+    failed,
+    addresses,
+  };
 }

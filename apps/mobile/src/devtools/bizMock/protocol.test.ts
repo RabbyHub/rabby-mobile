@@ -46,6 +46,62 @@ describe('parseBizMockAction', () => {
     });
   });
 
+  it('parses account and approval actions', () => {
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=account.importFromFile&file=kpi-test-accounts.txt',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      action: {
+        action: 'account.importFromFile',
+        file: 'kpi-test-accounts.txt',
+      },
+    });
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=account.select&address=0xabc',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      action: { action: 'account.select', address: '0xabc' },
+    });
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=approval.injectFromFile&file=sign-tx&component=SignTx&origin=https%3A%2F%2Fopensea.io',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      action: {
+        action: 'approval.injectFromFile',
+        file: 'sign-tx',
+        component: 'SignTx',
+        origin: 'https://opensea.io',
+      },
+    });
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=approval.rejectAll',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      action: { action: 'approval.rejectAll' },
+    });
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=env.setScreenE2E&enabled=1',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      action: { action: 'env.setScreenE2E', enabled: true },
+    });
+  });
+
   it('rejects invalid inline json', () => {
     const result = parseBizMockAction(
       'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=screen.open&screen=Home&params=not-json',

@@ -6,9 +6,16 @@ import { apisHomeTabIndex } from '@/hooks/navigation';
 import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 import { navigationRef } from '@/utils/navigation';
 import { makeOpenHomeRootState } from '@/utils/universalLinkOpenHome';
-import { notificationServiceApi } from '@/core/serviceApi/notification';
+import {
+  notificationServiceApi,
+  rejectAllNotificationApprovalsSync,
+  unlockNotificationSync,
+} from '@/core/serviceApi/notification';
 
 import { listInjectedStorePins } from '../screenRegistry/storeInjection';
+import { setAllowAnyApproval } from '../screenRegistry/requestCapture';
+import { runTestAccountsImport } from '../testAccountsImport';
+import { TEST_ACCOUNTS_FILENAME } from '../testAccountsPath';
 import type { BizMockAction } from './protocol';
 
 const BIZ_MOCK_DUMP_DIRNAME = 'biz-mock';
@@ -71,6 +78,162 @@ async function waitForNavigationReady(timeoutMs = 5_000) {
   });
 }
 
+function bizMockBaseDir() {
+  return Platform.OS === 'android'
+    ? RNFS.ExternalDirectoryPath
+    : RNFS.DocumentDirectoryPath;
+}
+
+async function readMockFixture(file: string) {
+  const name = safeName(file.replace(/\.json$/i, ''), 'fixture');
+  const path = `${bizMockBaseDir()}/biz-mock-fixtures/${name}.json`;
+  const raw = await RNFS.readFile(path, 'utf8');
+  const parsed = JSON.parse(raw);
+  const params = parsed?.params ?? parsed;
+  if (!params || typeof params !== 'object' || Array.isArray(params)) {
+    throw new Error(`fixture "${file}" has no params object`);
+  }
+  return params as Record<string, unknown>;
+}
+
+async function importAccountsFromFile(file?: string): Promise<BizMockResult> {
+  if (file && file !== TEST_ACCOUNTS_FILENAME) {
+    return {
+      ok: false,
+      action: 'account.importFromFile',
+      code: 'unsupported-file',
+      message: `only ${TEST_ACCOUNTS_FILENAME} is supported`,
+    };
+  }
+
+  const result = await runTestAccountsImport({ path: '' });
+  if (!result.ok) {
+    return {
+      ok: false,
+      action: 'account.importFromFile',
+      code: result.code || 'import-failed',
+      message: `imported=${result.imported} failed=${result.failed}`,
+    };
+  }
+
+  return {
+    ok: true,
+    action: 'account.importFromFile',
+    code: 'ok',
+    data: {
+      imported: result.imported,
+      privateKeys: result.privateKeys,
+      mnemonics: result.mnemonics,
+      rejected: result.rejected,
+      failed: result.failed,
+      addresses: result.addresses,
+    },
+  };
+}
+
+async function selectAccount(address: string): Promise<BizMockResult> {
+  const input = address.toLowerCase().trim();
+  const [{ getAllAccountsToDisplay }, { setCurrentAccount }] =
+    await Promise.all([
+      import('@/core/apis/account'),
+      import('@/core/serviceApi/preference'),
+    ]);
+  const accounts = await getAllAccountsToDisplay();
+  const match = accounts.find(account => {
+    const current = String(account.address || '').toLowerCase();
+    if (current === input) {
+      return true;
+    }
+    const [prefix, suffix] = input.split('...');
+    return Boolean(
+      prefix &&
+        suffix &&
+        current.startsWith(prefix) &&
+        current.endsWith(suffix),
+    );
+  });
+  if (!match) {
+    return {
+      ok: false,
+      action: 'account.select',
+      code: 'account-not-found',
+      message: `account not found: ${address}`,
+    };
+  }
+
+  await setCurrentAccount(match as any);
+  return {
+    ok: true,
+    action: 'account.select',
+    code: 'ok',
+    data: { address: match.address, brandName: match.brandName },
+  };
+}
+
+async function injectApprovalFromFile(
+  file: string,
+  component = 'SignTx',
+  origin?: string,
+): Promise<BizMockResult> {
+  const account = getFallbackAccountSnapshot();
+  if (!account) {
+    return {
+      ok: false,
+      action: 'approval.injectFromFile',
+      code: 'account-not-ready',
+      message: 'no current account',
+    };
+  }
+
+  const params = await readMockFixture(file);
+  // An injected approval has no live dapp tab to match. Mark the request as
+  // an allowed non-production approval so the approval sheet does not collapse
+  // into its "No approve found" dapp-disappeared state.
+  setAllowAnyApproval(true);
+  try {
+    await notificationServiceApi.clear();
+  } catch {
+    // A stale modal handle should not block a new request.
+  }
+  unlockNotificationSync();
+
+  let pending: Promise<unknown>;
+  try {
+    pending = notificationServiceApi.requestApproval({
+      approvalComponent: component,
+      params,
+      account: account as any,
+      origin: origin || 'https://opensea.io',
+      approvalType: component,
+    } as any);
+  } catch (error) {
+    return {
+      ok: false,
+      action: 'approval.injectFromFile',
+      code: 'approval-request-failed',
+      message: (error as Error)?.message || String(error),
+    };
+  }
+
+  void Promise.resolve(pending)
+    .then(() => unlockNotificationSync())
+    .catch(error => {
+      console.warn('[biz-mock] approval request failed', error);
+      try {
+        unlockNotificationSync();
+      } catch {
+        // ignore
+      }
+    });
+
+  return {
+    ok: true,
+    action: 'approval.injectFromFile',
+    code: 'ok',
+    data: { component, origin: origin || 'https://opensea.io' },
+  };
+}
+
 async function dumpState(name?: string): Promise<BizMockResult> {
   await waitForNavigationReady();
 
@@ -88,10 +251,7 @@ async function dumpState(name?: string): Promise<BizMockResult> {
       ? Object.keys(route.params).sort()
       : [];
   const fileName = safeName(name, 'state');
-  const baseDir =
-    Platform.OS === 'android'
-      ? RNFS.ExternalDirectoryPath
-      : RNFS.DocumentDirectoryPath;
+  const baseDir = bizMockBaseDir();
   const dir = `${baseDir}/${BIZ_MOCK_DUMP_DIRNAME}`;
   const path = `${dir}/${fileName}.json`;
   const dump = {
@@ -144,6 +304,39 @@ export async function runBizMockAction(
   try {
     if (action.action === 'state.dump') {
       return await dumpState(action.name);
+    }
+
+    if (action.action === 'account.importFromFile') {
+      return await importAccountsFromFile(action.file);
+    }
+
+    if (action.action === 'account.select') {
+      return await selectAccount(action.address);
+    }
+
+    if (action.action === 'approval.injectFromFile') {
+      return await injectApprovalFromFile(
+        action.file,
+        action.component,
+        action.origin,
+      );
+    }
+
+    if (action.action === 'approval.rejectAll') {
+      setAllowAnyApproval(false);
+      rejectAllNotificationApprovalsSync();
+      return { ok: true, action: action.action, code: 'ok' };
+    }
+
+    if (action.action === 'env.setScreenE2E') {
+      const { storeApiExpSettingData } = await import('@/hooks/appSettings');
+      storeApiExpSettingData.setScreenE2EEnabled(action.enabled);
+      return {
+        ok: true,
+        action: action.action,
+        code: 'ok',
+        data: { enabled: action.enabled },
+      };
     }
 
     if (action.action === 'screen.resetToHome') {
