@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { View, Alert } from 'react-native';
+import { View, Alert, type LayoutChangeEvent } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { useTheme2024 } from '@/hooks/theme';
@@ -1700,11 +1700,23 @@ export const BridgeContent = ({
   ) : null;
 
   const footerBottomOffset = getBottomButtonBottomOffset(bottom);
-  const footerReserveHeight =
+  /**
+   * The footer grows when extra rows appear above the button (e.g. the risk
+   * confirm checkbox), so a fixed estimate under-reserves and the scroll content
+   * ends up hidden behind it. Measure the real footer height instead; the old
+   * formula stays as the first-frame fallback.
+   */
+  const [footerHeight, setFooterHeight] = useState(0);
+  const handleFooterLayout = useCallback((event: LayoutChangeEvent) => {
+    const nextHeight = Math.ceil(event.nativeEvent.layout.height);
+    setFooterHeight(prev => (prev === nextHeight ? prev : nextHeight));
+  }, []);
+  const footerReserveFallback =
     BOTTOM_BUTTON_TOP_OFFSET +
     BOTTOM_BUTTON_SINGLE_HEIGHT +
     footerBottomOffset +
     (showRiskConfirm ? SIGN_RISK_WARNING_RESERVE_HEIGHT : 0);
+  const footerReserveHeight = footerHeight || footerReserveFallback;
 
   return (
     <SignatureInstanceProvider instance={instance}>
@@ -1856,7 +1868,8 @@ export const BridgeContent = ({
             {
               paddingBottom: footerBottomOffset,
             },
-          ]}>
+          ]}
+          onLayout={handleFooterLayout}>
           <Tip
             noPressable={!footerTipContent}
             isVisible={footerTipContent ? undefined : false}
