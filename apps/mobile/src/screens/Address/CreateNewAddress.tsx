@@ -23,7 +23,6 @@ import { Skeleton } from '@rneui/themed';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { StackActions, useRoute } from '@react-navigation/native';
 import type { GetNestedScreenRouteProp } from '@/navigation-type';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import LinearGradient from 'react-native-linear-gradient';
 import { useCreateAddressProc } from '@/hooks/address/useNewUser';
 import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
@@ -36,34 +35,44 @@ const PROGRESS_BAR_STEP = {
   THREE: 3,
 };
 
+/**
+ * Route-level header title for the add-wallet step.
+ *
+ * Registered on the route (`headerTitle: () => <CreateNewAddressHeaderTitle …/>`)
+ * instead of installed from an effect: swapping the header after mount makes
+ * iOS animate the previous native header out as a duplicated copy, and the
+ * first frame no longer matches the final one.
+ */
+export function CreateNewAddressHeaderTitle({
+  title,
+  isFirstCreate,
+}: {
+  title?: string;
+  isFirstCreate?: boolean;
+}) {
+  const { t } = useTranslation();
+  const { styles } = useTheme2024({ getStyle });
+
+  return (
+    <HeaderTitleText2024 style={styles.title}>
+      {title || isFirstCreate
+        ? t('screens.addressStackTitle.CreateNewAddress')
+        : t('screens.addressStackTitle.ConfrimAddress')}
+    </HeaderTitleText2024>
+  );
+}
+
 function MainListBlocks() {
   const { t } = useTranslation();
   const [newAddress, setNewAddress] = useState('');
   const { styles } = useTheme2024({ getStyle });
   const navigation = useRabbyAppNavigation();
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
 
   const route =
     useRoute<
       GetNestedScreenRouteProp<'AddressNavigatorParamList', 'CreateNewAddress'>
     >();
   const state = route.params;
-
-  const getHeaderTitle = React.useCallback(() => {
-    return (
-      <HeaderTitleText2024 style={styles.title}>
-        {state?.title || state?.isFirstCreate
-          ? t('screens.addressStackTitle.CreateNewAddress')
-          : t('screens.addressStackTitle.ConfrimAddress')}
-      </HeaderTitleText2024>
-    );
-  }, [state?.isFirstCreate, state?.title, styles.title, t]);
-
-  React.useEffect(() => {
-    setNavigationOptions({
-      headerTitle: getHeaderTitle,
-    });
-  }, [setNavigationOptions, getHeaderTitle, state?.title]);
 
   const { value, loading, error } = useAsync(async () => {
     let accountsToCreate: any[] | undefined = [];

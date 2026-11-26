@@ -33,7 +33,9 @@ import { ImportPrivateKeyScreen2024 } from '../Address/ImportPrivateKeyScreen202
 import { ImportSeedPhraseScreen2024 } from '../Address/ImportSeedPhraseScreen2024';
 import { ImportSuccessScreen2024 } from '../Address/ImportSuccessScreen2024';
 import { createGetStyles2024 } from '@/utils/styles';
-import CreateNewAddress from '../Address/CreateNewAddress';
+import CreateNewAddress, {
+  CreateNewAddressHeaderTitle,
+} from '../Address/CreateNewAddress';
 import CreateSelectMethod from '../Address/CreateSelectMethod';
 import SetPassword2024 from '../Address/SetPassword2024';
 import CreateChooseBackup from '../Address/CreateChooseBackup';
@@ -294,15 +296,24 @@ export function AddressNavigator() {
       <AddressStack.Screen
         name={RootNames.CreateNewAddress}
         component={withScreenPropsInjection(CreateNewAddress)}
-        options={mergeScreenOptions({
-          headerTitle: t('screens.addressStackTitle.CreateNewAddress'),
-          title: t('screens.addressStackTitle.CreateNewAddress'),
-          headerTintColor: colors2024['neutral-title-1'],
-          headerStyle: {
-            backgroundColor: colors2024['neutral-bg-1'],
-          },
-          headerTitleStyle: styles.headerTitleText,
-        })}
+        options={({ route }) =>
+          mergeScreenOptions({
+            // Declared on the route so the first frame already renders the
+            // final title; the screen used to install it from an effect.
+            headerTitle: () => (
+              <CreateNewAddressHeaderTitle
+                title={route.params?.title}
+                isFirstCreate={route.params?.isFirstCreate}
+              />
+            ),
+            title: t('screens.addressStackTitle.CreateNewAddress'),
+            headerTintColor: colors2024['neutral-title-1'],
+            headerStyle: {
+              backgroundColor: colors2024['neutral-bg-1'],
+            },
+            headerTitleStyle: styles.headerTitleText,
+          })
+        }
       />
       <AddressStack.Screen
         name={RootNames.SetPassword2024}
