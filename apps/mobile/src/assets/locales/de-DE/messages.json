@@ -3139,9 +3139,6 @@
       "closeAllConfirmTitle": "Schließen aller Positionen bestätigen",
       "closeAll": "Alle Positionen schließen",
       "closeAllConfirmMessage": "Alle offenen Positionen werden zum Marktpreis geschlossen.",
-      "assetPage": {
-        "hyperliquidPosition": "Hyperliquid-Position"
-      },
       "invitePopup": {
         "activateNow": "Jetzt aktivieren",
         "activatedFailed": "Aktivierung fehlgeschlagen",
@@ -3367,9 +3364,6 @@
         "crossTitle": "Kreuzmarge",
         "isolatedDesc": "Jede Position verwendet ihre eigene Margin. Verluste sind auf diese Position begrenzt, sie kann jedoch leichter liquidiert werden.",
         "crossDesc": "Alle Positionen teilen sich dieselbe Margin. Das senkt die Wahrscheinlichkeit, dass eine einzelne Position liquidiert wird, aber bei extremen Marktbewegungen können alle Cross-Margin-Mittel verloren gehen."
-      },
-      "guideEntry": {
-        "gotIt": "Verstanden"
       },
       "PerpsAbout": {
         "title": "Über"

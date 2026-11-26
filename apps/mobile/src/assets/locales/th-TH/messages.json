@@ -3022,9 +3022,6 @@
       "closeAllConfirmTitle": "ยืนยันการปิดโพซิชันทั้งหมด",
       "closeAll": "ปิดโพซิชันทั้งหมด",
       "closeAllConfirmMessage": "โพซิชันที่เปิดอยู่ทั้งหมดของคุณจะถูกปิดที่ราคาตลาด",
-      "assetPage": {
-        "hyperliquidPosition": "โพซิชัน Hyperliquid"
-      },
       "invitePopup": {
         "description": "ใช้รหัสของ Rabby เพื่อเปิดใช้งาน",
         "title": "ประหยัดค่าธรรมเนียม Hyperliquid",
@@ -3250,9 +3247,6 @@
         "isolatedTitle": "Isolated Margin",
         "isolatedDesc": "แต่ละโพซิชันใช้มาร์จิ้นของตัวเอง การขาดทุนจำกัดอยู่ที่โพซิชันนั้น แต่จะถูกชำระบัญชีได้ง่ายกว่า",
         "crossDesc": "โพซิชันทั้งหมดใช้มาร์จิ้นร่วมกัน ซึ่งช่วยลดโอกาสที่โพซิชันเดียวจะถูกชำระบัญชี แต่ในภาวะตลาดรุนแรง เงิน cross margin ทั้งหมดอาจสูญเสียได้"
-      },
-      "guideEntry": {
-        "gotIt": "เข้าใจแล้ว"
       },
       "PerpsAbout": {
         "title": "เกี่ยวกับ"

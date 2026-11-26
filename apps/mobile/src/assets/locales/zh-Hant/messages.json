@@ -3025,9 +3025,6 @@
       "closeAll": "全部平倉",
       "closeAllConfirmTitle": "確認全部平倉",
       "closeAllConfirmMessage": "所有未平倉倉位都將按市價平倉。",
-      "assetPage": {
-        "hyperliquidPosition": "Hyperliquid 倉位"
-      },
       "invitePopup": {
         "hyperliquidFee": "Hyperliquid 交易費用。",
         "title": "節省 Hyperliquid 手續費",
@@ -3253,9 +3250,6 @@
         "isolatedTitle": "逐倉保證金",
         "isolatedDesc": "每個倉位使用獨立保證金。虧損僅限於該倉位，但更容易被強平。",
         "crossDesc": "所有倉位共用同一保證金。這會降低單個倉位被強平的機率，但在極端行情下，所有全倉保證金都可能虧損。"
-      },
-      "guideEntry": {
-        "gotIt": "了解了"
       },
       "PerpsAbout": {
         "title": "關於"

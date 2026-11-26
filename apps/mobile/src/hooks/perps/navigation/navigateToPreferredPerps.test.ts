@@ -68,7 +68,6 @@ describe('preferred Perps external navigation', () => {
           canonicalMarket: 'BTC',
           navigation: harness.navigation,
           simpleDetail: {
-            fromSource: 'homePagePositionList',
             market: 'BTC',
             showOpenPosition: false,
           },
@@ -99,7 +98,6 @@ describe('preferred Perps external navigation', () => {
   it('preserves the Simple root-plus-detail back stack', async () => {
     const harness = createHarness('simple');
     const simpleDetail = {
-      fromSource: 'homePagePositionList' as const,
       market: 'SOL',
       showOpenPosition: false,
     };
@@ -126,7 +124,6 @@ describe('preferred Perps external navigation', () => {
           params: {
             account,
             dappId: 'hyperliquid',
-            fromSource: 'homePagePositionList',
           },
         },
       ],
