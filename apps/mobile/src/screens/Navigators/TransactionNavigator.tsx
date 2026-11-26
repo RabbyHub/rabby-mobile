@@ -285,6 +285,7 @@ export default function TransactionNavigator() {
             header: () => (
               <HistoryDetailHeader
                 title={route.params?.title}
+                account={route.params?.account}
                 address={route.params?.data?.address}
               />
             ),
@@ -318,6 +319,7 @@ export default function TransactionNavigator() {
             header: () => (
               <HistoryDetailHeader
                 title={route.params?.title}
+                account={route.params?.account}
                 address={route.params?.data?.address}
                 keyringType={route.params?.data?.keyringType}
               />
