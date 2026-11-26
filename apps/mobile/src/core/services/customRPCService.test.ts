@@ -16,6 +16,7 @@ jest.mock('@/constant', () => ({
 
 import { CustomRPCService } from './customRPCService';
 import axios from 'axios';
+import { openapi } from '../request';
 
 class TestCustomRPCService extends CustomRPCService {
   setDefaultRPCForTest(chainServerId: string, rpcUrls: string[]) {
@@ -176,14 +177,36 @@ describe('CustomRPCService preferred RPC', () => {
     await expect(
       service.defaultEthRPC({
         chainServerId,
-        method: 'eth_getTransactionReceipt',
+        method: 'eth_getTransactionByHash',
         params: ['0xhash'],
       }),
     ).resolves.toBe(bestRPC);
     expect(request).toHaveBeenCalledTimes(1);
-    expect(request).toHaveBeenCalledWith(bestRPC, 'eth_getTransactionReceipt', [
+    expect(request).toHaveBeenCalledWith(bestRPC, 'eth_getTransactionByHash', [
       '0xhash',
     ]);
+  });
+
+  it('routes eth_getTransactionReceipt to the Rabby backend RPC', async () => {
+    const chainServerId = 'chain';
+    const service = createService(chainServerId, ['https://external.example']);
+    const request = jest.spyOn(service, 'defaultRPCRequest');
+    const receipt = { status: '0x1' };
+    jest.mocked(openapi.ethRpc).mockResolvedValue(receipt);
+
+    await expect(
+      service.defaultEthRPC({
+        chainServerId,
+        method: 'eth_getTransactionReceipt',
+        params: ['0xhash'],
+      }),
+    ).resolves.toBe(receipt);
+    expect(openapi.ethRpc).toHaveBeenCalledWith(chainServerId, {
+      origin: encodeURIComponent('https://rabby.io'),
+      method: 'eth_getTransactionReceipt',
+      params: ['0xhash'],
+    });
+    expect(request).not.toHaveBeenCalled();
   });
 
   it('reuses one in-flight probe per chain', async () => {
