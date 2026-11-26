@@ -1,4 +1,8 @@
-import { findShadowedBuiltinType, parseTypedDataJson } from './typedDataTypes';
+import {
+  findShadowedBuiltinType,
+  hasInvalidTypedDataValue,
+  parseTypedDataJson,
+} from './typedDataTypes';
 
 const EIP712Domain = [
   { name: 'name', type: 'string' },
@@ -156,5 +160,57 @@ describe('parseTypedDataJson', () => {
 
   it('throws on invalid JSON', () => {
     expect(() => parseTypedDataJson('{')).toThrow();
+  });
+});
+
+describe('hasInvalidTypedDataValue', () => {
+  const data = {
+    types: {
+      EIP712Domain,
+      Permit,
+      Batch: [
+        { name: 'permits', type: 'Permit[1][]' },
+        { name: 'labels', type: 'string[]' },
+      ],
+    },
+    primaryType: 'Batch',
+    domain: { name: 'Permit', version: '1', verifyingContract: '0X1' },
+    message: {
+      permits: [
+        [
+          {
+            owner: '0x123',
+            spender: '0x1',
+            value: '42',
+            nonce: 0,
+            deadline: 1,
+          },
+        ],
+      ],
+      labels: [''],
+    },
+  };
+
+  it('accepts short addresses and decimal integer strings', () => {
+    expect(hasInvalidTypedDataValue(data)).toBe(false);
+  });
+
+  it.each([
+    { domain: { ...data.domain, version: 1 } },
+    { domain: { ...data.domain, verifyingContract: '123' } },
+    { message: { ...data.message, permits: [[{ owner: 1 }]] } },
+    { message: { ...data.message, labels: ['valid', null] } },
+  ])('rejects a mismatched domain or nested array value (%p)', patch => {
+    expect(hasInvalidTypedDataValue({ ...data, ...patch })).toBe(true);
+  });
+
+  it('terminates when inherited fields cycle back to an already visited value', () => {
+    expect(
+      hasInvalidTypedDataValue({
+        types: { Loop: [{ name: 'constructor', type: 'Loop' }] },
+        primaryType: 'Loop',
+        message: {},
+      }),
+    ).toBe(false);
   });
 });
