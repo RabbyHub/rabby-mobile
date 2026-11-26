@@ -22,6 +22,7 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import EventEmitter from 'events';
 import { throttle } from 'lodash';
 import { Text } from '@/components/Typography';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 
 const CAMERA_SIDE_ALLOWANCE = 70;
 
@@ -57,6 +58,7 @@ export const ScannerScreen = () => {
   // Render-time read so the camera square follows a fold/rotation.
   const { width: windowWidth } = useWindowDimensions();
   const cameraWidth = Math.max(0, windowWidth - CAMERA_SIDE_ALLOWANCE);
+  const columnInset = useSystemColumnInset();
   const [_, setText] = useAtom(textAtom);
   const { styles } = useTheme2024({ getStyle: getStyles });
   const route = useRoute<GetRootScreenRouteProp<'Scanner'>>();
@@ -142,7 +144,11 @@ export const ScannerScreen = () => {
   }, [navigation]);
 
   return (
-    <View style={styles.main}>
+    <View
+      style={[
+        styles.main,
+        { paddingLeft: columnInset.left, paddingRight: columnInset.right },
+      ]}>
       <View style={styles.wrapper}>
         <QRCodeScanner
           containerStyle={[

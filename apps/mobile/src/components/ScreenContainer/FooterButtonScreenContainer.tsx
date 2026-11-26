@@ -12,9 +12,8 @@ import {
   FootButtonProps,
   FooterButton,
 } from '@/components/FooterButton/FooterButton';
-import { ScreenLayouts } from '@/constant/layout';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 import { FooterButtonGroup } from '../FooterButton/FooterButtonGroup';
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -47,6 +46,12 @@ interface Props {
   style?: StyleProp<ViewStyle>;
   scrollableViewStyle?: StyleProp<ViewStyle>;
   onCancel?: () => void;
+  /**
+   * The legacy container normally applies the Duo system-column inset itself.
+   * Sheets rendered inside an already-inset bottom sheet must opt out to avoid
+   * applying the right inset twice.
+   */
+  disableColumnInset?: boolean;
 }
 
 /**
@@ -83,8 +88,9 @@ export const FooterButtonScreenContainer: React.FC<Props> = ({
   style,
   scrollableViewStyle,
   onCancel,
+  disableColumnInset = false,
 }) => {
-  const { top } = useSafeAreaInsets();
+  const { safeOffHeader } = useSafeSizes();
   const columnInset = useSystemColumnInset();
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -94,9 +100,11 @@ export const FooterButtonScreenContainer: React.FC<Props> = ({
       keyboardVerticalOffset={-20}
       style={StyleSheet.flatten([
         styles.root,
-        { paddingTop: top + ScreenLayouts.headerAreaHeight },
-        columnInset.left > 0 && { paddingLeft: columnInset.left },
-        columnInset.right > 0 && { paddingRight: columnInset.right },
+        { paddingTop: safeOffHeader },
+        !disableColumnInset &&
+          columnInset.left > 0 && { paddingLeft: columnInset.left },
+        !disableColumnInset &&
+          columnInset.right > 0 && { paddingRight: columnInset.right },
         style,
       ])}
       behavior="padding">
