@@ -1,4 +1,3 @@
-import { instrumentConfigIntegrityRuntime } from '@/core/configIntegrity/probe';
 import {
   Buffer,
   createHmac,
@@ -9,22 +8,23 @@ import { createConfigIntegrityKeychain } from '../apis/keychain';
 import { reportConfigIntegrity } from './diagnostics';
 import { configIntegrity } from './storage';
 
+export function signConfigIntegrity(key: string, input: string) {
+  return createHmac('sha256', Buffer.from(key, 'hex'))
+    .update(input)
+    .digest('hex');
+}
+
 export function startConfigIntegrity() {
   const scan = configIntegrity.getScan();
   if (scan) {
     return scan;
   }
-  return configIntegrity.start(
-    instrumentConfigIntegrityRuntime({
-      keychain: createConfigIntegrityKeychain(),
-      generateKey: () => randomBytes(32).toString('hex'),
-      sign: (key, input) =>
-        createHmac('sha256', Buffer.from(key, 'hex'))
-          .update(input)
-          .digest('hex'),
-      matches: (first, second) =>
-        timingSafeEqual(Buffer.from(first, 'hex'), Buffer.from(second, 'hex')),
-      report: reportConfigIntegrity,
-    }),
-  );
+  return configIntegrity.start({
+    keychain: createConfigIntegrityKeychain(),
+    generateKey: () => randomBytes(32).toString('hex'),
+    sign: signConfigIntegrity,
+    matches: (first, second) =>
+      timingSafeEqual(Buffer.from(first, 'hex'), Buffer.from(second, 'hex')),
+    report: reportConfigIntegrity,
+  });
 }

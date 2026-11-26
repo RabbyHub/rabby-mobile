@@ -6,16 +6,16 @@ import {
 import { getCurrentKeychainVersion } from '@/core/apis/keychainVersion';
 import { rawKeychain } from '@/core/apis/keychainV9_0_0';
 import {
-  armConfigIntegrityProbe,
-  failNextConfigIntegrityMetadataWrite,
-  getConfigIntegrityProbeDiagnostics,
-} from '@/core/configIntegrity/probe.nonprod';
-import {
   CONFIG_INTEGRITY_KEY,
+  fieldInput,
   isHexDigest,
+  isObject,
   parseKeyRecord,
   registry,
+  type KeyRecord,
+  type ProtectedStore,
 } from '@/core/configIntegrity/schema';
+import { signConfigIntegrity } from '@/core/configIntegrity/startup';
 import { configIntegrity } from '@/core/configIntegrity/storage';
 import { contactServiceApi } from '@/core/serviceApi/contact';
 import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
@@ -103,29 +103,45 @@ function readConfig() {
 async function inspect(context: RegressionScenarioExecutionContext) {
   const scan = configIntegrity.getScan();
   await scan;
-  const metadata = readStore<Metadata>(CONFIG_INTEGRITY_KEY);
-  const digests = Object.fromEntries(
-    Object.entries(registry.stores).map(([store, fields]) => [
-      store,
-      Object.keys(fields).filter(field =>
-        isHexDigest(metadata?.stores?.[store]?.[field]),
-      ).length,
-    ]),
-  );
-  let baselineRegistryVersion: number | null = null;
+  let keyRecord: KeyRecord | undefined;
   try {
     const key = await createConfigIntegrityKeychain().read();
     if (key !== null) {
-      baselineRegistryVersion = parseKeyRecord(key).baselineRegistryVersion;
+      keyRecord = parseKeyRecord(key);
     }
   } catch {
-    // The probe reports only whether a valid native record could be read.
+    // Only report whether a valid native record could be read.
+  }
+  const metadata = readStore<Metadata>(CONFIG_INTEGRITY_KEY);
+  const digests: Record<string, number> = {};
+  const verifiedDigests: Record<string, number> = {};
+  for (const [store, fields] of Object.entries(registry.stores)) {
+    const record = readStore<unknown>(store);
+    digests[store] = 0;
+    verifiedDigests[store] = 0;
+    for (const field of Object.keys(fields)) {
+      const digest = metadata?.stores?.[store]?.[field];
+      if (!isHexDigest(digest)) {
+        continue;
+      }
+      digests[store]++;
+      if (
+        keyRecord &&
+        isObject(record) &&
+        signConfigIntegrity(
+          keyRecord.key,
+          fieldInput(store as ProtectedStore, field, record),
+        ) === digest
+      ) {
+        verifiedDigests[store]++;
+      }
+    }
   }
   context.report('postcondition-ready', {
     scanStarted: !!scan,
-    baselineRegistryVersion,
+    baselineRegistryVersion: keyRecord?.baselineRegistryVersion ?? null,
     digests,
-    diagnostics: getConfigIntegrityProbeDiagnostics(),
+    verifiedDigests,
     ...readConfig(),
   });
 }
@@ -147,10 +163,6 @@ export async function executeRegressionScenario(
     await inspect(context);
     return;
   }
-  if (operation === 'arm') {
-    armConfigIntegrityProbe(command.params.fault ?? 'none', command.expiresAt);
-    return;
-  }
   if (operation === 'seed') {
     await editFixture();
   } else {
@@ -159,11 +171,7 @@ export async function executeRegressionScenario(
       throw new Error('Configuration integrity fixture is required');
     }
     switch (operation) {
-      case 'fail-signature':
       case 'edit-alias':
-        if (operation === 'fail-signature') {
-          failNextConfigIntegrityMetadataWrite();
-        }
         await contactServiceApi.updateAlias({
           address: FIXTURE_ADDRESS,
           name: EDITED_ALIAS,
@@ -183,7 +191,9 @@ export async function executeRegressionScenario(
       }
       case 'drop-key':
         if (getCurrentKeychainVersion() !== '9.0.0') {
-          throw new Error('Configuration integrity probe requires Keychain v9');
+          throw new Error(
+            'Configuration integrity scenario requires Keychain v9',
+          );
         }
         if (
           !(await rawKeychain.resetGenericPassword({

@@ -104,11 +104,6 @@ module.exports = api => {
           alias: {
             '^@/devtools/regressionScenarios/entry$': `./src/devtools/regressionScenarios/entry.${regressionScenarioImplExt}`,
             '^@/devtools/regressionScenarios/runtime$': `./src/devtools/regressionScenarios/runtime.${regressionScenarioImplExt}`,
-            '^@/core/configIntegrity/probe$': `./src/core/configIntegrity/probe.${
-              isDevTransform || resolvedBuildEnv === 'regression'
-                ? 'nonprod'
-                : 'prod'
-            }`,
             '^@/devtools/regressionScenarios/react$': `./src/devtools/regressionScenarios/react.${regressionScenarioImplExt}`,
             '^@/hooks/useFeatureActivationDiagnostics$': `./src/hooks/useFeatureActivationDiagnostics.${regressionScenarioImplExt}`,
             '^@/startup/moduleLoading/launchTaskLoaders$': `./src/startup/moduleLoading/launchTaskLoaders.${moduleLoadingMode}`,
