@@ -137,6 +137,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
     height: 74,
     borderRadius: 16,
+    borderCurve: 'continuous',
     paddingVertical: 14,
     paddingLeft: 12,
     paddingRight: 16,
@@ -183,7 +184,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['green-default'],
   },
   route: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 0 },
-  chain: { width: 14, height: 14, borderRadius: 4 },
+  chain: { width: 14, height: 14, borderRadius: 4, borderCurve: 'continuous' },
   routeArrow: {
     color: colors2024['neutral-secondary'],
     fontSize: 14,
@@ -206,6 +207,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 1,
     borderTopRightRadius: 4,
     borderBottomLeftRadius: 4,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-line'],
   },
   refundText: {

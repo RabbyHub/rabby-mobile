@@ -129,6 +129,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   field: {
     backgroundColor: resolvePerpsProDialogFieldBackground(colors2024, isLight),
     borderRadius: 6,
+    borderCurve: 'continuous',
     height: PERPS_PRO_DIALOG_LABELED_FIELD.height,
     justifyContent: 'center',
     paddingHorizontal: 12,
@@ -137,6 +138,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   compactField: {
     backgroundColor: resolvePerpsProDialogFieldBackground(colors2024, isLight),
     borderRadius: 6,
+    borderCurve: 'continuous',
     height: PERPS_PRO_DIALOG_FIELD.height,
     justifyContent: 'center',
     paddingHorizontal: 12,

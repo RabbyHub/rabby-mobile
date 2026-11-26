@@ -62,11 +62,13 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   media: {
     width: 46,
     height: 46,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   fromTokenBox: {
     position: 'absolute',

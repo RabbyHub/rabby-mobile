@@ -39,6 +39,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     backgroundColor: 'transparent',
     borderRadius: 8,
+    borderCurve: 'continuous',
     width: '100%',
     color: colors2024['neutral-title-1'],
     paddingHorizontal: 16,
@@ -139,6 +140,7 @@ export const BackupUnlockScreen: React.FC<Props> = ({
         containerStyle={styles.btnContainer}
         buttonStyle={{
           borderRadius: 100,
+          borderCurve: 'continuous',
         }}
         type="primary"
         loading={loading}

@@ -155,11 +155,28 @@ const BalanceHeader = React.memo(function BalanceHeader({
     <View style={styles.titleSection}>
       <Text style={styles.sectionTitle}>{t('page.sendToken.newAmount')}</Text>
       {showIssue ? (
-        <Text style={styles.issueText} numberOfLines={1} ellipsizeMode="tail">
-          {balanceError
-            ? `${balanceError}: ${balanceIssueValueText}`
-            : balanceWarn}
-        </Text>
+        balanceError ? (
+          // Keep the exact balance fully visible: let the localized label
+          // ellipsize instead of truncating the value (issue on 375/382pt
+          // screens for de-DE / ru-RU).
+          <View style={[styles.issueBlock, styles.issueRow]}>
+            <Text
+              style={[styles.issueText, styles.issueLabel]}
+              numberOfLines={1}
+              ellipsizeMode="tail">
+              {balanceError}
+            </Text>
+            <Text
+              style={[styles.issueText, styles.issueValue]}
+              numberOfLines={1}>
+              {`: ${balanceIssueValueText}`}
+            </Text>
+          </View>
+        ) : (
+          <Text style={styles.issueText} numberOfLines={1} ellipsizeMode="tail">
+            {balanceWarn}
+          </Text>
+        )
       ) : (
         <View style={styles.titleRightSpacer} />
       )}
@@ -606,11 +623,26 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       width: '100%',
       height: 106,
       borderRadius: 16,
+      borderCurve: 'continuous',
     },
 
     issueBlock: {
       flexDirection: 'row',
       justifyContent: 'flex-end',
+    },
+
+    issueRow: {
+      flexShrink: 1,
+      maxWidth: 240,
+    },
+
+    issueLabel: {
+      flexShrink: 1,
+      textAlign: 'right',
+    },
+
+    issueValue: {
+      flexShrink: 0,
     },
 
     gasReserved: {
@@ -657,6 +689,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       paddingVertical: 10,
       paddingTop: 16,
       borderRadius: 4,
+      borderCurve: 'continuous',
       position: 'relative',
       justifyContent: 'center',
       borderWidth: 1,
@@ -718,6 +751,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       width: 14,
       height: 14,
       borderRadius: 14,
+      borderCurve: 'continuous',
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: colors2024['neutral-bg-1'],
@@ -726,6 +760,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       width: 10,
       height: 10,
       borderRadius: 10,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['brand-default'],
     },
   };

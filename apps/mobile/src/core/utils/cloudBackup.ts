@@ -7,7 +7,11 @@ import type {
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { appEncryptorApi } from '@/core/serviceApi/appEncryptor';
 import { isKeyringUnlockedSnapshot } from '@/core/serviceApi/keyring';
-import { APPLICATION_ID, FIREBASE_WEBCLIENT_ID } from '@/constant';
+import {
+  APPLICATION_ID,
+  FIREBASE_WEBCLIENT_ID,
+  isNonPublicProductionEnv,
+} from '@/constant';
 import { getAddressFromMnemonic } from './mnemonic';
 import { getMnemonicByAddress } from '../apis/mnemonic';
 import { sortBy } from 'lodash';
@@ -176,7 +180,26 @@ export const checkTokenIsExpired = async () => {
   }
 };
 
+/**
+ * Dev-only override for cloud availability so the "cloud unavailable" branch
+ * can be reproduced deterministically on a device:
+ *   `?_cmd=debug-cloud-availability&value=unavailable|available|auto`
+ * In-memory only: cleared by an app restart, and ignored in production builds.
+ */
+let debugCloudAvailabilityOverride: boolean | null = null;
+
+export function setDebugCloudAvailabilityOverride(value: boolean | null) {
+  if (!isNonPublicProductionEnv) {
+    return;
+  }
+  debugCloudAvailabilityOverride = value;
+  devLog('setDebugCloudAvailabilityOverride', value);
+}
+
 export const detectCloudIsAvailable = async () => {
+  if (debugCloudAvailabilityOverride != null) {
+    return debugCloudAvailabilityOverride;
+  }
   if (!IS_IOS) {
     return true;
   }

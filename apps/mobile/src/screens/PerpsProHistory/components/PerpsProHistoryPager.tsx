@@ -678,6 +678,5 @@ const styles = StyleSheet.create({
   },
   pager: {
     flex: 1,
-    marginTop: 12,
   },
 });

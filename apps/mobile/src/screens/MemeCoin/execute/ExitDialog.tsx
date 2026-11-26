@@ -84,6 +84,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     padding: 24,
     borderRadius: 12,
+    borderCurve: 'continuous',
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-1'],
   },
@@ -111,6 +112,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 8,
     marginHorizontal: 10,
     borderRadius: 2,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-body'],
   },
   bulletText: {

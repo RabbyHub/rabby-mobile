@@ -363,9 +363,11 @@ export const useSlippage = () => {
 export const useTokenPair = ({
   account,
   active = true,
+  tabSelected = true,
 }: {
   account: Account;
   active?: boolean;
+  tabSelected?: boolean;
 }) => {
   const swapService = useSwapService();
   const userAddress = account?.address;
@@ -1376,6 +1378,7 @@ export const useTokenPair = ({
 
   useEffect(() => {
     if (
+      tabSelected &&
       slider === 100 &&
       swapUseSlider &&
       payToken?.amount &&
@@ -1385,6 +1388,7 @@ export const useTokenPair = ({
       handleSlider100();
     }
   }, [
+    tabSelected,
     slider,
     swapUseSlider,
     payToken?.amount,
@@ -1448,6 +1452,18 @@ export const useTokenPair = ({
     setSwapUseSlider(false);
     setIsDraggingSlider(false);
   }, [userAddress]);
+
+  useEffect(() => {
+    if (tabSelected) {
+      return;
+    }
+    setPayAmount('');
+    setSlider(0);
+    setSwapUseSlider(false);
+    setIsDraggingSlider(false);
+    setUseGasPrice(false);
+    setQuotesListVisible(false);
+  }, [tabSelected]);
 
   useFocusEffect(
     useCallback(() => {

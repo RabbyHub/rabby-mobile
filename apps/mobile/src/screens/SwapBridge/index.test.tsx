@@ -25,6 +25,62 @@ jest.mock('@react-navigation/native', () => {
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 47, bottom: 34, left: 0, right: 0 }),
 }));
+// Component-contract stub: keep every page that has ever been requested mounted
+// (the real track retains them), but only the requested key is at rest. Drag
+// mechanics, back-gesture handoff and native hit testing stay device-only.
+jest.mock('@rabby-wallet/rn-collapsible-scene-view', () => {
+  const ReactModule = require('react');
+  const RNView = require('react-native').View;
+  const RootScenePager = ({
+    keys,
+    requestedKey,
+    renderPage,
+    testID,
+  }: {
+    keys: readonly string[];
+    requestedKey: string;
+    renderPage: (
+      key: string,
+      context: { selected: boolean; interactive: boolean; visible: boolean },
+    ) => React.ReactElement | null;
+    testID?: string;
+  }) => {
+    const seen = ReactModule.useRef<Set<string>>(new Set());
+    seen.current.add(requestedKey);
+    return ReactModule.createElement(
+      RNView,
+      { testID },
+      keys
+        .filter(key => seen.current.has(key))
+        .map(key =>
+          ReactModule.createElement(
+            RNView,
+            {
+              key,
+              style: key === requestedKey ? null : { display: 'none' },
+            },
+            renderPage(key, {
+              selected: key === requestedKey,
+              interactive: true,
+              visible: true,
+            }),
+          ),
+        ),
+    );
+  };
+  return {
+    __esModule: true,
+    RootScenePager,
+    RootScenePagerGestureBlock: ({ children }: { children: unknown }) =>
+      children,
+  };
+});
+jest.mock('@/hooks/useRootPagerEnabled', () => ({
+  useRootPagerEnabled: () => true,
+}));
+jest.mock('@/hooks/useRootScenePagerBackGesture', () => ({
+  useRootScenePagerBackGesture: () => undefined,
+}));
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: Function }) => ({
     styles: getStyle({
@@ -99,9 +155,11 @@ jest.mock('../Swap/swapServiceDependencies', () => ({
 function MockScene({
   kind,
   sceneActive,
+  tabSelected,
 }: {
   kind: 'swap' | 'bridge';
   sceneActive: boolean;
+  tabSelected: boolean;
 }) {
   const [value, setValue] = React.useState('');
   React.useEffect(() => {
@@ -116,6 +174,7 @@ function MockScene({
   return (
     <View
       testID={`${kind}-scene`}
+      accessibilityValue={{ text: tabSelected ? 'selected-tab' : 'other-tab' }}
       accessibilityState={{ selected: sceneActive }}>
       <TextInput
         testID={`${kind}-amount`}
@@ -224,6 +283,13 @@ describe('SwapBridge route-owned scenes', () => {
         ['bridge', true],
       ]),
     );
+    expect(view.getByTestId('bridge-scene').props.accessibilityValue.text).toBe(
+      'selected-tab',
+    );
+    expect(
+      view.getByTestId('swap-scene', { includeHiddenElements: true }).props
+        .accessibilityValue.text,
+    ).toBe('other-tab');
     fireEvent.changeText(view.getByTestId('bridge-amount'), '456');
     view.rerender(
       <RouteBoundary context={context}>
@@ -231,6 +297,13 @@ describe('SwapBridge route-owned scenes', () => {
       </RouteBoundary>,
     );
     expect(view.getByTestId('swap-amount').props.value).toBe('123');
+    expect(view.getByTestId('swap-scene').props.accessibilityValue.text).toBe(
+      'selected-tab',
+    );
+    expect(
+      view.getByTestId('bridge-scene', { includeHiddenElements: true }).props
+        .accessibilityValue.text,
+    ).toBe('other-tab');
     expect(
       view.getByTestId('bridge-amount', { includeHiddenElements: true }).props
         .value,
@@ -333,6 +406,9 @@ describe('SwapBridge configured header', () => {
     expect(
       firstView.getByTestId('swap-scene').props.accessibilityState.selected,
     ).toBe(false);
+    expect(
+      firstView.getByTestId('swap-scene').props.accessibilityValue.text,
+    ).toBe('selected-tab');
     expect(secondView.getByTestId('bridge-header-actions')).toBeTruthy();
     expect(
       secondView.getByTestId('bridge-scene').props.accessibilityState.selected,

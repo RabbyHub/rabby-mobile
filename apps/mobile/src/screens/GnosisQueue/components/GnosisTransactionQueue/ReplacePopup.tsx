@@ -107,6 +107,7 @@ const getStyles = createGetStyles(colors => ({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 6,
+    borderCurve: 'continuous',
     backgroundColor: colors['neutral-card-2'],
     borderWidth: 1,
     borderColor: 'transparent',

@@ -640,6 +640,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                   direction === 'Long' && {
                     backgroundColor: colors2024['green-light-1'],
                     borderRadius: 8,
+                    borderCurve: 'continuous',
                   },
                 ]}
                 onPress={() => {
@@ -664,6 +665,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                   direction === 'Short' && {
                     backgroundColor: colors2024['red-light-1'],
                     borderRadius: 8,
+                    borderCurve: 'continuous',
                   },
                 ]}
                 onPress={() => {
@@ -1151,6 +1153,7 @@ const getStyle = createGetStyles2024(ctx => {
       paddingHorizontal: 16,
       paddingVertical: 18,
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: isLight
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
@@ -1202,7 +1205,7 @@ const getStyle = createGetStyles2024(ctx => {
       fontSize: 36,
       paddingVertical: 0,
       lineHeight: 42,
-      fontWeight: '900',
+      fontWeight: '800',
       color: colors2024['neutral-title-1'],
       flex: 1,
       textAlign: 'right',
@@ -1225,7 +1228,7 @@ const getStyle = createGetStyles2024(ctx => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 36,
       lineHeight: 42,
-      fontWeight: '900',
+      fontWeight: '800',
       color: colors2024['neutral-title-1'],
     },
     title: {
@@ -1233,7 +1236,7 @@ const getStyle = createGetStyles2024(ctx => {
       fontSize: 20,
       lineHeight: 24,
       marginTop: 12,
-      fontWeight: '900',
+      fontWeight: '800',
       color: colors2024['neutral-title-1'],
       marginBottom: 6,
       textAlign: 'center',
@@ -1285,6 +1288,7 @@ const getStyle = createGetStyles2024(ctx => {
     },
     list: {
       borderRadius: 16,
+      borderCurve: 'continuous',
       borderWidth: 1,
       borderColor: colors2024['neutral-line'],
       backgroundColor: isLight
@@ -1310,6 +1314,7 @@ const getStyle = createGetStyles2024(ctx => {
       padding: 12,
       backgroundColor: colors2024['neutral-bg-2'],
       borderRadius: 6,
+      borderCurve: 'continuous',
       marginTop: 12,
     },
     listSubItem: {
@@ -1383,6 +1388,7 @@ const getStyle = createGetStyles2024(ctx => {
       padding: 4,
       backgroundColor: colors2024['brand-light-1'],
       borderRadius: 8,
+      borderCurve: 'continuous',
     },
     maxButtonText: {
       color: colors2024['brand-default'],
@@ -1398,6 +1404,7 @@ const getStyle = createGetStyles2024(ctx => {
       flexDirection: 'row',
       marginBottom: 16,
       borderRadius: 8,
+      borderCurve: 'continuous',
       marginTop: 16,
       height: 42,
       overflow: 'hidden',
@@ -1413,10 +1420,12 @@ const getStyle = createGetStyles2024(ctx => {
     directionButtonLeft: {
       borderTopLeftRadius: 8,
       borderBottomLeftRadius: 8,
+      borderCurve: 'continuous',
     },
     directionButtonRight: {
       borderTopRightRadius: 8,
       borderBottomRightRadius: 8,
+      borderCurve: 'continuous',
     },
     directionButtonText: {
       fontSize: 16,
@@ -1435,6 +1444,7 @@ const getStyle = createGetStyles2024(ctx => {
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
       borderRadius: 12,
+      borderCurve: 'continuous',
       marginBottom: 16,
     },
     coinInfoLeft: {
@@ -1485,6 +1495,7 @@ const getStyle = createGetStyles2024(ctx => {
       paddingHorizontal: 16,
       backgroundColor: colors2024['neutral-bg-2'],
       borderRadius: 20,
+      borderCurve: 'continuous',
       paddingBottom: 6,
       marginBottom: 12,
       display: 'flex',
@@ -1509,6 +1520,7 @@ const getStyle = createGetStyles2024(ctx => {
       paddingHorizontal: 4,
       paddingLeft: 6,
       borderRadius: 4,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-line'],
     },
     orderTypeToggle: {
@@ -1521,7 +1533,7 @@ const getStyle = createGetStyles2024(ctx => {
     orderTypeToggleText: {
       fontSize: 16,
       lineHeight: 20,
-      fontWeight: '900',
+      fontWeight: '800',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
     },
@@ -1535,7 +1547,7 @@ const getStyle = createGetStyles2024(ctx => {
     marginLabel: {
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '900',
+      fontWeight: '800',
       // marginBottom: 4,
       color: '#50D2C1',
       fontFamily: 'SF Pro Rounded',
@@ -1557,7 +1569,7 @@ const getStyle = createGetStyles2024(ctx => {
     marginTitle: {
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '900',
+      fontWeight: '800',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
     },
@@ -1571,6 +1583,7 @@ const getStyle = createGetStyles2024(ctx => {
     leverageContainer: {
       backgroundColor: colors2024['neutral-bg-5'],
       borderRadius: 4,
+      borderCurve: 'continuous',
       paddingHorizontal: 4,
       paddingVertical: 1,
     },
@@ -1593,6 +1606,7 @@ const getStyle = createGetStyles2024(ctx => {
     },
     card: {
       borderRadius: 16,
+      borderCurve: 'continuous',
       paddingVertical: 14,
       paddingHorizontal: 12,
       borderWidth: 1,
@@ -1620,6 +1634,7 @@ const getStyle = createGetStyles2024(ctx => {
       width: 46,
       height: 46,
       borderRadius: 1000,
+      borderCurve: 'continuous',
       flexShrink: 0,
     },
     infoContainer: {

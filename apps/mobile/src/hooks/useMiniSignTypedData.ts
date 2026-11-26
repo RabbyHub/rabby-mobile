@@ -62,6 +62,7 @@ class MiniSignTypedDataStore {
   private state: MiniSignTypedDataInfo = createDefaultInfo();
   private listeners = new Set<Listener>();
   private runContext: MiniSignTypedDataRunContext | null = null;
+  private runId = 0;
   private pendingPromise: Promise<MiniSignTypedDataResult[]> | null = null;
   private pendingResult: {
     resolve: (value: MiniSignTypedDataResult[]) => void;
@@ -83,6 +84,7 @@ class MiniSignTypedDataStore {
   };
 
   startRun = (total: number, context: MiniSignTypedDataRunContext) => {
+    this.runId += 1;
     this.runContext = {
       ...context,
       results: [...context.results],
@@ -95,7 +97,14 @@ class MiniSignTypedDataStore {
       lastHash: undefined,
       error: null,
     });
+    return this.runId;
   };
+
+  invalidateRun = () => {
+    this.runId += 1;
+  };
+
+  isCurrentRun = (runId: number) => this.runId === runId;
 
   progress = ({
     index,
@@ -326,6 +335,18 @@ export const getMiniSignTypedDataState = () => store.getSnapshot();
 export const getMiniSignTypedDataContext = () => store.getRunContext();
 
 export const cancelMiniSignTypedData = (reason?: any) => {
+  // Bump the run id before any await. Closing the sheet cancels the device,
+  // which advances the keyring cancellation version; a continuation that
+  // then starts signing would capture that new version and keep going.
+  store.invalidateRun();
+  const account = store.getRunContext()?.account;
+  // Success already cleared the run context, so closing the sheet then does
+  // not cancel a finished signature. A failure sheet still has the account.
+  if (account?.type === KEYRING_CLASS.HARDWARE.ONEKEY) {
+    apiOneKey.cancel().catch(error => {
+      console.warn('[OneKey] cancel on typed-data close failed', error);
+    });
+  }
   const description =
     reason instanceof Error
       ? reason.message
@@ -388,11 +409,15 @@ const executeSignTypedData = async ({
     onProgress,
   };
 
-  store.startRun(total, context);
+  const runId = store.startRun(total, context);
+  const isCurrent = () => store.isCurrentRun(runId);
 
   try {
     await ensureHardwareConnected(account);
   } catch (error) {
+    if (!isCurrent()) {
+      return null;
+    }
     const message =
       error instanceof Error ? error.message : String(error ?? 'Unknown error');
     store.rejectPending(message);
@@ -400,7 +425,14 @@ const executeSignTypedData = async ({
     return null;
   }
 
+  if (!isCurrent()) {
+    return null;
+  }
+
   for (let index = resumeIndex; index < total; index++) {
+    if (!isCurrent()) {
+      return null;
+    }
     const item = txs[index];
     try {
       const result = await sendSignTypedData({
@@ -410,6 +442,9 @@ const executeSignTypedData = async ({
         ga,
         account,
         onProgress: (status, hash) => {
+          if (!isCurrent()) {
+            return;
+          }
           store.progress({
             index,
             total,
@@ -427,6 +462,10 @@ const executeSignTypedData = async ({
         },
       });
 
+      if (!isCurrent()) {
+        return null;
+      }
+
       results[index] = result;
 
       store.patchRunContext({
@@ -435,6 +474,9 @@ const executeSignTypedData = async ({
         onProgress,
       });
     } catch (error) {
+      if (!isCurrent()) {
+        return null;
+      }
       store.patchRunContext({
         currentIndex: index,
         results: results.slice(),
@@ -449,7 +491,13 @@ const executeSignTypedData = async ({
     }
   }
 
+  if (!isCurrent()) {
+    return null;
+  }
   store.finish(total);
+  if (!isCurrent()) {
+    return null;
+  }
   store.clearRunContext();
   return results;
 };

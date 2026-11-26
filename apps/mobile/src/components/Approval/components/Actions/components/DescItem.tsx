@@ -19,6 +19,7 @@ const getStyle = (colors: AppColorsVariants) =>
       height: 3,
       backgroundColor: colors['neutral-body'],
       borderRadius: 3,
+      borderCurve: 'continuous',
       marginRight: 6,
       marginTop: 1.5,
     },

@@ -52,7 +52,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   title: {
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '900',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
     textAlign: 'center',
@@ -63,6 +63,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   bubble: {
     borderRadius: 12,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-4'],
     paddingHorizontal: 42,
     paddingVertical: 9,

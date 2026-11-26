@@ -338,6 +338,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       position: 'relative',
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
+      borderCurve: 'continuous',
       overflow: 'hidden',
     },
     customHandleContainer: {
@@ -351,6 +352,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       width: 50,
       height: 6,
       borderRadius: 105,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-bg-5'],
     },
 
@@ -360,6 +362,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
         : colors2024['neutral-bg-1'],
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
+      borderCurve: 'continuous',
     },
     handleIndicatorStyle: {
       backgroundColor: colors2024['neutral-bg-5'],
@@ -381,6 +384,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingVertical: 4,
       paddingHorizontal: 12,
       borderRadius: 19,
+      borderCurve: 'continuous',
       gap: 8,
     },
     placeholder: {

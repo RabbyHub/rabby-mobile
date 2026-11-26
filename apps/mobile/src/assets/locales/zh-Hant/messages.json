@@ -1459,7 +1459,8 @@
         },
         "notFound": {
           "title": "找不到裝置",
-          "description": "開啟藍牙並解鎖 OneKey"
+          "description": "開啟藍牙並解鎖 OneKey",
+          "retry": "重新搜尋"
         },
         "connect": {
           "title": "連接中",
@@ -1474,6 +1475,23 @@
           "title": "可用裝置",
           "currentDevice": "目前",
           "description": "請選擇一個 OneKey 進行連接"
+        },
+        "error": {
+          "deviceNotFound": "找不到 OneKey。請確認裝置已解鎖、藍牙已開啟，且靠近手機。",
+          "disconnected": "OneKey 已中斷連線。請保持裝置解鎖並靠近手機後重試。",
+          "deviceBusy": "OneKey 正在處理其他請求。請在裝置上完成或取消後重試。",
+          "passphraseDisabled": "裝置未開啟密碼短語。請在裝置上開啟，或重新匯入此錢包。",
+          "firmwareTooOld": "OneKey 韌體版本過舊。請使用 OneKey App 更新後重試。",
+          "bluetoothOff": "藍牙未開啟。請開啟藍牙後重試。",
+          "bluetoothPermission": "Rabby 沒有藍牙權限。請在系統設定中允許 Rabby 使用藍牙（Android 11 及以下為定位）權限後重試。",
+          "locationServicesDisabled": "定位服務已關閉。搜尋藍牙裝置需要開啟定位服務。",
+          "bluetoothUnsupported": "此手機不支援藍牙。",
+          "scanFailed": "藍牙搜尋失敗，請重試。",
+          "pairingFailed": "藍牙配對失敗。請在手機和 OneKey 上確認配對請求後重試。",
+          "pairingInvalid": "藍牙配對資訊已失效。請在手機藍牙設定中忘記 OneKey 後重新配對。",
+          "pinInvalid": "PIN 碼錯誤，請重試。",
+          "cancelled": "請求已取消。",
+          "openSettings": "開啟設定"
         }
       },
       "seedPhrase": {
@@ -2029,7 +2047,6 @@
       "dataAnalysis": "協助改善 Rabby",
       "dataAnalysisDesc": "分享匿名使用資料以協助改善 Rabby。收集的資料不會與你或你的帳戶關聯。",
       "bugReportChat": "透過聊天分享回饋",
-      "features": "功能",
       "manageWallets": "管理錢包"
     },
     "settings": {
@@ -2408,7 +2425,10 @@
           "attachedTpSlUnresolved": "此市場先前有一筆 TP/SL 提交尚未確認。重試前請檢查未成交訂單和持倉。",
           "orderFilled": "訂單已成交。",
           "orderPlaced": "訂單已掛出。",
-          "orderFailed": "訂單失敗。"
+          "orderFailed": "訂單失敗。",
+          "scale": "分段委託",
+          "scaleDescription": "設定價格區間並下達多筆限價子單",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "僅掛單模式下，買入價必須低於目前最低賣價，以避免立即成交。",
@@ -2422,6 +2442,9 @@
           "tpSl": {
             "title": "TP/SL",
             "description": "提交基本市價 TP/SL 訂單。如需部分 TP/SL 等進階功能，請在已有持倉上設定 TP/SL。"
+          },
+          "randomize": {
+            "description": "隨機化會使每筆子交易的數量在 ±20% 的範圍內變化，同時遵守最大交易數量及其他限制。"
           },
           "reduceOnly": {
             "title": "只減倉",
@@ -2519,7 +2542,8 @@
             "orders": "委託歷史",
             "trade": "成交歷史",
             "transaction": "資金流水",
-            "funding": "資金費"
+            "funding": "資金費",
+            "twap": "TWAP 歷史"
           },
           "empty": {
             "orders": "暫無委託歷史",
@@ -2701,6 +2725,101 @@
           "cancelPartial": "已取消 {{success}} 筆訂單；{{failed}} 筆失敗",
           "cancelFailed": "取消訂單失敗",
           "cancelContextChanged": "帳戶已變更，請重試。"
+        },
+        "scaleOrder": {
+          "lowerPrice": "最低價",
+          "upperPrice": "最高價",
+          "size": "數量",
+          "count": "訂單數 (2–100)",
+          "distribution": "數量分布",
+          "flat": "固定",
+          "ascending": "升序",
+          "descending": "降序",
+          "flatDescription": "總數量中的每筆訂單分配相同數量",
+          "ascendingDescription": "訂單數量隨價格升高而遞增",
+          "descendingDescription": "訂單數量隨價格降低而遞增",
+          "previewBuy": "預覽買單",
+          "previewSell": "預覽賣單",
+          "totalSize": "總數量",
+          "averagePrice": "平均價格",
+          "result": "已受理 {{accepted}} 筆，已拒絕 {{rejected}} 筆，待確認 {{unresolved}} 筆",
+          "unknown": "下單結果待確認。請先檢查目前委託和交易紀錄，再下新訂單。",
+          "errors": {
+            "range": "請輸入有效價格，最高價必須高於最低價。",
+            "count": "請輸入 2 至 100 之間的整數。",
+            "size": "請輸入大於 0 且符合該市場數量精度的委託數量。",
+            "duplicatePrice": "按價格精度調整後，部分委託價格重複。請擴大價格區間或減少訂單數。",
+            "minimum": "按數量精度調整後，每筆子訂單金額不得低於 $10。",
+            "maximum": "委託總金額超過該市場允許的上限。",
+            "capacity": "目前可交易額度不足以提交整批訂單。",
+            "reduceOnly": "委託總數量超過目前可平倉數量。"
+          }
+        },
+        "twap": {
+          "description": "按自訂時間間隔下單",
+          "totalTime": "總時長",
+          "durationFieldLabel": "總時長 (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} 分鐘",
+          "minuteValue_one": "{{t}} 分鐘",
+          "confirmationDuration": "{{t}} 分鐘",
+          "totalSize": "總數量",
+          "selectTime": "選擇總時長",
+          "reset": "重設",
+          "randomize": "隨機化",
+          "randomized": "已隨機化",
+          "durationHint": "TWAP 訂單運行時間為 5–1439 分鐘。",
+          "minimum": "最小總數量為 {{amount}}",
+          "filled": "已成交",
+          "duration": "已持續",
+          "runtime": "運行時長",
+          "averagePrice": "平均價格",
+          "end": "結束",
+          "detail": "詳情",
+          "add": "新增",
+          "detailTitle": "TWAP 運行詳情",
+          "historyDetailTitle": "TWAP 歷史詳情",
+          "trades": "成交",
+          "size": "數量",
+          "fee": "手續費",
+          "noTrades": "暫無成交",
+          "endTitle": "確認結束 TWAP",
+          "endMessage": "確認後，TWAP 訂單將停止執行，該 TWAP 的所有未成交掛單將自動撤銷。",
+          "ending": "正在結束…",
+          "ended": "TWAP 訂單已結束。",
+          "placed": "{{coin}} TWAP 訂單已提交。",
+          "unknownOutcome": "{{coin}} TWAP 結果待確認。再次下單前，請先檢查訂單與歷史紀錄。",
+          "unknown": "TWAP 結果待確認。再次操作前，請先檢查訂單與歷史紀錄。",
+          "loadError": "無法載入 TWAP 訂單，點擊重試。",
+          "endedLabel": "已結束",
+          "skipConfirmation": "不再顯示 TWAP 訂單二次確認。",
+          "averageFilledPrice": "平均成交價",
+          "status": {
+            "working": "運行中",
+            "waiting": "等待中",
+            "filled": "已成交",
+            "cancelled": "已取消",
+            "expired": "已失效",
+            "unknown": "未知"
+          },
+          "fills": {
+            "loading": "正在載入成交…",
+            "error": "無法載入成交，點擊重試。"
+          },
+          "errors": {
+            "amountRequired": "請輸入下單數量。",
+            "amountTooSmall": "TWAP 訂單價值不得低於 $100。",
+            "amountExceedsMaximum": "下單數量超過可用上限。",
+            "invalidPrecision": "請輸入符合市場數量精度的數量。",
+            "priceUnavailable": "暫時無法取得目前價格，請重試。",
+            "durationRequired": "請輸入總時長。",
+            "durationInvalid": "請輸入整數分鐘。",
+            "durationTooShort": "TWAP 最短時長為 5 分鐘。",
+            "durationTooLong": "TWAP 最長時長為 1439 分鐘。",
+            "capacity": "可用交易額度不足。",
+            "reduceOnly": "下單數量超過可平倉數量。",
+            "contextChanged": "帳戶、訂單或市場已變更，請重新確認訂單。"
+          }
         }
       },
       "limitOrders": "限價單",
@@ -2765,7 +2884,8 @@
         "minimumDepositSize": "最低入金金額為 $5",
         "estReceive": "預計收到：{{balance}}",
         "fetchQuoteFailed": "取得入金報價失敗，請切換代幣。",
-        "estReceiveTooltip": "跨鏈入金透過 LiFi 處理，可能產生滑點。預計 {{number}} 秒到帳。"
+        "estReceiveTooltip": "跨鏈入金透過 LiFi 處理，可能產生滑點。預計 {{number}} 秒到帳。",
+        "estReceiveTooltipV2": "跨鏈入金透過 {{name}} 處理，可能產生滑點。預計 {{number}} 秒到帳。"
       },
       "PerpsWithdrawPopup": {
         "amount": "金額",
@@ -2906,9 +3026,6 @@
       "closeAll": "全部平倉",
       "closeAllConfirmTitle": "確認全部平倉",
       "closeAllConfirmMessage": "所有未平倉倉位都將按市價平倉。",
-      "assetPage": {
-        "hyperliquidPosition": "Hyperliquid 倉位"
-      },
       "invitePopup": {
         "hyperliquidFee": "Hyperliquid 交易費用。",
         "title": "節省 Hyperliquid 手續費",
@@ -2916,9 +3033,6 @@
         "activatedFailed": "啟用失敗",
         "activatedSuccess": "已啟用 4% Hyperliquid 手續費減免",
         "activateNow": "立即啟用"
-      },
-      "dappSelect": {
-        "title": "選擇永續合約服務商"
       },
       "search": {
         "placeholder": "搜尋永續合約",
@@ -3138,9 +3252,6 @@
         "isolatedDesc": "每個倉位使用獨立保證金。虧損僅限於該倉位，但更容易被強平。",
         "crossDesc": "所有倉位共用同一保證金。這會降低單個倉位被強平的機率，但在極端行情下，所有全倉保證金都可能虧損。"
       },
-      "guideEntry": {
-        "gotIt": "了解了"
-      },
       "PerpsAbout": {
         "title": "關於"
       }
@@ -3196,12 +3307,7 @@
         "risky": "風險較高"
       },
       "repayDetail": {
-        "actions": "還款",
-        "tabs": {
-          "collateral": "抵押品",
-          "wallet": "錢包餘額"
-        },
-        "repayWith": "還款來源"
+        "actions": "還款"
       },
       "supplyDetail": {
         "availableToBorrow": "可借額度",
@@ -3222,7 +3328,6 @@
         "almostReachedError": "由於協議借款上限即將達到，可借最大金額受到限制。",
         "borrowingUnavailable": "目前模式下無法借入該資產。",
         "almostReachedWarning": "該資產的協議借款上限已達 100%，無法繼續借入。",
-        "swapDebt": "轉換",
         "borrowed": "已借入",
         "noSupplyDesc": "若要借款，您需要先存入資產作為抵押品。",
         "noSupplyPrefix": "沒有存款："
@@ -3334,79 +3439,18 @@
         "title": "管理 E-Mode",
         "unavailableTips": "您已有的存借資產不支援該操作。",
         "unavailable": "• 無法使用",
-        "description": "啟用 E-Mode 可以最大化您的借款能力，但只能借入所選類別內的資產。",
-        "debtSwapSelector": {
-          "header": {
-            "assets": "代幣/餘額",
-            "borrow": "我的借款",
-            "apy": "APY"
-          },
-          "title": "選擇借款代幣"
-        },
-        "collateralSwapSelector": {
-          "header": {
-            "collateral": "我的抵押品",
-            "assets": "代幣"
-          },
-          "title": "選擇抵押品代幣"
-        }
+        "description": "啟用 E-Mode 可以最大化您的借款能力，但只能借入所選類別內的資產。"
       },
       "disabled": "已停用",
-      "debtSwap": {
-        "actions": {
-          "swapTo": "轉換為",
-          "select": "選擇",
-          "title": "債務轉換",
-          "borrowed": "已借入",
-          "amount": "金額"
-        },
-        "overview": {
-          "title": "交易概覽",
-          "borrowValueAfter": "轉換後借款餘額",
-          "borrowAPY": "借款 APY"
-        },
-        "button": {
-          "swap": "轉換"
-        },
-        "title": "轉換借款頭寸",
-        "lpRiskWarning": "轉換後健康因子偏低，您的頭寸將面臨更高的清算風險。",
-        "borrowBalance": "借入餘額",
-        "lpDangerWarning": "本次轉換後，您的健康因子將嚴重偏低，可能導致清算。請選擇其他資產或減少轉換金額以降低風險。",
-        "priceImpactTips": "價格影響較高（{{lostValue}}）。由於流動性較低或訂單金額較小，該路徑的預估結果可能偏離較大。",
-        "maxLtvWarning": "抵押品不足以覆蓋新的借款頭寸。您需要保留足夠的借款能力才能執行債務轉換。"
-      },
       "totalSupplied": "總存款",
       "totalBorrowed": "總共借入",
       "netApy": "淨 APY",
-      "repayWithCollateral": {
-        "action": {
-          "title": "使用 {{collateral}} 進行還款"
-        },
-        "overview": {
-          "collateralValueAfter": "還款後抵押品餘額",
-          "borrowValueAfter": "還款後借款餘額",
-          "title": "交易概覽"
-        },
-        "button": {
-          "repay": "還款"
-        },
-        "repayWith": "用於還款的抵押品",
-        "collateralNotEnough": "您的抵押品餘額低於所選金額。",
-        "toRepay": "預期償還金額",
-        "insufficientLiquidity": "流動性不足。",
-        "flashLoanDisabled": "基於安全考量，該資產的頭寸轉換功能已停用。",
-        "frozenCollateral": "該資產因 Aave 社區決議被凍結。"
-      },
       "repayWithAToken": {
         "header": {
           "assets": "代幣",
           "balance": "餘額"
         },
-        "title": "選擇還款代幣",
-        "zeroLtvCollateralTips": "您有以下 LTV = 0 的抵押品。根據抵押品還款規則，需要優先使用這些抵押品還款。"
-      },
-      "signFallback": {
-        "preExecFailedUseFullSign": "模擬失敗。此交易很可能因 AAVE 錯誤而失敗。"
+        "title": "選擇還款代幣"
       }
     },
     "address": {
@@ -3414,20 +3458,6 @@
         "title": "接收資產",
         "btnCopyAddress": "複製地址"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "選擇預測提供者"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableDesc": "此服務在您目前的地區不受支援。",
-      "serviceUnavailableTitle": "服務不可用"
-    },
-    "DAppFrame": {
-      "netWorth": "淨資產",
-      "selectAWallet": "選擇一個錢包",
-      "walletBalance": "錢包/餘額"
     },
     "meme": {
       "tokenHeader": {
@@ -3593,7 +3623,7 @@
       "title": "兌換零散資產"
     },
     "walletConnect": {
-      "screenTitle": "連接錢包",
+      "screenTitle": "掃碼連接",
       "connectingToRabby": "正在連接到 Rabby",
       "pairingFailed": "WalletConnect 配對失敗。",
       "proposalNotReceived": "WalletConnect 二維碼可能已失效，請重新整理後再試一次。",

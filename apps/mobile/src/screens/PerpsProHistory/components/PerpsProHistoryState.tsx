@@ -48,9 +48,9 @@ export const PerpsProHistoryEmpty = () => {
   );
 };
 
-export const PerpsProHistoryError: React.FC<{ onRetry: () => void }> = ({
-  onRetry,
-}) => {
+export const PerpsProHistoryError: React.FC<{
+  onRetry: () => void;
+}> = ({ onRetry }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   return (
@@ -73,12 +73,14 @@ export const PerpsProHistoryError: React.FC<{ onRetry: () => void }> = ({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   skeletonList: {
+    paddingTop: 12,
     flex: 1,
     gap: 8,
   },
   skeletonRow: {
     backgroundColor: colors2024['neutral-card-1'],
     borderRadius: 12,
+    borderCurve: 'continuous',
     gap: 8,
     marginHorizontal: 16,
     paddingHorizontal: 12,
@@ -91,24 +93,28 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   skeletonTitle: {
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 4,
+    borderCurve: 'continuous',
     height: 20,
     width: 112,
   },
   skeletonBadge: {
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 4,
+    borderCurve: 'continuous',
     height: 20,
     width: 64,
   },
   skeletonLine: {
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 3,
+    borderCurve: 'continuous',
     height: 14,
     width: '100%',
   },
   skeletonLineShort: {
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 3,
+    borderCurve: 'continuous',
     height: 14,
     width: '72%',
   },
@@ -131,6 +137,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 8,
+    borderCurve: 'continuous',
     height: 36,
     justifyContent: 'center',
     minWidth: 88,

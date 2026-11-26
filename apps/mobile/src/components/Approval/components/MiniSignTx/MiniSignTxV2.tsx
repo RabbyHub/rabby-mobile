@@ -1,4 +1,5 @@
-import { Dimensions, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { MiniFooterBar } from './MiniFooterBar';
 import BalanceChange from '../TxComponents/BalanceChange';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -801,7 +802,7 @@ const MiniSignTxV2 = ({
 const getSheetStyles = createGetStyles2024(({ colors2024 }) => ({
   wrapper: {
     backgroundColor: colors2024['neutral-bg-0'],
-    height: Dimensions.get('screen').height * 0.85,
+    height: getDimensionsSnapshot('screen').height * 0.85,
   },
   approvalTx: {
     paddingHorizontal: 15,
@@ -824,6 +825,7 @@ const getSheetStyles = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    borderCurve: 'continuous',
   },
 
   simulateChangeContainer: {
@@ -832,7 +834,7 @@ const getSheetStyles = createGetStyles2024(({ colors2024 }) => ({
     gap: 16,
   },
   balanceChangeScrollContainer: {
-    maxHeight: Dimensions.get('screen').height * 0.45,
+    maxHeight: getDimensionsSnapshot('screen').height * 0.45,
     backgroundColor: colors2024['neutral-bg-2'],
     marginTop: 0,
     marginBottom: 16,
@@ -840,6 +842,7 @@ const getSheetStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingTop: 12,
     paddingBottom: 0,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   balanceChangeContainer: {
     backgroundColor: colors2024['neutral-bg-2'],

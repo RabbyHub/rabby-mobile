@@ -615,7 +615,7 @@ const getStyles = createGetStyles2024(ctx => ({
   title: {
     color: ctx.colors2024['neutral-title-1'],
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: '800',
     lineHeight: 24,
     textAlign: 'center',
     marginTop: 0,
@@ -655,6 +655,7 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   warningText: {
     fontSize: 14,
@@ -672,6 +673,7 @@ const getStyles = createGetStyles2024(ctx => ({
     padding: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
+    borderCurve: 'continuous',
     marginTop: 18,
     width: '100%',
   },
@@ -701,6 +703,7 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['orange-light-1'],
     padding: 12,
     borderRadius: 8,
+    borderCurve: 'continuous',
     marginTop: 28,
     width: '100%',
   },

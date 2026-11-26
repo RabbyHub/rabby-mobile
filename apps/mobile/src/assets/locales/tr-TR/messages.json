@@ -1223,7 +1223,8 @@
         },
         "notFound": {
           "title": "Aygıt Bulunamadı",
-          "description": "Bluetooth'u açın ve OneKey'in kilidini açın."
+          "description": "Bluetooth'u açın ve OneKey'in kilidini açın.",
+          "retry": "Tekrar ara"
         },
         "select": {
           "currentDevice": "mevcut",
@@ -1238,6 +1239,23 @@
           "onDevice": "Cihazda PIN kodunu girin",
           "description": "Cihaz ekranında görüntülenen numara düzenine göre PIN kodunu girin.",
           "title": "PIN'i girin"
+        },
+        "error": {
+          "deviceNotFound": "OneKey bulunamadı. Cihazın kilidinin açık, Bluetooth'un açık ve cihazın telefonunuza yakın olduğundan emin olun.",
+          "disconnected": "OneKey bağlantısı kesildi. Cihazın kilidini açık tutup telefonunuza yakın tutun, ardından tekrar deneyin.",
+          "deviceBusy": "OneKey başka bir isteği işliyor. İsteği cihazda tamamlayın veya iptal edin, ardından tekrar deneyin.",
+          "passphraseDisabled": "Cihazda şifre (passphrase) kapalı. Açın veya bu cüzdanı yeniden içe aktarın.",
+          "firmwareTooOld": "OneKey yazılımınız çok eski. OneKey uygulamasıyla güncelleyin, ardından tekrar deneyin.",
+          "bluetoothOff": "Bluetooth kapalı. Bluetooth'u açın ve tekrar deneyin.",
+          "bluetoothPermission": "Rabby'nin Bluetooth kullanma izni yok. Ayarlar'dan Rabby için Bluetooth'a (Android 11 ve öncesinde Konum'a) izin verin, ardından tekrar deneyin.",
+          "locationServicesDisabled": "Konum servisleri kapalı. Bluetooth cihazlarını aramak için açın.",
+          "bluetoothUnsupported": "Bu telefon Bluetooth'u desteklemiyor.",
+          "scanFailed": "Bluetooth araması başarısız oldu. Lütfen tekrar deneyin.",
+          "pairingFailed": "Bluetooth eşleştirmesi başarısız oldu. Telefonunuzda ve OneKey'de eşleştirme isteğini onaylayın, ardından tekrar deneyin.",
+          "pairingInvalid": "Bluetooth eşleştirmesi artık geçerli değil. Telefonunuzun Bluetooth ayarlarında OneKey'i unutun, ardından yeniden eşleştirin.",
+          "pinInvalid": "PIN yanlış. Lütfen tekrar deneyin.",
+          "cancelled": "İstek iptal edildi.",
+          "openSettings": "Ayarları Aç"
         }
       },
       "keystone": {
@@ -1918,7 +1936,6 @@
       "dataAnalysis": "Rabby'yi geliştirmeye yardım edin",
       "dataAnalysisDesc": "Rabby'yi geliştirmeye yardımcı olmak için anonim kullanım verilerini paylaşın. Toplanan veriler sizinle veya hesabınızla ilişkilendirilmez.",
       "bugReportChat": "Sohbet Üzerinden Geri Bildirim Paylaş",
-      "features": "Özellikler",
       "manageWallets": "Cüzdanları Yönet"
     },
     "settings": {
@@ -2236,7 +2253,10 @@
           "attachedTpSlUnresolved": "Bu piyasa için önceki bir TP/SL gönderimi hâlâ çözümlenmedi. Tekrar denemeden önce Açık Emirleri ve Pozisyonları kontrol edin.",
           "orderFilled": "Emir gerçekleşti.",
           "orderPlaced": "Emir verildi.",
-          "orderFailed": "Emir başarısız."
+          "orderFailed": "Emir başarısız.",
+          "scale": "Kademeli Emir",
+          "scaleDescription": "Bir fiyat aralığı belirleyip birden fazla limit alt emri verin",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "Hemen eşleşmesini önlemek için post-only fiyatı en iyi satış fiyatından düşük olmalıdır.",
@@ -2250,6 +2270,9 @@
           "tpSl": {
             "title": "TP/SL",
             "description": "Temel piyasa TP/SL emirleri verir. Kısmi TP/SL gibi gelişmiş özellikler için açık bir pozisyonda TP/SL ayarlayın."
+          },
+          "randomize": {
+            "description": "Rastgeleleştirme, maksimum işlem büyüklüğüne ve diğer sınırlara uyarak her alt işlemin büyüklüğünü en fazla ±%20 değiştirir."
           },
           "reduceOnly": {
             "title": "Yalnızca Azalt",
@@ -2347,7 +2370,8 @@
             "orders": "Emir Geçmişi",
             "trade": "İşlem Geçmişi",
             "transaction": "Yatırma ve çekme",
-            "funding": "Fonlama Ücreti"
+            "funding": "Fonlama Ücreti",
+            "twap": "TWAP geçmişi"
           },
           "empty": {
             "orders": "Emir geçmişi yok",
@@ -2529,6 +2553,101 @@
           "cancelPartial": "{{success}} emir iptal edildi; {{failed}} başarısız",
           "cancelFailed": "Emir iptal edilemedi",
           "cancelContextChanged": "Hesap değişti. Tekrar deneyin."
+        },
+        "scaleOrder": {
+          "lowerPrice": "Alt Fiyat",
+          "upperPrice": "Üst Fiyat",
+          "size": "Miktar",
+          "count": "Emir Sayısı (2–100)",
+          "distribution": "Miktar Dağılımı",
+          "flat": "Eşit",
+          "ascending": "Artan",
+          "descending": "Azalan",
+          "flatDescription": "Her emre eşit miktar ayrılır",
+          "ascendingDescription": "Fiyat yükseldikçe emir miktarı artar",
+          "descendingDescription": "Fiyat düştükçe emir miktarı artar",
+          "previewBuy": "Alışı Önizle",
+          "previewSell": "Satışı Önizle",
+          "totalSize": "Toplam Miktar",
+          "averagePrice": "Ortalama Fiyat",
+          "result": "{{accepted}} kabul edildi, {{rejected}} reddedildi, {{unresolved}} onay bekliyor",
+          "unknown": "Emir sonucu onay bekliyor. Yeni emir vermeden önce açık emirleri ve işlem geçmişini kontrol edin.",
+          "errors": {
+            "range": "Geçerli fiyatlar girin; üst fiyat alt fiyattan yüksek olmalıdır.",
+            "count": "2 ile 100 arasında bir tam sayı girin.",
+            "size": "0’dan büyük ve bu piyasanın miktar hassasiyeti gereksinimlerine uygun bir emir miktarı girin.",
+            "duplicatePrice": "Fiyat hassasiyetine göre ayarlandıktan sonra bazı emir fiyatları aynı oluyor. Fiyat aralığını genişletin veya emir sayısını azaltın.",
+            "minimum": "Miktar hassasiyetine göre ayarlandıktan sonra her alt emir en az $10 değerinde olmalıdır.",
+            "maximum": "Toplam emir değeri bu piyasa için izin verilen sınırı aşıyor.",
+            "capacity": "Bu emir grubu için işlem kapasitesi yetersiz.",
+            "reduceOnly": "Toplam emir miktarı şu anda kapatılabilecek pozisyon miktarını aşıyor."
+          }
+        },
+        "twap": {
+          "description": "Belirlediğiniz aralıklarla emir verin",
+          "totalTime": "Toplam süre",
+          "durationFieldLabel": "Toplam süre (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} dk",
+          "minuteValue_one": "{{t}} dk",
+          "confirmationDuration": "{{t}} dk",
+          "totalSize": "Toplam miktar",
+          "selectTime": "Toplam süreyi seç",
+          "reset": "Sıfırla",
+          "randomize": "Rastgeleleştir",
+          "randomized": "Rastgeleleştirildi",
+          "durationHint": "TWAP emrinin çalışma süresi 5–1439 dakikadır.",
+          "minimum": "Minimum toplam miktar {{amount}}",
+          "filled": "Gerçekleşen",
+          "duration": "Geçen süre",
+          "runtime": "Çalışma süresi",
+          "averagePrice": "Ort. fiyat",
+          "end": "Sonlandır",
+          "detail": "Ayrıntılar",
+          "add": "Ekle",
+          "detailTitle": "Aktif TWAP ayrıntıları",
+          "historyDetailTitle": "TWAP geçmiş ayrıntıları",
+          "trades": "İşlemler",
+          "size": "Miktar",
+          "fee": "Ücret",
+          "noTrades": "Henüz işlem yok",
+          "endTitle": "TWAP Emrini Sonlandırmayı Onayla",
+          "endMessage": "Onayladığınızda TWAP emriniz durdurulacak ve bu TWAP kapsamındaki açık emirler otomatik olarak iptal edilecektir.",
+          "ending": "Sonlandırılıyor…",
+          "ended": "TWAP emri sonlandırıldı.",
+          "placed": "{{coin}} TWAP emri verildi.",
+          "unknownOutcome": "{{coin}} TWAP sonucu onay bekliyor. Yeni bir emir vermeden önce emirleri ve geçmişi kontrol edin.",
+          "unknown": "TWAP sonucu onay bekliyor. Tekrar denemeden önce emirleri ve geçmişi kontrol edin.",
+          "loadError": "TWAP emirleri yüklenemedi. Tekrar denemek için dokunun.",
+          "endedLabel": "Sonlandı",
+          "skipConfirmation": "TWAP emirleri için ikinci onayı tekrar gösterme.",
+          "averageFilledPrice": "Ort. gerçekleşme fiyatı",
+          "status": {
+            "working": "Çalışıyor",
+            "waiting": "Bekliyor",
+            "filled": "Gerçekleşti",
+            "cancelled": "İptal edildi",
+            "expired": "Süresi doldu",
+            "unknown": "Bilinmiyor"
+          },
+          "fills": {
+            "loading": "İşlemler yükleniyor…",
+            "error": "İşlemler yüklenemedi. Tekrar denemek için dokunun."
+          },
+          "errors": {
+            "amountRequired": "Emir miktarını girin.",
+            "amountTooSmall": "TWAP emrinin değeri en az $100 olmalıdır.",
+            "amountExceedsMaximum": "Emir kullanılabilir maksimum miktarı aşıyor.",
+            "invalidPrecision": "Bu piyasanın miktar hassasiyetine uygun bir miktar girin.",
+            "priceUnavailable": "Güncel fiyat alınamıyor. Lütfen tekrar deneyin.",
+            "durationRequired": "Toplam süreyi girin.",
+            "durationInvalid": "Tam sayı olarak dakika girin.",
+            "durationTooShort": "Minimum TWAP süresi 5 dakikadır.",
+            "durationTooLong": "Maksimum TWAP süresi 1439 dakikadır.",
+            "capacity": "Bu emir için yeterli işlem kapasitesi yok.",
+            "reduceOnly": "Emir, kapatılabilir pozisyon miktarını aşıyor.",
+            "contextChanged": "Hesap, emir veya piyasa değişti. Lütfen emri tekrar inceleyin."
+          }
         }
       },
       "limitOrders": "Limit Emirler",
@@ -2593,7 +2712,8 @@
         "minimumDepositSize": "Minimum para yatırma miktarı 5$'dır.",
         "invalidNumber": "Lütfen geçerli bir sayı girin",
         "fetchQuoteFailed": "Yatırım teklifi alınamadı. Lütfen token'ı değiştirin.",
-        "estReceiveTooltip": "Zincirler arası yatırma LiFi üzerinden işlenir ve bir miktar kayma oluşabilir. Tahmini varış süresi {{number}} sn."
+        "estReceiveTooltip": "Zincirler arası yatırma LiFi üzerinden işlenir ve bir miktar kayma oluşabilir. Tahmini varış süresi {{number}} sn.",
+        "estReceiveTooltipV2": "Zincirler arası yatırma {{name}} üzerinden işlenir ve bir miktar kayma oluşabilir. Tahmini varış süresi {{number}} sn."
       },
       "PerpsWithdrawPopup": {
         "title": "Çekim",
@@ -2734,9 +2854,6 @@
       "closeAll": "Tüm pozisyonları kapat",
       "closeAllConfirmMessage": "Tüm açık pozisyonlarınız piyasa fiyatından kapatılacak.",
       "closeAllConfirmTitle": "Tüm pozisyonları kapatmayı onayla",
-      "assetPage": {
-        "hyperliquidPosition": "Hyperliquid Pozisyonu"
-      },
       "invitePopup": {
         "title": "Hyperliquid Ücretlerinden Tasarruf Edin",
         "activatedFailed": "Aktivasyon başarısız oldu",
@@ -2744,9 +2861,6 @@
         "activatedSuccess": "%4 Hyperliquid ücret tasarrufu etkinleştirildi",
         "description": "Etkinleştirmek için Rabby kodunu kullanın",
         "activateNow": "Şimdi Etkinleştir"
-      },
-      "dappSelect": {
-        "title": "Perps Sağlayıcısını Seçin"
       },
       "search": {
         "placeholder": "Perps Ara",
@@ -2966,9 +3080,6 @@
         "isolatedDesc": "Her pozisyon kendi marjını kullanır. Kayıplar yalnızca o pozisyonla sınırlıdır, ancak pozisyon daha kolay tasfiye edilebilir.",
         "crossDesc": "Tüm pozisyonlar aynı marjı paylaşır. Bu, tek bir pozisyonun tasfiye edilme olasılığını azaltır; ancak aşırı piyasa hareketlerinde tüm çapraz marj fonları kaybedilebilir."
       },
-      "guideEntry": {
-        "gotIt": "Tamamdır"
-      },
       "PerpsAbout": {
         "title": "Hakkında"
       }
@@ -3024,12 +3135,7 @@
         "lq": "1'in altına düşerse, tasfiye tetiklenebilir."
       },
       "repayDetail": {
-        "actions": "Geri Ödeme",
-        "tabs": {
-          "collateral": "Teminat",
-          "wallet": "Cüzdan bakiyesi"
-        },
-        "repayWith": "Şununla geri öde"
+        "actions": "Geri Ödeme"
       },
       "supplyDetail": {
         "actions": "Yatır",
@@ -3050,7 +3156,6 @@
         "almostReachedError": "Maksimum borç alma miktarı, protokol borç limiti neredeyse ulaşıldığı için sınırlıdır.",
         "borrowingUnavailable": "Bu varlık mevcut modda ödünç alınamaz.",
         "almostReachedWarning": "Bu varlık için protokol borç limiti %100'e ulaştı. Daha fazla borç alınamaz.",
-        "swapDebt": "Değiştir",
         "borrowed": "Ödünç Alındı",
         "noSupplyDesc": "Borç almak için teminat olarak varlık sağlamanız gerekir.",
         "noSupplyPrefix": "Yatırım yok:"
@@ -3162,79 +3267,18 @@
         "unavailableTips": "Mevcut yatırma/borç alma varlıklarınız desteklenmiyor.",
         "disableTitle": "Devre dışı bırak",
         "enabled": "• Etkinleştirildi",
-        "description": "E-Mode'u etkinleştirmek, borçlanma gücünüzü en üst düzeye çıkarmanıza olanak tanır. Ancak, borçlanma, seçilen kategori içindeki varlıklarla sınırlıdır.",
-        "debtSwapSelector": {
-          "header": {
-            "assets": "Token/Bakiye",
-            "borrow": "Benim borçlarım",
-            "apy": "APY"
-          },
-          "title": "Borç Alınacak Token'ı Seçin"
-        },
-        "collateralSwapSelector": {
-          "header": {
-            "collateral": "Teminatım",
-            "assets": "Token"
-          },
-          "title": "Teminat Token Seçin"
-        }
+        "description": "E-Mode'u etkinleştirmek, borçlanma gücünüzü en üst düzeye çıkarmanıza olanak tanır. Ancak, borçlanma, seçilen kategori içindeki varlıklarla sınırlıdır."
       },
       "disabled": "DEVRE DIŞI",
-      "debtSwap": {
-        "actions": {
-          "title": "Borcu dönüştür",
-          "swapTo": "Şuna dönüştür",
-          "select": "Seçin",
-          "borrowed": "Borç alınan",
-          "amount": "Miktar"
-        },
-        "overview": {
-          "borrowValueAfter": "Dönüşüm sonrası borç bakiyesi",
-          "title": "İşlem Genel Bakışı",
-          "borrowAPY": "Borç APY"
-        },
-        "button": {
-          "swap": "Dönüştür"
-        },
-        "title": "Borç pozisyonunu dönüştür",
-        "borrowBalance": "Borç bakiyesi",
-        "lpRiskWarning": "Takas sonrasında Sağlık Faktörü düşük olacak. Pozisyonunuz daha yüksek tasfiye riski taşıyacak.",
-        "priceImpactTips": "Yüksek fiyat etkisi ({{lostValue}}). Düşük likidite veya küçük emir boyutu nedeniyle bu rotanın tahmini önemli ölçüde sapabilir.",
-        "lpDangerWarning": "Bu takas sonrası sağlık faktörünüz kritik derecede düşük olacak ve tasfiye ile sonuçlanabilir. Lütfen güvende kalmak için farklı bir varlık seçin veya takas miktarını azaltın.",
-        "maxLtvWarning": "Yeni borç pozisyonunu karşılayacak yeterli teminat yok. Borç değişimi için cüzdanınızda kullanılabilir borçlanma gücü kalmalıdır."
-      },
       "totalSupplied": "Toplam yatırılan",
       "totalBorrowed": "Toplam borçlanma",
       "netApy": "Net APY",
-      "repayWithCollateral": {
-        "action": {
-          "title": "{{collateral}} ile geri öde"
-        },
-        "overview": {
-          "title": "İşlem Genel Bakışı",
-          "collateralValueAfter": "Teminat bakiyesi geri ödeme sonrası",
-          "borrowValueAfter": "Borç bakiyesi geri ödeme sonrası"
-        },
-        "button": {
-          "repay": "Geri Ödeme"
-        },
-        "repayWith": "Geri ödeme için kullanılacak teminat",
-        "collateralNotEnough": "Teminat bakiyeniz seçilen tutardan daha düşük.",
-        "toRepay": "Beklenen geri ödeme tutarı",
-        "insufficientLiquidity": "Yetersiz likidite.",
-        "flashLoanDisabled": "Bu varlık için pozisyon dönüştürme işlemleri güvenlik nedenleriyle devre dışı bırakılmıştır.",
-        "frozenCollateral": "Bu varlık, Aave topluluğu kararı nedeniyle donduruldu."
-      },
       "repayWithAToken": {
         "header": {
           "balance": "Bakiye",
           "assets": "Token"
         },
-        "title": "Geri Ödeme Token'i Seçin",
-        "zeroLtvCollateralTips": "Aşağıdaki LTV = 0 teminatlarınız var. Teminatla geri ödeme kurallarına göre önce bu teminatlarla geri ödeme yapmanız gerekir."
-      },
-      "signFallback": {
-        "preExecFailedUseFullSign": "Simülasyon Başarısız. Bu işlem büyük olasılıkla AAVE hataları nedeniyle başarısız olacak."
+        "title": "Geri Ödeme Token'i Seçin"
       }
     },
     "address": {
@@ -3242,20 +3286,6 @@
         "title": "Varlıkları Al",
         "btnCopyAddress": "Adresi Kopyala"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "Tahmin Sağlayıcısını Seçin"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableDesc": "Hizmet mevcut bölgenizde desteklenmiyor.",
-      "serviceUnavailableTitle": "Hizmet Kullanılamıyor"
-    },
-    "DAppFrame": {
-      "selectAWallet": "Cüzdan Seçin",
-      "walletBalance": "Cüzdan/Bakiye",
-      "netWorth": "Net Değer"
     },
     "meme": {
       "tokenHeader": {
@@ -3421,7 +3451,7 @@
       "title": "Küçük Bakiyeleri Dönüştür"
     },
     "walletConnect": {
-      "screenTitle": "Cüzdanı Bağla",
+      "screenTitle": "Bağlanmak için Tara",
       "connectingToRabby": "Rabby'ye bağlanıyor",
       "pairingFailed": "WalletConnect eşleştirmesi başarısız.",
       "proposalNotReceived": "WalletConnect QR kodunun süresi dolmuş olabilir. Lütfen yenileyip tekrar deneyin.",

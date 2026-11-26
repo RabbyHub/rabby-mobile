@@ -377,6 +377,7 @@ const getStyle = createGetStyles2024(ctx => ({
     paddingHorizontal: 0,
     width: '100%',
     borderRadius: 12,
+    borderCurve: 'continuous',
     height: 56,
   },
   shadowButton: {

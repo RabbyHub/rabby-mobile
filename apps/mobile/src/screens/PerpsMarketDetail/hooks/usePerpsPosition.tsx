@@ -11,7 +11,7 @@ import {
 import { runPerpsAction } from '@/hooks/perps/perpsActionError';
 import { useMemoizedFn } from 'ahooks';
 import * as Sentry from '@sentry/react-native';
-import { Dimensions, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import {
   PERPS_BUILDER_INFO,
   PERPS_LIMIT_TIF_DEFAULT,

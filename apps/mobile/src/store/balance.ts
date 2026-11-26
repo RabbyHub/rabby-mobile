@@ -138,8 +138,28 @@ const buildRemoteBalancePayload = (
   };
 };
 
-const getAppChainUsdValue = (address: string) =>
-  useAppChainStore.getState().getAppChainTotalUsdValue(address);
+const getAppChainUsdValue = (
+  address: string,
+  previousValue?: Pick<IBalanceData, 'evmBalance' | 'totalBalance'>,
+) => {
+  const { appChainMap, getAppChainTotalUsdValue } = useAppChainStore.getState();
+  const usdValue = getAppChainTotalUsdValue(address);
+  if (
+    usdValue > 0 ||
+    (appChainMap &&
+      Object.prototype.hasOwnProperty.call(appChainMap, address.toLowerCase()))
+  ) {
+    return usdValue;
+  }
+
+  return previousValue
+    ? Math.max(
+        (Number(previousValue.totalBalance) || 0) -
+          (Number(previousValue.evmBalance) || 0),
+        0,
+      )
+    : 0;
+};
 
 const buildCoreAddressSet = <
   T extends {
@@ -727,17 +747,13 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     diagnostic?.mark('app-chain-refresh-started', {
       fetchAddressCount: fetchAddresses.length,
     });
-    try {
-      await useAppChainStore
-        .getState()
-        .batchGetAppChains(fetchAddresses, force, diagnostic || undefined);
-    } catch (error) {
-      diagnostic?.fail({
-        phase: 'app-chain-refresh',
-      });
-      throw error;
+    const appChainsReady = useAppChainStore
+      .getState()
+      .batchGetAppChains(fetchAddresses, force, diagnostic || undefined)
+      .then(() => diagnostic?.mark('app-chain-refresh-settled'));
+    if (trace?.scene !== 'Home') {
+      await appChainsReady;
     }
-    diagnostic?.mark('app-chain-refresh-settled');
 
     const queuedAt = Date.now();
     const queueSizeAtStart = getTotalBalanceQueue.size;
@@ -765,7 +781,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         });
 
         try {
-          const queuedBalance = await getTotalBalanceQueue.add(async () => {
+          const evmBalance = getTotalBalanceQueue.add(async () => {
             queueWaits.push(Date.now() - queuedAt);
             const requestStartedAt = Date.now();
             try {
@@ -781,6 +797,10 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
               requestDurations.push(Date.now() - requestStartedAt);
             }
           });
+          const [queuedBalance] = await Promise.all([
+            evmBalance,
+            appChainsReady,
+          ]);
           if (!queuedBalance) {
             throw new Error(
               'address balance remote task returned empty result',
@@ -827,6 +847,11 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
 
     const applyStartedAt = Date.now();
     results.forEach(result => {
+      if (
+        this.getMeta(result.address)?.activeRemoteRequestId !== result.requestId
+      ) {
+        return;
+      }
       if (!result.ok) {
         this.markError(result.address, 'remote', result.error, {
           requestId: result.requestId,
@@ -843,7 +868,10 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         return;
       }
 
-      const appChainUsdValue = getAppChainUsdValue(result.address);
+      const appChainUsdValue = getAppChainUsdValue(
+        result.address,
+        this.getAddressValue(result.address),
+      );
       const { formatBalance, value } = buildRemoteBalancePayload(
         result.balance,
         appChainUsdValue,
@@ -889,6 +917,11 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
           ),
         },
       );
+    });
+    // Propagate a batch failure after clearing the per-address loading states.
+    await appChainsReady.catch(error => {
+      diagnostic?.fail({ phase: 'app-chain-refresh' });
+      throw error;
     });
     diagnostic?.mark('remote-values-applied', {
       elapsedMs: Date.now() - applyStartedAt,
@@ -971,8 +1004,13 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         });
       }
 
-      await useAppChainStore.getState().getAppChains(lowerAddress, force);
-      const appChainUsdValue = getAppChainUsdValue(lowerAddress);
+      const appChainBalancePromise = useAppChainStore
+        .getState()
+        .getAppChains(lowerAddress, force)
+        .catch(() => undefined)
+        .then(() =>
+          getAppChainUsdValue(lowerAddress, this.getAddressValue(lowerAddress)),
+        );
       requestId = this.startRemoteFetch(lowerAddress, {
         localTargets,
         detail: buildBalanceTraceDetail(
@@ -984,7 +1022,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
           trace,
         ),
       });
-      const balance = await openapi.getTotalBalanceV2({
+      const evmBalancePromise = openapi.getTotalBalanceV2({
         address: lowerAddress,
         isCore,
         included_token_uuids: [],
@@ -992,6 +1030,10 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         excluded_protocol_ids: [],
         excluded_chain_ids: [],
       });
+      const [balance, appChainUsdValue] = await Promise.all([
+        evmBalancePromise,
+        appChainBalancePromise,
+      ]);
       const { formatBalance, value } = buildRemoteBalancePayload(
         balance,
         appChainUsdValue,
@@ -1084,6 +1126,11 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     return { loadBalanceFromApiStage };
   };
 
+  // A Home caller joining an in-flight refresh uses that round's selection too.
+  private readonly readRefreshAddresses: Partial<
+    Record<FetchTotalBalanceType, () => Promise<string[] | undefined>>
+  > = {};
+
   fetchTotalBalance = makeSWRKeyAsyncFunc(
     async (fetchType: FetchTotalBalanceType) => {
       const retBalances = {} as Record<string, BalanceAccountType>;
@@ -1123,7 +1170,14 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         }
 
         const selectionPolicyKey = getHomeAssetSelectionSettingsKey();
-        const selectionSnapshot = await getAccountBalanceSelectionSnapshot();
+        const selection = getAccountBalanceSelectionSnapshot();
+        this.readRefreshAddresses[fetchType] = async () => {
+          const snapshot = await selection;
+          return selectionPolicyKey === getHomeAssetSelectionSettingsKey()
+            ? snapshot?.selectedAddresses
+            : undefined;
+        };
+        const selectionSnapshot = await selection;
         if (!selectionSnapshot) {
           return retBalances;
         }
@@ -1157,6 +1211,8 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         );
       } catch (e) {
         console.error('fetchTotalBalance  error', e);
+      } finally {
+        delete this.readRefreshAddresses[fetchType];
       }
 
       return retBalances;
@@ -1179,7 +1235,10 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     }, []);
 
     const triggerUpdate = useCallback(
-      async (options?: boolean | AccountsBalanceTriggerOptions) => {
+      async (
+        options?: boolean | AccountsBalanceTriggerOptions,
+        onSelected?: (addresses?: string[]) => Promise<void>,
+      ) => {
         const forceFromApi =
           typeof options === 'boolean' ? options : !!options?.forceFromApi;
         const localOnly = typeof options === 'object' && !!options.localOnly;
@@ -1197,7 +1256,14 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         if (forceFromApi) {
           lastTimeStamps.current = Date.now();
         }
-        return this.fetchTotalBalance(fetchType);
+        const balance = this.fetchTotalBalance(fetchType);
+        if (onSelected && !localOnly) {
+          Promise.resolve(this.readRefreshAddresses[fetchType]?.())
+            .catch(() => undefined)
+            .then(onSelected)
+            .catch(console.error);
+        }
+        return balance;
       },
       [isNeedFetchData],
     );
@@ -1652,7 +1718,7 @@ export function startProcessAddressBalanceEvents() {
   }
   hasStartedAddressBalanceLifecycle = true;
 
-  void bindKeyringEvent('removedAccount', async account => {
+  bindKeyringEvent('removedAccount', async account => {
     const removedAccount = account as Account;
     const addresses = await keyringServiceApi.getAllAddresses();
     const stillExists = addresses.some(item => {
@@ -1705,14 +1771,17 @@ export function startProcessAddressBalanceEvents() {
     if (state.appChainMap === prevAppChainMap) {
       return;
     }
+    const previousMap = prevAppChainMap;
     prevAppChainMap = state.appChainMap;
 
-    const addresses = Object.keys(addressBalanceStore.getAddressValueMap());
-    if (!addresses.length) {
+    const changedAddresses = Object.keys(state.appChainMap).filter(
+      address => state.appChainMap[address] !== previousMap[address],
+    );
+    if (!changedAddresses.length) {
       return;
     }
 
-    addressBalanceStore.syncAppChainTotalsForAddresses(addresses, {
+    addressBalanceStore.syncAppChainTotalsForAddresses(changedAddresses, {
       trigger: 'appchain_store_changed',
     });
   });

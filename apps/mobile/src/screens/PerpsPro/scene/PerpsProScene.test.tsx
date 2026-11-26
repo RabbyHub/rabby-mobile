@@ -1,3 +1,25 @@
+// These isolated scene tests replace child sheets and action controllers.
+jest.mock('../components/twap/PerpsProTwapCard', () => ({
+  PerpsProTwapCard: () => null,
+}));
+jest.mock('../components/twap/PerpsProTwapDetailSheet', () => ({
+  PerpsProTwapDetailSheet: () => null,
+}));
+jest.mock('../components/twap/PerpsProEndTwapModal', () => ({
+  PerpsProEndTwapModal: () => null,
+}));
+jest.mock('../components/trade/PerpsProTwapOrderConfirmationSheet', () => ({
+  PerpsProTwapOrderConfirmationSheet: () => null,
+}));
+jest.mock('./usePerpsProCancelTwap', () => ({
+  usePerpsProCancelTwap: () => ({
+    command: null,
+    pending: false,
+    request: jest.fn(),
+    close: jest.fn(),
+    confirm: jest.fn(),
+  }),
+}));
 import {
   act,
   fireEvent,
@@ -8,13 +30,13 @@ import {
 import React from 'react';
 import {
   AppState,
-  Dimensions,
   Keyboard,
   Platform,
   StyleSheet,
   type AppStateStatus,
   type LayoutChangeEvent,
 } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 
 let mockIsLight = true;
 const mockUsePerpsProScene = jest.fn();
@@ -109,6 +131,7 @@ jest.mock('react-native-reanimated', () => {
       View: ReactNative.View,
     },
     cancelAnimation: jest.fn(),
+    makeMutable: (value: unknown) => ({ value }),
     dispatchCommand: (
       ref: { current: Record<string, (...args: unknown[]) => void> },
       name: string,
@@ -641,6 +664,9 @@ jest.mock('../components/trade/PerpsProTradeForm', () => {
 jest.mock('../components/trade/PerpsProOrderConfirmationSheet', () => ({
   PerpsProOrderConfirmationSheet: () => null,
 }));
+jest.mock('../components/trade/PerpsProScaleOrderConfirmationSheet', () => ({
+  PerpsProScaleOrderConfirmationSheet: () => null,
+}));
 
 jest.mock('./PerpsProRealtimeOrderBook', () => {
   const ReactModule = require('react');
@@ -770,6 +796,7 @@ const createSceneState = (overrides: Record<string, unknown> = {}) => ({
   cancelPendingMarketSelection: jest.fn(),
   currentMarket: null,
   executionActive: false,
+  routeFocused: true,
   fundingHistoryEnabled: false,
   isResolvingMarket: false,
   klineEnabled: false,
@@ -2015,6 +2042,38 @@ describe('PerpsProScene market loading states', () => {
     expect(screen.getAllByTestId('perps-pro-info-tab-account')).toHaveLength(1);
   });
 
+  it('puts the entire iOS info tab strip inside a native scroll bridge', () => {
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    const onOpenHistory = jest.fn();
+
+    render(
+      <PerpsProScene
+        historyEnabled
+        isModeSwitching={false}
+        onOpenHistory={onOpenHistory}
+        onSwitchToSimple={jest.fn()}
+      />,
+    );
+
+    const bridge = screen.getByTestId('perps-pro-info-tabs-scroll-bridge');
+    expect(bridge.props.scrollEnabled).toBe(true);
+    expect(StyleSheet.flatten(bridge.props.style)).toMatchObject({
+      height: 44,
+    });
+    for (const tab of ['positions', 'openOrders', 'account']) {
+      expect(
+        within(bridge).getByTestId(`perps-pro-info-tab-${tab}`),
+      ).toBeOnTheScreen();
+    }
+
+    fireEvent.press(within(bridge).getByTestId('perps-pro-history'));
+    expect(onOpenHistory).toHaveBeenCalledTimes(1);
+    fireEvent.press(
+      within(bridge).getByTestId('perps-pro-info-tab-openOrders'),
+    );
+    expect(mockInfoPagerSetPage).toHaveBeenCalledWith(1);
+  });
+
   it('uses one Android scene gesture owner and a shared Trade offset', () => {
     Object.defineProperty(Platform, 'OS', {
       configurable: true,
@@ -2028,6 +2087,10 @@ describe('PerpsProScene market loading states', () => {
 
     const scroll = screen.getByTestId('perps-pro-scroll');
     expect(scroll.props.scrollEnabled).toBe(false);
+    expect(
+      screen.queryByTestId('perps-pro-info-tabs-scroll-bridge'),
+    ).toBeNull();
+    expect(screen.getByTestId('perps-pro-info-tab-account')).toBeOnTheScreen();
     expect(
       screen.getByTestId('perps-pro-scroll-positions', {
         includeHiddenElements: true,
@@ -2364,7 +2427,7 @@ describe('PerpsProScene market loading states', () => {
       <PerpsProScene
         initialRegionAlertLayout={{
           height: 52,
-          width: Dimensions.get('window').width - 32,
+          width: getDimensionsSnapshot('window').width - 32,
         }}
         isModeSwitching={false}
         onSwitchToSimple={jest.fn()}
@@ -2435,7 +2498,7 @@ describe('PerpsProScene market loading states', () => {
       nativeEvent: {
         layout: {
           height: 52.25,
-          width: Dimensions.get('window').width - 32,
+          width: getDimensionsSnapshot('window').width - 32,
           x: 16,
           y: 56,
         },
@@ -2470,7 +2533,7 @@ describe('PerpsProScene market loading states', () => {
       <PerpsProScene
         initialRegionAlertLayout={{
           height: 34,
-          width: Dimensions.get('window').width - 32,
+          width: getDimensionsSnapshot('window').width - 32,
         }}
         isModeSwitching={false}
         onSwitchToSimple={jest.fn()}
@@ -2516,7 +2579,7 @@ describe('PerpsProScene market loading states', () => {
       nativeEvent: {
         layout: {
           height: 52,
-          width: Dimensions.get('window').width - 32,
+          width: getDimensionsSnapshot('window').width - 32,
           x: 16,
           y: 56,
         },
@@ -2626,7 +2689,9 @@ describe('PerpsProScene market loading states', () => {
   it('stops the retained Candle Feed while the app is in background', () => {
     let onAppStateChange: ((state: AppStateStatus) => void) | undefined;
     jest.spyOn(AppState, 'addEventListener').mockImplementation((event, cb) => {
-      if (event === 'change') onAppStateChange = cb;
+      if (event === 'change') {
+        onAppStateChange = cb;
+      }
       return { remove: jest.fn() } as never;
     });
     mockUsePerpsProScene.mockReturnValue(
@@ -2849,7 +2914,8 @@ describe('PerpsProScene market loading states', () => {
       screen.getByTestId('perps-pro-open-orders-empty-illustration'),
     ).toBeTruthy();
     expect(screen.getByText('page.perps.pro.openOrders.empty')).toBeTruthy();
-    expect(screen.queryByTestId('perps-pro-open-orders-controls')).toBeNull();
+    // TWAP remains reachable from an empty Open Orders collection.
+    expect(screen.getByTestId('perps-pro-open-orders-controls')).toBeTruthy();
   });
 
   it('keeps controls when a filter has no visible rows but the source is not empty', () => {

@@ -42,6 +42,7 @@ const getStyles = createGetStyles2024(ctx => ({
     height: 138,
     alignItems: 'center',
     borderRadius: 16,
+    borderCurve: 'continuous',
     flexDirection: 'column',
     paddingHorizontal: 12,
     paddingVertical: 15,
@@ -65,5 +66,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   actions: {
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
 }));

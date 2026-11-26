@@ -14,7 +14,6 @@ import {
 import {
   Animated,
   BackHandler,
-  Dimensions,
   Keyboard,
   Platform,
   StyleSheet,
@@ -22,6 +21,7 @@ import {
   View,
   type KeyboardEvent,
 } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import {
   BottomSheetModalProvider,
   useBottomSheetModalInternal,
@@ -41,6 +41,7 @@ jest.mock('react-native-reanimated', () => {
   const nativeMock = require('react-native-reanimated/mock');
   return {
     ...nativeMock,
+    makeMutable: (value: unknown) => ({ value }),
     // Mirror reactions synchronously on render; frames are not modelled here.
     useAnimatedReaction: (prepare: () => unknown, react: Function) =>
       react(prepare(), null),
@@ -62,6 +63,9 @@ jest.mock('@ledgerhq/react-native-hw-transport-ble', () => ({}));
 jest.mock('@react-navigation/native', () => ({
   createNavigationContainerRef: () => ({ current: null, isReady: () => false }),
   useIsFocused: () => true,
+}));
+jest.mock('@react-navigation/elements', () => ({
+  HeaderHeightContext: require('react').createContext(undefined),
 }));
 jest.mock('@rneui/themed', () => ({
   Text: require('react-native').Text,
@@ -1010,6 +1014,96 @@ it('retains the position portal and gate through fade-out, reopening and unmount
   }
 });
 
+it('releases iOS keyboard layout ownership when the position price input blurs', async () => {
+  const originalOS = Platform.OS;
+  Platform.OS = 'ios';
+  const listeners = new Map<string, (event: KeyboardEvent) => void>();
+  const subscribe = jest
+    .spyOn(Keyboard, 'addListener')
+    .mockImplementation((name, listener) => {
+      listeners.set(name, listener);
+      return { remove: () => listeners.delete(name) };
+    });
+  const metrics = jest.spyOn(Keyboard, 'metrics').mockReturnValue(undefined);
+  const schedule = jest.spyOn(Keyboard, 'scheduleLayoutAnimation');
+  const frame: KeyboardEvent = {
+    duration: 250,
+    easing: 'keyboard',
+    endCoordinates: { screenX: 0, screenY: 400, width: 393, height: 452 },
+  };
+  try {
+    const ui = render(
+      safe(
+        <PerpEditTpSlPriceTag
+          coin="ETH"
+          variant="position"
+          actionType="tp"
+          type="hasPosition"
+          entryPrice={100}
+          markPrice={110}
+          initTpOrSlPrice=""
+          direction="Long"
+          size={1}
+          margin={20}
+          leverage={5}
+          liqPrice={80}
+          pxDecimals={2}
+          szDecimals={3}
+          quoteAsset="USDC"
+          handleSetAutoClose={async () => false}
+          handleCancelAutoClose={async () => {}}
+        />,
+      ),
+    );
+    await act(async () => fireEvent.press(ui.getByText('-')));
+    const input = ui.getByPlaceholderText('$0');
+    const geometry = () =>
+      StyleSheet.flatten(
+        ui.getByTestId('simple-position-tpsl-viewport').props.style,
+      );
+    fireEvent(input, 'focus');
+    fireEvent.changeText(input, '120');
+    const update = listeners.get('keyboardWillChangeFrame')!;
+    act(() => update(frame));
+    expect(geometry().maxHeight).toBe(368);
+    expect(schedule).toHaveBeenCalledTimes(1);
+
+    fireEvent(input, 'blur');
+    const blurredGeometry = geometry();
+    expect(blurredGeometry.maxHeight).toBe(
+      getDimensionsSnapshot('window').height - 32,
+    );
+    expect(listeners.size).toBe(0);
+    // Even an event already queued before cleanup must not animate the later
+    // password sheet. Native keyboard frames themselves are not modelled here.
+    for (const screenY of [420, 400, 425]) {
+      act(() =>
+        update({
+          ...frame,
+          endCoordinates: { ...frame.endCoordinates, screenY },
+        }),
+      );
+    }
+    expect(geometry()).toEqual(blurredGeometry);
+    expect(schedule).toHaveBeenCalledTimes(1);
+    expect(ui.getByPlaceholderText('$0')).toBe(input);
+    expect(input.props.value).toBe('$120');
+
+    // Cancelling password entry and refocusing the draft reacquires the live
+    // keyboard frame without remounting the editor or changing its value.
+    metrics.mockReturnValue(frame.endCoordinates);
+    fireEvent(input, 'focus');
+    expect(geometry().maxHeight).toBe(368);
+    expect(listeners.size).toBe(6);
+  } finally {
+    await cleanupAsync();
+    schedule.mockRestore();
+    metrics.mockRestore();
+    subscribe.mockRestore();
+    Platform.OS = originalOS;
+  }
+});
+
 it('corrects the iOS keyboard frame without moving the backdrop or the exiting card', async () => {
   const originalOS = Platform.OS;
   Platform.OS = 'ios';
@@ -1025,18 +1119,19 @@ it('corrects the iOS keyboard frame without moving the backdrop or the exiting c
     safe(
       <SimplePositionTpSlModal
         visible={visible}
+        inputFocused
         modalId={MODAL_GATE_IDS.perpsEditTpSlPrice}>
         <View />
       </SimplePositionTpSlModal>,
     );
-  const screenHeight = Dimensions.get('window').height;
+  const screenHeight = getDimensionsSnapshot('window').height;
   const frame = (screenY: number): KeyboardEvent => ({
     duration: 0,
     easing: 'keyboard',
     endCoordinates: {
       screenX: 0,
       screenY,
-      width: Dimensions.get('window').width,
+      width: getDimensionsSnapshot('window').width,
       height: screenHeight - screenY,
     },
   });

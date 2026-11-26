@@ -39,12 +39,7 @@ import Svg, { Path, type PathProps } from 'react-native-svg';
 
 import type { PerpsProHistoryTab } from '../types';
 
-const TABS: PerpsProHistoryTab[] = [
-  'orders',
-  'trade',
-  'transaction',
-  'funding',
-];
+import { PERPS_PRO_HISTORY_TABS as TABS } from '../scene/perpsProHistoryControllerState';
 // Figma 导航 Tab instance 86313:291968: 38pt strip, 8pt top inset, 14pt gaps.
 const TAB_HORIZONTAL_PADDING = 20;
 const TAB_GAP = 14;

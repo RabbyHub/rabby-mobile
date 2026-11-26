@@ -4,10 +4,6 @@ import { TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import {
-  GlobalModalViewProps,
-  MODAL_NAMES,
-} from '@/components2024/GlobalBottomSheetModal/types';
-import {
   useLendingIsLoading,
   useLendingRemoteData,
   useLendingSummary,
@@ -473,18 +469,6 @@ export const LendingSupplyListContent: React.FC<
   );
 };
 
-const LendingSupplyList: React.FC<
-  GlobalModalViewProps<MODAL_NAMES.LENDING_SUPPLY_LIST> & {
-    onBeforeSwapNavigate?: () => void;
-  }
-> = ({ onBeforeSwapNavigate }) => {
-  return (
-    <LendingSupplyListContent onBeforeSwapNavigate={onBeforeSwapNavigate} />
-  );
-};
-
-export default LendingSupplyList;
-
 const getStyle = createGetStyles2024(({ colors2024 }) => {
   const wrapperTokenCardBgColor = colord(colors2024['neutral-line'])
     .alpha(0.3)
@@ -504,7 +488,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     titleText: {
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '900',
+      fontWeight: '800',
       textAlign: 'center',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
@@ -523,6 +507,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       paddingVertical: 12,
       justifyContent: 'space-between',
       borderRadius: 16,
+      borderCurve: 'continuous',
       overflow: 'visible',
     },
     wrapperToken: {
@@ -670,6 +655,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       paddingVertical: 12,
       backgroundColor: colors2024['orange-light-1'],
       borderRadius: 6,
+      borderCurve: 'continuous',
       marginTop: 0,
       marginBottom: 8,
       gap: 2,

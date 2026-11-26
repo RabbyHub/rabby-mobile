@@ -125,6 +125,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: DeviceUtils.getDeviceWidth() - 40,
     backgroundColor: colors2024['neutral-bg-3'],
     borderRadius: 20,
+    borderCurve: 'continuous',
   },
   body: {
     paddingHorizontal: 20,

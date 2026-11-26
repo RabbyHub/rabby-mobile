@@ -653,6 +653,7 @@ const TokenSelect = ({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   wrapper: {
     borderRadius: 100,
+    borderCurve: 'continuous',
     // TODO: backgroundColor: colors2024['neutral-card-2'],
     backgroundColor: colors2024['neutral-line'],
     padding: 4,
@@ -663,6 +664,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   bridgeWrapper: {
     borderRadius: 100,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-line'],
     padding: 4,
     flexDirection: 'row',

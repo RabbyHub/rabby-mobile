@@ -24,6 +24,7 @@ export const getStyles = (colors: AppColorsVariants) =>
       paddingHorizontal: 16,
       paddingVertical: 12,
       borderRadius: 6,
+      borderCurve: 'continuous',
       borderWidth: 1,
       borderColor: colors['neutral-title-1'],
       opacity: 0.3,

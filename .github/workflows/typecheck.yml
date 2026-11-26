@@ -49,8 +49,50 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
 
+      # Restoring the linked tree turns `yarn install --immutable` from a full
+      # 1.3GB link (~4-5 min on ubuntu-latest) into a state check (~5-20s).
+      # The install step stays: it repairs any drift a restored key may carry.
+      - name: Cache node_modules
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            .yarn/install-state.gz
+          key: nm2-${{ runner.os }}-${{ hashFiles('yarn.lock', '.yarnrc.yml', '.yarn/patches/**') }}
+          restore-keys: |
+            nm2-${{ runner.os }}-
+
+      # Workspace build output is keyed by the package sources, not the
+      # lockfile: a `packages/**` change must never reuse an older `dist`.
+      # No restore-keys here on purpose - a miss has to fall back to a rebuild.
+      - name: Cache workspace build output
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            packages/*/dist
+            packages/*/*.tsbuildinfo
+          key: pkgdist-${{ runner.os }}-${{ hashFiles('packages/**/src/**', 'packages/*/tsconfig*.json', 'tsconfig*.json', 'yarn.lock') }}
+
+      # `--mode=skip-build` keeps the cached tree usable: postinstall would
+      # re-link and rebuild everything (`yarn build` + the mobile postinstall),
+      # which is what made a cache hit still take ~4 minutes. The build outputs
+      # come from the cache and are repaired by the explicit build below.
       - name: Install dependencies
-        run: yarn install --immutable
+        run: yarn install --immutable --mode=skip-build
+
+      # Repair the workspace declarations in case the restored `packages/*/dist`
+      # is older than the checkout (lockfile-only changes do not invalidate it).
+      # The incremental tsc build takes seconds.
+      - name: Build workspace packages
+        run: yarn build
+
+      - name: Check workspace dependency constraints
+        run: yarn constraints
+
+      - name: Check direct dependency versions
+        run: node scripts/check-pinned-dependencies.js
 
       - name: Run Type Check
         run: time yarn workspace rabby-mobile typecheck
@@ -81,8 +123,46 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
 
+      # Restoring the linked tree turns `yarn install --immutable` from a full
+      # 1.3GB link (~4-5 min on ubuntu-latest) into a state check (~5-20s).
+      # The install step stays: it repairs any drift a restored key may carry.
+      - name: Cache node_modules
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            .yarn/install-state.gz
+          key: nm2-${{ runner.os }}-${{ hashFiles('yarn.lock', '.yarnrc.yml', '.yarn/patches/**') }}
+          restore-keys: |
+            nm2-${{ runner.os }}-
+
+      # Workspace build output is keyed by the package sources, not the
+      # lockfile: a `packages/**` change must never reuse an older `dist`.
+      # No restore-keys here on purpose - a miss has to fall back to a rebuild.
+      - name: Cache workspace build output
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            packages/*/dist
+            packages/*/*.tsbuildinfo
+          key: pkgdist-${{ runner.os }}-${{ hashFiles('packages/**/src/**', 'packages/*/tsconfig*.json', 'tsconfig*.json', 'yarn.lock') }}
+
+      # `--mode=skip-build` keeps the cached tree usable: postinstall would
+      # re-link and rebuild everything (`yarn build` + the mobile postinstall),
+      # which is what made a cache hit still take ~4 minutes. The build outputs
+      # come from the cache and are repaired by the explicit build below.
       - name: Install dependencies
-        run: yarn install --immutable
+        run: yarn install --immutable --mode=skip-build
+
+      # A node_modules cache hit turns `yarn install` into a no-op, so the root
+      # postinstall that compiles `packages/*/dist` does not run and every
+      # workspace import resolves to missing declarations. Rebuild explicitly;
+      # tsc incremental rebuild is a few seconds, the link step it replaces is
+      # minutes.
+      - name: Build workspace packages
+        run: yarn build
 
       - name: Run apps/mobile Jest
         run: time yarn workspace rabby-mobile test --runInBand
@@ -113,8 +193,46 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
 
+      # Restoring the linked tree turns `yarn install --immutable` from a full
+      # 1.3GB link (~4-5 min on ubuntu-latest) into a state check (~5-20s).
+      # The install step stays: it repairs any drift a restored key may carry.
+      - name: Cache node_modules
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            .yarn/install-state.gz
+          key: nm2-${{ runner.os }}-${{ hashFiles('yarn.lock', '.yarnrc.yml', '.yarn/patches/**') }}
+          restore-keys: |
+            nm2-${{ runner.os }}-
+
+      # Workspace build output is keyed by the package sources, not the
+      # lockfile: a `packages/**` change must never reuse an older `dist`.
+      # No restore-keys here on purpose - a miss has to fall back to a rebuild.
+      - name: Cache workspace build output
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            packages/*/dist
+            packages/*/*.tsbuildinfo
+          key: pkgdist-${{ runner.os }}-${{ hashFiles('packages/**/src/**', 'packages/*/tsconfig*.json', 'tsconfig*.json', 'yarn.lock') }}
+
+      # `--mode=skip-build` keeps the cached tree usable: postinstall would
+      # re-link and rebuild everything (`yarn build` + the mobile postinstall),
+      # which is what made a cache hit still take ~4 minutes. The build outputs
+      # come from the cache and are repaired by the explicit build below.
       - name: Install dependencies
-        run: yarn install --immutable
+        run: yarn install --immutable --mode=skip-build
+
+      # A node_modules cache hit turns `yarn install` into a no-op, so the root
+      # postinstall that compiles `packages/*/dist` does not run and every
+      # workspace import resolves to missing declarations. Rebuild explicitly;
+      # tsc incremental rebuild is a few seconds, the link step it replaces is
+      # minutes.
+      - name: Build workspace packages
+        run: yarn build
 
       - name: Run apps/mobile Madge Import Cycle Check
         run: time yarn workspace rabby-mobile lint:cycles

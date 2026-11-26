@@ -65,6 +65,7 @@ const getStyles = (colors: AppColorsVariants) => {
       alignItems: 'center',
       flexDirection: 'row',
       borderRadius: 6,
+      borderCurve: 'continuous',
       padding: 2,
       backgroundColor: colors['neutral-line'],
     },
@@ -72,6 +73,7 @@ const getStyles = (colors: AppColorsVariants) => {
       paddingHorizontal: 10,
       paddingVertical: 8,
       borderRadius: 4,
+      borderCurve: 'continuous',
     },
     itemActive: {
       backgroundColor: colors['neutral-bg-1'],

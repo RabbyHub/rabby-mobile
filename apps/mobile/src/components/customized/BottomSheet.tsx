@@ -20,6 +20,7 @@ import AppBottomSheetBackdrop from '../patches/BottomSheetBackdrop';
 import { perfEvents } from '@/core/utils/perf';
 import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
 import { Text } from '@/components/Typography';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 
 export const getBottomSheetHandleStyles = (colors: AppColorsVariants) => {
   return StyleSheet.create({
@@ -28,6 +29,7 @@ export const getBottomSheetHandleStyles = (colors: AppColorsVariants) => {
       backgroundColor: colors['neutral-bg-1'],
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
+      borderCurve: 'continuous',
     },
     handleIndicatorStyle: {
       backgroundColor: colors['neutral-line'],
@@ -100,6 +102,7 @@ export const AppBottomSheetModal = ({
   backdropProps?: Partial<BottomSheetDefaultBackdropProps>;
 } & { ref?: Ref<BottomSheetModal> }) => {
   const colors = useThemeColors();
+  const columnInset = useSystemColumnInset();
   const styles = useMemo(() => getBottomSheetHandleStyles(colors), [colors]);
   const backgroundStyle = useMemo(
     () => [
@@ -148,6 +151,13 @@ export const AppBottomSheetModal = ({
       stackBehavior="push"
       enableDynamicSizing={false}
       {...props}
+      style={[
+        props.style,
+        (columnInset.left > 0 || columnInset.right > 0) && {
+          marginLeft: columnInset.left,
+          marginRight: columnInset.right,
+        },
+      ]}
       onChange={handleChange}
       backgroundStyle={backgroundStyle}
       ref={ref}

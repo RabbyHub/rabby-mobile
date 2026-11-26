@@ -29,6 +29,7 @@ const getStyles = (colors: AppColorsVariants) =>
       padding: 16,
       backgroundColor: colors['neutral-card-2'],
       borderRadius: 6,
+      borderCurve: 'continuous',
       marginBottom: 30,
       justifyContent: 'space-between',
     },
@@ -54,6 +55,7 @@ const getStyles = (colors: AppColorsVariants) =>
       width: '100%',
       backgroundColor: colors['neutral-bg-1'],
       borderRadius: 16,
+      borderCurve: 'continuous',
       position: 'relative',
     },
     modalTitle: {
@@ -87,6 +89,7 @@ const getStyles = (colors: AppColorsVariants) =>
       borderWidth: 1,
       height: 48,
       borderRadius: 8,
+      borderCurve: 'continuous',
     },
     closeButtonText: {
       color: colors['blue-default'],
@@ -95,6 +98,7 @@ const getStyles = (colors: AppColorsVariants) =>
       width: 150,
       height: 48,
       borderRadius: 8,
+      borderCurve: 'continuous',
     },
   });
 

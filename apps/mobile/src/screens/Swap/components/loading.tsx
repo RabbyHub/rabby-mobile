@@ -76,6 +76,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 8,
     borderWidth: 1,
     borderRadius: 16,
+    borderCurve: 'continuous',
     borderColor: 'transparent',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
@@ -107,22 +108,26 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   skeleton1: {
     borderRadius: 2,
+    borderCurve: 'continuous',
     width: 90,
     height: 20,
   },
   skeleton2: {
     marginLeft: 'auto',
     borderRadius: 2,
+    borderCurve: 'continuous',
     width: 70,
     height: 18,
   },
   skeleton3: {
     borderRadius: 2,
+    borderCurve: 'continuous',
     width: 132,
     height: 18,
   },
   skeleton4: {
     borderRadius: 2,
+    borderCurve: 'continuous',
     width: 90,
     height: 16,
   },

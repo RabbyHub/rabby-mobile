@@ -1,5 +1,6 @@
 import React from 'react';
-import { Dimensions, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
@@ -147,7 +148,8 @@ function DevUIAccountShowCase(): JSX.Element {
                       paddingHorizontal: 0,
                       flexShrink: 1,
                       width:
-                        Math.floor(Dimensions.get('window').width / 3) - 16,
+                        Math.floor(getDimensionsSnapshot('window').width / 3) -
+                        16,
                       height: 110,
                       marginVertical: 12,
                       // ...makeDebugBorder('red'),
@@ -182,7 +184,6 @@ function DevUIAccountShowCase(): JSX.Element {
   );
 }
 
-const CONTENT_W = Dimensions.get('screen').width - 24;
 const getStyles = createGetStyles2024(ctx =>
   StyleSheet.create({
     screen: {
@@ -224,7 +225,7 @@ const getStyles = createGetStyles2024(ctx =>
     propertyDesc: {
       flexDirection: 'row',
       width: '100%',
-      maxWidth: CONTENT_W,
+      maxWidth: getDimensionsSnapshot('screen').width - 24,
       flexWrap: 'wrap',
       alignItems: 'flex-start',
       justifyContent: 'flex-start',

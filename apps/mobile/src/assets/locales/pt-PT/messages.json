@@ -1393,7 +1393,8 @@
         },
         "notFound": {
           "title": "Dispositivo não encontrado",
-          "description": "Ative o Bluetooth e desbloqueie o OneKey"
+          "description": "Ative o Bluetooth e desbloqueie o OneKey",
+          "retry": "Pesquisar novamente"
         },
         "inputPin": {
           "title": "Introduzir PIN",
@@ -1408,6 +1409,23 @@
         "connect": {
           "description": "Introduza o PIN ou a frase-passe no dispositivo",
           "title": "A ligar"
+        },
+        "error": {
+          "deviceNotFound": "OneKey não encontrado. Certifique-se de que está desbloqueado, de que o Bluetooth está ativado e de que está perto do seu telemóvel.",
+          "disconnected": "O OneKey foi desligado. Mantenha-o desbloqueado e perto do seu telemóvel e tente novamente.",
+          "deviceBusy": "O OneKey está a processar outro pedido. Conclua-o ou cancele-o no dispositivo e tente novamente.",
+          "passphraseDisabled": "A frase-passe está desativada no dispositivo. Ative-a ou volte a importar esta carteira.",
+          "firmwareTooOld": "O firmware do seu OneKey é demasiado antigo. Atualize-o com a aplicação OneKey e tente novamente.",
+          "bluetoothOff": "O Bluetooth está desativado. Ative o Bluetooth e tente novamente.",
+          "bluetoothPermission": "O Rabby não tem permissão para utilizar o Bluetooth. Permita o Bluetooth (ou a Localização no Android 11 e anteriores) para o Rabby nas Definições e tente novamente.",
+          "locationServicesDisabled": "Os serviços de localização estão desativados. Ative-os para pesquisar dispositivos Bluetooth.",
+          "bluetoothUnsupported": "O Bluetooth não é suportado neste telemóvel.",
+          "scanFailed": "A pesquisa Bluetooth falhou. Tente novamente.",
+          "pairingFailed": "O emparelhamento Bluetooth falhou. Aceite o pedido de emparelhamento no seu telemóvel e no OneKey e tente novamente.",
+          "pairingInvalid": "O emparelhamento Bluetooth já não é válido. Esqueça o OneKey nas definições de Bluetooth do seu telemóvel e volte a emparelhá-lo.",
+          "pinInvalid": "PIN incorreto. Tente novamente.",
+          "cancelled": "O pedido foi cancelado.",
+          "openSettings": "Abrir Definições"
         }
       },
       "ledger": {
@@ -2066,7 +2084,6 @@
       "dataAnalysis": "Ajudar a melhorar a Rabby",
       "dataAnalysisDesc": "Partilhe dados de utilização anónimos para ajudar a melhorar a Rabby. Os dados recolhidos não são associados a si nem à sua conta.",
       "bugReportChat": "Partilhar feedback através do chat",
-      "features": "Funcionalidades",
       "manageWallets": "Gerir carteiras"
     },
     "settings": {
@@ -2522,7 +2539,10 @@
           "attachedTpSlUnresolved": "Um envio de TP/SL anterior para este mercado continua por resolver. Verifique as Ordens abertas e as Posições antes de tentar novamente.",
           "orderFilled": "Ordem executada.",
           "orderPlaced": "Ordem colocada.",
-          "orderFailed": "A ordem falhou."
+          "orderFailed": "A ordem falhou.",
+          "scale": "Ordem escalonada",
+          "scaleDescription": "Defina um intervalo de preços e coloque várias subordens limitadas",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "O preço post-only deve ser inferior à melhor oferta de venda para evitar uma execução imediata.",
@@ -2536,6 +2556,9 @@
           "tpSl": {
             "title": "TP/SL",
             "description": "Coloca ordens TP/SL de mercado básicas. Para funcionalidades avançadas, como TP/SL parcial, defina o TP/SL numa posição aberta."
+          },
+          "randomize": {
+            "description": "A aleatorização varia o tamanho de cada subordem até ±20%, respeitando o tamanho máximo da ordem e os restantes limites."
           },
           "reduceOnly": {
             "title": "Apenas redução",
@@ -2633,7 +2656,8 @@
             "orders": "Histórico de ordens",
             "trade": "Histórico de negociações",
             "transaction": "Depósitos e levantamentos",
-            "funding": "Comissão de financiamento"
+            "funding": "Comissão de financiamento",
+            "twap": "Histórico TWAP"
           },
           "empty": {
             "orders": "Sem histórico de ordens",
@@ -2815,6 +2839,101 @@
           "cancelPartial": "{{success}} ordens canceladas; {{failed}} falharam",
           "cancelFailed": "Falha ao cancelar a ordem",
           "cancelContextChanged": "A conta foi alterada. Tente novamente."
+        },
+        "scaleOrder": {
+          "lowerPrice": "Preço mínimo",
+          "upperPrice": "Preço máximo",
+          "size": "Quantidade",
+          "count": "N.º de ordens (2–100)",
+          "distribution": "Distribuição",
+          "flat": "Uniforme",
+          "ascending": "Ascendente",
+          "descending": "Descendente",
+          "flatDescription": "Cada ordem recebe a mesma quantidade",
+          "ascendingDescription": "A quantidade aumenta à medida que o preço sobe",
+          "descendingDescription": "A quantidade aumenta à medida que o preço desce",
+          "previewBuy": "Prévia de compra",
+          "previewSell": "Prévia de venda",
+          "totalSize": "Quantidade total",
+          "averagePrice": "Preço médio",
+          "result": "{{accepted}} aceites, {{rejected}} rejeitadas, {{unresolved}} por confirmar",
+          "unknown": "Resultado por confirmar. Verifique as ordens abertas e o histórico antes de colocar outra ordem.",
+          "errors": {
+            "range": "Introduza preços válidos; o máximo deve ser superior ao mínimo.",
+            "count": "Introduza um inteiro entre 2 e 100.",
+            "size": "Introduza uma quantidade de ordem superior a 0 que cumpra os requisitos de precisão de quantidade deste mercado.",
+            "duplicatePrice": "Alguns preços das ordens coincidem após o ajuste à precisão de preço permitida. Alargue o intervalo de preços ou reduza o número de ordens.",
+            "minimum": "Após o ajuste à precisão de quantidade permitida, cada subordem deve ter um valor de, pelo menos, $10.",
+            "maximum": "O valor total das ordens excede o limite permitido para este mercado.",
+            "capacity": "Capacidade de negociação insuficiente para este lote.",
+            "reduceOnly": "A quantidade total das ordens excede a quantidade da posição que pode ser fechada neste momento."
+          }
+        },
+        "twap": {
+          "description": "Coloque ordens a intervalos personalizados",
+          "totalTime": "Tempo total",
+          "durationFieldLabel": "Tempo total (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} min",
+          "minuteValue_one": "{{t}} min",
+          "confirmationDuration": "{{t}} min",
+          "totalSize": "Quantidade total",
+          "selectTime": "Selecionar tempo total",
+          "reset": "Repor",
+          "randomize": "Aleatorizar",
+          "randomized": "Aleatorizado",
+          "durationHint": "A duração da ordem TWAP é de 5 a 1439 minutos.",
+          "minimum": "A quantidade total mínima é {{amount}}",
+          "filled": "Executado",
+          "duration": "Tempo decorrido",
+          "runtime": "Tempo de execução",
+          "averagePrice": "Preço médio",
+          "end": "Terminar",
+          "detail": "Detalhes",
+          "add": "Adicionar",
+          "detailTitle": "Detalhes do TWAP ativo",
+          "historyDetailTitle": "Detalhes do histórico TWAP",
+          "trades": "Transações",
+          "size": "Quantidade",
+          "fee": "Taxa",
+          "noTrades": "Ainda não há transações",
+          "endTitle": "Confirmar o fim da ordem TWAP",
+          "endMessage": "Após a confirmação, a sua ordem TWAP será interrompida e as ordens em aberto deste TWAP serão canceladas automaticamente.",
+          "ending": "A terminar…",
+          "ended": "Ordem TWAP terminada.",
+          "placed": "Ordem TWAP de {{coin}} colocada.",
+          "unknownOutcome": "O resultado do TWAP de {{coin}} aguarda confirmação. Verifique as ordens e o histórico antes de colocar outra ordem.",
+          "unknown": "O resultado do TWAP aguarda confirmação. Verifique as ordens e o histórico antes de tentar novamente.",
+          "loadError": "Não foi possível carregar as ordens TWAP. Toque para tentar novamente.",
+          "endedLabel": "Terminada",
+          "skipConfirmation": "Não voltar a mostrar a dupla confirmação para ordens TWAP.",
+          "averageFilledPrice": "Preço médio de execução",
+          "status": {
+            "working": "Em execução",
+            "waiting": "Em espera",
+            "filled": "Executada",
+            "cancelled": "Cancelada",
+            "expired": "Expirada",
+            "unknown": "Desconhecido"
+          },
+          "fills": {
+            "loading": "A carregar transações…",
+            "error": "Não foi possível carregar as transações. Toque para tentar novamente."
+          },
+          "errors": {
+            "amountRequired": "Introduza a quantidade da ordem.",
+            "amountTooSmall": "A ordem TWAP deve ter um valor mínimo de $100.",
+            "amountExceedsMaximum": "A ordem excede o máximo disponível.",
+            "invalidPrecision": "Introduza uma quantidade com a precisão permitida neste mercado.",
+            "priceUnavailable": "O preço atual não está disponível. Tente novamente.",
+            "durationRequired": "Introduza o tempo total.",
+            "durationInvalid": "Introduza um número inteiro de minutos.",
+            "durationTooShort": "A duração mínima do TWAP é de 5 minutos.",
+            "durationTooLong": "A duração máxima do TWAP é de 1439 minutos.",
+            "capacity": "Capacidade de negociação insuficiente para esta ordem.",
+            "reduceOnly": "A ordem excede a quantidade da posição disponível para fechar.",
+            "contextChanged": "A conta, a ordem ou o mercado mudou. Reveja a ordem."
+          }
         }
       },
       "PerpsCard": {
@@ -2857,7 +2976,8 @@
         "invalidNumber": "Introduza um número válido",
         "estReceive": "Receção est.: {{balance}}",
         "minimumDepositSize": "O montante mínimo de depósito é $5",
-        "estReceiveTooltip": "O depósito entre redes é processado através da LiFi e pode sofrer slippage. Chegada estimada em {{number}} s."
+        "estReceiveTooltip": "O depósito entre redes é processado através da LiFi e pode sofrer slippage. Chegada estimada em {{number}} s.",
+        "estReceiveTooltipV2": "O depósito entre redes é processado através da {{name}} e pode sofrer slippage. Chegada estimada em {{number}} s."
       },
       "PerpsWithdrawPopup": {
         "amount": "Quantidade",
@@ -3021,9 +3141,6 @@
       "closeAll": "Fechar todas as posições",
       "closeAllConfirmMessage": "Todas as suas posições abertas serão fechadas ao preço de mercado.",
       "closeAllConfirmTitle": "Confirmar fecho de todas as posições",
-      "assetPage": {
-        "hyperliquidPosition": "Posição Hyperliquid"
-      },
       "invitePopup": {
         "activateNow": "Ativar agora",
         "title": "Poupe nas taxas da Hyperliquid",
@@ -3031,9 +3148,6 @@
         "activatedFailed": "Ativação falhou",
         "activatedSuccess": "4% de poupança em taxas Hyperliquid ativada",
         "hyperliquidFee": "Taxas de negociação Hyperliquid."
-      },
-      "dappSelect": {
-        "title": "Selecionar fornecedor de Perps"
       },
       "search": {
         "placeholder": "Pesquisar Perps",
@@ -3253,9 +3367,6 @@
         "isolatedDesc": "Cada posição usa a sua própria margem. As perdas ficam limitadas a essa posição, mas ela pode ser liquidada com mais facilidade.",
         "crossDesc": "Todas as posições partilham a mesma margem. Isto reduz a probabilidade de uma única posição ser liquidada, mas todos os fundos de margem cruzada podem ser perdidos em movimentos extremos do mercado."
       },
-      "guideEntry": {
-        "gotIt": "Compreendi"
-      },
       "PerpsAbout": {
         "title": "Sobre"
       }
@@ -3311,12 +3422,7 @@
         "healthy": "Saudável"
       },
       "repayDetail": {
-        "actions": "Reembolsar",
-        "tabs": {
-          "wallet": "Saldo da carteira",
-          "collateral": "Colateral"
-        },
-        "repayWith": "Reembolsar com"
+        "actions": "Reembolsar"
       },
       "supplyDetail": {
         "availableToBorrow": "Disponível para pedir emprestado",
@@ -3337,7 +3443,6 @@
         "almostReachedError": "O montante máximo disponível para empréstimo é limitado porque o limite de empréstimo do protocolo está quase atingido.",
         "borrowingUnavailable": "Não é possível pedir este ativo emprestado no modo atual.",
         "almostReachedWarning": "O limite de empréstimo do protocolo está em 100% para este ativo. Novos empréstimos não estão disponíveis.",
-        "swapDebt": "Trocar",
         "borrowed": "Emprestado",
         "noSupplyPrefix": "Sem depósitos:",
         "noSupplyDesc": "Para pedir emprestado, precisa fornecer ativos como garantia."
@@ -3449,79 +3554,18 @@
         "unavailable": "• Indisponível",
         "disableTitle": "Desativar",
         "unavailableTips": "Os seus ativos atuais de empréstimo e depósito não são suportados.",
-        "description": "Ativar o E-Mode permite maximizar o seu poder de empréstimo. No entanto, o empréstimo está restrito a ativos dentro da categoria selecionada.",
-        "debtSwapSelector": {
-          "header": {
-            "borrow": "Os meus empréstimos",
-            "assets": "Token/Saldo",
-            "apy": "APY"
-          },
-          "title": "Selecionar Token de Empréstimo"
-        },
-        "collateralSwapSelector": {
-          "header": {
-            "collateral": "O meu colateral",
-            "assets": "Token"
-          },
-          "title": "Selecionar Token de Colateral"
-        }
+        "description": "Ativar o E-Mode permite maximizar o seu poder de empréstimo. No entanto, o empréstimo está restrito a ativos dentro da categoria selecionada."
       },
       "disabled": "DESABILITADO",
-      "debtSwap": {
-        "actions": {
-          "title": "Converter dívida",
-          "select": "Selecionar",
-          "swapTo": "Converter para",
-          "borrowed": "Emprestado",
-          "amount": "Quantidade"
-        },
-        "overview": {
-          "title": "Visão geral da transação",
-          "borrowAPY": "APY do empréstimo",
-          "borrowValueAfter": "Saldo do empréstimo após conversão"
-        },
-        "button": {
-          "swap": "Converter"
-        },
-        "borrowBalance": "Saldo de empréstimo",
-        "title": "Converter posição de empréstimo",
-        "lpDangerWarning": "O seu fator de saúde após esta troca ficará criticamente baixo e pode resultar em liquidação. Por favor, escolha um ativo diferente ou reduza o valor da troca para se manter seguro.",
-        "lpRiskWarning": "Fator de saúde baixo após a troca. A sua posição terá um risco de liquidação mais elevado.",
-        "priceImpactTips": "Impacto de preço elevado ({{lostValue}}). Devido à baixa liquidez ou ao tamanho reduzido da ordem, a estimativa desta rota pode desviar-se bastante.",
-        "maxLtvWarning": "Colateral insuficiente para cobrir a nova posição de empréstimo. A carteira deve ter poder de empréstimo restante para realizar a troca de dívida."
-      },
       "netApy": "APY líquido",
       "totalBorrowed": "Total emprestado",
       "totalSupplied": "Total depositado",
-      "repayWithCollateral": {
-        "action": {
-          "title": "Reembolsar com {{collateral}}"
-        },
-        "overview": {
-          "title": "Visão geral da transação",
-          "borrowValueAfter": "Saldo do empréstimo após o reembolso",
-          "collateralValueAfter": "Saldo de colateral após reembolso"
-        },
-        "button": {
-          "repay": "Reembolsar"
-        },
-        "collateralNotEnough": "O seu saldo de colateral é inferior ao montante selecionado.",
-        "toRepay": "Montante esperado para reembolso",
-        "repayWith": "Colateral para reembolsar",
-        "insufficientLiquidity": "Liquidez insuficiente.",
-        "flashLoanDisabled": "A conversão de posições está desativada para este ativo por motivos de segurança.",
-        "frozenCollateral": "Este ativo está congelado devido a uma decisão da comunidade Aave."
-      },
       "repayWithAToken": {
         "header": {
           "balance": "Saldo",
           "assets": "Token"
         },
-        "title": "Selecionar Token de Reembolso",
-        "zeroLtvCollateralTips": "Tem os seguintes colaterais com LTV = 0. De acordo com as regras de reembolso com colateral, deve usar primeiro estes colaterais para reembolsar."
-      },
-      "signFallback": {
-        "preExecFailedUseFullSign": "A simulação falhou. É muito provável que esta transação falhe devido a erros da AAVE."
+        "title": "Selecionar Token de Reembolso"
       }
     },
     "address": {
@@ -3529,20 +3573,6 @@
         "title": "Receber ativos",
         "btnCopyAddress": "Copiar Endereço"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "Selecionar fornecedor de previsões"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableDesc": "O serviço não é suportado na sua região atual.",
-      "serviceUnavailableTitle": "Serviço indisponível"
-    },
-    "DAppFrame": {
-      "netWorth": "Valor líquido",
-      "selectAWallet": "Selecionar uma carteira",
-      "walletBalance": "Carteira/Saldo"
     },
     "meme": {
       "tokenHeader": {
@@ -3708,7 +3738,7 @@
       "title": "Converter saldos residuais"
     },
     "walletConnect": {
-      "screenTitle": "Ligar carteira",
+      "screenTitle": "Digitalizar para ligar",
       "connectingToRabby": "A ligar ao Rabby",
       "pairingFailed": "O emparelhamento WalletConnect falhou.",
       "proposalNotReceived": "O código QR do WalletConnect pode ter expirado. Atualize-o e tente novamente.",

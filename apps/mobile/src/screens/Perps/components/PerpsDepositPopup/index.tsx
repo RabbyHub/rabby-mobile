@@ -19,6 +19,7 @@ import {
 import useAsync from 'react-use/lib/useAsync';
 import { Skeleton } from '@rneui/themed';
 import { openapi } from '@/core/request';
+import { validatePerpsDepositBridgeQuote } from '@/core/depositBridgeValidation';
 import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatPerpsUsdValue, formatUsdValue } from '@/utils/number';
@@ -223,6 +224,23 @@ const usePerpsDepositTokenIndexStore = zCreate(
     },
   })),
 );
+
+const DEPOSIT_BRIDGE_NAME_MAP: Record<string, string> = {
+  relay: 'Relay',
+  across: 'Across',
+};
+
+const formatDepositBridgeName = (quote?: PerpBridgeQuote | null) => {
+  const bridgeId = quote?.bridge_id?.trim().toLowerCase();
+  if (bridgeId && DEPOSIT_BRIDGE_NAME_MAP[bridgeId]) {
+    return DEPOSIT_BRIDGE_NAME_MAP[bridgeId];
+  }
+  const rawName = quote?.bridge?.name || quote?.bridge_id || '';
+  if (!rawName) {
+    return '';
+  }
+  return rawName.charAt(0).toUpperCase() + rawName.slice(1);
+};
 
 export const PerpsDepositPopup: React.FC<{
   account?: Account | null;
@@ -659,6 +677,15 @@ export const PerpsDepositPopup: React.FC<{
             from_token_id: token.id,
             from_token_raw_amount: fromTokenRawAmount,
           });
+          if (controller.signal.aborted) {
+            return;
+          }
+          validatePerpsDepositBridgeQuote(res, {
+            userAddress: account!.address,
+            fromChainId: token.chain,
+            fromTokenId: token.id,
+            fromTokenRawAmount,
+          });
           let tokenApproved = false;
           let allowance = '0';
           const fromChain = findChain({ serverId: token.chain });
@@ -725,21 +752,25 @@ export const PerpsDepositPopup: React.FC<{
             setTxs(targetTxs);
             setBridgeQuote(res);
             setQuoteLoading(false);
+            const historyTx = { ...res.tx };
+            delete (historyTx as { order_data?: unknown }).order_data;
             setCacheBridgeHistory({
               from_chain_id: token.chain,
               from_token_id: token.id,
               from_token_amount: amount,
               to_token_amount: res.to_token_amount,
-              tx: res.tx,
+              tx: historyTx,
             });
           } else {
             setBridgeQuote(null);
+            setCacheBridgeHistory(null);
             setTxs([]);
             setQuoteLoading(false);
           }
         } catch (error) {
           console.error('getPerpBridgeQuote error', error);
           setBridgeQuote(null);
+          setCacheBridgeHistory(null);
           setTxs([]);
           setQuoteLoading(false);
         }
@@ -975,7 +1006,8 @@ export const PerpsDepositPopup: React.FC<{
                         { fontSize: 12, color: '#fff' },
                         tooltipTextStyle,
                       ]}>
-                      {t('page.perps.PerpsDepositPopup.estReceiveTooltip', {
+                      {t('page.perps.PerpsDepositPopup.estReceiveTooltipV2', {
+                        name: formatDepositBridgeName(bridgeQuote),
                         number: bridgeQuote?.duration || 0,
                       })}
                     </Text>
@@ -1252,6 +1284,7 @@ const getStyle = createGetStyles2024(ctx => {
     inputContainer: {
       height: 98,
       borderRadius: 16,
+      borderCurve: 'continuous',
       paddingVertical: 28,
       paddingHorizontal: 20,
       backgroundColor: ctx.colors2024['neutral-bg-2'],
@@ -1279,6 +1312,7 @@ const getStyle = createGetStyles2024(ctx => {
     },
     skeleton: {
       borderRadius: 100,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-5'],
     },
     bottomContainer: {
@@ -1295,6 +1329,7 @@ const getStyle = createGetStyles2024(ctx => {
       padding: 4,
       backgroundColor: 'rgba(80, 210, 193, 0.12)',
       borderRadius: 8,
+      borderCurve: 'continuous',
     },
     maxButtonText: {
       color: '#50D2C1',
@@ -1315,7 +1350,7 @@ const getStyle = createGetStyles2024(ctx => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '900',
+      fontWeight: '800',
       color: ctx.colors2024['neutral-title-1'],
       marginBottom: 24,
       textAlign: 'center',
@@ -1333,6 +1368,7 @@ const getStyle = createGetStyles2024(ctx => {
       padding: 4,
       backgroundColor: ctx.colors2024['neutral-line'],
       borderRadius: 100,
+      borderCurve: 'continuous',
     },
     tokenText: {
       fontSize: 16,
@@ -1374,6 +1410,7 @@ const getStyle = createGetStyles2024(ctx => {
       flex: 1,
       height: 40,
       borderRadius: 8,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-5'],
       alignItems: 'center',
       justifyContent: 'center',

@@ -203,6 +203,13 @@ function Backup(): JSX.Element {
             removeGlobalBottomSheetModal2024(id);
             handleBackupComplete();
           },
+          // Cloud (iCloud / Google Drive) unavailable: dismiss the sheet and
+          // go back only. Treating it as success cleared the backup reminder,
+          // so the home "not backed up" banner disappeared (issue 1462).
+          onUnavailable: () => {
+            removeGlobalBottomSheetModal2024(id);
+            navigation.goBack();
+          },
         });
       },
     });
@@ -210,6 +217,7 @@ function Backup(): JSX.Element {
     address,
     type,
     t,
+    navigation,
     invokeEnterPassphrase,
     handleBackupComplete,
     getAuthModalLabels,
@@ -338,6 +346,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     borderRadius: 20,
+    borderCurve: 'continuous',
     marginBottom: 12,
     padding: 20,
     shadowColor: colors2024['neutral-title-1'],
@@ -366,12 +375,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 40,
     height: 40,
     borderRadius: 14,
+    borderCurve: 'continuous',
   },
   quickBadge: {
     backgroundColor: colors2024['brand-light-1'],
     paddingHorizontal: 6,
     paddingVertical: 4,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   quickBadgeText: {
     fontSize: 12,
@@ -385,6 +396,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 6,
     paddingVertical: 4,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   doneBadgeText: {
     fontSize: 12,

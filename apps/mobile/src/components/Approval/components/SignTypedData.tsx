@@ -16,7 +16,11 @@ import {
 } from '@rabby-wallet/rabby-action';
 import { findChain, isTestnetChainId } from '@/utils/chain';
 import type { Account } from '@/core/startupServices/preference';
-import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
+import { INTERNAL_REQUEST_ORIGIN, isNonPublicProductionEnv } from '@/constant';
+import {
+  getApprovalParseOverride,
+  maybeCaptureApprovalParse,
+} from '@/devtools/screenRegistry/approvalParseOverride';
 import { useApproval } from '@/hooks/useApproval';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -38,6 +42,7 @@ import {
 } from './SignTypedDataExplain/parseSignTypedDataMessage';
 import { getDappSnapshot } from '@/core/serviceApi/dapp';
 import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { createSigningOperationId } from '@/core/utils/signingOperation';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
 import { openapi, testOpenapi } from '@/core/request';
@@ -298,12 +303,24 @@ export const SignTypedData = ({
       signTypedData &&
       !isTestnetChainId(signTypedData.domain?.chainId)
     ) {
+      if (isNonPublicProductionEnv) {
+        const overridden = getApprovalParseOverride(signTypedData);
+        if (overridden) {
+          console.log('[approval-parse] using fixture override');
+          return { requestKey, response: overridden };
+        }
+      }
       const response = await openapi.parseCommon({
         typed_data: signTypedData,
         user_addr: currentAccount.address,
         origin: session.origin,
       });
       if (!response) throw new Error('Missing typed-data parse response');
+      if (isNonPublicProductionEnv) {
+        await maybeCaptureApprovalParse(signTypedData, response).catch(
+          () => {},
+        );
+      }
       return { requestKey, response };
     }
     return { requestKey, response: null };
@@ -663,6 +680,7 @@ export const SignTypedData = ({
     });
 
     if (WaitingSignComponent[account.type]) {
+      const signingOperationId = createSigningOperationId();
       apisKeyring.signTypedDataWithUI(
         account.type,
         account.address,
@@ -670,11 +688,13 @@ export const SignTypedData = ({
         {
           brandName: account.brandName,
           version: 'V4',
+          signingOperationId,
         },
       );
 
       resolveApproval({
         uiRequestComponent: WaitingSignComponent[account.type],
+        signingOperationId,
         type: account.type,
         address: account.address,
         data: [account.address, JSON.stringify(typedData)],

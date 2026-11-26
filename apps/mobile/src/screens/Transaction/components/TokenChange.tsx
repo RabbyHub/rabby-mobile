@@ -156,6 +156,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     width: 14,
     height: 14,
     borderRadius: 2,
+    borderCurve: 'continuous',
   },
   text: {
     fontSize: 16,

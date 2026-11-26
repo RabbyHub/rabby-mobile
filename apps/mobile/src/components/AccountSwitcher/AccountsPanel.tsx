@@ -2,7 +2,8 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { Dimensions, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
 import TouchableView from '../Touchable/TouchableView';
@@ -574,7 +575,7 @@ AccountSwitcherAopProps<{
 }
 
 export function getAccountsPanelInModalMaxHeight() {
-  const winInfo = Dimensions.get('window');
+  const winInfo = getDimensionsSnapshot('window');
 
   return winInfo.height - ScreenWithAccountSwitcherLayouts.modalBottomSpace;
 }
@@ -628,6 +629,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
       borderWidth: 2,
       borderColor: ctx.colors2024['neutral-bg-1'],
       borderRadius: 10,
+      borderCurve: 'continuous',
     },
     panel: {
       position: 'relative',
@@ -643,7 +645,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
     title: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
-      fontWeight: '900',
+      fontWeight: '800',
       lineHeight: 24,
       color: ctx.colors2024['neutral-title-1'],
       textAlign: 'center',
@@ -718,6 +720,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
       height: 6,
       width: 50,
       borderRadius: 104,
+      borderCurve: 'continuous',
     },
     tokenHeader: {
       flexDirection: 'row',

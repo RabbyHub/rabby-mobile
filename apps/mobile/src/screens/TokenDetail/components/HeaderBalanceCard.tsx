@@ -79,6 +79,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
     height: 42,
     borderRadius: 6,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['green-light-1'],
     paddingHorizontal: 16,
     paddingVertical: 10,

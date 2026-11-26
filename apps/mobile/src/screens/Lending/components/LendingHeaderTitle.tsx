@@ -5,7 +5,8 @@ import { View } from 'react-native';
 
 import { Text } from '@/components/Typography';
 import { HeaderBackPressable } from '@/hooks/navigation';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCustomHeaderTop } from '@/hooks/useAppLayout';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 import RcIconAAVE from '@/assets2024/icons/lending/IconAAVE.svg';
 import { LendingHistoryHeader } from './Header';
 import { HeaderAccountSwitcher } from '@/components/AccountSwitcher/HeaderAccountSwitcher';
@@ -14,10 +15,19 @@ const HEADER_HEIGHT = 58;
 
 const LendingHeaderContent = () => {
   const { styles } = useTheme2024({ getStyle });
-  const { top } = useSafeAreaInsets();
+  const headerTop = useCustomHeaderTop();
+  const columnInset = useSystemColumnInset();
 
   return (
-    <View style={[styles.headerOuter, { marginTop: top }]}>
+    <View
+      style={[
+        styles.headerOuter,
+        {
+          marginTop: headerTop,
+          paddingLeft: 12 + columnInset.left,
+          paddingRight: 16 + columnInset.right,
+        },
+      ]}>
       <View style={styles.headerInner}>
         <View style={styles.headerLeft}>
           <HeaderBackPressable />
@@ -66,7 +76,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '900',
+    fontWeight: '800',
     color: colors2024['neutral-title-1'],
   },
   headerRight: {

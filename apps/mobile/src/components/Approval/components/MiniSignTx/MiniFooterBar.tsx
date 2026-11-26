@@ -114,11 +114,13 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     width: 24,
     height: 24,
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
   chainLogo: {
     width: 14,
     height: 14,
     borderRadius: 100,
+    borderCurve: 'continuous',
     position: 'absolute',
     bottom: -5,
     right: -5,
@@ -161,6 +163,7 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
   securityLevelTip: {
     marginTop: 10,
     borderRadius: 4,
+    borderCurve: 'continuous',
     paddingVertical: 6,
     paddingHorizontal: 8,
     display: 'flex',

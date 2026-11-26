@@ -1,9 +1,10 @@
 import { useTheme2024 } from '@/hooks/theme';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 import { autoLoginGasAccountIfNeeded } from '@/utils/autoLoginGasAccount';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect } from 'react';
-import { View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import * as apisAccount from '@/core/apis/account';
@@ -316,10 +317,20 @@ function HomePostStartupEffects() {
   );
 }
 
+// Pixel size of up-home.png / loss-home.png. The overview background box
+// follows this ratio so cover does not crop a shorter asset.
+const HOME_OVERVIEW_BG_IMAGE_WIDTH = 786;
+const HOME_OVERVIEW_BG_IMAGE_HEIGHT = 434;
+
 function MultiAddressHome(): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
+  const { width: windowWidth } = useWindowDimensions();
+  const bgImageHeight =
+    (windowWidth * HOME_OVERVIEW_BG_IMAGE_HEIGHT) /
+    HOME_OVERVIEW_BG_IMAGE_WIDTH;
+  const { safeHeaderTop } = useSafeSizes();
   const isLoss = useHome24hProjection(state => !!state.value?.isLoss);
   useRendererDetect({ name: 'MultiAddressHome' });
 
@@ -336,6 +347,7 @@ function MultiAddressHome(): JSX.Element {
           ? require('@/assets2024/singleHome/loss-home.png')
           : require('@/assets2024/singleHome/up-home.png')
       }
+      bgImageHeight={bgImageHeight}
       linearProp={{
         colors: isLight
           ? [colors2024['neutral-bg-1'], colors2024['neutral-bg-2']]
@@ -344,7 +356,11 @@ function MultiAddressHome(): JSX.Element {
         start: { x: 0.5, y: 0 },
         end: { x: 0.5, y: 0.26 },
       }}
-      overwriteStyle={styles.screenContainer}>
+      // Start the whole home scroll area below the status-bar inset. On the
+      // Duo outer screen safe-area-context reports `top = 0` while the native
+      // header still reserves ~38pt, so use the same effective value as the
+      // container instead of the raw safe-area top.
+      overwriteStyle={{ paddingTop: safeHeaderTop }}>
       <View
         style={[styles.paddingContainer]}
         onTouchStart={() => {
@@ -363,17 +379,12 @@ function MultiAddressHome(): JSX.Element {
   );
 }
 
-const getStyle = createGetStyles2024(
-  ({ colors2024, isLight, safeAreaInsets }) => ({
-    screenContainer: {
-      paddingTop: safeAreaInsets.top,
-    },
-    paddingContainer: {
-      paddingHorizontal: 0,
-      flex: 1,
-      flexGrow: 1,
-    },
-  }),
-);
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  paddingContainer: {
+    paddingHorizontal: 0,
+    flex: 1,
+    flexGrow: 1,
+  },
+}));
 
 export default MultiAddressHome;

@@ -179,8 +179,7 @@ export const HyperliquidPerpsEntry = () => {
 
 // Figma: a translucent tint over a 4.5px backdrop blur. The tint alone is
 // see-through (dark neutral-bg-5 is 50% alpha), so it is only used on top of
-// the iOS BlurView; Android has no blur and uses opaque colors instead, like
-// BrowserSearchEntry.
+// the iOS BlurView; Android has no blur and uses opaque colors instead.
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   const tint = isLight
     ? colord(colors2024['neutral-bg-1']).alpha(0.6).toRgbString()
@@ -198,6 +197,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       gap: 4,
       paddingHorizontal: 15,
       borderRadius: 19,
+      borderCurve: 'continuous',
       overflow: 'hidden',
       backgroundColor: IS_IOS ? 'transparent' : androidBackground,
       borderWidth: StyleSheet.hairlineWidth,

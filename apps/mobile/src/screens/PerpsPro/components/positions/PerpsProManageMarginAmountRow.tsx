@@ -184,6 +184,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
       .alpha(0.12)
       .toRgbString(),
     borderRadius: 8,
+    borderCurve: 'continuous',
     marginTop: 8,
     height: 26,
     justifyContent: 'center',

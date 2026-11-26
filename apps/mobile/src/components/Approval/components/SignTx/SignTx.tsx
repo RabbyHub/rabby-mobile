@@ -70,6 +70,7 @@ import { SecurityEngineError } from '../SecurityEngine/SecurityEngineError';
 import { SUPPORT_1559_KEYRING_TYPE } from '@/constant/tx';
 import { getDappSnapshot } from '@/core/serviceApi/dapp';
 import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { createSigningOperationId } from '@/core/utils/signingOperation';
 import {
   getLastTimeGasSelection,
   updateLastTimeGasSelection,
@@ -404,6 +405,8 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     });
   }, [chain.serverId, params.data]);
 
+  const gnosisOperation = Number(params.data[0]?.operation) === 1 ? 1 : 0;
+
   // Only the internal Safe queue has already built a transaction to sign.
   const isViewGnosisSafe =
     origin === INTERNAL_REQUEST_ORIGIN && requestedViewGnosisSafe === true;
@@ -483,6 +486,11 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   >([]);
   const [tempoGasTokenLoading, setTempoGasTokenLoading] = useState(false);
   const [tempoCurrentFeeTokenId, setTempoCurrentFeeTokenId] = useState('');
+  // Kept with tempoCurrentFeeTokenId: a stored pathUSD preference looks the same
+  // as the no-preference default, and only the latter falls back to OUSD.
+  const tempoHasUserFeeTokenPreferenceRef = useRef<boolean | undefined>(
+    undefined,
+  );
   const [tempoPreferredFeeTokenId, setTempoPreferredFeeTokenId] = useState('');
   const security = useActionSecurity(
     preparedActions,
@@ -863,8 +871,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     } // do not overwrite nonce if from === to(cancel transaction)
 
     const explainNonce = (updateNonce ? recommendNonce : tx.nonce) || '0x1';
-    const delegateCall =
-      isGnosisAccount && Number(params?.data?.[0]?.operation) === 1;
+    const delegateCall = isGnosisAccount && gnosisOperation === 1;
     const parseTxPromise = openapi.parseTx({
       chainId: chain.serverId,
       tx: omit(
@@ -1187,6 +1194,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         to: tx.to,
         data: tx.data,
         value: tx.value,
+        operation: gnosisOperation,
         safeTxGas: safeTxGas,
       };
       params.nonce = realNonce;
@@ -1206,6 +1214,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     if (!security.canSubmit()) return;
     if (!(await getApproval()) || !security.canSubmit()) return;
     if (WaitingSignComponent[account.type]) {
+      const signingOperationId = createSigningOperationId();
       apisKeyring.signTypedDataWithUI(
         account.type,
         account.address,
@@ -1213,11 +1222,13 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         {
           brandName: account.brandName,
           version: 'V4',
+          signingOperationId,
         },
       );
 
       resolveApproval({
         uiRequestComponent: WaitingSignComponent[account.type],
+        signingOperationId,
         type: account.type,
         address: account.address,
         data: [account.address, JSON.stringify(typedData)],
@@ -1735,6 +1746,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
           const {
             options,
             currentFeeTokenId,
+            hasUserFeeTokenPreference,
             preferredTokenId,
             selectedOption,
           } = await loadTempoFeeTokenOptionsState({
@@ -1748,6 +1760,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
             maxGasCostRawAmountIn18: calcTempoMaxGasCostRawAmountIn18([tx]),
           });
 
+          tempoHasUserFeeTokenPreferenceRef.current = hasUserFeeTokenPreference;
           setTempoCurrentFeeTokenId(currentFeeTokenId);
           setTempoPreferredFeeTokenId(preferredTokenId);
           setTempoGasTokenList(options);
@@ -1894,15 +1907,25 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       tokenList: cachedTokenItems,
       txFeeToken: tx.feeToken as string | undefined,
       currentFeeTokenId: tempoCurrentFeeTokenId,
+      hasUserFeeTokenPreference: tempoCurrentFeeTokenId
+        ? tempoHasUserFeeTokenPreferenceRef.current
+        : undefined,
       maxGasCostRawAmount: gasExplainResponse.maxGasCostRawAmount,
       maxGasCostRawAmountDecimals: gasToken?.decimals || 18,
       maxGasCostRawAmountIn18,
     })
       .then(
-        ({ options, currentFeeTokenId, preferredTokenId, selectedOption }) => {
+        ({
+          options,
+          currentFeeTokenId,
+          hasUserFeeTokenPreference,
+          preferredTokenId,
+          selectedOption,
+        }) => {
           if (!mounted) {
             return;
           }
+          tempoHasUserFeeTokenPreferenceRef.current = hasUserFeeTokenPreference;
           setTempoCurrentFeeTokenId(currentFeeTokenId);
           setTempoPreferredFeeTokenId(preferredTokenId);
           setTempoGasTokenList(options);

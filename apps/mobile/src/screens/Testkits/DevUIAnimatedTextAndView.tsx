@@ -501,6 +501,7 @@ const getStyles = createGetStyles2024(ctx => {
       marginBottom: 24,
       padding: 12,
       borderRadius: 8,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-2'],
     },
     stressTitle: {
@@ -575,6 +576,7 @@ const getStyles = createGetStyles2024(ctx => {
     sliderTrack: {
       height: 4,
       borderRadius: 2,
+      borderCurve: 'continuous',
     },
     // For bubble slider
     thumbStyle: {
@@ -588,6 +590,7 @@ const getStyles = createGetStyles2024(ctx => {
       width: 14,
       height: 14,
       borderRadius: 14,
+      borderCurve: 'continuous',
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: ctx.colors2024['neutral-bg-1'],
@@ -599,6 +602,7 @@ const getStyles = createGetStyles2024(ctx => {
       width: 10,
       height: 10,
       borderRadius: 10,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['brand-default'],
     },
 
@@ -639,7 +643,7 @@ const getStyles = createGetStyles2024(ctx => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 40,
       lineHeight: 48,
-      fontWeight: '900',
+      fontWeight: '800',
       color: ctx.colors2024['neutral-title-1'],
     },
     numSamples: {

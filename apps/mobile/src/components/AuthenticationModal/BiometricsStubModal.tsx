@@ -130,6 +130,7 @@ const getStyles = createGetStyles(colors => ({
     backgroundColor: colors['neutral-bg1'],
     paddingVertical: SIZES.containerPaddingVertical,
     borderRadius: 16,
+    borderCurve: 'continuous',
     flexDirection: 'column',
     justifyContent: 'space-between',
     alignItems: 'center',

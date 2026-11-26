@@ -74,10 +74,7 @@ export const RightMore: React.FC<{
       content={
         <View style={styles.menu}>
           <Pressable
-            style={({ pressed }) => [
-              styles.menuItem,
-              pressed && styles.menuItemPressed,
-            ]}
+            style={styles.menuItem}
             accessibilityRole="button"
             onPress={handleFavorite}>
             {({ pressed }) => (
@@ -102,10 +99,7 @@ export const RightMore: React.FC<{
             )}
           </Pressable>
           <Pressable
-            style={({ pressed }) => [
-              styles.menuItem,
-              pressed && styles.menuItemPressed,
-            ]}
+            style={styles.menuItem}
             accessibilityRole="button"
             onPress={() => {
               pendingRemoveTokenRef.current = token;
@@ -153,6 +147,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 200,
     padding: 4,
     borderRadius: 16,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-1'],
     ...Platform.select({ android: { elevation: 0 } }),
   },
@@ -173,12 +168,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 8,
     paddingVertical: 12,
     borderRadius: 8,
+    borderCurve: 'continuous',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  menuItemPressed: {
-    backgroundColor: colors2024['neutral-bg-2'],
   },
   favoriteText: {
     color: isLight

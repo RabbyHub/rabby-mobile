@@ -18,12 +18,18 @@ module.exports = {
   testPathIgnorePatterns: [
     '/node_modules/',
     '\\.integration\\.test\\.[jt]sx?$',
-    // Build-script contracts use node:test and the project's Ruby toolchain.
-    '<rootDir>/scripts/.*\\.test\\.(cjs|mjs)$',
+    // Helper-script contracts (build cache, CI upload, Metro/architecture,
+    // page assets, webview codegen) assert repository tooling, not app
+    // behaviour, and several of them depend on the runner environment (proxy,
+    // node/native tooling). Keep them out of the app unit-test job and run them
+    // on demand next to the script they cover, e.g.
+    //   node --test scripts/**/*.test.cjs
+    //   yarn jest --testPathIgnorePatterns=/node_modules/ scripts/foo.test.js
+    '<rootDir>/scripts/.*\\.test\\.(cjs|mjs|js)$',
   ],
   transformIgnorePatterns: [
     // `rabby-api` and `rabby-action` ship ESM-only `dist/*.js`, so tests that
     // render a screen reaching them must transform those packages too.
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|react-native-root-toast|react-native-root-siblings|react-native-walkthrough-tooltip|@debank|@rabby-wallet/rabby-security-engine|@rabby-wallet/rabby-bridge|@rabby-wallet/rabby-api|@rabby-wallet/rabby-action|p-queue|p-timeout|eventemitter3)/)',
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|react-native-root-toast|react-native-root-siblings|react-native-walkthrough-tooltip|@debank|@rabby-wallet/rabby-security-engine|@rabby-wallet/rabby-bridge|@rabby-wallet/rabby-api|@rabby-wallet/rabby-action|p-queue|p-timeout|eventemitter3|react-native-reanimated|@react-navigation)/)',
   ],
 };

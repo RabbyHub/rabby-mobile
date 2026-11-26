@@ -130,6 +130,7 @@ export const RestoreFromCloud2024: React.FC<{
     return (
       <NormalScreenContainer
         noHeader
+        disableColumnInset
         overwriteStyle={styles.loadingContainer}
         style={StyleSheet.flatten([styles.rootLoading])}>
         <View style={styles.empty}>

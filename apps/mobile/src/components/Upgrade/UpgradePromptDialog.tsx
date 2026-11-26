@@ -272,6 +272,7 @@ const styles = StyleSheet.create({
     height: CARD_HEIGHT,
     overflow: 'hidden',
     borderRadius: 20,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: '#FFFFFF',
   },
@@ -342,6 +343,7 @@ const styles = StyleSheet.create({
     height: SLIDER_HEIGHT,
     overflow: 'hidden',
     borderRadius: 200,
+    borderCurve: 'continuous',
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
   },
@@ -355,6 +357,7 @@ const styles = StyleSheet.create({
     height: SLIDER_THUMB_SIZE,
     overflow: 'hidden',
     borderRadius: 200,
+    borderCurve: 'continuous',
   },
   sliderGradient: {
     width: '100%',
@@ -379,5 +382,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: SLIDER_THUMB_SIZE / 2,
+    borderCurve: 'continuous',
   },
 });

@@ -34,6 +34,7 @@ export const BE_SUPPORTED_METHODS: string[] = [
   'eth_getStorageAt',
   'eth_getTransactionCount',
   'eth_chainId',
+  'eth_getTransactionReceipt',
 ];
 
 async function submitTxWithFallbackRpcs<T>(
@@ -82,6 +83,26 @@ let idCounter = Math.floor(Math.random() * MAX);
 function getUniqueId(): number {
   idCounter = (idCounter + 1) % MAX;
   return idCounter;
+}
+
+function createRpcError(error: {
+  message?: unknown;
+  code?: unknown;
+  data?: unknown;
+}) {
+  // Remote fields such as transaction must not become local error metadata.
+  return Object.assign(
+    new Error(
+      typeof error.message === 'string' ? error.message : 'RPC request failed',
+    ),
+    {
+      code:
+        typeof error.code === 'number' && Number.isInteger(error.code)
+          ? error.code
+          : -32603,
+      data: error.data,
+    },
+  );
 }
 
 // TODO: remove
@@ -199,7 +220,7 @@ export class CustomRPCService extends StoreServiceBase<
         timeout,
       },
     );
-    if (data?.error) throw data.error;
+    if (data?.error) throw createRpcError(data.error);
     return data.result;
   };
 
@@ -404,7 +425,7 @@ export class CustomRPCService extends StoreServiceBase<
         timeout,
       },
     );
-    if (data?.error) throw data.error;
+    if (data?.error) throw createRpcError(data.error);
     if (data?.result) return data.result;
     return data;
   };

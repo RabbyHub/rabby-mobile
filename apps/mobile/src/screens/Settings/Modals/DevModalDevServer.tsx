@@ -6,7 +6,6 @@ import React, {
   useState,
 } from 'react';
 import {
-  Dimensions,
   KeyboardAvoidingView,
   ScrollView,
   Switch,
@@ -14,6 +13,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { atom, useAtom } from 'jotai';
 
 import AutoLockView from '@/components/AutoLockView';
@@ -258,12 +258,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: MODAL_H_PADDING,
   },
   modal: {
-    maxWidth: Dimensions.get('window').width - MODAL_H_PADDING * 2,
-    maxHeight: Dimensions.get('window').height * 0.8,
+    maxWidth: getDimensionsSnapshot('window').width - MODAL_H_PADDING * 2,
+    maxHeight: getDimensionsSnapshot('window').height * 0.8,
     paddingTop: 21,
     paddingBottom: 13,
     backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 20,
+    borderCurve: 'continuous',
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
@@ -285,7 +286,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   body: {
     width: '100%',
     paddingHorizontal: MODAL_INNER_H_PADDING,
-    maxHeight: Dimensions.get('window').height * 0.5,
+    maxHeight: getDimensionsSnapshot('window').height * 0.5,
   },
   inputBlock: {
     marginBlock: 12,
@@ -295,6 +296,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colors2024['neutral-bg-2'],
     padding: 12,
     borderRadius: 12,
+    borderCurve: 'continuous',
     marginBlock: 8,
   },
   unifiedHeader: {
@@ -325,6 +327,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     height: 56,
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   portSuffix: {
     fontSize: 16,

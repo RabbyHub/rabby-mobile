@@ -510,13 +510,19 @@ export const SignMainnetCustomGasSheet = ({
                       source={{ uri: resolvedGasToken.logoUrl }}
                       width={16}
                       height={16}
-                      style={StyleSheet.flatten({ borderRadius: 16 })}
+                      style={StyleSheet.flatten({
+                        borderRadius: 16,
+                        borderCurve: 'continuous',
+                      })}
                     />
                   ) : (
                     <RcIconUnknown
                       width={16}
                       height={16}
-                      style={StyleSheet.flatten({ borderRadius: 16 })}
+                      style={StyleSheet.flatten({
+                        borderRadius: 16,
+                        borderCurve: 'continuous',
+                      })}
                     />
                   )}
                   <Text style={styles.gasSelectorModalUsd}>

@@ -9,6 +9,7 @@ import {
   buildGasAccountBridgeTxs,
   buildTopUpGasAccount,
   fetchGasAccountBridgeQuote,
+  getGasAccountBridgeRawAmount,
   topUpGasAccount,
 } from '@/core/apis/gasAccount';
 import { sendRequest } from '@/core/apis/sendRequest';
@@ -251,6 +252,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
     null,
   );
   const [quoteAmountValue, setQuoteAmountValue] = useState<number | null>(null);
+  const [quoteRawAmount, setQuoteRawAmount] = useState<string | null>(null);
   const [bridgeQuoteError, setBridgeQuoteError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showEstimateTip, setShowEstimateTip] = useState(false);
@@ -336,6 +338,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
   const resetBridgeQuoteState = useCallback(() => {
     setBridgeQuote(null);
     setQuoteAmountValue(null);
+    setQuoteRawAmount(null);
     setBridgeQuoteError('');
     setQuoteLoading(false);
   }, []);
@@ -537,12 +540,20 @@ const GasAccountDepositTokenFormInner: React.FC<{
       resetBridgeQuoteState();
       setQuoteLoading(true);
 
-      fetchGasAccountBridgeQuote({
-        token: selectedToken,
-        account: selectedOwnerAccount,
-        usdValue: amountValue,
-      })
-        .then(quote => {
+      Promise.resolve()
+        .then(() => {
+          const rawAmount = getGasAccountBridgeRawAmount({
+            token: selectedToken,
+            usdValue: amountValue,
+          });
+          return fetchGasAccountBridgeQuote({
+            token: selectedToken,
+            account: selectedOwnerAccount,
+            usdValue: amountValue,
+            fromTokenRawAmount: rawAmount,
+          }).then(quote => ({ quote, rawAmount }));
+        })
+        .then(({ quote, rawAmount }) => {
           if (quoteReqIdRef.current !== requestId) {
             return;
           }
@@ -568,6 +579,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
           isSelectingDefaultQuoteRef.current = false;
           setBridgeQuote(quote);
           setQuoteAmountValue(amountValue);
+          setQuoteRawAmount(rawAmount);
         })
         .catch(error => {
           if (quoteReqIdRef.current !== requestId) {
@@ -725,6 +737,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
           account: selectedOwnerAccount,
           quote: bridgeQuote,
           usdValue: amountValue,
+          fromTokenRawAmount: quoteRawAmount || undefined,
         });
 
         let lastHash = '';
@@ -860,6 +873,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
     onWaitDepositResult,
     openDirectOrFallbackToUI,
     quoteAmountValue,
+    quoteRawAmount,
     selectedOwnerAccount,
     selectedToken,
     sendBridgeTxsDirectly,
@@ -1257,6 +1271,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   inputContainer: {
     borderRadius: 16,
+    borderCurve: 'continuous',
     paddingVertical: 28,
     paddingHorizontal: 20,
     backgroundColor: ctx.colors2024['neutral-bg-2'],
@@ -1291,7 +1306,7 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '900',
+    fontWeight: '800',
     color: ctx.colors2024['neutral-title-1'],
     marginBottom: 24,
     textAlign: 'center',
@@ -1300,6 +1315,7 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-line'],
     padding: 4,
     borderRadius: 100,
+    borderCurve: 'continuous',
   },
   tokenContainer: {
     display: 'flex',
@@ -1328,6 +1344,7 @@ const getStyles = createGetStyles2024(ctx => ({
     padding: 4,
     backgroundColor: ctx.colors2024['brand-light-1'],
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   maxButtonText: {
     color: ctx.colors2024['brand-default'],
@@ -1362,6 +1379,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   skeleton: {
     borderRadius: 100,
+    borderCurve: 'continuous',
     backgroundColor: ctx.colors2024['neutral-bg-5'],
   },
   tipTrigger: {
@@ -1390,6 +1408,7 @@ const getStyles = createGetStyles2024(ctx => ({
   tipContentStyle: {
     backgroundColor: ctx.colors2024['neutral-black'],
     borderRadius: 8,
+    borderCurve: 'continuous',
     padding: 0,
   },
   tipTooltipStyle: {
@@ -1405,6 +1424,7 @@ const getStyles = createGetStyles2024(ctx => ({
   depositButton: {
     height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     borderRadius: 16,
+    borderCurve: 'continuous',
   },
   depositButtonTitle: {
     fontFamily: 'SF Pro Rounded',

@@ -121,6 +121,7 @@ const getStyles = createGetStyles(colors => ({
     paddingHorizontal: 12,
     paddingBottom: 12,
     borderRadius: 6,
+    borderCurve: 'continuous',
   },
   nonceSelect: {
     marginBottom: 12,
@@ -135,6 +136,7 @@ const getStyles = createGetStyles(colors => ({
   inputContainer: {
     backgroundColor: colors['neutral-card-2'],
     borderRadius: 4,
+    borderCurve: 'continuous',
     paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',

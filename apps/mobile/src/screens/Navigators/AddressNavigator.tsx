@@ -1,3 +1,4 @@
+import { withScreenPropsInjection } from '@/devtools/screenRegistry/screenInjection';
 import 'react-native-gesture-handler';
 import React from 'react';
 import { RoundedFontStyles } from '@/core/utils/fonts';
@@ -52,6 +53,7 @@ import { APP_TEST_PASSWORD } from '@/constant';
 import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { ImportMethodsHeader } from '../Address/ImportMethodsHeader';
 import { AutoFitCenterHeader } from '@/components/AutoFitCenterHeader';
+import { SafeWindowHeaderInset } from '@/components/SafeWindowFrame/headerInset';
 
 const AddressStack = createNativeStackNavigator<AddressNavigatorParamList>();
 const RegressionSyncExtensionPasswordScreen = withRegressionScenario(
@@ -84,7 +86,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   headerTitleText: {
     color: colors2024['neutral-title-1'],
-    fontWeight: '900',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
   },
@@ -94,7 +96,6 @@ export function AddressNavigator() {
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
   const { colors, colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
@@ -121,7 +122,7 @@ export function AddressNavigator() {
       })}>
       <AddressStack.Screen
         name={RootNames.ReceiveAddressList}
-        component={ReceiveAddressListScreen}
+        component={withScreenPropsInjection(ReceiveAddressListScreen)}
         options={mergeScreenOptions2024([
           {
             headerTitle: t('page.receiveAddressList.title'),
@@ -133,7 +134,7 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.ApprovalAddressList}
-        component={ApprovalAddressListScreen}
+        component={withScreenPropsInjection(ApprovalAddressListScreen)}
         options={mergeScreenOptions2024([
           {
             headerTitle: t('page.approvalsAddressList.title'),
@@ -145,32 +146,40 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.WatchAddressList}
-        component={WatchAddressListScreen}
+        component={withScreenPropsInjection(WatchAddressListScreen)}
         options={mergeScreenOptions({
           headerTitle: t('screens.addressStackTitle.WatchAddressList'),
           title: t('screens.addressStackTitle.WatchAddressList'),
           headerTintColor: colors2024['neutral-title-1'],
           headerTitleStyle: styles.headerTitleText,
           // eslint-disable-next-line react/no-unstable-nested-components
-          headerRight: () => <AddressListScreenButton type="watch-address" />,
+          headerRight: () => (
+            <SafeWindowHeaderInset>
+              <AddressListScreenButton type="watch-address" />
+            </SafeWindowHeaderInset>
+          ),
         })}
       />
       <AddressStack.Screen
         name={RootNames.SafeAddressList}
-        component={SafeAddressListScreen}
+        component={withScreenPropsInjection(SafeAddressListScreen)}
         options={mergeScreenOptions({
           headerTitle: t('screens.addressStackTitle.SafeAddressList'),
           title: t('screens.addressStackTitle.SafeAddressList'),
           headerTintColor: colors2024['neutral-title-1'],
           headerTitleStyle: styles.headerTitleText,
           // eslint-disable-next-line react/no-unstable-nested-components
-          headerRight: () => <AddressListScreenButton type="safe-address" />,
+          headerRight: () => (
+            <SafeWindowHeaderInset>
+              <AddressListScreenButton type="safe-address" />
+            </SafeWindowHeaderInset>
+          ),
         })}
       />
 
       <AddressStack.Screen
         name={RootNames.ImportNewAddress}
-        component={ImportNewAddressScreen}
+        component={withScreenPropsInjection(ImportNewAddressScreen)}
         options={mergeScreenOptions({
           headerTitle: t('screens.addressStackTitle.ImportNewAddress'),
           title: t('screens.addressStackTitle.ImportNewAddress'),
@@ -183,19 +192,20 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.ImportHardwareAddress}
-        component={ImportHardwareAddressScreen}
+        component={withScreenPropsInjection(ImportHardwareAddressScreen)}
         options={mergeScreenOptions({
           // Same native-title overflow as SelectAddMethod (QA 1352).
           header: () => (
             <AutoFitCenterHeader
               title={t('screens.addressStackTitle.ImportHardwareAddress')}
+              titleKey="screens.addressStackTitle.ImportHardwareAddress"
             />
           ),
         })}
       />
       <AddressStack.Screen
         name={RootNames.ImportSuccess}
-        component={ImportSuccessScreen}
+        component={withScreenPropsInjection(ImportSuccessScreen)}
         options={{
           title: t('screens.addressStackTitle.ImportSuccess'),
           headerTintColor: colors['neutral-title-2'],
@@ -203,7 +213,7 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.ImportSuccess2024}
-        component={ImportSuccessScreen2024}
+        component={withScreenPropsInjection(ImportSuccessScreen2024)}
         options={{
           title: t('screens.addressStackTitle.ImportSuccess'),
           headerTintColor: colors2024['neutral-bg-1'],
@@ -212,33 +222,36 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.ImportWatchAddress}
-        component={ImportWatchAddressScreen}
+        component={withScreenPropsInjection(ImportWatchAddressScreen)}
         options={{
           headerTintColor: colors['neutral-title-2'],
         }}
       />
       <AddressStack.Screen
         name={RootNames.ImportWatchAddress2024}
-        component={ImportWatchAddressScreen2024}
+        component={withScreenPropsInjection(ImportWatchAddressScreen2024)}
         options={mergeScreenOptions({
           // Same native-title overflow as SelectAddMethod (QA 1352).
           header: () => (
             <AutoFitCenterHeader
               title={t('screens.addressStackTitle.ImportWatchAddress2024')}
+              titleKey="screens.addressStackTitle.ImportWatchAddress2024"
             />
           ),
         })}
       />
       <AddressStack.Screen
         name={RootNames.ImportMethods}
-        component={ImportMethods}
+        component={withScreenPropsInjection(ImportMethods)}
         options={mergeScreenOptions2024([
           {
             headerShown: true,
             // Fully custom header: a long translation used to overflow the
             // native title slot (QA 1352), so the row now owns the leading
             // slot and truncates the title inside the content width.
-            header: () => <ImportMethodsHeader />,
+            header: () => (
+              <ImportMethodsHeader titleKey="screens.addressStackTitle.ImportMethods" />
+            ),
             title: t('screens.addressStackTitle.ImportMethods'),
             headerTintColor: colors['neutral-title-1'],
             headerTitleStyle: styles.headerTitleText,
@@ -247,26 +260,27 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.ImportSafeAddress}
-        component={ImportSafeAddressScreen}
+        component={withScreenPropsInjection(ImportSafeAddressScreen)}
         options={{
           headerTintColor: colors['neutral-title-2'],
         }}
       />
       <AddressStack.Screen
         name={RootNames.ImportSafeAddress2024}
-        component={ImportSafeAddressScreen2024}
+        component={withScreenPropsInjection(ImportSafeAddressScreen2024)}
         options={mergeScreenOptions({
           // Same native-title overflow as SelectAddMethod (QA 1352).
           header: () => (
             <AutoFitCenterHeader
               title={t('screens.addressStackTitle.ImportSafeAddress2024')}
+              titleKey="screens.addressStackTitle.ImportSafeAddress2024"
             />
           ),
         })}
       />
       <AddressStack.Screen
         name={RootNames.CreateSelectMethod}
-        component={CreateSelectMethod}
+        component={withScreenPropsInjection(CreateSelectMethod)}
         options={mergeScreenOptions({
           headerTitle: t('screens.addressStackTitle.CreateWallet'),
           title: t('screens.addressStackTitle.CreateWallet'),
@@ -279,7 +293,7 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.CreateNewAddress}
-        component={CreateNewAddress}
+        component={withScreenPropsInjection(CreateNewAddress)}
         options={mergeScreenOptions({
           headerTitle: t('screens.addressStackTitle.CreateNewAddress'),
           title: t('screens.addressStackTitle.CreateNewAddress'),
@@ -292,7 +306,7 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.SetPassword2024}
-        component={SetPassword2024}
+        component={withScreenPropsInjection(SetPassword2024)}
         options={mergeScreenOptions({
           headerTitle: t('screens.addressStackTitle.SetPassword'),
           title: t('screens.addressStackTitle.SetPassword'),
@@ -305,15 +319,23 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.CreateChooseBackup}
-        component={CreateChooseBackup}
+        component={withScreenPropsInjection(CreateChooseBackup)}
         options={e => {
+          // Native iOS headers shift a long title right when the back button
+          // sits next to it (QA 1439 on the SE: +20pt in English, centred in
+          // Chinese). The JS header keeps equal leading/trailing slots, so the
+          // title stays centred for every language.
+          const title = e.route.params?.isFirstCreate
+            ? t('screens.addressStackTitle.CreateChooseBackup')
+            : t('screens.addressStackTitle.ChooseBackup');
+          const titleKey = e.route.params?.isFirstCreate
+            ? 'screens.addressStackTitle.CreateChooseBackup'
+            : 'screens.addressStackTitle.ChooseBackup';
           return mergeScreenOptions({
-            headerTitle: e.route.params?.isFirstCreate
-              ? t('screens.addressStackTitle.CreateChooseBackup')
-              : t('screens.addressStackTitle.ChooseBackup'),
-            title: e.route.params?.isFirstCreate
-              ? t('screens.addressStackTitle.CreateChooseBackup')
-              : t('screens.addressStackTitle.ChooseBackup'),
+            title,
+            header: () => (
+              <AutoFitCenterHeader title={title} titleKey={titleKey} />
+            ),
             headerStyle: {
               backgroundColor: colors2024['neutral-bg-1'],
             },
@@ -324,7 +346,7 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.AddressDetail}
-        component={AddressDetailScreen}
+        component={withScreenPropsInjection(AddressDetailScreen)}
         options={{
           headerTitle: t('screens.addressStackTitle.AddressDetail'),
           title: t('screens.addressStackTitle.AddressDetail'),
@@ -337,7 +359,7 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.ImportMoreAddress}
-        component={ImportMoreAddressScreen}
+        component={withScreenPropsInjection(ImportMoreAddressScreen)}
         options={{
           headerTitle: t('screens.addressStackTitle.ImportMoreAddress'),
           headerTitleStyle: {
@@ -349,7 +371,7 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.ImportPrivateKey}
-        component={ImportPrivateKeyScreen}
+        component={withScreenPropsInjection(ImportPrivateKeyScreen)}
         options={{
           headerTitle: t('screens.addressStackTitle.ImportPrivateKey'),
           title: t('screens.addressStackTitle.ImportPrivateKey'),
@@ -360,7 +382,7 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.ImportPrivateKey2024}
-        component={ImportPrivateKeyScreen2024}
+        component={withScreenPropsInjection(ImportPrivateKeyScreen2024)}
         options={{
           headerTitle: t('screens.addressStackTitle.ImportPrivateKey'),
           title: t('screens.addressStackTitle.ImportPrivateKey'),
@@ -369,7 +391,7 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.ImportMnemonic}
-        component={ImportSeedPhraseScreen}
+        component={withScreenPropsInjection(ImportSeedPhraseScreen)}
         options={{
           headerTitle: t('screens.addressStackTitle.ImportMnemonic'),
           title: t('screens.addressStackTitle.ImportMnemonic'),
@@ -381,7 +403,7 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.ImportMnemonic2024}
-        component={ImportSeedPhraseScreen2024}
+        component={withScreenPropsInjection(ImportSeedPhraseScreen2024)}
         options={{
           headerTitle: t('screens.addressStackTitle.ImportMnemonic'),
           title: t('screens.addressStackTitle.ImportMnemonic'),
@@ -390,11 +412,11 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.PreCreateMnemonic}
-        component={PreCreateSeedPhraseScreen}
+        component={withScreenPropsInjection(PreCreateSeedPhraseScreen)}
       />
       <AddressStack.Screen
         name={RootNames.CreateMnemonic}
-        component={CreateSeedPhraseRickCheckScreen}
+        component={withScreenPropsInjection(CreateSeedPhraseRickCheckScreen)}
         options={{
           headerTitle: t('page.newAddress.createNewSeedPhrase'),
           title: t('page.newAddress.createNewSeedPhrase'),
@@ -405,7 +427,7 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.AddMnemonic}
-        component={AddSeedPhraseScreen}
+        component={withScreenPropsInjection(AddSeedPhraseScreen)}
         options={{
           headerTitle: t('screens.addressStackTitle.AddMnemonic'),
           title: t('screens.addressStackTitle.AddMnemonic'),
@@ -413,7 +435,7 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.CreateMnemonicBackup}
-        component={CreateSeedPhraseBackupScreen}
+        component={withScreenPropsInjection(CreateSeedPhraseBackupScreen)}
         options={{
           headerTitle: t('screens.addressStackTitle.CreateMnemonicBackup'),
           title: t('screens.addressStackTitle.CreateMnemonicBackup'),
@@ -425,7 +447,7 @@ export function AddressNavigator() {
       {/* no use RootNames page */}
       <AddressStack.Screen
         name={RootNames.CreateMnemonicVerify}
-        component={CreateSeedPhraseVerifyScreen}
+        component={withScreenPropsInjection(CreateSeedPhraseVerifyScreen)}
         options={{
           headerTitle: t('screens.addressStackTitle.VerifySeedPhrase'),
           title: t('screens.addressStackTitle.VerifySeedPhrase'),
@@ -436,7 +458,7 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.BackupPrivateKey}
-        component={BackupPrivateKeyScreen}
+        component={withScreenPropsInjection(BackupPrivateKeyScreen)}
         options={{
           headerTitle: t('screens.addressStackTitle.BackupPrivateKey'),
           title: t('screens.addressStackTitle.BackupPrivateKey'),
@@ -447,7 +469,7 @@ export function AddressNavigator() {
       />
       {/* <AddressStack.Screen
         name={RootNames.BackupMnemonic}
-        component={BackSeedPhraseScreen}
+        component={withScreenPropsInjection(BackSeedPhraseScreen)}
         options={{
           headerTitle: t('screens.addressStackTitle.BackupSeedPhrase'),
           title: t('screens.addressStackTitle.BackupSeedPhrase'),
@@ -458,7 +480,7 @@ export function AddressNavigator() {
       /> */}
       <AddressStack.Screen
         name={RootNames.RestoreFromCloud}
-        component={RestoreFromCloud}
+        component={withScreenPropsInjection(RestoreFromCloud)}
         options={mergeScreenOptions({
           headerTitle: t('screens.addressStackTitle.RestoreFromCloud', {
             type: IS_IOS ? 'iCloud' : 'Google Drive',
@@ -469,7 +491,9 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.SyncExtensionPassword}
-        component={RegressionSyncExtensionPasswordScreen}
+        component={withScreenPropsInjection(
+          RegressionSyncExtensionPasswordScreen,
+        )}
         options={mergeScreenOptions({
           headerShadowVisible: false,
           headerShown: true,
@@ -478,7 +502,9 @@ export function AddressNavigator() {
 
       <AddressStack.Screen
         name={RootNames.SyncExtensionAccountSuccess}
-        component={SyncExtensionAccountSuccessfulScreen}
+        component={withScreenPropsInjection(
+          SyncExtensionAccountSuccessfulScreen,
+        )}
         options={mergeScreenOptions({
           headerShadowVisible: false,
           headerShown: false,
@@ -487,7 +513,7 @@ export function AddressNavigator() {
 
       <AddressStack.Screen
         name={RootNames.Points}
-        component={PointsScreen}
+        component={withScreenPropsInjection(PointsScreen)}
         options={mergeScreenOptions2024([
           {
             headerTitleAlign: 'center',

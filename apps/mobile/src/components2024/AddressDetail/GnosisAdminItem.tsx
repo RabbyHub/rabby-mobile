@@ -56,6 +56,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderColor: colors2024['brand-default'],
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 90,
+    borderCurve: 'continuous',
     paddingHorizontal: 6,
     paddingVertical: 1,
     fontSize: 12,

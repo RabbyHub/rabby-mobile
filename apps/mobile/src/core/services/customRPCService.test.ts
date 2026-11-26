@@ -15,6 +15,8 @@ jest.mock('@/constant', () => ({
 }));
 
 import { CustomRPCService } from './customRPCService';
+import axios from 'axios';
+import { openapi } from '../request';
 
 class TestCustomRPCService extends CustomRPCService {
   setDefaultRPCForTest(chainServerId: string, rpcUrls: string[]) {
@@ -41,6 +43,77 @@ const createService = (
   service.rpcStatus = {};
   return service;
 };
+
+describe.each(['request', 'defaultRPCRequest'] as const)(
+  'CustomRPCService.%s error boundary',
+  method => {
+    afterEach(() => jest.restoreAllMocks());
+
+    it('preserves standard error fields without promoting remote transaction metadata', async () => {
+      const transaction = { to: '0x3333333333333333333333333333333333333333' };
+      const data = { reason: 'upstream failure', transaction };
+      jest.spyOn(axios, 'post').mockResolvedValue({
+        data: {
+          error: {
+            code: -32000,
+            message: 'backend unavailable',
+            data,
+            transaction,
+            method: 'estimateGas',
+          },
+        },
+      });
+      const pending = new CustomRPCService()[method](
+        'https://rpc.example',
+        'eth_estimateGas',
+        [],
+      );
+      await expect(pending).rejects.toBeInstanceOf(Error);
+      await expect(pending).rejects.toMatchObject({
+        code: -32000,
+        message: 'backend unavailable',
+        data,
+      });
+      await expect(pending).rejects.not.toHaveProperty('transaction');
+      await expect(pending).rejects.not.toHaveProperty('method');
+    });
+
+    it('handles malformed message and code without copying untrusted fields', async () => {
+      jest.spyOn(axios, 'post').mockResolvedValue({
+        data: {
+          error: {
+            message: {},
+            code: 'UNPREDICTABLE_GAS_LIMIT',
+            transaction: {},
+          },
+        },
+      });
+      const pending = new CustomRPCService()[method](
+        'https://rpc.example',
+        'eth_estimateGas',
+        [],
+      );
+      await expect(pending).rejects.toMatchObject({
+        code: -32603,
+        message: 'RPC request failed',
+      });
+      await expect(pending).rejects.not.toHaveProperty('transaction');
+    });
+
+    it('preserves successful RPC results', async () => {
+      jest
+        .spyOn(axios, 'post')
+        .mockResolvedValue({ data: { result: '0x5208' } });
+      await expect(
+        new CustomRPCService()[method](
+          'https://rpc.example',
+          'eth_estimateGas',
+          [],
+        ),
+      ).resolves.toBe('0x5208');
+    });
+  },
+);
 
 describe('CustomRPCService preferred RPC', () => {
   afterEach(() => {
@@ -104,14 +177,36 @@ describe('CustomRPCService preferred RPC', () => {
     await expect(
       service.defaultEthRPC({
         chainServerId,
-        method: 'eth_getTransactionReceipt',
+        method: 'eth_getTransactionByHash',
         params: ['0xhash'],
       }),
     ).resolves.toBe(bestRPC);
     expect(request).toHaveBeenCalledTimes(1);
-    expect(request).toHaveBeenCalledWith(bestRPC, 'eth_getTransactionReceipt', [
+    expect(request).toHaveBeenCalledWith(bestRPC, 'eth_getTransactionByHash', [
       '0xhash',
     ]);
+  });
+
+  it('routes eth_getTransactionReceipt to the Rabby backend RPC', async () => {
+    const chainServerId = 'chain';
+    const service = createService(chainServerId, ['https://external.example']);
+    const request = jest.spyOn(service, 'defaultRPCRequest');
+    const receipt = { status: '0x1' };
+    jest.mocked(openapi.ethRpc).mockResolvedValue(receipt);
+
+    await expect(
+      service.defaultEthRPC({
+        chainServerId,
+        method: 'eth_getTransactionReceipt',
+        params: ['0xhash'],
+      }),
+    ).resolves.toBe(receipt);
+    expect(openapi.ethRpc).toHaveBeenCalledWith(chainServerId, {
+      origin: encodeURIComponent('https://rabby.io'),
+      method: 'eth_getTransactionReceipt',
+      params: ['0xhash'],
+    });
+    expect(request).not.toHaveBeenCalled();
   });
 
   it('reuses one in-flight probe per chain', async () => {

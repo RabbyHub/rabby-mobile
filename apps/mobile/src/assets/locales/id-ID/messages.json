@@ -1223,7 +1223,8 @@
         },
         "notFound": {
           "description": "Nyalakan Bluetooth dan buka kunci OneKey",
-          "title": "Perangkat Tidak Ditemukan"
+          "title": "Perangkat Tidak Ditemukan",
+          "retry": "Cari lagi"
         },
         "select": {
           "title": "Perangkat Tersedia",
@@ -1238,6 +1239,23 @@
           "onDevice": "Masukkan kode PIN di perangkat",
           "title": "Masukkan PIN",
           "description": "Masukkan kode PIN sesuai dengan tata letak angka yang ditampilkan di layar perangkat"
+        },
+        "error": {
+          "deviceNotFound": "OneKey tidak ditemukan. Pastikan perangkat tidak terkunci, Bluetooth menyala, dan perangkat berada di dekat ponsel Anda.",
+          "disconnected": "OneKey terputus. Biarkan perangkat tetap tidak terkunci dan dekat dengan ponsel Anda, lalu coba lagi.",
+          "deviceBusy": "OneKey sedang memproses permintaan lain. Selesaikan atau batalkan di perangkat, lalu coba lagi.",
+          "passphraseDisabled": "Passphrase dinonaktifkan di perangkat. Aktifkan, atau impor ulang dompet ini.",
+          "firmwareTooOld": "Firmware OneKey Anda terlalu lama. Perbarui melalui aplikasi OneKey, lalu coba lagi.",
+          "bluetoothOff": "Bluetooth mati. Nyalakan Bluetooth, lalu coba lagi.",
+          "bluetoothPermission": "Rabby tidak memiliki izin untuk menggunakan Bluetooth. Izinkan Bluetooth (atau Lokasi di Android 11 ke bawah) untuk Rabby di Pengaturan, lalu coba lagi.",
+          "locationServicesDisabled": "Layanan lokasi dinonaktifkan. Aktifkan untuk mencari perangkat Bluetooth.",
+          "bluetoothUnsupported": "Bluetooth tidak didukung di ponsel ini.",
+          "scanFailed": "Pencarian Bluetooth gagal. Silakan coba lagi.",
+          "pairingFailed": "Pemasangan Bluetooth gagal. Terima permintaan pemasangan di ponsel dan OneKey Anda, lalu coba lagi.",
+          "pairingInvalid": "Pemasangan Bluetooth sudah tidak valid. Lupakan OneKey di pengaturan Bluetooth ponsel Anda, lalu pasangkan lagi.",
+          "pinInvalid": "PIN salah. Silakan coba lagi.",
+          "cancelled": "Permintaan dibatalkan.",
+          "openSettings": "Buka Pengaturan"
         }
       },
       "keystone": {
@@ -1918,7 +1936,6 @@
       "dataAnalysis": "Bantu tingkatkan Rabby",
       "dataAnalysisDesc": "Bagikan data penggunaan anonim untuk membantu meningkatkan Rabby. Data yang dikumpulkan tidak dikaitkan dengan Anda atau akun Anda.",
       "bugReportChat": "Bagikan Umpan Balik melalui Obrolan",
-      "features": "Fitur",
       "manageWallets": "Kelola Dompet"
     },
     "settings": {
@@ -2236,7 +2253,10 @@
           "attachedTpSlUnresolved": "Pengiriman TP/SL sebelumnya untuk pasar ini belum terselesaikan. Periksa Order Terbuka dan Posisi sebelum mencoba lagi.",
           "orderFilled": "Order terisi.",
           "orderPlaced": "Order ditempatkan.",
-          "orderFailed": "Order gagal."
+          "orderFailed": "Order gagal.",
+          "scale": "Order Bertingkat",
+          "scaleDescription": "Tetapkan rentang harga dan tempatkan beberapa sub-order limit",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "Harga post-only harus lebih rendah dari harga jual terbaik agar tidak langsung terisi.",
@@ -2250,6 +2270,9 @@
           "tpSl": {
             "title": "TP/SL",
             "description": "Membuat order TP/SL pasar dasar. Untuk fitur lanjutan seperti TP/SL sebagian, atur TP/SL pada posisi terbuka."
+          },
+          "randomize": {
+            "description": "Pengacakan memvariasikan ukuran setiap suborder hingga ±20%, dengan tetap mematuhi ukuran order maksimum dan batas lainnya."
           },
           "reduceOnly": {
             "title": "Hanya Kurangi",
@@ -2347,7 +2370,8 @@
             "orders": "Riwayat Order",
             "trade": "Riwayat Perdagangan",
             "transaction": "Riwayat Setor/Tarik",
-            "funding": "Biaya Pendanaan"
+            "funding": "Biaya Pendanaan",
+            "twap": "Riwayat TWAP"
           },
           "empty": {
             "orders": "Tidak ada riwayat order",
@@ -2529,6 +2553,101 @@
           "cancelPartial": "{{success}} order dibatalkan; {{failed}} gagal",
           "cancelFailed": "Gagal membatalkan order",
           "cancelContextChanged": "Akun telah berubah. Coba lagi."
+        },
+        "scaleOrder": {
+          "lowerPrice": "Harga Terendah",
+          "upperPrice": "Harga Tertinggi",
+          "size": "Jumlah",
+          "count": "Jumlah Order (2–100)",
+          "distribution": "Distribusi Jumlah",
+          "flat": "Merata",
+          "ascending": "Menaik",
+          "descending": "Menurun",
+          "flatDescription": "Setiap order mendapatkan jumlah yang sama",
+          "ascendingDescription": "Jumlah order bertambah saat harga naik",
+          "descendingDescription": "Jumlah order bertambah saat harga turun",
+          "previewBuy": "Pratinjau Beli",
+          "previewSell": "Pratinjau Jual",
+          "totalSize": "Jumlah Total",
+          "averagePrice": "Harga Rata-rata",
+          "result": "{{accepted}} diterima, {{rejected}} ditolak, {{unresolved}} menunggu konfirmasi",
+          "unknown": "Hasil order menunggu konfirmasi. Periksa order terbuka dan riwayat transaksi sebelum membuat order lain.",
+          "errors": {
+            "range": "Masukkan harga valid; harga tertinggi harus melebihi harga terendah.",
+            "count": "Masukkan bilangan bulat antara 2 dan 100.",
+            "size": "Masukkan kuantitas order lebih besar dari 0 yang memenuhi ketentuan presisi kuantitas pasar ini.",
+            "duplicatePrice": "Beberapa harga order sama setelah disesuaikan dengan presisi harga yang diizinkan. Perluas rentang harga atau kurangi jumlah order.",
+            "minimum": "Setelah disesuaikan dengan presisi kuantitas yang diizinkan, setiap sub-order harus bernilai setidaknya $10.",
+            "maximum": "Nilai total order melebihi batas yang diizinkan untuk pasar ini.",
+            "capacity": "Kapasitas perdagangan tidak cukup untuk kumpulan order ini.",
+            "reduceOnly": "Total kuantitas order melebihi kuantitas posisi yang saat ini dapat ditutup."
+          }
+        },
+        "twap": {
+          "description": "Pasang order pada interval yang ditentukan sendiri",
+          "totalTime": "Total waktu",
+          "durationFieldLabel": "Total waktu (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} menit",
+          "minuteValue_one": "{{t}} menit",
+          "confirmationDuration": "{{t}} menit",
+          "totalSize": "Total jumlah",
+          "selectTime": "Pilih total waktu",
+          "reset": "Atur ulang",
+          "randomize": "Acak",
+          "randomized": "Diacak",
+          "durationHint": "Durasi order TWAP adalah 5–1439 menit.",
+          "minimum": "Jumlah total minimum adalah {{amount}}",
+          "filled": "Terisi",
+          "duration": "Waktu berlalu",
+          "runtime": "Waktu berjalan",
+          "averagePrice": "Harga rata-rata",
+          "end": "Akhiri",
+          "detail": "Detail",
+          "add": "Tambah",
+          "detailTitle": "Detail TWAP aktif",
+          "historyDetailTitle": "Detail riwayat TWAP",
+          "trades": "Transaksi",
+          "size": "Jumlah",
+          "fee": "Biaya",
+          "noTrades": "Belum ada transaksi",
+          "endTitle": "Konfirmasi Penghentian Order TWAP",
+          "endMessage": "Setelah dikonfirmasi, order TWAP Anda akan dihentikan dan semua order yang masih terbuka dari TWAP ini akan dibatalkan secara otomatis.",
+          "ending": "Mengakhiri…",
+          "ended": "Order TWAP diakhiri.",
+          "placed": "Order TWAP {{coin}} dipasang.",
+          "unknownOutcome": "Hasil TWAP {{coin}} menunggu konfirmasi. Periksa order dan riwayat sebelum memasang order lain.",
+          "unknown": "Hasil TWAP menunggu konfirmasi. Periksa order dan riwayat sebelum mencoba lagi.",
+          "loadError": "Gagal memuat order TWAP. Ketuk untuk mencoba lagi.",
+          "endedLabel": "Berakhir",
+          "skipConfirmation": "Jangan tampilkan konfirmasi ganda untuk order TWAP lagi.",
+          "averageFilledPrice": "Harga rata-rata terisi",
+          "status": {
+            "working": "Berjalan",
+            "waiting": "Menunggu",
+            "filled": "Terisi",
+            "cancelled": "Dibatalkan",
+            "expired": "Kedaluwarsa",
+            "unknown": "Tidak diketahui"
+          },
+          "fills": {
+            "loading": "Memuat transaksi…",
+            "error": "Gagal memuat transaksi. Ketuk untuk mencoba lagi."
+          },
+          "errors": {
+            "amountRequired": "Masukkan jumlah order.",
+            "amountTooSmall": "Nilai order TWAP harus minimal $100.",
+            "amountExceedsMaximum": "Order melebihi batas maksimum yang tersedia.",
+            "invalidPrecision": "Masukkan jumlah sesuai presisi jumlah pasar ini.",
+            "priceUnavailable": "Harga saat ini tidak tersedia. Silakan coba lagi.",
+            "durationRequired": "Masukkan total waktu.",
+            "durationInvalid": "Masukkan jumlah menit dalam bilangan bulat.",
+            "durationTooShort": "Durasi minimum TWAP adalah 5 menit.",
+            "durationTooLong": "Durasi maksimum TWAP adalah 1439 menit.",
+            "capacity": "Kapasitas perdagangan tidak cukup untuk order ini.",
+            "reduceOnly": "Order melebihi jumlah posisi yang dapat ditutup.",
+            "contextChanged": "Akun, order, atau pasar berubah. Silakan tinjau ulang order."
+          }
         }
       },
       "limitOrders": "Limit Order",
@@ -2593,7 +2712,8 @@
         "estReceive": "Estimasi Terima: {{balance}}",
         "invalidNumber": "Silakan masukkan angka yang valid",
         "fetchQuoteFailed": "Gagal mendapatkan penawaran setoran. Silakan ganti token.",
-        "estReceiveTooltip": "Setoran lintas-rantai diproses melalui LiFi, mungkin mengalami sedikit slippage. Perkiraan tiba dalam {{number}} detik."
+        "estReceiveTooltip": "Setoran lintas-rantai diproses melalui LiFi, mungkin mengalami sedikit slippage. Perkiraan tiba dalam {{number}} detik.",
+        "estReceiveTooltipV2": "Setoran lintas-rantai diproses melalui {{name}}, mungkin mengalami sedikit slippage. Perkiraan tiba dalam {{number}} detik."
       },
       "PerpsWithdrawPopup": {
         "feeTip": "Biaya: $1,00",
@@ -2734,9 +2854,6 @@
       "closeAllConfirmTitle": "Konfirmasi tutup semua posisi",
       "closeAllConfirmMessage": "Semua posisi terbuka Anda akan ditutup pada harga pasar.",
       "closeAll": "Tutup semua posisi",
-      "assetPage": {
-        "hyperliquidPosition": "Posisi Hyperliquid"
-      },
       "invitePopup": {
         "title": "Hemat Biaya Hyperliquid",
         "activatedFailed": "Aktivasi gagal",
@@ -2744,9 +2861,6 @@
         "hyperliquidFee": "Biaya trading Hyperliquid.",
         "activatedSuccess": "4% penghematan biaya Hyperliquid diaktifkan",
         "description": "Gunakan kode Rabby untuk mengaktifkan"
-      },
-      "dappSelect": {
-        "title": "Pilih Penyedia Perps"
       },
       "search": {
         "placeholder": "Cari Perps",
@@ -2966,9 +3080,6 @@
         "crossDesc": "Semua posisi berbagi margin yang sama. Ini mengurangi kemungkinan satu posisi dilikuidasi, tetapi semua dana cross margin dapat hilang saat pasar bergerak ekstrem.",
         "crossTitle": "Margin Silang"
       },
-      "guideEntry": {
-        "gotIt": "Mengerti"
-      },
       "PerpsAbout": {
         "title": "Tentang"
       }
@@ -3024,12 +3135,7 @@
         "risky": "Berisiko"
       },
       "repayDetail": {
-        "actions": "Bayar kembali",
-        "tabs": {
-          "collateral": "Jaminan",
-          "wallet": "Saldo dompet"
-        },
-        "repayWith": "Bayar dengan"
+        "actions": "Bayar kembali"
       },
       "supplyDetail": {
         "availableToBorrow": "Tersedia untuk dipinjam",
@@ -3050,7 +3156,6 @@
         "almostReachedError": "Jumlah maksimum yang tersedia untuk dipinjam terbatas karena batas peminjaman protokol sudah hampir tercapai.",
         "borrowingUnavailable": "Aset ini tidak tersedia untuk dipinjam dalam mode saat ini.",
         "almostReachedWarning": "Batas pinjaman protokol adalah 100% untuk aset ini. Pinjaman lebih lanjut tidak tersedia.",
-        "swapDebt": "Tukar",
         "borrowed": "Dipinjam",
         "noSupplyDesc": "Untuk meminjam, Anda perlu menyetor aset sebagai jaminan.",
         "noSupplyPrefix": "Belum ada setoran:"
@@ -3162,79 +3267,18 @@
         "disableTitle": "Nonaktifkan",
         "unavailableTips": "Aset setoran/pinjaman Anda saat ini tidak didukung.",
         "description": "Mengaktifkan E-Mode memungkinkan Anda memaksimalkan daya pinjaman Anda. Namun, pinjaman dibatasi pada aset dalam kategori yang dipilih.",
-        "enabled": "• Diaktifkan",
-        "debtSwapSelector": {
-          "header": {
-            "borrow": "Peminjaman saya",
-            "assets": "Token/Saldo",
-            "apy": "APY"
-          },
-          "title": "Pilih Token Pinjam"
-        },
-        "collateralSwapSelector": {
-          "header": {
-            "assets": "Token",
-            "collateral": "Jaminan Saya"
-          },
-          "title": "Pilih Token Jaminan"
-        }
+        "enabled": "• Diaktifkan"
       },
       "disabled": "DINONAKTIFKAN",
-      "debtSwap": {
-        "actions": {
-          "borrowed": "Dipinjam",
-          "title": "Konversi utang",
-          "select": "Pilih",
-          "amount": "Jumlah",
-          "swapTo": "Konversi ke"
-        },
-        "overview": {
-          "borrowAPY": "APY Pinjaman",
-          "borrowValueAfter": "Saldo pinjaman setelah konversi",
-          "title": "Ikhtisar Transaksi"
-        },
-        "button": {
-          "swap": "Konversi"
-        },
-        "borrowBalance": "Saldo pinjaman",
-        "title": "Konversi posisi pinjaman",
-        "priceImpactTips": "Dampak harga tinggi ({{lostValue}}). Karena likuiditas rendah atau ukuran order kecil, estimasi rute ini dapat menyimpang cukup besar.",
-        "lpDangerWarning": "Setelah pertukaran ini, faktor kesehatan Anda akan sangat rendah dan dapat mengakibatkan likuidasi. Silakan pilih aset lain atau kurangi jumlah pertukaran untuk tetap aman.",
-        "lpRiskWarning": "Faktor kesehatan rendah setelah pertukaran. Posisi Anda akan membawa risiko likuidasi yang lebih tinggi.",
-        "maxLtvWarning": "Jaminan tidak cukup untuk menutupi posisi pinjaman baru. Dompet harus memiliki sisa daya pinjaman untuk melakukan perpindahan utang."
-      },
       "netApy": "APY bersih",
       "totalSupplied": "Total disetor",
       "totalBorrowed": "Total dipinjam",
-      "repayWithCollateral": {
-        "action": {
-          "title": "Bayar kembali dengan {{collateral}}"
-        },
-        "overview": {
-          "borrowValueAfter": "Saldo pinjam setelah dilunasi",
-          "title": "Ikhtisar Transaksi",
-          "collateralValueAfter": "Saldo jaminan setelah pembayaran kembali"
-        },
-        "button": {
-          "repay": "Bayar kembali"
-        },
-        "toRepay": "Jumlah yang diharapkan untuk dilunasi",
-        "collateralNotEnough": "Saldo jaminan Anda lebih rendah dari jumlah yang dipilih.",
-        "repayWith": "Jaminan untuk pelunasan",
-        "insufficientLiquidity": "Likuiditas tidak mencukupi.",
-        "flashLoanDisabled": "Konversi posisi dinonaktifkan untuk aset ini karena alasan keamanan.",
-        "frozenCollateral": "Aset ini dibekukan karena keputusan komunitas Aave."
-      },
       "repayWithAToken": {
         "header": {
           "balance": "Saldo",
           "assets": "Token"
         },
-        "title": "Pilih Token Pembayaran Kembali",
-        "zeroLtvCollateralTips": "Anda memiliki jaminan berikut dengan LTV = 0. Sesuai aturan pelunasan dengan jaminan, Anda harus menggunakan jaminan ini terlebih dahulu untuk melunasi."
-      },
-      "signFallback": {
-        "preExecFailedUseFullSign": "Simulasi Gagal. Transaksi ini kemungkinan besar akan gagal karena kesalahan AAVE."
+        "title": "Pilih Token Pembayaran Kembali"
       }
     },
     "address": {
@@ -3242,20 +3286,6 @@
         "btnCopyAddress": "Salin Alamat",
         "title": "Terima aset"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "Pilih Penyedia Prediksi"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableDesc": "Layanan ini tidak didukung di wilayah Anda saat ini.",
-      "serviceUnavailableTitle": "Layanan Tidak Tersedia"
-    },
-    "DAppFrame": {
-      "walletBalance": "Dompet/Saldo",
-      "netWorth": "Kekayaan bersih",
-      "selectAWallet": "Pilih Dompet"
     },
     "meme": {
       "tokenHeader": {
@@ -3421,7 +3451,7 @@
       "title": "Konversi Dust"
     },
     "walletConnect": {
-      "screenTitle": "Hubungkan Dompet",
+      "screenTitle": "Pindai untuk Terhubung",
       "connectingToRabby": "Menghubungkan ke Rabby",
       "pairingFailed": "Penyandingan WalletConnect gagal.",
       "proposalNotReceived": "Kode QR WalletConnect mungkin sudah kedaluwarsa. Muat ulang lalu coba lagi.",

@@ -114,7 +114,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     gap: BOTTOM_BUTTON_GAP,
     paddingBottom: BOTTOM_BUTTON_BOTTOM_OFFSET,
   },
-  button: { borderRadius: 10 },
+  button: { borderRadius: 10, borderCurve: 'continuous' },
   buttonTitle: {
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',

@@ -43,6 +43,7 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 4,
+    borderCurve: 'continuous',
     borderWidth: 1.25,
     borderColor: PERPS_PRO_DIALOG_TOKENS.checkboxBorder,
   },

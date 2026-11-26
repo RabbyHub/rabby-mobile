@@ -32,7 +32,7 @@ describe('history detail title font metrics', () => {
       const text = view.getByText(title);
       const style = StyleSheet.flatten(text.props.style);
       expect(style.lineHeight).toBeUndefined();
-      expect(style).toMatchObject({ fontSize: 20, fontWeight: '900' });
+      expect(style).toMatchObject({ fontSize: 20, fontWeight: '800' });
       expect(text.props.numberOfLines).toBe(1);
     },
   );

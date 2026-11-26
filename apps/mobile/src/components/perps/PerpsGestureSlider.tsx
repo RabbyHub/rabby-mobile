@@ -428,7 +428,7 @@ export const PerpsGestureSlider = ({
 
 const styles = StyleSheet.create({
   container: { height: 40, justifyContent: 'center' },
-  track: { height: 4, borderRadius: 2 },
+  track: { height: 4, borderRadius: 2, borderCurve: 'continuous' },
   absolute: { position: 'absolute', left: 0 },
   thumb: {
     position: 'absolute',
@@ -436,5 +436,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
+    borderCurve: 'continuous',
   },
 });

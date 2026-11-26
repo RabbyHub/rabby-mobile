@@ -415,12 +415,6 @@ export const LendingBorrowListContent: React.FC<
   );
 };
 
-const LendingBorrowList: React.FC = () => {
-  return <LendingBorrowListContent />;
-};
-
-export default LendingBorrowList;
-
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flex: 1,
@@ -435,7 +429,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   titleText: {
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '900',
+    fontWeight: '800',
     textAlign: 'center',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
@@ -550,6 +544,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingVertical: 12,
     backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: 6,
+    borderCurve: 'continuous',
     marginTop: 0,
     gap: 2,
   },

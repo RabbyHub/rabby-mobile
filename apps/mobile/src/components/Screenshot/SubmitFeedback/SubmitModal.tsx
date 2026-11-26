@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Dimensions,
   GestureResponderEvent,
   Image,
   Keyboard,
@@ -8,6 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { useTranslation } from 'react-i18next';
 
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
@@ -304,7 +304,7 @@ const SIZES = {
 //   return (imageWrapperW - editIconWrapperW) / 2;
 // }
 const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
-  const winLayout = Dimensions.get('window');
+  const winLayout = getDimensionsSnapshot('window');
   const modalWidth = winLayout.width - SIZES.MODAL_MASK_H_PADDING * 2;
 
   return {
@@ -345,6 +345,7 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       paddingBottom: SIZES.MODAL_V_PADDING,
       backgroundColor: colors2024['neutral-bg-1'],
       borderRadius: 20,
+      borderCurve: 'continuous',
       position: 'relative',
       alignItems: 'center',
       justifyContent: 'center',
@@ -391,6 +392,7 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       minHeight: SIZES.IMG_MIN_H,
       flexShrink: 1,
       borderRadius: 21,
+      borderCurve: 'continuous',
       borderWidth: 1,
       borderStyle: 'solid',
       borderColor: colors2024['neutral-line'],
@@ -399,7 +401,7 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       overflow: 'hidden',
       // ...makeDebugBorder(),
     },
-    image: IS_IOS ? { borderRadius: 21 } : {},
+    image: IS_IOS ? { borderRadius: 21, borderCurve: 'continuous' } : {},
     submitArea: {
       position: 'relative',
       width: '100%',
@@ -459,6 +461,7 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       gap: 4,
       padding: 12,
       borderRadius: 8,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-bg-5'],
     },
     alertText: {

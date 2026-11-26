@@ -1,3 +1,4 @@
+import { withScreenPropsInjection } from '@/devtools/screenRegistry/screenInjection';
 import { RoundedFontStyles } from '@/core/utils/fonts';
 import { useTranslation } from 'react-i18next';
 
@@ -44,7 +45,7 @@ export function SettingNavigator() {
       })}>
       <SettingsStack.Screen
         name={RootNames.Settings}
-        component={AuditedSettingsScreen}
+        component={withScreenPropsInjection(AuditedSettingsScreen)}
         options={mergeScreenOptions2024([
           {
             headerTitle: () => (
@@ -60,7 +61,7 @@ export function SettingNavigator() {
       />
       <SettingsStack.Screen
         name={RootNames.SetPassword}
-        component={SetPasswordScreen}
+        component={withScreenPropsInjection(SetPasswordScreen)}
         options={{
           title: '',
           headerTitle: '',
@@ -76,7 +77,7 @@ export function SettingNavigator() {
       />
       <SettingsStack.Screen
         name={RootNames.WalletConnect}
-        component={WalletConnectScreen}
+        component={withScreenPropsInjection(WalletConnectScreen)}
         options={mergeScreenOptions({
           title: t('page.walletConnect.screenTitle'),
           headerTitle: t('page.walletConnect.screenTitle'),
@@ -93,7 +94,7 @@ export function SettingNavigator() {
       />
       <SettingsStack.Screen
         name={RootNames.CustomTestnet}
-        component={CustomTestnetScreen}
+        component={withScreenPropsInjection(CustomTestnetScreen)}
         options={{
           title: 'Custom Network',
           headerTitle: 'Custom Network',
@@ -104,7 +105,7 @@ export function SettingNavigator() {
       {__DEV__ && (
         <SettingsStack.Screen
           name={RootNames.ProviderControllerTester}
-          component={ProviderControllerTester}
+          component={withScreenPropsInjection(ProviderControllerTester)}
           options={{
             title: 'Settings',
           }}

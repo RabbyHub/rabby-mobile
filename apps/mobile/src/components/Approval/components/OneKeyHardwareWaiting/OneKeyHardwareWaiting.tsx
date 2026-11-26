@@ -17,7 +17,11 @@ import type { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { adjustV } from '@/utils/gnosis';
 import { apisSafe } from '@/core/apis/safe';
-import { emitSignComponentAmounted } from '@/core/utils/signEvent';
+import {
+  cancelSignComponentAmounted,
+  emitSignComponentAmounted,
+} from '@/core/utils/signEvent';
+import { listenForSignFinished } from '@/core/utils/signingOperation';
 import type { RetryUpdateType } from '@/utils/errorTxRetry';
 import {
   getTxFailedResult,
@@ -30,9 +34,12 @@ import useAsync from 'react-use/lib/useAsync';
 import { useUnmount } from 'ahooks';
 import { Text } from '@/components/Typography';
 import { useRetryMinPending } from '@/components/Approval/hooks/useRetryMinPending';
+import { apiOneKey } from '@/core/apis';
+import { getOneKeyErrorMessage } from '@/utils/onekeyError';
 
 interface ApprovalParams {
   address: string;
+  signingOperationId: string;
   chainId?: number;
   isGnosis?: boolean;
   data?: string[];
@@ -113,31 +120,52 @@ export const OneKeyHardwareWaiting = ({
   const account = params.isGnosis ? params.account! : $account;
 
   const cancelRef = useRef(false);
+  const operationActiveRef = useRef(true);
+  const signFinishedSubscriptionRef = useRef<(() => void) | undefined>(
+    undefined,
+  );
+
+  // Mirrors connectStatus for the unmount handler.
+  const waitingOnDeviceRef = useRef(true);
+
+  const releaseDevice = () => {
+    // The device may still show the confirmation screen; release it so it
+    // does not stay busy for the next request.
+    if (waitingOnDeviceRef.current) {
+      waitingOnDeviceRef.current = false;
+      apiOneKey.cancel();
+    }
+  };
 
   const handleCancel = () => {
+    operationActiveRef.current = false;
     cancelRef.current = true;
+    releaseDevice();
     rejectApproval('user cancel');
   };
 
   useUnmount(() => {
     if (!cancelRef.current) {
+      releaseDevice();
       rejectApproval('user cancel');
     }
   });
 
-  const [isRetrying, setIsRetrying] = React.useState(false);
+  const retryingRef = useRef(false);
 
   const { markRetryStarted, afterMinPending } = useRetryMinPending();
 
   const handleRetry = async (showToast = true) => {
-    if (isRetrying) {
-      return;
-    }
     if (connectStatus === APPROVAL_STATUS_MAP.SUBMITTING) {
       toast.success(t('page.signFooterBar.ledger.resubmited'));
       return;
     }
-    setIsRetrying(true);
+    // One hardware sign at a time: a second tap while the device is still
+    // working would start another sign (device busy / double confirm).
+    if (retryingRef.current || connectStatus === APPROVAL_STATUS_MAP.WAITING) {
+      return;
+    }
+    retryingRef.current = true;
 
     setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
     markRetryStarted();
@@ -160,17 +188,17 @@ export const OneKeyHardwareWaiting = ({
     // Fire and forget: this resolves only when signing ends, and a failed
     // attempt is reported through SIGN_FINISHED instead.
     void notificationServiceApi
-      .callCurrentRequestDeferFn(true)
+      .callCurrentRequestDeferFn(true, params.signingOperationId)
       .catch(console.error);
     if (showToast) {
       toast.success(t('page.signFooterBar.ledger.resent'));
     }
-    setIsRetrying(false);
   };
 
   const init = async () => {
     const account = params.isGnosis ? params.account! : $account;
-    const approval = (await getApproval())!;
+    const approval = await getApproval();
+    if (!approval || !operationActiveRef.current) return;
 
     const isSignText = params.isGnosis
       ? true
@@ -189,63 +217,81 @@ export const OneKeyHardwareWaiting = ({
         }
       }
     }
+    if (!operationActiveRef.current) return;
+
     eventBus.addListener(EVENTS.COMMON_HARDWARE.REJECTED, async data => {
+      retryingRef.current = false;
       setErrorMessage(data);
       setConnectStatus(APPROVAL_STATUS_MAP.REJECTED);
     });
     eventBus.addListener(EVENTS.TX_SUBMITTING, async () => {
       setConnectStatus(APPROVAL_STATUS_MAP.SUBMITTING);
     });
-    eventBus.addListener(EVENTS.SIGN_FINISHED, async data => {
-      if (data.success) {
-        cancelRef.current = true;
-        let sig = data.data;
-        setResult(sig);
-        setConnectStatus(APPROVAL_STATUS_MAP.SUBMITTED);
-        try {
-          if (params.isGnosis) {
-            sig = adjustV('eth_signTypedData', sig);
-            const safeMessage = params.safeMessage;
-            if (safeMessage) {
-              await apisSafe.handleGnosisMessage({
-                signature: data.data,
-                signerAddress: params.account!.address!,
-              });
-            } else {
-              const sigs = await apisSafe.getGnosisTransactionSignatures();
-              if (sigs.length > 0) {
-                await apisSafe.gnosisAddConfirmation(
-                  account.address,
-                  data.data,
-                );
+    signFinishedSubscriptionRef.current = listenForSignFinished(
+      params.signingOperationId,
+      () => operationActiveRef.current,
+      async data => {
+        retryingRef.current = false;
+        if (data.success) {
+          let sig = data.data;
+          setResult(sig);
+          setConnectStatus(APPROVAL_STATUS_MAP.SUBMITTED);
+          try {
+            if (params.isGnosis) {
+              sig = adjustV('eth_signTypedData', sig);
+              const safeMessage = params.safeMessage;
+              if (safeMessage) {
+                await apisSafe.handleGnosisMessage({
+                  signature: data.data,
+                  signerAddress: params.account!.address!,
+                });
               } else {
-                await apisSafe.gnosisAddSignature(account.address, data.data);
-                await apisSafe.postGnosisTransaction();
+                const sigs = await apisSafe.getGnosisTransactionSignatures();
+                if (sigs.length > 0) {
+                  await apisSafe.gnosisAddConfirmation(
+                    account.address,
+                    data.data,
+                  );
+                } else {
+                  await apisSafe.gnosisAddSignature(account.address, data.data);
+                  await apisSafe.postGnosisTransaction();
+                }
               }
             }
+          } catch (e: any) {
+            setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
+            setErrorMessage(e.message);
+            return;
           }
-        } catch (e: any) {
-          setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
-          setErrorMessage(e.message);
-          return;
+
+          operationActiveRef.current = false;
+          cancelRef.current = true;
+          setSignFinishedData({
+            data: sig,
+            approvalId: approval.id,
+          });
+        } else {
+          Sentry.captureException(
+            new Error('OneKey sign error: ' + JSON.stringify(data)),
+          );
+          afterMinPending(() => {
+            setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
+            setErrorMessage(
+              getOneKeyErrorMessage(
+                data.errorCode !== undefined
+                  ? { code: data.errorCode, message: data.errorMsg }
+                  : data.errorMsg,
+                t,
+              ) ||
+                data.errorMsg ||
+                '',
+            );
+          });
         }
+      },
+    );
 
-        setSignFinishedData({
-          data: sig,
-          approvalId: approval.id,
-        });
-      } else {
-        Sentry.captureException(
-          new Error('OneKey sign error: ' + JSON.stringify(data)),
-        );
-        afterMinPending(() => {
-          setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
-          setErrorMessage(data.errorMsg);
-        });
-      }
-    });
-
-    emitSignComponentAmounted();
+    emitSignComponentAmounted(params.signingOperationId);
   };
 
   React.useEffect(() => {
@@ -258,9 +304,12 @@ export const OneKeyHardwareWaiting = ({
     mountedRef.current = true;
 
     return () => {
+      operationActiveRef.current = false;
+      signFinishedSubscriptionRef.current?.();
+      signFinishedSubscriptionRef.current = undefined;
+      cancelSignComponentAmounted(params.signingOperationId);
       eventBus.removeAllListeners(EVENTS.COMMON_HARDWARE.REJECTED);
       eventBus.removeAllListeners(EVENTS.TX_SUBMITTING);
-      eventBus.removeAllListeners(EVENTS.SIGN_FINISHED);
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -278,6 +327,13 @@ export const OneKeyHardwareWaiting = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signFinishedData, isClickDone]);
+
+  React.useEffect(() => {
+    waitingOnDeviceRef.current = connectStatus === APPROVAL_STATUS_MAP.WAITING;
+    if (connectStatus !== APPROVAL_STATUS_MAP.WAITING) {
+      retryingRef.current = false;
+    }
+  }, [connectStatus]);
 
   React.useEffect(() => {
     setVisible(true);

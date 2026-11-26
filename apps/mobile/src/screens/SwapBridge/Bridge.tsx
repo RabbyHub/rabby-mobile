@@ -16,6 +16,7 @@ type BridgeProps = PropsForAccountSwitchScreen<{
   disableAccountSwitcherModal?: boolean;
   diagnosticActive?: boolean;
   sceneActive?: boolean;
+  tabSelected?: boolean;
 }>;
 
 export const Bridge = ({
@@ -24,6 +25,7 @@ export const Bridge = ({
   disableAccountSwitcherModal,
   diagnosticActive,
   sceneActive = true,
+  tabSelected = true,
 }: BridgeProps) => {
   return (
     <SettingVisibleProvider>
@@ -35,6 +37,7 @@ export const Bridge = ({
             disableAccountSwitcherModal={disableAccountSwitcherModal}
             diagnosticActive={diagnosticActive}
             sceneActive={sceneActive}
+            tabSelected={tabSelected}
           />
         </QuoteVisibleProvider>
       </RefreshIdProvider>

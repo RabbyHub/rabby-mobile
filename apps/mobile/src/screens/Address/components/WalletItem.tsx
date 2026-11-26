@@ -16,6 +16,7 @@ const RcIconRight = makeThemeIconFromCC(RcIconRightCC, {
 const styles = StyleSheet.create({
   entryItem: {
     borderRadius: 6,
+    borderCurve: 'continuous',
     backgroundColor: '#FFF',
     width: '100%',
     paddingHorizontal: 16,

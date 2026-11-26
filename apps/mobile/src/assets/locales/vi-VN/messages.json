@@ -1460,7 +1460,25 @@
         },
         "notFound": {
           "title": "Không tìm thấy thiết bị",
-          "description": "Bật Bluetooth và mở khóa OneKey"
+          "description": "Bật Bluetooth và mở khóa OneKey",
+          "retry": "Tìm lại"
+        },
+        "error": {
+          "deviceNotFound": "Không tìm thấy OneKey. Hãy đảm bảo thiết bị đã được mở khóa, Bluetooth đang bật và thiết bị ở gần điện thoại của bạn.",
+          "disconnected": "OneKey đã ngắt kết nối. Hãy giữ thiết bị ở trạng thái mở khóa và gần điện thoại, rồi thử lại.",
+          "deviceBusy": "OneKey đang xử lý một yêu cầu khác. Hãy hoàn tất hoặc hủy yêu cầu đó trên thiết bị, rồi thử lại.",
+          "passphraseDisabled": "Cụm mật khẩu đang tắt trên thiết bị. Hãy bật lên, hoặc nhập lại ví này.",
+          "firmwareTooOld": "Firmware OneKey của bạn đã quá cũ. Hãy cập nhật bằng ứng dụng OneKey, rồi thử lại.",
+          "bluetoothOff": "Bluetooth đang tắt. Hãy bật Bluetooth rồi thử lại.",
+          "bluetoothPermission": "Rabby chưa có quyền sử dụng Bluetooth. Hãy cho phép Rabby dùng Bluetooth (hoặc Vị trí trên Android 11 trở xuống) trong Cài đặt, rồi thử lại.",
+          "locationServicesDisabled": "Dịch vụ vị trí đang tắt. Hãy bật lên để tìm thiết bị Bluetooth.",
+          "bluetoothUnsupported": "Điện thoại này không hỗ trợ Bluetooth.",
+          "scanFailed": "Tìm kiếm Bluetooth thất bại. Vui lòng thử lại.",
+          "pairingFailed": "Ghép nối Bluetooth thất bại. Hãy chấp nhận yêu cầu ghép nối trên điện thoại và OneKey, rồi thử lại.",
+          "pairingInvalid": "Thông tin ghép nối Bluetooth không còn hợp lệ. Hãy xóa OneKey trong cài đặt Bluetooth của điện thoại, rồi ghép nối lại.",
+          "pinInvalid": "Mã PIN không đúng. Vui lòng thử lại.",
+          "cancelled": "Yêu cầu đã bị hủy.",
+          "openSettings": "Mở Cài đặt"
         }
       },
       "createNewAddress": "Tạo ví mới",
@@ -1732,7 +1750,6 @@
       "dataAnalysis": "Giúp cải thiện Rabby",
       "dataAnalysisDesc": "Chia sẻ dữ liệu sử dụng ẩn danh để giúp cải thiện Rabby. Dữ liệu thu thập không được liên kết với bạn hoặc tài khoản của bạn.",
       "bugReportChat": "Gửi phản hồi qua trò chuyện",
-      "features": "Tính năng",
       "manageWallets": "Quản lý ví"
     },
     "settings": {
@@ -2353,7 +2370,10 @@
           "attachedTpSlUnresolved": "Một lần gửi TP/SL trước đó cho thị trường này vẫn chưa có kết quả xác định. Hãy kiểm tra Lệnh đang mở và Vị thế trước khi thử lại.",
           "orderFilled": "Lệnh đã khớp.",
           "orderPlaced": "Đã đặt lệnh.",
-          "orderFailed": "Lệnh thất bại."
+          "orderFailed": "Lệnh thất bại.",
+          "scale": "Lệnh chia bậc",
+          "scaleDescription": "Đặt khoảng giá và tạo nhiều lệnh giới hạn con",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "Giá post-only phải thấp hơn giá bán tốt nhất để tránh khớp ngay lập tức.",
@@ -2367,6 +2387,9 @@
           "tpSl": {
             "title": "TP/SL",
             "description": "Đặt các lệnh TP/SL thị trường cơ bản. Với tính năng nâng cao như TP/SL một phần, hãy đặt TP/SL trên vị thế đang mở."
+          },
+          "randomize": {
+            "description": "Tính năng ngẫu nhiên hóa thay đổi quy mô của mỗi lệnh nhỏ trong phạm vi ±20%, đồng thời tuân thủ quy mô giao dịch tối đa và các giới hạn khác."
           },
           "reduceOnly": {
             "title": "Chỉ giảm",
@@ -2464,7 +2487,8 @@
             "orders": "Lịch sử lệnh",
             "trade": "Lịch sử giao dịch",
             "transaction": "Lịch sử nạp/rút",
-            "funding": "Phí funding"
+            "funding": "Phí funding",
+            "twap": "Lịch sử TWAP"
           },
           "empty": {
             "orders": "Không có lịch sử lệnh",
@@ -2646,6 +2670,101 @@
           "cancelPartial": "Đã hủy {{success}} lệnh; {{failed}} lệnh thất bại",
           "cancelFailed": "Không thể hủy lệnh",
           "cancelContextChanged": "Tài khoản đã thay đổi. Hãy thử lại."
+        },
+        "scaleOrder": {
+          "lowerPrice": "Giá thấp nhất",
+          "upperPrice": "Giá cao nhất",
+          "size": "Số lượng",
+          "count": "Số lệnh (2–100)",
+          "distribution": "Phân bổ số lượng",
+          "flat": "Đồng đều",
+          "ascending": "Tăng dần",
+          "descending": "Giảm dần",
+          "flatDescription": "Mỗi lệnh được phân bổ cùng số lượng",
+          "ascendingDescription": "Số lượng lệnh tăng khi giá tăng",
+          "descendingDescription": "Số lượng lệnh tăng khi giá giảm",
+          "previewBuy": "Xem trước mua",
+          "previewSell": "Xem trước bán",
+          "totalSize": "Tổng số lượng",
+          "averagePrice": "Giá trung bình",
+          "result": "{{accepted}} được chấp nhận, {{rejected}} bị từ chối, {{unresolved}} chờ xác nhận",
+          "unknown": "Kết quả lệnh đang chờ xác nhận. Hãy kiểm tra lệnh mở và lịch sử giao dịch trước khi đặt lệnh mới.",
+          "errors": {
+            "range": "Nhập giá hợp lệ; giá cao nhất phải lớn hơn giá thấp nhất.",
+            "count": "Nhập số nguyên từ 2 đến 100.",
+            "size": "Nhập khối lượng lệnh lớn hơn 0 và đáp ứng yêu cầu về độ chính xác khối lượng của thị trường này.",
+            "duplicatePrice": "Một số giá lệnh trùng nhau sau khi điều chỉnh theo độ chính xác giá cho phép. Hãy mở rộng khoảng giá hoặc giảm số lệnh.",
+            "minimum": "Sau khi điều chỉnh theo độ chính xác khối lượng cho phép, mỗi lệnh con phải có giá trị ít nhất $10.",
+            "maximum": "Tổng giá trị các lệnh vượt quá giới hạn cho phép của thị trường này.",
+            "capacity": "Không đủ khả năng giao dịch cho nhóm lệnh này.",
+            "reduceOnly": "Tổng khối lượng các lệnh vượt quá khối lượng vị thế hiện có thể đóng."
+          }
+        },
+        "twap": {
+          "description": "Đặt lệnh theo khoảng thời gian tùy chỉnh",
+          "totalTime": "Tổng thời gian",
+          "durationFieldLabel": "Tổng thời gian (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} phút",
+          "minuteValue_one": "{{t}} phút",
+          "confirmationDuration": "{{t}} phút",
+          "totalSize": "Tổng khối lượng",
+          "selectTime": "Chọn tổng thời gian",
+          "reset": "Đặt lại",
+          "randomize": "Ngẫu nhiên hóa",
+          "randomized": "Đã ngẫu nhiên hóa",
+          "durationHint": "Thời gian chạy lệnh TWAP là 5–1439 phút.",
+          "minimum": "Tổng khối lượng tối thiểu là {{amount}}",
+          "filled": "Đã khớp",
+          "duration": "Đã chạy",
+          "runtime": "Thời gian hoạt động",
+          "averagePrice": "Giá trung bình",
+          "end": "Kết thúc",
+          "detail": "Chi tiết",
+          "add": "Thêm",
+          "detailTitle": "Chi tiết TWAP đang chạy",
+          "historyDetailTitle": "Chi tiết lịch sử TWAP",
+          "trades": "Giao dịch",
+          "size": "Khối lượng",
+          "fee": "Phí",
+          "noTrades": "Chưa có giao dịch",
+          "endTitle": "Xác nhận kết thúc lệnh TWAP",
+          "endMessage": "Sau khi bạn xác nhận, lệnh TWAP sẽ dừng và các lệnh đang mở của TWAP này sẽ tự động bị hủy.",
+          "ending": "Đang kết thúc…",
+          "ended": "Lệnh TWAP đã kết thúc.",
+          "placed": "Đã đặt lệnh TWAP {{coin}}.",
+          "unknownOutcome": "Kết quả TWAP {{coin}} đang chờ xác nhận. Kiểm tra lệnh và lịch sử trước khi đặt lệnh khác.",
+          "unknown": "Kết quả TWAP đang chờ xác nhận. Kiểm tra lệnh và lịch sử trước khi thử lại.",
+          "loadError": "Không thể tải lệnh TWAP. Nhấn để thử lại.",
+          "endedLabel": "Đã kết thúc",
+          "skipConfirmation": "Không hiển thị xác nhận lần hai cho lệnh TWAP nữa.",
+          "averageFilledPrice": "Giá khớp trung bình",
+          "status": {
+            "working": "Đang chạy",
+            "waiting": "Đang chờ",
+            "filled": "Đã khớp",
+            "cancelled": "Đã hủy",
+            "expired": "Hết hiệu lực",
+            "unknown": "Không xác định"
+          },
+          "fills": {
+            "loading": "Đang tải giao dịch…",
+            "error": "Không thể tải giao dịch. Nhấn để thử lại."
+          },
+          "errors": {
+            "amountRequired": "Nhập khối lượng lệnh.",
+            "amountTooSmall": "Giá trị lệnh TWAP phải tối thiểu $100.",
+            "amountExceedsMaximum": "Lệnh vượt quá mức tối đa khả dụng.",
+            "invalidPrecision": "Nhập khối lượng phù hợp với độ chính xác của thị trường này.",
+            "priceUnavailable": "Giá hiện tại không khả dụng. Vui lòng thử lại.",
+            "durationRequired": "Nhập tổng thời gian.",
+            "durationInvalid": "Nhập số phút nguyên.",
+            "durationTooShort": "Thời gian TWAP tối thiểu là 5 phút.",
+            "durationTooLong": "Thời gian TWAP tối đa là 1439 phút.",
+            "capacity": "Không đủ khả năng giao dịch cho lệnh này.",
+            "reduceOnly": "Lệnh vượt quá khối lượng vị thế có thể đóng.",
+            "contextChanged": "Tài khoản, lệnh hoặc thị trường đã thay đổi. Vui lòng kiểm tra lại lệnh."
+          }
         }
       },
       "limitOrders": "Lệnh giới hạn",
@@ -2710,6 +2829,7 @@
         "fetchQuoteFailed": "Không thể lấy báo giá gửi tiền. Vui lòng chuyển đổi token.",
         "minimumDepositSize": "Số tiền gửi tối thiểu là 5 đô la.",
         "estReceiveTooltip": "Khoản nạp liên chuỗi được xử lý qua LiFi và có thể phát sinh trượt giá. Thời gian nhận dự kiến là {{number}} giây.",
+        "estReceiveTooltipV2": "Khoản nạp liên chuỗi được xử lý qua {{name}} và có thể phát sinh trượt giá. Thời gian nhận dự kiến là {{number}} giây.",
         "insufficientBalance": "Số dư không đủ"
       },
       "PerpsWithdrawPopup": {
@@ -2851,9 +2971,6 @@
       "closeAll": "Đóng tất cả vị thế",
       "closeAllConfirmTitle": "Xác nhận đóng tất cả vị thế",
       "closeAllConfirmMessage": "Tất cả vị thế đang mở của bạn sẽ được đóng theo giá thị trường.",
-      "assetPage": {
-        "hyperliquidPosition": "Vị thế Hyperliquid"
-      },
       "invitePopup": {
         "activateNow": "Kích hoạt ngay",
         "activatedFailed": "Kích hoạt không thành công",
@@ -2861,9 +2978,6 @@
         "title": "Tiết kiệm phí trên Hyperliquid",
         "hyperliquidFee": "Phí giao dịch Hyperliquid.",
         "activatedSuccess": "Đã kích hoạt ưu đãi giảm 4% phí Hyperliquid"
-      },
-      "dappSelect": {
-        "title": "Chọn nhà cung cấp Perps"
       },
       "EnableUnifiedAccount": {
         "title": "Bật Tài khoản Thống nhất",
@@ -3083,9 +3197,6 @@
         "isolatedDesc": "Mỗi vị thế dùng ký quỹ riêng. Khoản lỗ được giới hạn trong vị thế đó, nhưng vị thế có thể dễ bị thanh lý hơn.",
         "crossDesc": "Tất cả vị thế dùng chung cùng một ký quỹ. Điều này giảm khả năng một vị thế riêng lẻ bị thanh lý, nhưng trong biến động thị trường cực đoan, toàn bộ tiền ký quỹ chéo có thể bị mất."
       },
-      "guideEntry": {
-        "gotIt": "Được rồi"
-      },
       "PerpsAbout": {
         "title": "Giới thiệu"
       }
@@ -3141,12 +3252,7 @@
         "more": "Thêm"
       },
       "repayDetail": {
-        "actions": "Trả nợ",
-        "tabs": {
-          "wallet": "Số dư ví",
-          "collateral": "Tài sản thế chấp"
-        },
-        "repayWith": "Trả nợ với"
+        "actions": "Trả nợ"
       },
       "supplyDetail": {
         "actions": "Cung cấp",
@@ -3167,7 +3273,6 @@
         "almostReachedError": "Số tiền tối đa có sẵn để vay bị giới hạn vì giới hạn vay của giao thức gần đạt.",
         "borrowingUnavailable": "Không thể vay tài sản này trong chế độ hiện tại.",
         "almostReachedWarning": "Mức giới hạn vay của giao thức cho tài sản này là 100%. Không có khả năng vay thêm.",
-        "swapDebt": "Hoán đổi",
         "borrowed": "Đã vay",
         "noSupplyDesc": "Để vay, bạn cần cung cấp tài sản làm tài sản thế chấp.",
         "noSupplyPrefix": "Chưa có khoản gửi:"
@@ -3279,79 +3384,18 @@
         "description": "Bật E-Mode giúp bạn tối đa hóa khả năng vay. Tuy nhiên, bạn chỉ có thể vay các tài sản thuộc danh mục đã chọn.",
         "unavailable": "• Không có sẵn",
         "unavailableTips": "Tài sản đang cung cấp hoặc vay của bạn không được hỗ trợ.",
-        "enabled": "• Đã kích hoạt",
-        "debtSwapSelector": {
-          "header": {
-            "assets": "Token/Số dư",
-            "borrow": "Các khoản vay của tôi",
-            "apy": "APY"
-          },
-          "title": "Chọn Token Vay"
-        },
-        "collateralSwapSelector": {
-          "header": {
-            "collateral": "Tài sản thế chấp của tôi",
-            "assets": "Token"
-          },
-          "title": "Chọn Token Đảm Bảo"
-        }
+        "enabled": "• Đã kích hoạt"
       },
       "disabled": "VÔ HIỆU HÓA",
-      "debtSwap": {
-        "actions": {
-          "select": "Chọn",
-          "swapTo": "Chuyển đổi sang",
-          "amount": "Số tiền",
-          "title": "Chuyển đổi nợ",
-          "borrowed": "Đã vay"
-        },
-        "overview": {
-          "borrowAPY": "APY vay",
-          "title": "Tổng quan giao dịch",
-          "borrowValueAfter": "Dư nợ sau khi chuyển đổi"
-        },
-        "button": {
-          "swap": "Chuyển đổi"
-        },
-        "borrowBalance": "Số dư vay",
-        "lpRiskWarning": "Hệ số sức khỏe sau khi hoán đổi ở mức thấp. Vị thế của bạn sẽ có nguy cơ thanh lý cao hơn.",
-        "lpDangerWarning": "Hệ số sức khỏe sau giao dịch này sẽ ở mức rất thấp và có thể dẫn đến thanh lý. Vui lòng chọn tài sản khác hoặc giảm số lượng hoán đổi để đảm bảo an toàn.",
-        "priceImpactTips": "Tác động giá cao ({{lostValue}}). Do thanh khoản thấp hoặc kích thước lệnh nhỏ, ước tính của tuyến này có thể lệch đáng kể.",
-        "title": "Chuyển đổi vị thế vay",
-        "maxLtvWarning": "Không đủ tài sản thế chấp để đảm bảo vị thế vay mới. Ví phải còn khả năng vay để thực hiện chuyển đổi nợ."
-      },
       "totalSupplied": "Tổng đã cung cấp",
       "netApy": "APY ròng",
       "totalBorrowed": "Tổng đã vay",
-      "repayWithCollateral": {
-        "action": {
-          "title": "Trả nợ bằng {{collateral}}"
-        },
-        "overview": {
-          "title": "Tổng quan giao dịch",
-          "borrowValueAfter": "Dư nợ sau khi trả",
-          "collateralValueAfter": "Số dư tài sản thế chấp sau khi trả"
-        },
-        "button": {
-          "repay": "Trả nợ"
-        },
-        "toRepay": "Số tiền kỳ vọng để trả nợ",
-        "collateralNotEnough": "Số dư tài sản thế chấp của bạn thấp hơn số tiền đã chọn.",
-        "repayWith": "Tài sản thế chấp dùng để trả nợ",
-        "insufficientLiquidity": "Không đủ thanh khoản.",
-        "flashLoanDisabled": "Việc chuyển đổi vị thế bị vô hiệu hóa đối với tài sản này vì lý do bảo mật.",
-        "frozenCollateral": "Tài sản này đã bị đóng băng do quyết định của cộng đồng Aave."
-      },
       "repayWithAToken": {
         "header": {
           "assets": "Token",
           "balance": "Số dư"
         },
-        "title": "Chọn token trả nợ",
-        "zeroLtvCollateralTips": "Bạn có các tài sản thế chấp LTV = 0 sau. Theo quy tắc trả nợ bằng tài sản thế chấp, bạn cần ưu tiên dùng các tài sản thế chấp này để trả nợ trước."
-      },
-      "signFallback": {
-        "preExecFailedUseFullSign": "Mô phỏng thất bại. Giao dịch này rất có thể sẽ thất bại do lỗi AAVE."
+        "title": "Chọn token trả nợ"
       }
     },
     "address": {
@@ -3359,20 +3403,6 @@
         "btnCopyAddress": "Sao chép địa chỉ",
         "title": "Nhận tài sản"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "Chọn nhà cung cấp Dự đoán"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableTitle": "Dịch vụ không khả dụng",
-      "serviceUnavailableDesc": "Dịch vụ không được hỗ trợ ở khu vực hiện tại của bạn."
-    },
-    "DAppFrame": {
-      "selectAWallet": "Chọn một ví",
-      "netWorth": "Giá trị ròng",
-      "walletBalance": "Ví/Số dư"
     },
     "meme": {
       "tokenHeader": {
@@ -3538,7 +3568,7 @@
       "title": "Chuyển đổi số dư nhỏ"
     },
     "walletConnect": {
-      "screenTitle": "Kết nối ví",
+      "screenTitle": "Quét để kết nối",
       "connectingToRabby": "Đang kết nối với Rabby",
       "pairingFailed": "Ghép nối WalletConnect thất bại.",
       "proposalNotReceived": "Mã QR WalletConnect có thể đã hết hạn. Vui lòng làm mới và thử lại.",

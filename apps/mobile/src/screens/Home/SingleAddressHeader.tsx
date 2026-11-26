@@ -4,6 +4,8 @@ import { View } from 'react-native';
 import { E2E_ID } from '@/constant/e2e';
 import { HeaderBackPressable } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
+import { useCustomHeaderTop } from '@/hooks/useAppLayout';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 import { ScreenStoreActivityProvider } from '@/hooks/storeActivity/ScreenStoreActivityProvider';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -12,9 +14,19 @@ import { SingleHomeRightArea } from './SingleHomeRightArea';
 
 function SingleAddressHeaderContent() {
   const { styles } = useTheme2024({ getStyle });
+  const headerTop = useCustomHeaderTop();
+  const columnInset = useSystemColumnInset();
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        {
+          marginTop: headerTop,
+          paddingLeft: 16 + columnInset.left,
+          paddingRight: 16 + columnInset.right,
+        },
+      ]}>
       <View style={styles.containerLeft}>
         <HeaderBackPressable
           style={styles.backButton}
@@ -37,9 +49,8 @@ export function SingleAddressHeader() {
   );
 }
 
-const getStyle = createGetStyles2024(({ safeAreaInsets }) => ({
+const getStyle = createGetStyles2024(() => ({
   container: {
-    marginTop: safeAreaInsets.top,
     height: 52,
     flexDirection: 'row',
     alignItems: 'center',
