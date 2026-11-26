@@ -8,7 +8,10 @@ import {
 } from '../../../../../packages/service-keyring/src/keyringService';
 import RNEncryptor, { DERIVATION_OPTIONS_OWASP2023 } from './encryptor';
 import { createKeyringStatePersistence } from '../storage/keyringStatePersistence';
-import type { KeyringStateStorage } from '../storage/keyringStateMigration';
+import {
+  normalizePersistedKeyringState,
+  type KeyringStateStorage,
+} from '../storage/keyringStateMigration';
 
 // JS integration: real encryptor, service, keyring and ObservableStore. Node
 // crypto substitutes only the native AES/PBKDF2 boundary. The durable callback
@@ -160,7 +163,12 @@ function openService(
   {
     encryptor = upgradedEncryptor,
     persist = true,
-  }: { encryptor?: RNEncryptor; persist?: boolean } = {},
+    scheduleVaultUpgrade,
+  }: {
+    encryptor?: RNEncryptor;
+    persist?: boolean;
+    scheduleVaultUpgrade?: KeyringServiceOptions['scheduleVaultUpgrade'];
+  } = {},
 ) {
   const keyringStorage = memoryStorage(state);
   const checkpointStorage = memoryStorage(state);
@@ -172,8 +180,8 @@ function openService(
   const commits: PersistedState[] = [];
   const persistState: NonNullable<
     KeyringServiceOptions['onPersistVaultUpgrade']
-  > = nextState => {
-    persistence.persistVaultUpgrade(nextState);
+  > = (nextState, options) => {
+    persistence.persistVaultUpgrade(nextState, options);
     commits.push(copy(nextState));
     return true;
   };
@@ -181,6 +189,7 @@ function openService(
     encryptor,
     keyringClasses: [SimpleKeyring],
     onCreateKeyring: () => new SimpleKeyring(),
+    scheduleVaultUpgrade,
     ...(persist ? { onPersistVaultUpgrade: persistState } : {}),
   });
   service.loadStore(copy(state));
@@ -192,6 +201,8 @@ function openService(
   return {
     service,
     commits,
+    keyringStorage,
+    checkpointStorage,
     readDurable: (): PersistedState =>
       JSON.parse(keyringStorage.getString('keyring')!),
     readCheckpoint: (): PersistedState =>
@@ -330,6 +341,19 @@ describe('keyring KDF policy and vault upgrade integration', () => {
     expectIterations(service.store.getState().booted, 5000);
   });
 
+  it('upgrades a legacy booted-only wallet on unlock before its first vault is saved', async () => {
+    const booted = await legacyEncryptor.encrypt(password, 'true');
+    const { service, readDurable, readCheckpoint } = openService({ booted });
+
+    await service.submitPassword(password);
+
+    expect(readDurable().vault).toBeUndefined();
+    expectIterations(readDurable().booted, 600000);
+    expect(readCheckpoint()).toEqual(readDurable());
+    await service.persistAllKeyrings();
+    expectIterations(readDurable().vault, 600000);
+  });
+
   it('adds original version metadata to an unversioned legacy vault', async () => {
     const { state } = await createFixture();
     const before = copy(state);
@@ -442,6 +466,9 @@ describe('keyring KDF policy and vault upgrade integration', () => {
 
   it('commits both 600k credentials once and publishes a cached key valid after restart', async () => {
     const { state, rawVault, address } = await createFixture();
+    const oldKey = (
+      await legacyEncryptor.decryptWithDetail(password, state.vault!)
+    ).exportedKeyString;
     const { service, commits, readDurable, readCheckpoint } =
       openService(state);
     const cachedKeys: string[] = [];
@@ -454,8 +481,8 @@ describe('keyring KDF policy and vault upgrade integration', () => {
 
     expect(service.isUnlocked()).toBe(true);
     expect(commits).toHaveLength(1);
-    expect(readCheckpoint()).toEqual(state);
     const persisted = readDurable();
+    expect(readCheckpoint()).toEqual(persisted);
     expectIterations(persisted.vault, 600000);
     expectIterations(persisted.booted, 600000);
     expect(persisted.vault).not.toBe(state.vault);
@@ -489,6 +516,121 @@ describe('keyring KDF policy and vault upgrade integration', () => {
     expect(await restart.service.keyrings[0].getAccounts()).toEqual([address]);
     expect(Aes.pbkdf2).not.toHaveBeenCalled();
     expect(restart.commits).toEqual([]);
+
+    // Exit can occur after MMKV commits but before the cached key is updated.
+    const staleCacheRestart = openService(persisted);
+    let refreshedKey = '';
+    await staleCacheRestart.service.submitPassword(password, {
+      trustedPassword: true,
+      trustedVaultKeyString: oldKey,
+      onTrustedVaultKeyString: key => {
+        refreshedKey = key;
+      },
+    });
+    expect(jest.mocked(Aes.pbkdf2).mock.calls.map(call => call[2])).toEqual([
+      600000,
+    ]);
+    await expect(
+      legacyEncryptor.decryptWithExportedKey(persisted.vault!, refreshedKey),
+    ).resolves.toEqual(rawVault);
+  });
+
+  it('finishes unlock before starting scheduled migration and can retry after an interrupted launch', async () => {
+    const { state, rawVault, address } = await createFixture();
+    state.vault = stripKdfMetadata(state.vault!);
+    state.booted = stripKdfMetadata(state.booted!);
+    const scheduleVaultUpgrade = jest.fn<
+      void,
+      [upgrade: () => Promise<void>]
+    >();
+    const { service, commits, readDurable, readCheckpoint } = openService(
+      state,
+      { scheduleVaultUpgrade },
+    );
+    jest.mocked(Aes.pbkdf2).mockClear();
+
+    await service.submitPassword(password);
+
+    expect(service.isUnlocked()).toBe(true);
+    expect(await service.keyrings[0].getAccounts()).toEqual([address]);
+    expect(scheduleVaultUpgrade).toHaveBeenCalledTimes(1);
+    expect(jest.mocked(Aes.pbkdf2).mock.calls.map(call => call[2])).toEqual([
+      5000, 5000,
+    ]);
+
+    const gate = pauseFirstUpgradedDerivation();
+    const upgrading = scheduleVaultUpgrade.mock.calls[0][0]();
+    await gate.pending;
+    expect(readDurable()).toEqual(state);
+    expect(readCheckpoint()).toEqual(state);
+    await service.setLocked();
+    gate.release();
+    await upgrading;
+    expect(commits).toEqual([]);
+
+    const restart = openService(readDurable(), { scheduleVaultUpgrade });
+    await restart.service.submitPassword(password);
+    await scheduleVaultUpgrade.mock.calls[1][0]();
+    expect(restart.commits).toHaveLength(1);
+    expectIterations(restart.readDurable().vault, 600000);
+    expectIterations(restart.readDurable().booted, 600000);
+    await expect(
+      legacyEncryptor.decrypt(password, restart.readDurable().vault!),
+    ).resolves.toEqual(rawVault);
+  });
+
+  it('recovers the verified 600k checkpoint if the primary write is interrupted', async () => {
+    const { state, address } = await createFixture();
+    const { service, keyringStorage, checkpointStorage, commits } =
+      openService(state);
+    const originalSet = keyringStorage.set;
+    keyringStorage.set = (key, value) => {
+      originalSet(key, key === 'keyring' ? '{truncated' : value);
+    };
+
+    await service.submitPassword(password);
+
+    expect(service.isUnlocked()).toBe(true);
+    expect(service.store.getState().vault).toBe(state.vault);
+    expect(commits).toEqual([]);
+    const recovered = normalizePersistedKeyringState({
+      key: 'keyring',
+      keyringStorage,
+      checkpointStorage,
+      legacyStorage: memoryStorage({}),
+    });
+    expect(recovered.recoverySource).toBe('keyring-checkpoint');
+    expectIterations(recovered.keyringData?.vault as string, 600000);
+    expectIterations(recovered.keyringData?.booted as string, 600000);
+
+    const restart = openService(recovered.keyringData as PersistedState);
+    await restart.service.submitPassword(password);
+    expect(await restart.service.keyrings[0].getAccounts()).toEqual([address]);
+  });
+
+  it('upgrades the vault saved by an ordinary writer before idle migration begins', async () => {
+    const { state } = await createFixture();
+    const scheduleVaultUpgrade = jest.fn<
+      void,
+      [upgrade: () => Promise<void>]
+    >();
+    const { service, readDurable } = openService(state, {
+      scheduleVaultUpgrade,
+    });
+
+    await service.submitPassword(password);
+    await service.importPrivateKey('22'.repeat(32));
+    const currentVault = await legacyEncryptor.decrypt(
+      password,
+      readDurable().vault!,
+    );
+
+    await scheduleVaultUpgrade.mock.calls[0][0]();
+
+    expectIterations(readDurable().vault, 600000);
+    await expect(
+      legacyEncryptor.decrypt(password, readDurable().vault!),
+    ).resolves.toEqual(currentVault);
   });
 
   it('does not change storage or publish keys when the password is wrong', async () => {
@@ -521,9 +663,13 @@ describe('keyring KDF policy and vault upgrade integration', () => {
     expect(copy(service.store.getState())).toEqual(before);
   });
 
-  it.each(['valid', 'invalid'] as const)(
-    'does not migrate during a cached-key unlock with a %s cache',
-    async cache => {
+  it.each([
+    { cache: 'valid', correctPassword: false },
+    { cache: 'valid', correctPassword: true },
+    { cache: 'invalid', correctPassword: true },
+  ] as const)(
+    'requires password verification for migration with cache=$cache and correctPassword=$correctPassword',
+    async ({ cache, correctPassword }) => {
       const { state } = await createFixture();
       const { service, commits, readDurable } = openService(state);
       const detail = await legacyEncryptor.decryptWithDetail(
@@ -534,7 +680,7 @@ describe('keyring KDF policy and vault upgrade integration', () => {
       // The exported key can unlock the vault even when the accompanying
       // password is wrong; that password must never create replacement data.
       await service.submitPassword(
-        cache === 'valid' ? 'wrong password' : password,
+        correctPassword ? password : 'wrong password',
         {
           trustedPassword: true,
           trustedVaultKeyString:
@@ -543,10 +689,13 @@ describe('keyring KDF policy and vault upgrade integration', () => {
       );
 
       expect(service.isUnlocked()).toBe(true);
-      expect(commits).toEqual([]);
-      expect(readDurable()).toEqual(state);
-      if (cache === 'valid') {
-        expect(Aes.pbkdf2).not.toHaveBeenCalled();
+      if (correctPassword) {
+        expect(commits).toHaveLength(1);
+        expectIterations(readDurable().vault, 600000);
+        expectIterations(readDurable().booted, 600000);
+      } else {
+        expect(commits).toEqual([]);
+        expect(readDurable()).toEqual(state);
       }
     },
   );
@@ -816,6 +965,46 @@ describe('keyring KDF policy and vault upgrade integration', () => {
     expect(service.store.getState().vault).toBe(replacement);
     expect(service.store.getState().booted).toBe(state.booted);
     expect(commits).toEqual([]);
+  });
+
+  it('does not commit over an in-flight ordinary write using the old KDF', async () => {
+    const { state } = await createFixture();
+    const { service, commits, readDurable } = openService(state);
+    const gate = pauseFirstUpgradedDerivation();
+    const unlocking = service.submitPassword(password);
+    await gate.pending;
+
+    let releaseWrite!: () => void;
+    let markWriteStarted!: () => void;
+    const writeMayFinish = new Promise<void>(resolve => {
+      releaseWrite = resolve;
+    });
+    const writeStarted = new Promise<void>(resolve => {
+      markWriteStarted = resolve;
+    });
+    const derive = jest.mocked(Aes.pbkdf2).getMockImplementation()!;
+    jest.mocked(Aes.pbkdf2).mockImplementation(async (...args) => {
+      if (args[2] === 5000) {
+        markWriteStarted();
+        await writeMayFinish;
+      }
+      return derive(...args);
+    });
+    const writing = service.persistAllKeyrings();
+    await writeStarted;
+
+    gate.release();
+    await unlocking;
+    expect(commits).toEqual([]);
+    expect(readDurable()).toEqual(state);
+    releaseWrite();
+    await writing;
+    expectIterations(readDurable().vault, 5000);
+
+    await service.setLocked();
+    await service.submitPassword(password);
+    expect(commits).toHaveLength(1);
+    expectIterations(readDurable().vault, 600000);
   });
 
   it('does not stamp the earlier resolved version onto a replaced unversioned vault', async () => {
