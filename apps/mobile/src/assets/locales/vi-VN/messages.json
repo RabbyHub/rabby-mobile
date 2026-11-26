@@ -2982,9 +2982,6 @@
       "closeAll": "Đóng tất cả vị thế",
       "closeAllConfirmTitle": "Xác nhận đóng tất cả vị thế",
       "closeAllConfirmMessage": "Tất cả vị thế đang mở của bạn sẽ được đóng theo giá thị trường.",
-      "assetPage": {
-        "hyperliquidPosition": "Vị thế Hyperliquid"
-      },
       "invitePopup": {
         "activateNow": "Kích hoạt ngay",
         "activatedFailed": "Kích hoạt không thành công",
@@ -3210,9 +3207,6 @@
         "isolatedTitle": "Ký quỹ cô lập",
         "isolatedDesc": "Mỗi vị thế dùng ký quỹ riêng. Khoản lỗ được giới hạn trong vị thế đó, nhưng vị thế có thể dễ bị thanh lý hơn.",
         "crossDesc": "Tất cả vị thế dùng chung cùng một ký quỹ. Điều này giảm khả năng một vị thế riêng lẻ bị thanh lý, nhưng trong biến động thị trường cực đoan, toàn bộ tiền ký quỹ chéo có thể bị mất."
-      },
-      "guideEntry": {
-        "gotIt": "Được rồi"
       },
       "PerpsAbout": {
         "title": "Giới thiệu"

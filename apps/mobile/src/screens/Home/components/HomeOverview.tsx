@@ -72,7 +72,6 @@ import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import useTokenList from '@/store/tokens';
 import useProtocol from '@/store/protocols';
-import { BrowserOrPerpsPosition } from './BrowserOrPerpsPosition';
 import { apisLending } from '../../Lending/hooks';
 import { HomeCenterArea } from '../components/HomeCenterArea';
 import { HomeDappDrawer } from '../components/HomeDappDrawer';
@@ -1123,7 +1122,6 @@ export const HomeOverview = React.memo(() => {
               <HomeCenterArea />
               <View style={styles.grid}>
                 <HomeFeatureGrid place="home" />
-                <BrowserOrPerpsPosition />
                 <HomeSwipeUpHint />
               </View>
             </Animated.View>

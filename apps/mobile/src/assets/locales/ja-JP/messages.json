@@ -2915,9 +2915,6 @@
       "closeAllConfirmTitle": "全ポジションの決済を確認",
       "closeAll": "すべてのポジションを閉じる",
       "closeAllConfirmMessage": "すべての未決済ポジションが市場価格で決済されます。",
-      "assetPage": {
-        "hyperliquidPosition": "Hyperliquidポジション"
-      },
       "invitePopup": {
         "activateNow": "今すぐ有効にする",
         "title": "Hyperliquidの手数料を節約",
@@ -3143,9 +3140,6 @@
         "isolatedTitle": "アイソレート証拠金",
         "isolatedDesc": "各ポジションは個別の証拠金を使用します。損失はそのポジションに限定されますが、清算されやすくなります。",
         "crossDesc": "すべてのポジションで同じ証拠金を共有します。個別ポジションが清算される可能性は下がりますが、極端な相場変動ではクロス証拠金の資金をすべて失う可能性があります。"
-      },
-      "guideEntry": {
-        "gotIt": "わかりました"
       },
       "PerpsAbout": {
         "title": "概要"

@@ -19,6 +19,7 @@ export default function NormalScreenContainer<
   style,
   fitStatuBar,
   overwriteStyle,
+  disableColumnInset = false,
 }: React.PropsWithChildren<
   {
     as?: T;
@@ -27,6 +28,8 @@ export default function NormalScreenContainer<
     style?: React.ComponentProps<typeof View>['style'];
     hideBottomBar?: boolean;
     overwriteStyle?: React.ComponentProps<typeof View>['style'];
+    /** Sheets already rendered inside the inset content column opt out. */
+    disableColumnInset?: boolean;
   } & React.ComponentProps<ReactNativeViewAsMap[T]>
 >) {
   const { safeOffHeader, safeTop } = useSafeSizes();
@@ -47,8 +50,10 @@ export default function NormalScreenContainer<
           height: '100%',
           backgroundColor: colors['neutral-bg-2'],
         },
-        columnInset.left > 0 && { paddingLeft: columnInset.left },
-        columnInset.right > 0 && { paddingRight: columnInset.right },
+        !disableColumnInset &&
+          columnInset.left > 0 && { paddingLeft: columnInset.left },
+        !disableColumnInset &&
+          columnInset.right > 0 && { paddingRight: columnInset.right },
         overwriteStyle,
       ])}>
       {children}

@@ -55,6 +55,7 @@ import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { Text } from '@/components/Typography';
 import MarketScreen from '@/screens/Market';
 import { HomeDappDrawerContent } from './HomeDappDrawerContent';
+import { DappDrawerTabsButton } from './DappDrawerTabsButton';
 import {
   HOME_GESTURE_AXIS,
   beginHomeGesture,
@@ -582,18 +583,18 @@ export const HomeDappDrawer: React.FC<{
                   />
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={[styles.fabContainer]}
-                  onPress={() => {
-                    setPartialBrowserState({
-                      isShowBrowser: true,
-                      isShowSearch: true,
-                      searchText: '',
-                      searchTabId: '',
-                      trigger: 'home',
-                    });
-                  }}>
-                  <View style={styles.innerCircle}>
+                <View style={styles.searchBar}>
+                  <TouchableOpacity
+                    style={styles.searchBarButton}
+                    onPress={() => {
+                      setPartialBrowserState({
+                        isShowBrowser: true,
+                        isShowSearch: true,
+                        searchText: '',
+                        searchTabId: '',
+                        trigger: 'home',
+                      });
+                    }}>
                     <RcNextSearchCC
                       width={20}
                       height={20}
@@ -603,9 +604,10 @@ export const HomeDappDrawer: React.FC<{
                     <Text style={styles.text}>
                       {t('page.browser.BrowserSearchEntry.searchWebsite')}
                     </Text>
-                    <View style={{ width: 20 }} />
-                  </View>
-                </TouchableOpacity>
+                  </TouchableOpacity>
+
+                  <DappDrawerTabsButton />
+                </View>
               </Animated.View>
             </GestureDetector>
           </View>
@@ -664,8 +666,20 @@ const getStyle = createGetStyles2024(
       flex: 1,
     },
 
-    fabContainer: {
+    searchBar: {
       flex: 1,
+      flexDirection: 'row',
+      height: 46,
+      borderRadius: 12,
+      borderCurve: 'continuous',
+      backgroundColor: colors2024['neutral-bg-5'],
+    },
+    searchBarButton: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingLeft: 12,
     },
     gradient: {
       padding: 12,
@@ -677,21 +691,6 @@ const getStyle = createGetStyles2024(
       borderColor: isLight
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-5'],
-    },
-    innerCircle: {
-      width: '100%',
-      display: 'flex',
-      flexDirection: 'row',
-      gap: 4,
-      height: 46,
-      borderRadius: 12,
-      borderCurve: 'continuous',
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: colors2024['neutral-bg-5'],
-      position: 'relative',
-      paddingLeft: 12,
-      paddingRight: 12,
     },
     icon: {},
     text: {

@@ -76,10 +76,6 @@ class ApisPerps {
   setHasDoneNewUserProcess = (hasDone: boolean) =>
     perpsServiceApi.setHasDoneNewUserProcess(hasDone);
   getHasDoneNewUserProcess = () => perpsServiceApi.getHasDoneNewUserProcess();
-  setHasShownPerpsGuidePopup = (value: boolean) =>
-    perpsServiceApi.setHasShownPerpsGuidePopup(value);
-  getHasShownPerpsGuidePopup = () =>
-    perpsServiceApi.getHasShownPerpsGuidePopup();
   setHasClosedLearnMoreCard = (value: boolean) =>
     perpsServiceApi.setHasClosedLearnMoreCard(value);
   getHasClosedLearnMoreCard = () => perpsServiceApi.getHasClosedLearnMoreCard();

@@ -23,7 +23,6 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { RootNames } from '@/constant/layout';
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
-import { apisPerps } from '@/core/apis';
 import {
   beginFeatureActivation,
   markFeatureActivation,
@@ -313,7 +312,6 @@ export function useHomeFeaturePress() {
         case MultiHomeFeatTitle.Ecosystem:
           break;
         case MultiHomeFeatTitle.Perps:
-          apisPerps.setHasShownPerpsGuidePopup(true);
           void navigateToPerpsHome({
             navigation,
             source: 'home-main',
