@@ -36,6 +36,7 @@ import RcIconQueueCC from '@/assets2024/singleHome/queue-cc.svg';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Text } from '@/components/Typography';
 import { enterSingleAddressTransactionFeature } from '../transactionFeatureEntry';
+import { useBizMockAction } from '@/devtools/bizMock/useBizMockAction';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -196,12 +197,24 @@ export const BottomBtns = ({
     moreSheetModalRef.current?.present();
   };
 
+  // Biz-mock: expose the real handlers, never a test-only re-implementation.
+  const sendActionHandler = useBizMockAction({
+    id: 'home.action.send',
+    testID: 'home-bottom-send',
+    handler: handleSend,
+  });
+  const swapActionHandler = useBizMockAction({
+    id: 'home.action.swap',
+    testID: 'home-bottom-swap',
+    handler: handleSwap,
+  });
+
   return (
     <>
       <View style={[styles.container]}>
         <View style={styles.group}>
           <View style={styles.leftActions}>
-            <Pressable style={styles.action} onPress={handleSend}>
+            <Pressable style={styles.action} onPress={sendActionHandler}>
               <RcIconSendCC width={22} height={22} style={styles.actionIcon} />
               <Text
                 numberOfLines={1}
@@ -212,7 +225,7 @@ export const BottomBtns = ({
             </Pressable>
             <Pressable
               style={[styles.action, styles.blueAction]}
-              onPress={handleSwap}>
+              onPress={swapActionHandler}>
               <RcIconSwapCC width={22} height={22} style={styles.actionIcon} />
               <Text
                 numberOfLines={1}

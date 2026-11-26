@@ -113,6 +113,47 @@ describe('parseBizMockAction', () => {
     });
   });
 
+  it('parses an action.invoke target by id or testID', () => {
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=action.invoke&id=home.action.swap&payload=%7B%22a%22%3A1%7D&timeoutMs=2000',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      action: {
+        action: 'action.invoke',
+        id: 'home.action.swap',
+        payload: { a: 1 },
+        timeoutMs: 2000,
+      },
+    });
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=action.invoke&testID=home-bottom-swap',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      action: {
+        action: 'action.invoke',
+        testID: 'home-bottom-swap',
+      },
+    });
+  });
+
+  it('requires an id or testID for action.invoke', () => {
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=action.invoke',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      error: { code: 'missing-param' },
+    });
+  });
+
   it('does not match a different protocol or path', () => {
     expect(
       parseBizMockAction(

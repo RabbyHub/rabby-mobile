@@ -16,6 +16,7 @@ import { listInjectedStorePins } from '../screenRegistry/storeInjection';
 import { setAllowAnyApproval } from '../screenRegistry/requestCapture';
 import { runTestAccountsImport } from '../testAccountsImport';
 import { TEST_ACCOUNTS_FILENAME } from '../testAccountsPath';
+import { listBizMockActions } from './actionRegistry';
 import type { BizMockAction } from './protocol';
 
 const BIZ_MOCK_DUMP_DIRNAME = 'biz-mock';
@@ -275,6 +276,7 @@ async function dumpState(name?: string): Promise<BizMockResult> {
       : null,
     approval: summarizeApproval(approval),
     storePins: listInjectedStorePins(),
+    bizMockActions: listBizMockActions(),
   };
 
   await RNFS.mkdir(dir);
@@ -326,6 +328,30 @@ export async function runBizMockAction(
       setAllowAnyApproval(false);
       rejectAllNotificationApprovalsSync();
       return { ok: true, action: action.action, code: 'ok' };
+    }
+
+    if (action.action === 'action.invoke') {
+      const { invokeBizMockAction } = await import('./actionRegistry');
+      const invoked = await invokeBizMockAction({
+        id: action.id,
+        testID: action.testID,
+        payload: action.payload as Record<string, unknown> | undefined,
+        timeoutMs: action.timeoutMs,
+      });
+      if (!invoked.ok) {
+        return {
+          ok: false,
+          action: action.action,
+          code: invoked.code,
+          message: invoked.message,
+        };
+      }
+      return {
+        ok: true,
+        action: action.action,
+        code: 'ok',
+        data: invoked.data,
+      };
     }
 
     if (action.action === 'env.setScreenE2E') {

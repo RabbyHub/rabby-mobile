@@ -32,6 +32,13 @@ export type BizMockAction =
       origin?: string;
     }
   | { action: 'approval.rejectAll' }
+  | {
+      action: 'action.invoke';
+      id?: string;
+      testID?: string;
+      payload?: JsonObject;
+      timeoutMs?: number;
+    }
   | { action: 'env.setScreenE2E'; enabled: boolean };
 
 export type BizMockMeta = {
@@ -292,6 +299,44 @@ export function parseBizMockAction(
 
   if (command === 'approval.rejectAll') {
     return { matched: true, meta, action: { action: 'approval.rejectAll' } };
+  }
+
+  if (command === 'action.invoke') {
+    const id = readString(urlInfo.searchParams.get('id'), 128);
+    const testID = readString(urlInfo.searchParams.get('testID'), 128);
+    if (!id && !testID) {
+      return {
+        matched: true,
+        meta,
+        error: {
+          code: 'missing-param',
+          message: 'id or testID is required for action.invoke',
+        },
+      };
+    }
+    const payload = parseJsonObject(
+      urlInfo.searchParams.get('payload'),
+      'payload',
+    );
+    if (payload.error) {
+      return { matched: true, meta, error: payload.error };
+    }
+    const rawTimeout = readString(urlInfo.searchParams.get('timeoutMs'), 16);
+    const parsedTimeout = rawTimeout ? Number(rawTimeout) : undefined;
+    return {
+      matched: true,
+      meta,
+      action: {
+        action: 'action.invoke',
+        id,
+        testID,
+        payload: payload.value,
+        timeoutMs:
+          parsedTimeout !== undefined && Number.isFinite(parsedTimeout)
+            ? parsedTimeout
+            : undefined,
+      },
+    };
   }
 
   if (command === 'env.setScreenE2E') {
