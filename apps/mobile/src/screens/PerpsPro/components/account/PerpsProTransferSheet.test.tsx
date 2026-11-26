@@ -187,9 +187,10 @@ describe('PerpsProTransferSheet', () => {
         fontFamily:
           platform === 'android' ? 'SF-Pro-Rounded-Bold' : 'ui-rounded',
         fontSize: 28,
-        height: 76,
         padding: 0,
       });
+      // A blurred iOS field two lines tall wraps a long amount onto line two.
+      expect(style.height).toBe(platform === 'android' ? 76 : 36);
       if (platform === 'android') {
         expect(style.lineHeight).toBeUndefined();
         expect(style).toMatchObject({

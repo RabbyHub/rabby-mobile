@@ -11,6 +11,8 @@ import {
   PERPS_PRO_DIALOG_TOKENS,
 } from '../common/perpsProDialogVisual';
 
+export const AMOUNT_INPUT_LINE_HEIGHT = 36;
+
 // Dark cards use bg-3 (Figma 87900:97324).
 const getTransferCardBackground = (
   colors: AppColors2024Variants,
@@ -90,7 +92,7 @@ export const getPerpsProTransferSheetStyles = createGetStyles2024(
       flex: 1,
       fontSize: 28,
       height: 76,
-      lineHeight: 36,
+      lineHeight: AMOUNT_INPUT_LINE_HEIGHT,
       minWidth: 0,
       padding: 0,
     },
