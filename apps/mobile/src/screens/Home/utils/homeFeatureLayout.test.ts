@@ -17,16 +17,40 @@ const {
   Approvals,
   Points,
   ConvertDust,
-  Lending,
+  MemeCoin,
   Swap,
+  Bridge,
+  Send,
+  Receive,
+  Perps,
+  Lending,
 } = MultiHomeFeatTitle;
 
 describe('homeFeatureLayout', () => {
   it('starts with Gas deposit and Approvals on the second floor', () => {
     expect(getDefaultHomeFeatureLayout()).toEqual({
-      home: [History, Market, Points, ConvertDust, Lending],
+      home: [History, Market, Points, ConvertDust, MemeCoin],
       more: [GasAccount, Approvals],
     });
+  });
+
+  it('keeps the Home grid order: Lending after Perps, Memecoin last', () => {
+    expect([
+      ...HOME_PINNED_FEATURES,
+      ...getDefaultHomeFeatureLayout().home,
+    ]).toEqual([
+      Swap,
+      Bridge,
+      Send,
+      Receive,
+      Perps,
+      Lending,
+      History,
+      Market,
+      Points,
+      ConvertDust,
+      MemeCoin,
+    ]);
   });
 
   it('keeps pinned and movable cards apart', () => {
@@ -44,12 +68,12 @@ describe('homeFeatureLayout', () => {
 
       const moved = moveHomeFeature(layout, History, 'more');
       expect(moved).toEqual({
-        home: [Market, Points, ConvertDust, Lending],
+        home: [Market, Points, ConvertDust, MemeCoin],
         more: [History, GasAccount, Approvals],
       });
 
       expect(moveHomeFeature(moved, History, 'home')).toEqual({
-        home: [History, Market, Points, ConvertDust, Lending],
+        home: [History, Market, Points, ConvertDust, MemeCoin],
         more: [GasAccount, Approvals],
       });
     });
@@ -67,7 +91,7 @@ describe('homeFeatureLayout', () => {
         Market,
         Points,
         ConvertDust,
-        Lending,
+        MemeCoin,
       ]);
     });
 
@@ -94,7 +118,7 @@ describe('homeFeatureLayout', () => {
   describe('normalizeHomeFeatureLayout', () => {
     it('keeps a valid stored layout as it is', () => {
       const stored = {
-        home: [Lending, History],
+        home: [MemeCoin, History],
         more: [Market, GasAccount, Approvals, Points, ConvertDust],
       };
 
@@ -115,17 +139,17 @@ describe('homeFeatureLayout', () => {
     it('drops unknown, pinned and duplicated keys', () => {
       const normalized = normalizeHomeFeatureLayout({
         home: [History, 'Removed Feature', Swap, History, Market],
-        more: [Market, GasAccount, Approvals, Points, ConvertDust, Lending],
+        more: [Market, GasAccount, Approvals, Points, ConvertDust, MemeCoin],
       });
 
       expect(normalized).toEqual({
         home: [History, Market],
-        more: [GasAccount, Approvals, Points, ConvertDust, Lending],
+        more: [GasAccount, Approvals, Points, ConvertDust, MemeCoin],
       });
     });
 
     it('puts a card the stored layout does not know on its default floor', () => {
-      // As if Points, Convert Dust, Lending and Approvals shipped after this
+      // As if Points, Convert Dust, Memecoin and Approvals shipped after this
       // layout was saved.
       const normalized = normalizeHomeFeatureLayout({
         home: [Market],
@@ -133,13 +157,13 @@ describe('homeFeatureLayout', () => {
       });
 
       expect(normalized).toEqual({
-        home: [Market, Points, ConvertDust, Lending],
+        home: [Market, Points, ConvertDust, MemeCoin],
         more: [History, GasAccount, Approvals],
       });
     });
 
     it('always accounts for every movable card exactly once', () => {
-      const normalized = normalizeHomeFeatureLayout({ home: [Lending] });
+      const normalized = normalizeHomeFeatureLayout({ home: [MemeCoin] });
       const all = [...normalized.home, ...normalized.more];
 
       expect(all).toHaveLength(HOME_MOVABLE_FEATURES.length);

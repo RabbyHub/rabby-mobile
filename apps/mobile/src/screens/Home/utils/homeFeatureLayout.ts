@@ -9,14 +9,19 @@ export type HomeFeaturePlace = 'home' | 'more';
 /** The cards the user moved, in display order. Pinned cards are not stored. */
 export type HomeFeatureLayout = Record<HomeFeaturePlace, MultiHomeFeatTitle[]>;
 
-/** Always on Home, always first, never editable. */
+/**
+ * Always on Home, always first, never editable.
+ *
+ * Together with the movable cards below this is the order of the Home grid:
+ * Lending follows Perps and Memecoin closes the grid.
+ */
 export const HOME_PINNED_FEATURES: readonly MultiHomeFeatTitle[] = [
   MultiHomeFeatTitle.Swap,
   MultiHomeFeatTitle.Bridge,
   MultiHomeFeatTitle.Send,
   MultiHomeFeatTitle.Receive,
   MultiHomeFeatTitle.Perps,
-  MultiHomeFeatTitle.MemeCoin,
+  MultiHomeFeatTitle.Lending,
 ];
 
 /** Cards the user can move between the two floors, in their default order. */
@@ -27,7 +32,7 @@ export const HOME_MOVABLE_FEATURES: readonly MultiHomeFeatTitle[] = [
   MultiHomeFeatTitle.Approvals,
   MultiHomeFeatTitle.Points,
   MultiHomeFeatTitle.ConvertDust,
-  MultiHomeFeatTitle.Lending,
+  MultiHomeFeatTitle.MemeCoin,
 ];
 
 /** Movable cards that start on the second floor. */
