@@ -131,4 +131,59 @@ describe('store/appchain batch refresh', () => {
     expect(mockPersist).not.toHaveBeenCalled();
     expect(mockRemoteError).toHaveBeenCalledTimes(1);
   });
+
+  it('treats non-empty error_apps as failure without overwriting or persisting empty data', async () => {
+    const oldValue = [{ ...app, netWorth: 99 }];
+    store.setState({ appChainMap: { '0xa': oldValue } });
+    mockGetAppChainList
+      .mockResolvedValueOnce({
+        apps: [],
+        error_apps: [{ id: 'hyperliquid' }],
+      })
+      .mockResolvedValueOnce({
+        apps: [],
+        error_apps: [{ id: 'hyperliquid' }],
+      });
+
+    await store.getState().batchGetAppChains(['0xA', '0xB'], true);
+
+    expect(store.getState().appChainMap['0xa']).toBe(oldValue);
+    expect(
+      Object.prototype.hasOwnProperty.call(store.getState().appChainMap, '0xb'),
+    ).toBe(false);
+    expect(mockPersist).not.toHaveBeenCalled();
+    expect(mockRemoteError).toHaveBeenCalledTimes(2);
+  });
+
+  it('treats non-empty error_apps as failure in getAppChains and accepts empty error_apps', async () => {
+    const warnError = jest.spyOn(console, 'error').mockImplementation();
+    try {
+      mockGetAppChainList.mockResolvedValueOnce({
+        apps: [],
+        error_apps: [{ id: 'hyperliquid' }],
+      });
+
+      const failedResult = await store.getState().getAppChains('0xA', true);
+      expect(failedResult).toBeUndefined();
+      expect(
+        Object.prototype.hasOwnProperty.call(
+          store.getState().appChainMap,
+          '0xa',
+        ),
+      ).toBe(false);
+      expect(mockPersist).not.toHaveBeenCalled();
+
+      mockGetAppChainList.mockResolvedValueOnce({
+        apps: [],
+        error_apps: [],
+      });
+
+      const emptyResult = await store.getState().getAppChains('0xA', true);
+      expect(emptyResult).toEqual([]);
+      expect(store.getState().appChainMap['0xa']).toEqual([]);
+      expect(mockPersist).toHaveBeenCalledTimes(1);
+    } finally {
+      warnError.mockRestore();
+    }
+  });
 });

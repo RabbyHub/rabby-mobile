@@ -138,8 +138,28 @@ const buildRemoteBalancePayload = (
   };
 };
 
-const getAppChainUsdValue = (address: string) =>
-  useAppChainStore.getState().getAppChainTotalUsdValue(address);
+const getAppChainUsdValue = (
+  address: string,
+  previousValue?: Pick<IBalanceData, 'evmBalance' | 'totalBalance'>,
+) => {
+  const { appChainMap, getAppChainTotalUsdValue } = useAppChainStore.getState();
+  const usdValue = getAppChainTotalUsdValue(address);
+  if (
+    usdValue > 0 ||
+    (appChainMap &&
+      Object.prototype.hasOwnProperty.call(appChainMap, address.toLowerCase()))
+  ) {
+    return usdValue;
+  }
+
+  return previousValue
+    ? Math.max(
+        (Number(previousValue.totalBalance) || 0) -
+          (Number(previousValue.evmBalance) || 0),
+        0,
+      )
+    : 0;
+};
 
 const buildCoreAddressSet = <
   T extends {
@@ -848,7 +868,10 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         return;
       }
 
-      const appChainUsdValue = getAppChainUsdValue(result.address);
+      const appChainUsdValue = getAppChainUsdValue(
+        result.address,
+        this.getAddressValue(result.address),
+      );
       const { formatBalance, value } = buildRemoteBalancePayload(
         result.balance,
         appChainUsdValue,
@@ -984,7 +1007,10 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
       const appChainBalancePromise = useAppChainStore
         .getState()
         .getAppChains(lowerAddress, force)
-        .then(() => getAppChainUsdValue(lowerAddress));
+        .catch(() => undefined)
+        .then(() =>
+          getAppChainUsdValue(lowerAddress, this.getAddressValue(lowerAddress)),
+        );
       requestId = this.startRemoteFetch(lowerAddress, {
         localTargets,
         detail: buildBalanceTraceDetail(
@@ -1692,7 +1718,7 @@ export function startProcessAddressBalanceEvents() {
   }
   hasStartedAddressBalanceLifecycle = true;
 
-  void bindKeyringEvent('removedAccount', async account => {
+  bindKeyringEvent('removedAccount', async account => {
     const removedAccount = account as Account;
     const addresses = await keyringServiceApi.getAllAddresses();
     const stillExists = addresses.some(item => {
@@ -1745,14 +1771,17 @@ export function startProcessAddressBalanceEvents() {
     if (state.appChainMap === prevAppChainMap) {
       return;
     }
+    const previousMap = prevAppChainMap;
     prevAppChainMap = state.appChainMap;
 
-    const addresses = Object.keys(addressBalanceStore.getAddressValueMap());
-    if (!addresses.length) {
+    const changedAddresses = Object.keys(state.appChainMap).filter(
+      address => state.appChainMap[address] !== previousMap[address],
+    );
+    if (!changedAddresses.length) {
       return;
     }
 
-    addressBalanceStore.syncAppChainTotalsForAddresses(addresses, {
+    addressBalanceStore.syncAppChainTotalsForAddresses(changedAddresses, {
       trigger: 'appchain_store_changed',
     });
   });
