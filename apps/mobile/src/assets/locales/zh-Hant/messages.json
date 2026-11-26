@@ -3018,9 +3018,6 @@
         "activatedSuccess": "已啟用 4% Hyperliquid 手續費減免",
         "activateNow": "立即啟用"
       },
-      "dappSelect": {
-        "title": "選擇永續合約服務商"
-      },
       "search": {
         "placeholder": "搜尋永續合約",
         "empty": "找不到結果"
@@ -3515,20 +3512,6 @@
         "title": "接收資產",
         "btnCopyAddress": "複製地址"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "選擇預測提供者"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableDesc": "此服務在您目前的地區不受支援。",
-      "serviceUnavailableTitle": "服務不可用"
-    },
-    "DAppFrame": {
-      "netWorth": "淨資產",
-      "selectAWallet": "選擇一個錢包",
-      "walletBalance": "錢包/餘額"
     },
     "meme": {
       "tokenHeader": {

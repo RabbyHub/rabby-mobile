@@ -2963,9 +2963,6 @@
         "hyperliquidFee": "Phí giao dịch Hyperliquid.",
         "activatedSuccess": "Đã kích hoạt ưu đãi giảm 4% phí Hyperliquid"
       },
-      "dappSelect": {
-        "title": "Chọn nhà cung cấp Perps"
-      },
       "EnableUnifiedAccount": {
         "title": "Bật Tài khoản Thống nhất",
         "desc": "Unified Account là chế độ tài khoản được khuyến nghị để đơn giản hóa trải nghiệm giao dịch. Số dư Spot và Perps của tất cả token được gộp lại, và cross margin được hỗ trợ cho mọi tài sản khả dụng.",
@@ -3460,20 +3457,6 @@
         "btnCopyAddress": "Sao chép địa chỉ",
         "title": "Nhận tài sản"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "Chọn nhà cung cấp Dự đoán"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableTitle": "Dịch vụ không khả dụng",
-      "serviceUnavailableDesc": "Dịch vụ không được hỗ trợ ở khu vực hiện tại của bạn."
-    },
-    "DAppFrame": {
-      "selectAWallet": "Chọn một ví",
-      "netWorth": "Giá trị ròng",
-      "walletBalance": "Ví/Số dư"
     },
     "meme": {
       "tokenHeader": {

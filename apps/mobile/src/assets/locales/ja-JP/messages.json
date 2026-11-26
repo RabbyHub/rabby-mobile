@@ -2896,9 +2896,6 @@
         "activatedSuccess": "Hyperliquidの取引手数料4%割引を有効にしました",
         "activatedFailed": "有効化に失敗しました"
       },
-      "dappSelect": {
-        "title": "無期限先物プロバイダーを選択"
-      },
       "search": {
         "placeholder": "無期限先物を検索",
         "empty": "結果が見つかりません"
@@ -3393,20 +3390,6 @@
         "title": "資産を受け取る",
         "btnCopyAddress": "アドレスをコピー"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "予測プロバイダーを選択してください"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableTitle": "サービスは利用できません",
-      "serviceUnavailableDesc": "このサービスは現在の地域ではサポートされていません。"
-    },
-    "DAppFrame": {
-      "selectAWallet": "ウォレットを選択",
-      "walletBalance": "ウォレット/残高",
-      "netWorth": "純資産"
     },
     "meme": {
       "tokenHeader": {

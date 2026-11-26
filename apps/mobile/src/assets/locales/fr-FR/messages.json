@@ -2856,9 +2856,6 @@
         "activatedSuccess": "4 % d'économies sur les frais Hyperliquid activées",
         "description": "Utilisez le code de Rabby pour activer"
       },
-      "dappSelect": {
-        "title": "Sélectionner le fournisseur de Perps"
-      },
       "search": {
         "placeholder": "Rechercher sur Perps",
         "empty": "Aucun résultat trouvé"
@@ -3352,20 +3349,6 @@
       "receiveAssets": {
         "btnCopyAddress": "Copier l'adresse",
         "title": "Recevoir des actifs"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableDesc": "Ce service n'est pas pris en charge dans votre région actuelle.",
-      "serviceUnavailableTitle": "Service indisponible"
-    },
-    "DAppFrame": {
-      "netWorth": "Valeur nette",
-      "walletBalance": "Portefeuille/Solde",
-      "selectAWallet": "Sélectionnez un portefeuille"
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "Sélectionner un fournisseur de prévisions"
       }
     },
     "meme": {

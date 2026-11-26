@@ -3015,9 +3015,6 @@
         "activatedSuccess": "เปิดใช้งานการประหยัดค่าธรรมเนียม Hyperliquid 4%",
         "activateNow": "เปิดใช้งานเดี๋ยวนี้"
       },
-      "dappSelect": {
-        "title": "เลือกผู้ให้บริการ Perps"
-      },
       "search": {
         "placeholder": "ค้นหา Perps",
         "empty": "ไม่พบผลลัพธ์"
@@ -3512,20 +3509,6 @@
         "btnCopyAddress": "คัดลอกที่อยู่",
         "title": "รับสินทรัพย์"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "เลือกผู้ให้บริการการคาดการณ์"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableTitle": "บริการไม่พร้อมใช้งาน",
-      "serviceUnavailableDesc": "บริการนี้ไม่รองรับในภูมิภาคปัจจุบันของคุณ."
-    },
-    "DAppFrame": {
-      "netWorth": "สินทรัพย์สุทธิ",
-      "selectAWallet": "เลือกกระเป๋าเงิน",
-      "walletBalance": "กระเป๋าเงิน/ยอดเงิน"
     },
     "meme": {
       "tokenHeader": {
