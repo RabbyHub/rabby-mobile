@@ -37,12 +37,7 @@ const TITLE_AREA_HORIZONTAL_MARGIN = 8;
  * behaviour: it measures the real glyphs and shrinks to the compact two-line
  * layout only when the base-size title cannot fit.
  */
-export const AutoFitCenterHeader = ({
-  title,
-  titleKey,
-  titleNode,
-  textStylesByLanguage,
-}: {
+export type AutoFitCenterHeaderProps = {
   title: string;
   /**
    * Optional rich title content (e.g. the history header's title + account
@@ -54,7 +49,27 @@ export const AutoFitCenterHeader = ({
   titleKey?: string;
   /** Exact language tag -> typography override; decided by the screen. */
   textStylesByLanguage?: Partial<Record<string, HeaderTitleLanguageStyle>>;
-}) => {
+  /**
+   * Whether the row owns a back control. `false` keeps the leading slot (so a
+   * centred title stays centred) but renders no button — used by first-run
+   * flows that must not go back.
+   */
+  back?: boolean;
+  /** Optional trailing action; the trailing slot keeps its fixed width. */
+  rightSlot?: React.ReactNode;
+  /** Left alignment is reserved for detail pages on the white list. */
+  titleAlign?: 'center' | 'left';
+};
+
+export const AutoFitCenterHeader = ({
+  title,
+  titleKey,
+  titleNode,
+  textStylesByLanguage,
+  back = true,
+  rightSlot,
+  titleAlign = 'center',
+}: AutoFitCenterHeaderProps) => {
   const { styles, colors2024, windowWidth, language } = useTheme2024({
     getStyle,
   });
@@ -86,23 +101,32 @@ export const AutoFitCenterHeader = ({
           },
         ]}>
         <View style={styles.backSlot}>
-          <HeaderBackButton
-            style={styles.backButtonTouch}
-            tintColor={colors2024['neutral-title-1']}
-          />
+          {back ? (
+            <HeaderBackButton
+              style={styles.backButtonTouch}
+              tintColor={colors2024['neutral-title-1']}
+            />
+          ) : null}
         </View>
-        <View style={styles.titleArea}>
+        <View
+          style={[
+            styles.titleArea,
+            titleAlign === 'left' && styles.titleAreaLeft,
+          ]}>
           {titleNode ?? (
             <AutoFitHeaderTitle
               text={title}
-              textStyle={styles.title}
+              textStyle={[
+                styles.title,
+                titleAlign === 'left' && styles.titleLeft,
+              ]}
               textStylesByLanguage={textStylesByLanguage}
               languageStyle={languageStyle}
             />
           )}
         </View>
         {/* Equal trailing slot keeps the title centred on the screen. */}
-        <View style={styles.rightSlot} />
+        <View style={styles.rightSlot}>{rightSlot}</View>
       </View>
     </View>
   );
@@ -143,12 +167,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
     marginHorizontal: TITLE_AREA_HORIZONTAL_MARGIN,
   },
+  titleAreaLeft: {
+    alignItems: 'flex-start',
+  },
   rightSlot: {
     width: HEADER_SIDE_SLOT_WIDTH,
     height: HEADER_CONTENT_HEIGHT,
     flexShrink: 0,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
   },
   title: {
     color: colors2024['neutral-title-1'],
+  },
+  titleLeft: {
+    textAlign: 'left',
   },
 }));
