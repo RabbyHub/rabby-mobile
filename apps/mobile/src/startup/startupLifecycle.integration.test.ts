@@ -63,6 +63,7 @@ const EXPECTED_LAUNCH_TASK_LABELS = [
   'home.preSplashLocalStateWarmup',
   'computation.workerPrewarm',
   'customTestnet.snapshotHydration',
+  'security.configIntegrity',
   'transaction.watchersStart',
   'chain.syncMetadataWarmup',
 ];
@@ -145,6 +146,9 @@ function createBoundaryLoaders(events: string[]): LaunchTaskLoaderCatalog {
       warmHomePreSplashLocalState: () => {
         events.push('home-local-state:warmed');
       },
+    }),
+    configIntegrity: async () => ({
+      startConfigIntegrity: () => events.push('config-integrity:started'),
     }),
     computationWorkerPrewarm: async () => ({
       requestComputationThreadStart: reason => {
@@ -319,6 +323,7 @@ describe.each([
       );
       expect(events).not.toContain('transactionWatcherService:requested');
       expect(events).not.toContain('syncChainService:requested');
+      expect(events).not.toContain('config-integrity:started');
 
       expect(
         markHomeEntryReadyIfEligible(
@@ -360,6 +365,7 @@ describe.each([
       expect(getHomeStartupReady()).toBe(true);
       expect(getHomePostStartupReady()).toBe(true);
       expect(events).toContain('custom-testnet:snapshot-hydrated');
+      expect(events).toContain('config-integrity:started');
       expect(events).toEqual(
         expect.arrayContaining([
           'transactionWatcherService:requested',

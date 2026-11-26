@@ -5,6 +5,7 @@ export const launchTaskLoaders = {
   appTimeoutAutoLockHydrate: () => import('@/hooks/appTimeout'),
   biometricsSystemAuthAvailability: () => import('@/hooks/biometrics'),
   bootstrapI18nReady: () => import('@/hooks/lang'),
+  configIntegrity: () => import('@/core/configIntegrity/startup'),
   computationWorkerPrewarm: () => import('@/perfs/thread'),
   customTestnetSnapshotHydration: () =>
     import('@/core/serviceApi/customTestnet'),

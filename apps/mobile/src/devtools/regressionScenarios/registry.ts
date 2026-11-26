@@ -42,6 +42,7 @@ const SCENARIO_MODULE_LOADERS: Record<
   'rabby-points-entry': () => import('./scenarios/focused'),
   'convert-dust-entry': () => import('./scenarios/focused'),
   'worker-thread': () => import('./scenarios/worker'),
+  'config-integrity': () => import('./scenarios/configIntegrity'),
   'crypto-compatibility': () => import('./scenarios/cryptoCompatibility'),
 };
 

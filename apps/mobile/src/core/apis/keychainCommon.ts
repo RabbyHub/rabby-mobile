@@ -250,6 +250,7 @@ export type KeychainCompatibleModule = {
   isPasscodeAuthAvailable?: () => Promise<boolean>;
   ACCESSIBLE: {
     WHEN_UNLOCKED_THIS_DEVICE_ONLY: unknown;
+    AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY: unknown;
   };
   ACCESS_CONTROL: {
     BIOMETRY_CURRENT_SET: unknown;

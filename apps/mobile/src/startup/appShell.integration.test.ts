@@ -84,6 +84,7 @@ function createBoundaryLoaders(events: string[]): LaunchTaskLoaderCatalog {
     homePreSplashLocalStateWarmup: async () => ({
       warmHomePreSplashLocalState: () => events.push('launch:home-local'),
     }),
+    configIntegrity: async () => ({ startConfigIntegrity: () => undefined }),
     computationWorkerPrewarm: async () => ({
       requestComputationThreadStart: () => events.push('launch:worker'),
     }),

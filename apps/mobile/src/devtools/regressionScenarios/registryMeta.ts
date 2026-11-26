@@ -276,6 +276,14 @@ export const REGRESSION_SCENARIO_METADATA = Object.freeze<
     description:
       'Verify the packaged computation worker starts and responds through the native thread bridge.',
   },
+  'config-integrity': {
+    id: 'config-integrity',
+    kind: 'focused',
+    screens: [],
+    requiresFixture: false,
+    description:
+      'Verify persisted configuration and its integrity observation across app launches.',
+  },
   'crypto-compatibility': {
     id: 'crypto-compatibility',
     kind: 'focused',

@@ -125,6 +125,16 @@ export const STARTUP_TASKS = {
     priority: 'normal',
     budgetMs: 80,
   }),
+  configIntegrity: defineStartupTask({
+    label: 'security.configIntegrity',
+    owner: 'config-integrity',
+    reason: 'observe persisted configuration after the first screen can render',
+    stage: 'homePostStartupIdle',
+    priority: 'low',
+    fallbackMs: 5000,
+    idleTimeoutMs: 3000,
+    budgetMs: 120,
+  }),
   transactionWatchersStart: defineStartupTask({
     label: 'transaction.watchersStart',
     owner: 'transaction',

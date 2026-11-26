@@ -166,6 +166,100 @@ describe('core/sentry', () => {
     },
   );
 
+  it('sends only allowlisted configuration integrity diagnostics', () => {
+    const { sentry, sentryModule } = loadSentryModule({
+      userBehaviorTrackingOptOut: false,
+    });
+    sentryModule.initSentry();
+    const { reportConfigIntegrity } =
+      require('./configIntegrity/diagnostics') as typeof import('./configIntegrity/diagnostics');
+    const { beforeSend } = (sentry.init as jest.Mock).mock.calls[0][0];
+    reportConfigIntegrity({ reason: 'key_missing' });
+    const [capture] = (sentry.captureEvent as jest.Mock).mock.calls[0];
+    const hint = { attachments: [{ filename: 'sdk.txt', data: 'inherited' }] };
+    expect(
+      beforeSend(
+        {
+          ...capture,
+          event_id: 'abc',
+          timestamp: 100,
+          release: '1.0.0-test',
+          environment: 'test',
+          platform: 'javascript',
+          user: { id: 'private' },
+          device: { model: 'private' },
+          request: { url: 'https://private.example' },
+          breadcrumbs: [{ message: 'private' }],
+          exception: { values: [{ value: 'private' }] },
+          contexts: { device: { model: 'private' } },
+          extra: { private: true },
+          tags: { ...capture.tags, inherited: 'private' },
+          fingerprint: ['private'],
+        },
+        hint,
+      ),
+    ).toEqual({
+      message: 'config-integrity',
+      level: 'warning',
+      event_id: 'abc',
+      timestamp: 100,
+      release: '1.0.0-test',
+      environment: 'test',
+      tags: { reason: 'key_missing', os: 'ios' },
+      fingerprint: ['config-integrity', 'key_missing'],
+    });
+    expect(hint.attachments).toEqual([]);
+
+    const precise = {
+      ...capture,
+      tags: {
+        reason: 'hmac_mismatch',
+        os: 'android',
+        store: 'contactBook',
+        field: 'aliases',
+      },
+    };
+    expect(beforeSend(precise).fingerprint).toEqual([
+      'config-integrity',
+      'hmac_mismatch',
+      'contactBook',
+      'aliases',
+    ]);
+    expect(
+      beforeSend({ ...precise, tags: { ...precise.tags, field: 'customRPC' } }),
+    ).toBeNull();
+    expect(
+      beforeSend({
+        ...precise,
+        tags: { ...precise.tags, reason: 'key_missing' },
+      }),
+    ).toBeNull();
+    expect(
+      beforeSend({ ...precise, tags: { ...precise.tags, os: 'web' } }),
+    ).toBeNull();
+  });
+
+  it('applies tracking opt-out to configuration integrity capture and beforeSend', () => {
+    const { sentry, sentryModule } = loadSentryModule({
+      userBehaviorTrackingOptOut: false,
+    });
+    sentryModule.initSentry();
+    const { beforeSend } = (sentry.init as jest.Mock).mock.calls[0][0];
+    const { appStorage } =
+      require('./storage/mmkv') as typeof import('./storage/mmkv');
+    appStorage.setItem('preference', { userBehaviorTrackingOptOut: true });
+    const { reportConfigIntegrity } =
+      require('./configIntegrity/diagnostics') as typeof import('./configIntegrity/diagnostics');
+    reportConfigIntegrity({ reason: 'key_read_failed' });
+    expect(sentry.captureEvent).not.toHaveBeenCalled();
+    expect(
+      beforeSend({
+        message: 'config-integrity',
+        tags: { reason: 'key_read_failed', os: 'ios' },
+      }),
+    ).toBeNull();
+  });
+
   it('initializes on sync when tracking becomes allowed', () => {
     const { sentry, sentryModule } = loadSentryModule({
       userBehaviorTrackingOptOut: false,

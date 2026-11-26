@@ -45,6 +45,7 @@ export const FOCUSED_REGRESSION_SCENARIO_IDS = [
   'convert-dust-entry',
   'worker-thread',
   'crypto-compatibility',
+  'config-integrity',
 ] as const;
 
 export const REGRESSION_SCENARIO_IDS = [

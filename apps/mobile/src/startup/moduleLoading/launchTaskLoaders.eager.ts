@@ -1,3 +1,4 @@
+import * as configIntegrity from '@/core/configIntegrity/startup';
 import * as appSettings from '@/hooks/appSettings';
 import * as appTimeout from '@/hooks/appTimeout';
 import * as biometrics from '@/hooks/biometrics';
@@ -16,6 +17,7 @@ export const launchTaskLoaders = {
   appTimeoutAutoLockHydrate: () => Promise.resolve(appTimeout),
   biometricsSystemAuthAvailability: () => Promise.resolve(biometrics),
   bootstrapI18nReady: () => Promise.resolve(lang),
+  configIntegrity: () => Promise.resolve(configIntegrity),
   computationWorkerPrewarm: () => Promise.resolve(computationThread),
   customTestnetSnapshotHydration: () => Promise.resolve(customTestnet),
   globalNetworkPolling: () => Promise.resolve(globalStatus),

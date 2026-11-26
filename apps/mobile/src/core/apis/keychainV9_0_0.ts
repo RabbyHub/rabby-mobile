@@ -31,8 +31,11 @@ import {
   type SecureKeyChainInstance,
 } from './keychainCommon';
 
+export const rawKeychain =
+  OfficialKeychain as unknown as KeychainCompatibleModule;
+
 const keychainApi = createBusinessKeychainApi({
-  keychainModule: OfficialKeychain as unknown as KeychainCompatibleModule,
+  keychainModule: rawKeychain,
   debugNativeModuleName: 'RNRabbyKeychainV9Manager',
   sourceLabel: '@rabby-wallet/react-native-keychain-9@9.2.3-rabby.0',
 });

@@ -3,6 +3,10 @@ import type { ReactNativeOptions } from '@sentry/react-native';
 
 import { APP_VERSIONS } from '@/constant';
 import { SENTRY_DEBUG, getSentryEnv } from '@/constant/env';
+import {
+  CONFIG_INTEGRITY_EVENT,
+  sanitizeConfigIntegrityEvent,
+} from '@/core/configIntegrity/diagnostics';
 import { createBridgeSdkSentryEvent } from '@/core/bridgeSdkReport';
 import { getUserBehaviorTrackingOptOut } from '@/utils/trackingOptOut';
 
@@ -25,6 +29,13 @@ function dropWhenTrackingOptedOut<T>(event: T) {
 function beforeSendSentryEvent(event: SentryEvent, hint?: SentryEventHint) {
   if (!shouldSendToSentry()) {
     return null;
+  }
+
+  if (event.message === CONFIG_INTEGRITY_EVENT) {
+    if (hint?.attachments) {
+      hint.attachments = [];
+    }
+    return sanitizeConfigIntegrityEvent(event);
   }
 
   if (event.tags?.bridge_sdk === 'validation') {
