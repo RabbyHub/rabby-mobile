@@ -3408,12 +3408,7 @@
         "risky": "Risikohaft"
       },
       "repayDetail": {
-        "actions": "Zurückzahlen",
-        "tabs": {
-          "wallet": "Wallet-Guthaben",
-          "collateral": "Kollateral"
-        },
-        "repayWith": "Mit zurückzahlen"
+        "actions": "Zurückzahlen"
       },
       "supplyDetail": {
         "supplyAPY": "Einlagen-APY",
@@ -3434,7 +3429,6 @@
         "borrowingUnavailable": "Dieses Asset kann im aktuellen Modus nicht ausgeliehen werden.",
         "almostReachedWarning": "Die Kreditobergrenze des Protokolls ist für dieses Asset zu 100 % erreicht. Weitere Kredite sind nicht verfügbar.",
         "almostReachedError": "Der maximale Betrag, der ausgeliehen werden kann, ist begrenzt, da die Kreditobergrenze des Protokolls nahezu erreicht ist.",
-        "swapDebt": "Tausch",
         "borrowed": "Ausgeliehen",
         "noSupplyPrefix": "Keine Einlagen:",
         "noSupplyDesc": "Um zu leihen, müssen Sie Vermögenswerte als Sicherheiten bereitstellen."
@@ -3546,79 +3540,18 @@
         "disableTitle": "Deaktivieren",
         "description": "Die Aktivierung des E-Modus ermöglicht es Ihnen, Ihre Kreditaufnahme zu maximieren. Das Ausleihen ist jedoch auf Vermögenswerte innerhalb der ausgewählten Kategorie beschränkt.",
         "unavailableTips": "Ihre vorhandenen Lending-/Borrowing-Assets werden nicht unterstützt.",
-        "enabled": "• Aktiviert",
-        "debtSwapSelector": {
-          "header": {
-            "borrow": "Meine Kredite",
-            "assets": "Token/Guthaben",
-            "apy": "APY"
-          },
-          "title": "Wählen Sie das Kredit-Token aus"
-        },
-        "collateralSwapSelector": {
-          "header": {
-            "assets": "Token",
-            "collateral": "Meine Sicherheiten"
-          },
-          "title": "Wählen Sie das Sicherheiten-Token"
-        }
+        "enabled": "• Aktiviert"
       },
       "disabled": "DEAKTIVIERT",
-      "debtSwap": {
-        "actions": {
-          "select": "Auswählen",
-          "title": "Schulden umwandeln",
-          "swapTo": "Umwandeln in",
-          "amount": "Betrag",
-          "borrowed": "Geliehen"
-        },
-        "overview": {
-          "title": "Transaktionsübersicht",
-          "borrowValueAfter": "Darlehenssaldo nach Umwandlung",
-          "borrowAPY": "Kredit-APY"
-        },
-        "button": {
-          "swap": "Umwandeln"
-        },
-        "title": "Darlehensposition umwandeln",
-        "borrowBalance": "Leihguthaben",
-        "priceImpactTips": "Hoher Preiseinfluss ({{lostValue}}). Wegen geringer Liquidität oder kleiner Ordergröße kann die Schätzung für diese Route deutlich abweichen.",
-        "lpRiskWarning": "Niedriger Gesundheitsfaktor nach dem Swap. Ihre Position trägt ein höheres Risiko der Liquidation.",
-        "lpDangerWarning": "Ihr Gesundheitsfaktor nach diesem Swap wird kritisch niedrig sein und kann zu einer Liquidation führen. Bitte wählen Sie einen anderen Vermögenswert oder reduzieren Sie den Swap-Betrag, um sicher zu bleiben.",
-        "maxLtvWarning": "Unzureichende Sicherheiten, um eine neue Kreditposition zu decken. Die Wallet muss über verbleibende Kreditaufnahmefähigkeiten verfügen, um einen Schuldenwechsel durchzuführen."
-      },
       "totalBorrowed": "Insgesamt geliehen",
       "totalSupplied": "Gesamt eingezahlt",
       "netApy": "Netto-APY",
-      "repayWithCollateral": {
-        "action": {
-          "title": "Zahlen Sie mit {{collateral}} zurück"
-        },
-        "overview": {
-          "title": "Transaktionsübersicht",
-          "borrowValueAfter": "Ausleihsaldo nach Rückzahlung",
-          "collateralValueAfter": "Kollateralbetrag nach der Rückzahlung"
-        },
-        "button": {
-          "repay": "Rückzahlen"
-        },
-        "repayWith": "Sicherheit für die Rückzahlung",
-        "toRepay": "Erwarteter Rückzahlungsbetrag",
-        "collateralNotEnough": "Ihr Sicherheitensaldo ist niedriger als der ausgewählte Betrag.",
-        "insufficientLiquidity": "Unzureichende Liquidität.",
-        "flashLoanDisabled": "Das Umwandeln von Positionen ist für dieses Asset aus Sicherheitsgründen deaktiviert.",
-        "frozenCollateral": "Dieses Asset ist aufgrund einer Aave-Gemeinschaftsentscheidung eingefroren."
-      },
       "repayWithAToken": {
         "header": {
           "balance": "Saldo",
           "assets": "Token"
         },
-        "title": "Wählen Sie Rückzahlungs-Token",
-        "zeroLtvCollateralTips": "Sie haben die folgenden Sicherheiten mit LTV = 0. Nach den Regeln für die Rückzahlung mit Sicherheiten müssen Sie diese Sicherheiten zuerst verwenden."
-      },
-      "signFallback": {
-        "preExecFailedUseFullSign": "Simulation fehlgeschlagen. Diese Transaktion wird sehr wahrscheinlich aufgrund von AAVE-Fehlern fehlschlagen."
+        "title": "Wählen Sie Rückzahlungs-Token"
       }
     },
     "address": {

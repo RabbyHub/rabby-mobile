@@ -3409,12 +3409,7 @@
         "healthy": "Saudável"
       },
       "repayDetail": {
-        "actions": "Reembolsar",
-        "tabs": {
-          "wallet": "Saldo da carteira",
-          "collateral": "Colateral"
-        },
-        "repayWith": "Reembolsar com"
+        "actions": "Reembolsar"
       },
       "supplyDetail": {
         "availableToBorrow": "Disponível para pedir emprestado",
@@ -3435,7 +3430,6 @@
         "almostReachedError": "O montante máximo disponível para empréstimo é limitado porque o limite de empréstimo do protocolo está quase atingido.",
         "borrowingUnavailable": "Não é possível pedir este ativo emprestado no modo atual.",
         "almostReachedWarning": "O limite de empréstimo do protocolo está em 100% para este ativo. Novos empréstimos não estão disponíveis.",
-        "swapDebt": "Trocar",
         "borrowed": "Emprestado",
         "noSupplyPrefix": "Sem depósitos:",
         "noSupplyDesc": "Para pedir emprestado, precisa fornecer ativos como garantia."
@@ -3547,79 +3541,18 @@
         "unavailable": "• Indisponível",
         "disableTitle": "Desativar",
         "unavailableTips": "Os seus ativos atuais de empréstimo e depósito não são suportados.",
-        "description": "Ativar o E-Mode permite maximizar o seu poder de empréstimo. No entanto, o empréstimo está restrito a ativos dentro da categoria selecionada.",
-        "debtSwapSelector": {
-          "header": {
-            "borrow": "Os meus empréstimos",
-            "assets": "Token/Saldo",
-            "apy": "APY"
-          },
-          "title": "Selecionar Token de Empréstimo"
-        },
-        "collateralSwapSelector": {
-          "header": {
-            "collateral": "O meu colateral",
-            "assets": "Token"
-          },
-          "title": "Selecionar Token de Colateral"
-        }
+        "description": "Ativar o E-Mode permite maximizar o seu poder de empréstimo. No entanto, o empréstimo está restrito a ativos dentro da categoria selecionada."
       },
       "disabled": "DESABILITADO",
-      "debtSwap": {
-        "actions": {
-          "title": "Converter dívida",
-          "select": "Selecionar",
-          "swapTo": "Converter para",
-          "borrowed": "Emprestado",
-          "amount": "Quantidade"
-        },
-        "overview": {
-          "title": "Visão geral da transação",
-          "borrowAPY": "APY do empréstimo",
-          "borrowValueAfter": "Saldo do empréstimo após conversão"
-        },
-        "button": {
-          "swap": "Converter"
-        },
-        "borrowBalance": "Saldo de empréstimo",
-        "title": "Converter posição de empréstimo",
-        "lpDangerWarning": "O seu fator de saúde após esta troca ficará criticamente baixo e pode resultar em liquidação. Por favor, escolha um ativo diferente ou reduza o valor da troca para se manter seguro.",
-        "lpRiskWarning": "Fator de saúde baixo após a troca. A sua posição terá um risco de liquidação mais elevado.",
-        "priceImpactTips": "Impacto de preço elevado ({{lostValue}}). Devido à baixa liquidez ou ao tamanho reduzido da ordem, a estimativa desta rota pode desviar-se bastante.",
-        "maxLtvWarning": "Colateral insuficiente para cobrir a nova posição de empréstimo. A carteira deve ter poder de empréstimo restante para realizar a troca de dívida."
-      },
       "netApy": "APY líquido",
       "totalBorrowed": "Total emprestado",
       "totalSupplied": "Total depositado",
-      "repayWithCollateral": {
-        "action": {
-          "title": "Reembolsar com {{collateral}}"
-        },
-        "overview": {
-          "title": "Visão geral da transação",
-          "borrowValueAfter": "Saldo do empréstimo após o reembolso",
-          "collateralValueAfter": "Saldo de colateral após reembolso"
-        },
-        "button": {
-          "repay": "Reembolsar"
-        },
-        "collateralNotEnough": "O seu saldo de colateral é inferior ao montante selecionado.",
-        "toRepay": "Montante esperado para reembolso",
-        "repayWith": "Colateral para reembolsar",
-        "insufficientLiquidity": "Liquidez insuficiente.",
-        "flashLoanDisabled": "A conversão de posições está desativada para este ativo por motivos de segurança.",
-        "frozenCollateral": "Este ativo está congelado devido a uma decisão da comunidade Aave."
-      },
       "repayWithAToken": {
         "header": {
           "balance": "Saldo",
           "assets": "Token"
         },
-        "title": "Selecionar Token de Reembolso",
-        "zeroLtvCollateralTips": "Tem os seguintes colaterais com LTV = 0. De acordo com as regras de reembolso com colateral, deve usar primeiro estes colaterais para reembolsar."
-      },
-      "signFallback": {
-        "preExecFailedUseFullSign": "A simulação falhou. É muito provável que esta transação falhe devido a erros da AAVE."
+        "title": "Selecionar Token de Reembolso"
       }
     },
     "address": {
