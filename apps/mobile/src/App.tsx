@@ -29,6 +29,7 @@ import { ScreenSceneAccountProvider } from './hooks/accountsSwitcher';
 import { useIAPListener } from './hooks/iap/useIAPListener';
 import { useIncreaseTxCountOnAppTop } from './components/RateModal/hooks';
 import { useUniversalLinkOnTop } from './hooks/universalLink';
+import { useBizMockDeeplink } from './devtools/bizMock/useBizMockDeeplink';
 import Safe from '@rabby-wallet/gnosis-sdk';
 import {
   RerenderDetector,
@@ -74,6 +75,7 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
   useInitializeAppOnTop();
   useSetupServiceStub();
   useUniversalLinkOnTop();
+  useBizMockDeeplink();
   useIAPListener();
   useIncreaseTxCountOnAppTop({ isTop: true });
 

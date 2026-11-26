@@ -44,6 +44,14 @@
 				<string>$(RABBYGO_SCHEMA)</string>
 			</array>
 		</dict>
+#if RABBYMOCK_SCHEME_ENABLED
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>$(RABBYMOCK_SCHEMA)</string>
+			</array>
+		</dict>
+#endif
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>

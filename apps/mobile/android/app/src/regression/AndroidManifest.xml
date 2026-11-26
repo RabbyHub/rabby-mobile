@@ -19,6 +19,15 @@
                 <data android:scheme="https" />
                 <data android:host="go-regression.rabby.io" android:pathPrefix="/mobile-regression/" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="@string/rabbymock_scheme"
+                    android:host="go.rabby.io"
+                    android:pathPrefix="/mobile-mock/" />
+            </intent-filter>
         </activity>
     </application>
 </manifest>

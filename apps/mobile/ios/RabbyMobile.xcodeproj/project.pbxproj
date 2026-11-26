@@ -824,7 +824,10 @@
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
 				OTHER_LDFLAGS = "$(inherited)";
+				INFOPLIST_PREPROCESS = YES;
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = "RABBYMOCK_SCHEME_ENABLED=1";
 				RABBYGO_SCHEMA = "rabbygo-regression";
+				RABBYMOCK_SCHEMA = "rabbymock-regression";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
@@ -1129,7 +1132,10 @@
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
 				OTHER_LDFLAGS = "$(inherited)";
+				INFOPLIST_PREPROCESS = YES;
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = "RABBYMOCK_SCHEME_ENABLED=1";
 				RABBYGO_SCHEMA = "rabbygo-debug";
+				RABBYMOCK_SCHEMA = "rabbymock-debug";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -1231,6 +1237,8 @@
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
 				OTHER_LDFLAGS = "$(inherited)";
+				INFOPLIST_PREPROCESS = YES;
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = "RABBYMOCK_SCHEME_ENABLED=0";
 				RABBYGO_SCHEMA = rabbygo;
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
