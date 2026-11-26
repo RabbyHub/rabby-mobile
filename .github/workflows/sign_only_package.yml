@@ -85,7 +85,9 @@ jobs:
       SKIP_NOTIFY_LARK: ${{ inputs.notify_lark == 'true' && 'false' || 'true' }}
       RABBY_MOBILE_LARK_DRIVE_UPLOAD: ${{ inputs.notify_lark == 'true' && 'true' || 'false' }}
       RABBY_MOBILE_LARK_DRIVE_UPLOAD_REQUIRED: 'false'
-      RABBY_MOBILE_ANDROID_16KB_CHECK: 'warn'
+      # Sign-only packages are shipped to QA, so a 16 KB page-size failure must
+      # block the package instead of only being reported.
+      RABBY_MOBILE_ANDROID_16KB_CHECK: 'strict'
       GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       GITHUB_ACTOR: ${{ github.actor }}
       GITHUB_TRIGGERING_ACTOR: ${{ github.triggering_actor }}
