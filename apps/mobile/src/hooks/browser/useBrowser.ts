@@ -34,6 +34,7 @@ import { resolveValFromUpdater } from '@/core/utils/store';
 import { runStartupTask } from '@/core/utils/startupScheduler';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { perfEvents } from '@/core/utils/perf';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 type TabsState = {
   tabs: Tab[];
@@ -255,6 +256,16 @@ function useDisplayedTabs() {
   const displayedTabs = useMemo(() => getDisplayedTabs(tabs), [tabs]);
 
   return { displayedTabs };
+}
+
+const selectDisplayedTabsCount = (state: TabsState) =>
+  getDisplayedTabs(state.tabs).length;
+
+/** How many tabs the tab manager lists. Re-renders only when that count changes. */
+export function useDisplayedTabsCount() {
+  return useActivityStore(tabsStore, selectDisplayedTabsCount, Object.is, {
+    storeLabel: 'home-dapp-drawer-tabs-count',
+  });
 }
 
 export const useBrowserActiveTabState = () => {
