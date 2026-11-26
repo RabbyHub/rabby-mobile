@@ -29,7 +29,7 @@ import {
 } from '../../hooks/useHomeDrawerAnimate';
 import { HOME_FEATURE_EDIT_FOOTER_HEIGHT } from '../HomeFeatures/constants';
 import { HomeFeatureGrid } from '../HomeFeatures/HomeFeatureGrid';
-import { DRAWER_MORE_CONTENT_TOP } from './constants';
+import { DRAWER_MORE_CONTENT_GAP, DRAWER_TOP_BAR_HEIGHT } from './constants';
 
 type HomeMoreFeaturesProps = {
   drawerScrollableGesture: NativeGesture;
@@ -46,6 +46,10 @@ type HomeMoreFeaturesProps = {
  * lists, even though its content rarely scrolls: a page with no vertical
  * scroll view of its own leaves a vertical drag to the pager's recognizer on
  * iOS, and the drawer could then not be pulled down from it.
+ *
+ * The scroll view starts under the floating title row and indicator, like
+ * the Home's own list under its header: cards scrolled up are clipped at
+ * that edge instead of showing through the title.
  */
 export const HomeMoreFeatures = React.memo(function HomeMoreFeatures({
   drawerScrollableGesture,
@@ -100,54 +104,60 @@ export const HomeMoreFeatures = React.memo(function HomeMoreFeatures({
   });
 
   return (
-    <GestureDetector gesture={drawerScrollableGesture}>
-      <Animated.ScrollView
-        ref={scrollableRef}
-        style={styles.page}
-        contentContainerStyle={[
-          styles.content,
-          !hasFeatures && styles.emptyContent,
-          isEditing && styles.editingContent,
-        ]}
-        showsVerticalScrollIndicator={false}
-        onScroll={scrollHandler}
-        scrollEventThrottle={16}
-        animatedProps={animatedProps}>
-        {hasFeatures ? (
-          <>
-            <HomeFeatureGrid place="more" />
-            <View style={styles.swipeDownHint}>
-              <RcIconDoubleArrowCC
-                style={styles.swipeDownIcon}
-                color={colors2024['neutral-secondary']}
-              />
-              <Text style={styles.swipeDownHintText}>
-                {isEditing
-                  ? t('page.home.moreFeatures.swipeDownEdit')
-                  : t('page.home.moreFeatures.swipeDown')}
+    <View style={styles.page}>
+      <GestureDetector gesture={drawerScrollableGesture}>
+        <Animated.ScrollView
+          ref={scrollableRef}
+          style={styles.scroll}
+          contentContainerStyle={[
+            styles.content,
+            !hasFeatures && styles.emptyContent,
+            isEditing && styles.editingContent,
+          ]}
+          showsVerticalScrollIndicator={false}
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
+          animatedProps={animatedProps}>
+          {hasFeatures ? (
+            <>
+              <HomeFeatureGrid place="more" />
+              <View style={styles.swipeDownHint}>
+                <RcIconDoubleArrowCC
+                  style={styles.swipeDownIcon}
+                  color={colors2024['neutral-secondary']}
+                />
+                <Text style={styles.swipeDownHintText}>
+                  {isEditing
+                    ? t('page.home.moreFeatures.swipeDownEdit')
+                    : t('page.home.moreFeatures.swipeDown')}
+                </Text>
+              </View>
+            </>
+          ) : (
+            <>
+              <RcImgMoreFeaturesEmpty width={163} height={126} />
+              <Text style={styles.emptyText}>
+                {t('page.home.moreFeatures.empty')}
               </Text>
-            </View>
-          </>
-        ) : (
-          <>
-            <RcImgMoreFeaturesEmpty width={163} height={126} />
-            <Text style={styles.emptyText}>
-              {t('page.home.moreFeatures.empty')}
-            </Text>
-          </>
-        )}
-      </Animated.ScrollView>
-    </GestureDetector>
+            </>
+          )}
+        </Animated.ScrollView>
+      </GestureDetector>
+    </View>
   );
 });
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   page: {
     flex: 1,
+    paddingTop: DRAWER_TOP_BAR_HEIGHT,
+  },
+  scroll: {
+    flex: 1,
   },
   content: {
     flexGrow: 1,
-    paddingTop: DRAWER_MORE_CONTENT_TOP,
+    paddingTop: DRAWER_MORE_CONTENT_GAP,
     paddingBottom: 24,
     paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
   },

@@ -52,6 +52,21 @@ export const homeDrawerAnimateMutable = {
   scrollViewContentHeight: makeMutable(0),
   scrollViewLayoutHeight: makeMutable(0),
   swipeUpHintHeight: makeMutable(0),
+  /**
+   * Where the first floor's own content ends inside its scroll view: the
+   * bottom edge of the swipe-up hint's box. Whatever the scroll content has
+   * below it is padding.
+   */
+  firstFloorContentEnd: makeMutable(0),
+
+  /**
+   * 0 outside the feature-card edit mode. While the cards are edited the two
+   * floors read as one page, and this is how far they travel between the
+   * Home and the second floor: less than a screen, so that the second floor
+   * starts right under the Home's swipe-up hint instead of a screen below
+   * the first floor's top. Pass its value to `getHomeFloorTravel`.
+   */
+  editingFloorTravel: makeMutable(0),
 
   /**
    * Page position of the second floor's own pager: 0 is "More Features",
@@ -60,6 +75,69 @@ export const homeDrawerAnimateMutable = {
    */
   drawerTabPosition: makeMutable(0),
 };
+
+/** The two floors never travel less than this share of the screen. */
+const MIN_FLOOR_TRAVEL_RATIO = 0.35;
+
+/**
+ * How far the two floors move on screen between the Home and the second
+ * floor. `translateY` and `pullPercent` always span a full screen; this is
+ * the distance that span is drawn over, and the distance a finger has to
+ * cover for it.
+ *
+ * `editingTravel` is `editingFloorTravel.value`. It is a parameter so that
+ * an animated style or reaction reads the shared value itself: one read
+ * inside this helper would not be tracked, and the style would keep the old
+ * distance when the edit mode changes.
+ */
+export function getHomeFloorTravel(
+  screenHeight: number,
+  editingTravel: number,
+) {
+  'worklet';
+  if (editingTravel <= 0 || screenHeight <= 0) {
+    return screenHeight;
+  }
+
+  return Math.min(
+    screenHeight,
+    Math.max(editingTravel, screenHeight * MIN_FLOOR_TRAVEL_RATIO),
+  );
+}
+
+/**
+ * Whether the first floor's list has to be held at its very end. Whatever
+ * shows right above the second floor is that end, and the list's distance to
+ * it keeps changing: its content resizes (a card moved up from the second
+ * floor adds a row, entering or leaving edit mode resizes the hint) and its
+ * viewport resizes with the Home header all along the drawer's travel.
+ *
+ * - Drawer resting fully open: yes.
+ * - Feature-card edit mode: yes, for as long as any of the drawer is on
+ *   screen. The two floors read as one page there, and the first floor stays
+ *   less than a screen away behind a drawer panel with no background of its
+ *   own, so anything short of its end shows through the second floor.
+ * - Otherwise no: on the drawer's way down the list is scrolled back to its
+ *   top.
+ *
+ * The arguments are the shared values' current values, as for
+ * `getHomeFloorTravel`.
+ */
+export function shouldHoldFirstFloorAtEnd(
+  drawerTranslateY: number,
+  screenHeight: number,
+  editingTravel: number,
+) {
+  'worklet';
+  if (screenHeight <= 0) {
+    return false;
+  }
+  if (drawerTranslateY <= -screenHeight) {
+    return true;
+  }
+
+  return editingTravel > 0 && drawerTranslateY < 0;
+}
 
 export function getScrollContainerPb(bottomInset: number) {
   'worklet';

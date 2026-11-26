@@ -8,7 +8,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef } from 'react';
 import type { ScrollView, ViewProps } from 'react-native';
 import { View } from 'react-native';
-import { svsLayout } from '@/hooks/useAppLayout';
+import { svsLayout, useSafeSizes } from '@/hooks/useAppLayout';
 
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -90,11 +90,13 @@ import { TabsScrollView } from '@/components/customized/react-native-collapsible
 import type { RNGHScrollView } from '@/components/customized/reexports';
 import { RNGHRefreshControl } from '@/components/customized/reexports';
 import {
+  getHomeFloorTravel,
   getPullThreshold,
   getScrollContainerPb,
   homeDrawerAnimateMutable,
   SCROLLABLE_STATUS,
   THRESHOLD_PERCENT,
+  shouldHoldFirstFloorAtEnd,
 } from '../hooks/useHomeDrawerAnimate';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import type { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
@@ -181,7 +183,34 @@ const {
   scrollViewContentHeight,
   scrollViewLayoutHeight,
   swipeUpHintHeight,
+  firstFloorContentEnd,
+  editingFloorTravel,
 } = homeDrawerAnimateMutable;
+
+/**
+ * Bottom padding the swipe-up hint gets in edit mode: room for the edit
+ * footer, so the last cards and the hint can scroll clear of it.
+ */
+const EDITING_SWIPE_UP_HINT_PADDING = HOME_FEATURE_EDIT_FOOTER_HEIGHT + 62;
+/** Edit mode: from the swipe-up hint to the second floor's tab bar. */
+const EDITING_FLOOR_GAP = 12;
+/**
+ * Edit mode: the hint ends its trip just under the top of the screen, right
+ * above the second floor's tab bar, so it fades out over this last stretch.
+ */
+const EDITING_SWIPE_UP_HINT_FADE_PERCENT = 20;
+
+/**
+ * Share of a full screen the two floors travel: `translateY` spans a screen,
+ * the floors are drawn over `getHomeFloorTravel`. The arguments are the
+ * shared values' current values, read by the caller so that it tracks them.
+ */
+function getFloorTravelRatio(screenHeight: number, editingTravel: number) {
+  'worklet';
+  return screenHeight > 0
+    ? getHomeFloorTravel(screenHeight, editingTravel) / screenHeight
+    : 1;
+}
 
 function getIsAtBottom(scrollY: number) {
   'worklet';
@@ -199,9 +228,11 @@ function getIsAtBottom(scrollY: number) {
 
 function hasOverThreshold() {
   'worklet';
+  const screenHeight = svsLayout.screenLayout.value.height;
   return (
-    translateY.value <
-    getPullThreshold(svsLayout.screenLayout.value.height) * -1
+    translateY.value *
+      getFloorTravelRatio(screenHeight, editingFloorTravel.value) <
+    getPullThreshold(screenHeight) * -1
   );
 }
 
@@ -212,6 +243,13 @@ const tabsScrollHandlers = {
   onLayout: (event => {
     scrollViewLayoutHeight.value = event.nativeEvent.layout.height;
   }) as TabsScrollViewProps['onLayout'] & object,
+};
+
+const scrollViewInnerHandlers = {
+  onLayout: (event => {
+    const { y, height } = event.nativeEvent.layout;
+    firstFloorContentEnd.value = y + height;
+  }) as ViewProps['onLayout'] & object,
 };
 
 const swipeUpViewHandlers = {
@@ -312,10 +350,42 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
     },
   );
 
+  // The list is pinned to its end when the drawer starts to move and when it
+  // opens. Its distance to that end still changes afterwards, so pin it again
+  // whenever it does and the end is what has to show.
+  useAnimatedReaction(
+    () =>
+      Math.max(0, scrollViewContentHeight.value - scrollViewLayoutHeight.value),
+    (maxScrollOffset, prevMaxScrollOffset) => {
+      if (
+        prevMaxScrollOffset === null ||
+        maxScrollOffset === prevMaxScrollOffset
+      ) {
+        return;
+      }
+      if (
+        shouldHoldFirstFloorAtEnd(
+          translateY.value,
+          svsLayout.screenLayout.value.height,
+          editingFloorTravel.value,
+        )
+      ) {
+        scrollToEnd(true, false);
+      }
+    },
+    [scrollToEnd],
+  );
+
   const uiOnScrollBack = useCallback<WorkletFunction>(
     // @ts-expect-error
     () => {
       'worklet';
+      // Editing holds the end of the first floor right above the second
+      // floor all the way down (`shouldHoldFirstFloorAtEnd`), so the page
+      // lands where it was left instead of rewinding under the drawer.
+      if (editingFloorTravel.value > 0) {
+        return;
+      }
       scrollToEnd(false, true);
     },
     [scrollToEnd],
@@ -402,7 +472,14 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
       .onUpdate(event => {
         panUp: {
           if (startValues.value.startedAtBottom && event.translationY < 0) {
-            translateY.value = event.translationY;
+            // The floors follow the finger one to one, whatever distance
+            // they travel.
+            translateY.value =
+              event.translationY /
+              getFloorTravelRatio(
+                svsLayout.screenLayout.value.height,
+                editingFloorTravel.value,
+              );
             scrollableStatus.value = SCROLLABLE_STATUS.LOCKED;
             // Keep the first floor frozen at its end while the drawer owns the
             // drag. If the native scroll view manages to move the offset (an
@@ -568,10 +645,10 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     // ...makeDebugBorder('purple'),
   },
   // Room for the edit footer, so the last cards and this hint can scroll
-  // clear of it. It is part of the hint's own box on purpose: the drawer's
-  // pull overlay is anchored to this view's measured height.
+  // clear of it. It stays inside the hint's own box: the edit-mode floor
+  // travel is measured from the end of this box, minus this padding.
   swipeUpHintEditing: {
-    paddingBottom: HOME_FEATURE_EDIT_FOOTER_HEIGHT + 62,
+    paddingBottom: EDITING_SWIPE_UP_HINT_PADDING,
   },
   swipeUpHintText: {
     marginTop: 4,
@@ -779,10 +856,58 @@ function HomeSwipeUpHint() {
   });
   const { t } = useTranslation();
   const isEditing = useIsHomeFeatureEditing();
+  const { safeHeaderTop } = useSafeSizes();
+
+  // Editing treats the two floors as one page: the second floor's tab bar
+  // follows this hint at `EDITING_FLOOR_GAP`. The floors therefore travel
+  // from where the hint rests at the end of the Home to where that tab bar
+  // rests on the second floor, not a full screen.
+  useAnimatedReaction(
+    () => {
+      if (!isEditing) {
+        return 0;
+      }
+      const screenHeight = svsLayout.screenLayout.value.height;
+      const contentHeight = scrollViewContentHeight.value;
+      const contentEnd = firstFloorContentEnd.value;
+      if (screenHeight <= 0 || contentHeight <= 0 || contentEnd <= 0) {
+        // Not measured yet: still editing, over a full screen.
+        return screenHeight;
+      }
+
+      // With the Home scrolled to its end, from the hint's own bottom edge
+      // to the bottom of the screen.
+      const belowHint =
+        Math.max(0, contentHeight - contentEnd) + EDITING_SWIPE_UP_HINT_PADDING;
+      return screenHeight - belowHint + EDITING_FLOOR_GAP - safeHeaderTop;
+    },
+    travel => {
+      editingFloorTravel.value = travel;
+    },
+    [isEditing, safeHeaderTop],
+  );
+
+  const hintStyle = useAnimatedStyle(
+    () => ({
+      opacity: isEditing
+        ? interpolate(
+            pullPercent.value,
+            [-100, EDITING_SWIPE_UP_HINT_FADE_PERCENT - 100],
+            [0, 1],
+            Extrapolate.CLAMP,
+          )
+        : 1,
+    }),
+    [isEditing],
+  );
 
   return (
-    <View
-      style={[styles.swipeUpHint, isEditing && styles.swipeUpHintEditing]}
+    <Animated.View
+      style={[
+        styles.swipeUpHint,
+        isEditing && styles.swipeUpHintEditing,
+        hintStyle,
+      ]}
       onLayout={swipeUpViewHandlers.onLayout}>
       <RcIconDoubleArrowCC color={colors2024['neutral-secondary']} />
       <Text style={styles.swipeUpHintText}>
@@ -790,7 +915,7 @@ function HomeSwipeUpHint() {
           ? t('page.home.swipeUp.editMore')
           : t('page.home.swipeUp.more')}
       </Text>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -939,7 +1064,12 @@ export const HomeOverview = React.memo(() => {
       transform: [
         {
           // translateY: Math.min(HOME_TOP_HEADER_SIZES.scrollableListTopOffset * 2, translateY.value),
-          translateY: Math.min(0, translateY.value),
+          translateY:
+            Math.min(0, translateY.value) *
+            getFloorTravelRatio(
+              svsLayout.screenLayout.value.height,
+              editingFloorTravel.value,
+            ),
         },
       ],
     };
@@ -985,7 +1115,9 @@ export const HomeOverview = React.memo(() => {
               animatedIndicatorStyle={styles.iosAbsIndicatorOffset}
               __PICK_MANUAL__
             />
-            <Animated.View style={[styles.scrollViewInner]}>
+            <Animated.View
+              style={[styles.scrollViewInner]}
+              onLayout={scrollViewInnerHandlers.onLayout}>
               <MultiAddressHomeHeader onRefresh={onRefresh} />
 
               <HomeCenterArea />
