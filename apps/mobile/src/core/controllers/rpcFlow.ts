@@ -423,6 +423,9 @@ const flowContext = flow
                     success: false,
                     errorMsg: e?.message || JSON.stringify(e),
                     signingOperationId,
+                    // Hardware keyrings (OneKey) attach the SDK error code;
+                    // pass it on so the UI does not have to parse the text.
+                    ...(e?.code !== undefined ? { errorCode: e.code } : {}),
                   },
                 };
                 if (e.method) {

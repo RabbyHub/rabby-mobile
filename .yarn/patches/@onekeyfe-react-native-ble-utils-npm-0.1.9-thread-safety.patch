@@ -1,8 +1,7 @@
 diff --git a/ios/BleUtils.swift b/ios/BleUtils.swift
-index 1dd806a7b531dd8d8856271d4df1cd8d26d29f93..ca685bd3891806d71449a900f1f6a418facec9de 100644
 --- a/ios/BleUtils.swift
 +++ b/ios/BleUtils.swift
-@@ -3,67 +3,71 @@ import CoreBluetooth
+@@ -3,73 +3,71 @@ import CoreBluetooth
  
  @objc(BleUtilsModule)
  class BleUtilsModule: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
@@ -23,7 +22,14 @@ index 1dd806a7b531dd8d8856271d4df1cd8d26d29f93..ca685bd3891806d71449a900f1f6a418
  
 -    override init() {
 -      super.init()
--      manager = CBCentralManager(delegate: self, queue: nil)
+-      // Lazy CBCentralManager: avoid triggering iOS BT dialog on module init.
+-    }
+-
+-    private func ensureManager() -> CBCentralManager {
+-      if let m = manager { return m }
+-      let m = CBCentralManager(delegate: self, queue: nil)
+-      manager = m
+-      return m
 +    func centralManagerDidUpdateState(_ central: CBCentralManager) {
 +        let blocks = pendingStateBlocks
 +        pendingStateBlocks.removeAll()
@@ -47,13 +53,12 @@ index 1dd806a7b531dd8d8856271d4df1cd8d26d29f93..ca685bd3891806d71449a900f1f6a418
      }
  
      @objc public func checkState(_ callback: @escaping RCTResponseSenderBlock) {
--        if let manager = manager {
--            if manager.state == .unknown {
--                stateChangedCallbacks.append(callback)
--            } else {
--                let stateName = Helper.centralManagerStateToString(manager.state)
--                callback([stateName])
--            }
+-        let manager = ensureManager()
+-        if manager.state == .unknown {
+-            stateChangedCallbacks.append(callback)
+-        } else {
+-            let stateName = Helper.centralManagerStateToString(manager.state)
+-            callback([stateName])
 +        whenStateKnown { [weak self] in
 +            guard let self = self else { return }
 +            callback([Helper.centralManagerStateToString(self.manager.state)])
@@ -79,7 +84,7 @@ index 1dd806a7b531dd8d8856271d4df1cd8d26d29f93..ca685bd3891806d71449a900f1f6a418
 -        var connectedPeripherals: [Peripheral] = []
 +            var connectedPeripherals: [Peripheral] = []
  
--        let connectedCBPeripherals: [CBPeripheral] = manager?.retrieveConnectedPeripherals(withServices: serviceUUIDs) ?? []
+-        let connectedCBPeripherals: [CBPeripheral] = ensureManager().retrieveConnectedPeripherals(withServices: serviceUUIDs)
 +            let connectedCBPeripherals: [CBPeripheral] = self.manager.retrieveConnectedPeripherals(withServices: serviceUUIDs)
  
 -        serialQueue.sync {

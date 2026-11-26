@@ -5,6 +5,8 @@ export type SignFinishedEvent = {
   success: boolean;
   data?: any;
   errorMsg?: string;
+  /** SDK error code from hardware keyrings (OneKey), when present. */
+  errorCode?: number | string;
   signingOperationId?: string;
 };
 

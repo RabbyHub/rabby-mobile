@@ -1405,7 +1405,8 @@
         },
         "notFound": {
           "title": "Dispositivo não encontrado",
-          "description": "Ative o Bluetooth e desbloqueie o OneKey"
+          "description": "Ative o Bluetooth e desbloqueie o OneKey",
+          "retry": "Pesquisar novamente"
         },
         "inputPin": {
           "title": "Introduzir PIN",
@@ -1420,6 +1421,23 @@
         "connect": {
           "description": "Introduza o PIN ou a frase-passe no dispositivo",
           "title": "A ligar"
+        },
+        "error": {
+          "deviceNotFound": "OneKey não encontrado. Certifique-se de que está desbloqueado, de que o Bluetooth está ativado e de que está perto do seu telemóvel.",
+          "disconnected": "O OneKey foi desligado. Mantenha-o desbloqueado e perto do seu telemóvel e tente novamente.",
+          "deviceBusy": "O OneKey está a processar outro pedido. Conclua-o ou cancele-o no dispositivo e tente novamente.",
+          "passphraseDisabled": "A frase-passe está desativada no dispositivo. Ative-a ou volte a importar esta carteira.",
+          "firmwareTooOld": "O firmware do seu OneKey é demasiado antigo. Atualize-o com a aplicação OneKey e tente novamente.",
+          "bluetoothOff": "O Bluetooth está desativado. Ative o Bluetooth e tente novamente.",
+          "bluetoothPermission": "O Rabby não tem permissão para utilizar o Bluetooth. Permita o Bluetooth (ou a Localização no Android 11 e anteriores) para o Rabby nas Definições e tente novamente.",
+          "locationServicesDisabled": "Os serviços de localização estão desativados. Ative-os para pesquisar dispositivos Bluetooth.",
+          "bluetoothUnsupported": "O Bluetooth não é suportado neste telemóvel.",
+          "scanFailed": "A pesquisa Bluetooth falhou. Tente novamente.",
+          "pairingFailed": "O emparelhamento Bluetooth falhou. Aceite o pedido de emparelhamento no seu telemóvel e no OneKey e tente novamente.",
+          "pairingInvalid": "O emparelhamento Bluetooth já não é válido. Esqueça o OneKey nas definições de Bluetooth do seu telemóvel e volte a emparelhá-lo.",
+          "pinInvalid": "PIN incorreto. Tente novamente.",
+          "cancelled": "O pedido foi cancelado.",
+          "openSettings": "Abrir Definições"
         }
       },
       "ledger": {

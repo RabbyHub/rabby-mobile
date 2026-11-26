@@ -1472,7 +1472,25 @@
         },
         "notFound": {
           "title": "Không tìm thấy thiết bị",
-          "description": "Bật Bluetooth và mở khóa OneKey"
+          "description": "Bật Bluetooth và mở khóa OneKey",
+          "retry": "Tìm lại"
+        },
+        "error": {
+          "deviceNotFound": "Không tìm thấy OneKey. Hãy đảm bảo thiết bị đã được mở khóa, Bluetooth đang bật và thiết bị ở gần điện thoại của bạn.",
+          "disconnected": "OneKey đã ngắt kết nối. Hãy giữ thiết bị ở trạng thái mở khóa và gần điện thoại, rồi thử lại.",
+          "deviceBusy": "OneKey đang xử lý một yêu cầu khác. Hãy hoàn tất hoặc hủy yêu cầu đó trên thiết bị, rồi thử lại.",
+          "passphraseDisabled": "Cụm mật khẩu đang tắt trên thiết bị. Hãy bật lên, hoặc nhập lại ví này.",
+          "firmwareTooOld": "Firmware OneKey của bạn đã quá cũ. Hãy cập nhật bằng ứng dụng OneKey, rồi thử lại.",
+          "bluetoothOff": "Bluetooth đang tắt. Hãy bật Bluetooth rồi thử lại.",
+          "bluetoothPermission": "Rabby chưa có quyền sử dụng Bluetooth. Hãy cho phép Rabby dùng Bluetooth (hoặc Vị trí trên Android 11 trở xuống) trong Cài đặt, rồi thử lại.",
+          "locationServicesDisabled": "Dịch vụ vị trí đang tắt. Hãy bật lên để tìm thiết bị Bluetooth.",
+          "bluetoothUnsupported": "Điện thoại này không hỗ trợ Bluetooth.",
+          "scanFailed": "Tìm kiếm Bluetooth thất bại. Vui lòng thử lại.",
+          "pairingFailed": "Ghép nối Bluetooth thất bại. Hãy chấp nhận yêu cầu ghép nối trên điện thoại và OneKey, rồi thử lại.",
+          "pairingInvalid": "Thông tin ghép nối Bluetooth không còn hợp lệ. Hãy xóa OneKey trong cài đặt Bluetooth của điện thoại, rồi ghép nối lại.",
+          "pinInvalid": "Mã PIN không đúng. Vui lòng thử lại.",
+          "cancelled": "Yêu cầu đã bị hủy.",
+          "openSettings": "Mở Cài đặt"
         }
       },
       "createNewAddress": "Tạo ví mới",

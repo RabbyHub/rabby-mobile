@@ -1235,7 +1235,8 @@
         },
         "notFound": {
           "title": "Aygıt Bulunamadı",
-          "description": "Bluetooth'u açın ve OneKey'in kilidini açın."
+          "description": "Bluetooth'u açın ve OneKey'in kilidini açın.",
+          "retry": "Tekrar ara"
         },
         "select": {
           "currentDevice": "mevcut",
@@ -1250,6 +1251,23 @@
           "onDevice": "Cihazda PIN kodunu girin",
           "description": "Cihaz ekranında görüntülenen numara düzenine göre PIN kodunu girin.",
           "title": "PIN'i girin"
+        },
+        "error": {
+          "deviceNotFound": "OneKey bulunamadı. Cihazın kilidinin açık, Bluetooth'un açık ve cihazın telefonunuza yakın olduğundan emin olun.",
+          "disconnected": "OneKey bağlantısı kesildi. Cihazın kilidini açık tutup telefonunuza yakın tutun, ardından tekrar deneyin.",
+          "deviceBusy": "OneKey başka bir isteği işliyor. İsteği cihazda tamamlayın veya iptal edin, ardından tekrar deneyin.",
+          "passphraseDisabled": "Cihazda şifre (passphrase) kapalı. Açın veya bu cüzdanı yeniden içe aktarın.",
+          "firmwareTooOld": "OneKey yazılımınız çok eski. OneKey uygulamasıyla güncelleyin, ardından tekrar deneyin.",
+          "bluetoothOff": "Bluetooth kapalı. Bluetooth'u açın ve tekrar deneyin.",
+          "bluetoothPermission": "Rabby'nin Bluetooth kullanma izni yok. Ayarlar'dan Rabby için Bluetooth'a (Android 11 ve öncesinde Konum'a) izin verin, ardından tekrar deneyin.",
+          "locationServicesDisabled": "Konum servisleri kapalı. Bluetooth cihazlarını aramak için açın.",
+          "bluetoothUnsupported": "Bu telefon Bluetooth'u desteklemiyor.",
+          "scanFailed": "Bluetooth araması başarısız oldu. Lütfen tekrar deneyin.",
+          "pairingFailed": "Bluetooth eşleştirmesi başarısız oldu. Telefonunuzda ve OneKey'de eşleştirme isteğini onaylayın, ardından tekrar deneyin.",
+          "pairingInvalid": "Bluetooth eşleştirmesi artık geçerli değil. Telefonunuzun Bluetooth ayarlarında OneKey'i unutun, ardından yeniden eşleştirin.",
+          "pinInvalid": "PIN yanlış. Lütfen tekrar deneyin.",
+          "cancelled": "İstek iptal edildi.",
+          "openSettings": "Ayarları Aç"
         }
       },
       "keystone": {

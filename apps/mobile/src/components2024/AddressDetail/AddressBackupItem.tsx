@@ -3,7 +3,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { KeyringAccountWithAlias, useBackupReminder } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { navigateDeprecated } from '@/utils/navigation';
-import { RootNames } from '@/constant/layout';
+import { isNarrowScreenWidth, RootNames } from '@/constant/layout';
 import { useTranslation } from 'react-i18next';
 import { apiPrivateKey } from '@/core/apis';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
@@ -85,6 +85,10 @@ export const AddressBackupItem: React.FC<AddressInfoProps> = props => {
         <Item
           label={t('page.addressDetail.backup-seed-phrase')}
           value={needsBackupReminder ? <BackupBadge /> : null}
+          labelNumberOfLines={2}
+          labelBox
+          valueGrow
+          style={styles.seedPhraseItem}
           showArrow
           onPress={handlePressBackupSeedPhrase}
         />
@@ -102,10 +106,14 @@ export const AddressBackupItem: React.FC<AddressInfoProps> = props => {
   );
 };
 
-const getStyle = createGetStyles2024(() => ({
+const getStyle = createGetStyles2024(({ windowWidth }) => ({
   card: {
     gap: 24,
     marginHorizontal: 16,
     width: 'auto',
   },
+  // Only the 375pt tier needs the tighter row: it leaves enough room for the
+  // English label and the backup chip to stay on one line. Wider screens keep
+  // the Item default. See `IPHONE_SCREEN_TIERS` in `@/constant/layout`.
+  seedPhraseItem: { gap: isNarrowScreenWidth(windowWidth) ? 6 : 8 },
 }));
