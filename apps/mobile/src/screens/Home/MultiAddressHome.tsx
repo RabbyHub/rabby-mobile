@@ -14,7 +14,11 @@ import {
   traceHomeStartupReady,
   useHomePostStartupReady,
 } from '@/core/utils/homeStartupReady';
-import { apisHomeTabIndex, resetNavigationTo } from '@/hooks/navigation';
+import {
+  apisHomeTabIndex,
+  HomeTabName,
+  resetNavigationTo,
+} from '@/hooks/navigation';
 import { getReadyNavigationInstance } from '@/utils/navigation';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
@@ -335,7 +339,10 @@ function MultiAddressHome(): JSX.Element {
   useRendererDetect({ name: 'MultiAddressHome' });
 
   useEffect(() => {
-    apisHomeTabIndex.setTabIndex(0);
+    // The pager mounts already at index 0, so it never reports a settle here;
+    // publish the reset so the shared index/name cannot keep the tab the user
+    // came from.
+    apisHomeTabIndex.resetTabIndex(0, HomeTabName.overview);
   }, []);
 
   return (

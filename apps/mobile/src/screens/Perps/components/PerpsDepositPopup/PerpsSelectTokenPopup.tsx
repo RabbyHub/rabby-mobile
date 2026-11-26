@@ -80,9 +80,15 @@ export const PerpsSelectTokenPopup: React.FC<{
   useEffect(() => {
     if (visible) {
       modalRef.current?.present();
-    } else {
-      modalRef.current?.close();
+      return;
     }
+    // Dismiss instead of only animating closed: this popup stays mounted and is
+    // re-presented many times, and a `close()` that lands while another sheet
+    // animation is in flight can be ignored, leaving the sheet on screen after
+    // the token was already selected (QA 1465, Perps side).
+    // `dismiss()` must receive an animation config object (or nothing) —
+    // gorhom forwards the argument to `forceClose(animationConfigs)`.
+    modalRef.current?.dismiss({ duration: 250 });
   }, [visible]);
 
   return (
