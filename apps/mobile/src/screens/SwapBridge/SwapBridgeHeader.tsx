@@ -183,7 +183,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerTabs: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 1,
   },
   headerLeft: {
     flexDirection: 'row',

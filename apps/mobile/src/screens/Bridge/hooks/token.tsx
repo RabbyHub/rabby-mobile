@@ -687,6 +687,7 @@ export const useBridge = (
     setAmount,
     fromToken,
     handleSlider100,
+    currentAmount: amount,
   });
 
   const handleAmountChange = useCallback(
