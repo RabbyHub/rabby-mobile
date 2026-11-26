@@ -2868,9 +2868,6 @@
         "activatedSuccess": "4 % d'économies sur les frais Hyperliquid activées",
         "description": "Utilisez le code de Rabby pour activer"
       },
-      "dappSelect": {
-        "title": "Sélectionner le fournisseur de Perps"
-      },
       "search": {
         "placeholder": "Rechercher sur Perps",
         "empty": "Aucun résultat trouvé"
@@ -3147,12 +3144,7 @@
         "lq": "Si cela descend en dessous de 1, la liquidation pourrait être déclenchée."
       },
       "repayDetail": {
-        "actions": "Rembourser",
-        "tabs": {
-          "collateral": "Garantie",
-          "wallet": "Solde du portefeuille"
-        },
-        "repayWith": "Rembourser avec"
+        "actions": "Rembourser"
       },
       "supplyDetail": {
         "actions": "Déposer",
@@ -3173,7 +3165,6 @@
         "almostReachedError": "Le montant maximum disponible pour emprunter est limité car le plafond d'emprunt du protocole est presque atteint.",
         "borrowingUnavailable": "Cet actif ne peut pas être emprunté dans le mode actuel.",
         "almostReachedWarning": "Le cap d'emprunt du protocole est de 100 % pour cet actif. Emprunts supplémentaires non disponibles.",
-        "swapDebt": "Échanger",
         "borrowed": "Emprunté",
         "noSupplyPrefix": "Aucun dépôt :",
         "noSupplyDesc": "Pour emprunter, vous devez fournir des actifs en tant que garantie."
@@ -3285,99 +3276,24 @@
         "unavailable": "• Indisponible",
         "disableTitle": "Désactiver",
         "description": "Activer le E-Mode vous permet de maximiser votre pouvoir d'emprunt. Cependant, l'emprunt est limité aux actifs de la catégorie sélectionnée.",
-        "title": "Gérer E-Mode",
-        "debtSwapSelector": {
-          "header": {
-            "assets": "Token/solde",
-            "borrow": "Mes emprunts",
-            "apy": "APY"
-          },
-          "title": "Sélectionner le Token d'emprunt"
-        },
-        "collateralSwapSelector": {
-          "header": {
-            "collateral": "Mon collatéral",
-            "assets": "Jeton"
-          },
-          "title": "Sélectionner le jeton de garantie"
-        }
+        "title": "Gérer E-Mode"
       },
       "disabled": "DÉSACTIVÉ",
-      "debtSwap": {
-        "actions": {
-          "amount": "Montant",
-          "swapTo": "Convertir en",
-          "title": "Convertir la dette",
-          "select": "Sélectionnez",
-          "borrowed": "Emprunté"
-        },
-        "overview": {
-          "borrowAPY": "APY d’emprunt",
-          "borrowValueAfter": "Solde emprunté après conversion",
-          "title": "Aperçu des transactions"
-        },
-        "button": {
-          "swap": "Convertir"
-        },
-        "title": "Convertir la position empruntée",
-        "borrowBalance": "Solde emprunté",
-        "lpRiskWarning": "Facteur de santé faible après l'échange. Votre position comportera un risque plus élevé de liquidation.",
-        "priceImpactTips": "Impact de prix élevé ({{lostValue}}). En raison d’une faible liquidité ou d’une petite taille d’ordre, l’estimation de cette route peut s’écarter nettement.",
-        "lpDangerWarning": "Votre facteur de santé après cet échange sera extrêmement bas et pourrait entraîner une liquidation. Veuillez choisir un autre actif ou réduire le montant de l'échange pour rester en sécurité.",
-        "maxLtvWarning": "Fonds de garantie insuffisants pour couvrir la nouvelle position d'emprunt. Le portefeuille doit disposer d'une capacité d'emprunt restante pour effectuer le changement de dette."
-      },
       "totalSupplied": "Total déposé",
       "totalBorrowed": "Total emprunté",
       "netApy": "APY net",
-      "repayWithCollateral": {
-        "overview": {
-          "title": "Aperçu des transactions",
-          "collateralValueAfter": "Solde de collatéral après remboursement",
-          "borrowValueAfter": "Solde d'emprunt après remboursement"
-        },
-        "button": {
-          "repay": "Rembourser"
-        },
-        "repayWith": "Garantie à utiliser pour rembourser",
-        "toRepay": "Montant attendu à rembourser",
-        "collateralNotEnough": "Votre solde de collatéral est inférieur au montant sélectionné.",
-        "action": {
-          "title": "Remboursez avec {{collateral}}"
-        },
-        "insufficientLiquidity": "Liquidité insuffisante.",
-        "flashLoanDisabled": "Pour des raisons de sécurité, la conversion de positions est désactivée pour cet actif.",
-        "frozenCollateral": "Cet actif est gelé en raison d'une décision de la communauté Aave."
-      },
       "repayWithAToken": {
         "header": {
           "assets": "Jeton",
           "balance": "Solde"
         },
-        "title": "Sélectionner le jeton de remboursement",
-        "zeroLtvCollateralTips": "Vous avez les garanties suivantes avec un LTV = 0. Selon les règles de remboursement par garantie, vous devez d’abord utiliser ces garanties pour rembourser."
-      },
-      "signFallback": {
-        "preExecFailedUseFullSign": "Échec de la simulation. Cette transaction est très susceptible d'échouer en raison d'erreurs AAVE."
+        "title": "Sélectionner le jeton de remboursement"
       }
     },
     "address": {
       "receiveAssets": {
         "btnCopyAddress": "Copier l'adresse",
         "title": "Recevoir des actifs"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableDesc": "Ce service n'est pas pris en charge dans votre région actuelle.",
-      "serviceUnavailableTitle": "Service indisponible"
-    },
-    "DAppFrame": {
-      "netWorth": "Valeur nette",
-      "walletBalance": "Portefeuille/Solde",
-      "selectAWallet": "Sélectionnez un portefeuille"
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "Sélectionner un fournisseur de prévisions"
       }
     },
     "meme": {

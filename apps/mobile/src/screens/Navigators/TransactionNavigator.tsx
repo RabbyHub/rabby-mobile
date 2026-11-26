@@ -53,9 +53,6 @@ import { PerpsSearchScreen } from '../PerpsSearch';
 import LendingHistory from '../Lending/components/LendingHistory';
 import LendingScreen from '../Lending';
 import { renderLendingHeader } from '../Lending/components/LendingHeaderTitle';
-import PredictionScreen from '../Prediction';
-import { PredictionScreenWithPreload } from '../InnerDapp/InnerDappPreloadScreens';
-import { useInnerDappPreloadStrategy } from '@/config/innerDappPreloadStrategy';
 import { Text } from '@/components/Typography';
 import { createGetStyles2024 } from '@/utils/styles';
 import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
@@ -150,12 +147,7 @@ export default function TransactionNavigator() {
   const { t } = useTranslation();
   const { colors, colors2024, isLight } = useTheme2024();
   const headerPresets = makeHeadersPresets({ colors, colors2024 });
-  const innerDappStrategy = useInnerDappPreloadStrategy();
 
-  const PredictionComponent =
-    innerDappStrategy === 'screen'
-      ? PredictionScreenWithPreload
-      : PredictionScreen;
   return (
     <TransactionStack.Navigator
       screenOptions={mergeScreenOptions({
@@ -557,17 +549,6 @@ export default function TransactionNavigator() {
             ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
-        })}
-      />
-      <TransactionStack.Screen
-        name={RootNames.Prediction}
-        component={withScreenPropsInjection(PredictionComponent)}
-        options={mergeScreenOptions({
-          headerStyle: {
-            backgroundColor: colors2024['neutral-bg-1'],
-          },
-          // headerShown: false,
-          // gestureEnabled: true,
         })}
       />
     </TransactionStack.Navigator>

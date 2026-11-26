@@ -102,9 +102,6 @@ jest.mock('../Bridge/components/BridgeHeader', () => ({
 jest.mock('@/devtools/regressionScenarios/react', () => ({
   withRegressionScenario: (component: unknown) => component,
 }));
-jest.mock('@/config/innerDappPreloadStrategy', () => ({
-  useInnerDappPreloadStrategy: () => 'screen',
-}));
 
 // Screen bodies and unrelated headers must not run effects to supply options.
 jest.mock('../Send/Send', () => ({
@@ -168,10 +165,6 @@ jest.mock('../Lending/components/Header', () => ({
     }),
 }));
 jest.mock('@/assets2024/icons/lending/IconAAVE.svg', () => () => null);
-jest.mock('../Prediction', () => () => null);
-jest.mock('../InnerDapp/InnerDappPreloadScreens', () => ({
-  PredictionScreenWithPreload: () => null,
-}));
 
 function getInitialHeader(
   name:

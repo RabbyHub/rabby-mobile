@@ -2975,9 +2975,6 @@
         "hyperliquidFee": "Phí giao dịch Hyperliquid.",
         "activatedSuccess": "Đã kích hoạt ưu đãi giảm 4% phí Hyperliquid"
       },
-      "dappSelect": {
-        "title": "Chọn nhà cung cấp Perps"
-      },
       "EnableUnifiedAccount": {
         "title": "Bật Tài khoản Thống nhất",
         "desc": "Unified Account là chế độ tài khoản được khuyến nghị để đơn giản hóa trải nghiệm giao dịch. Số dư Spot và Perps của tất cả token được gộp lại, và cross margin được hỗ trợ cho mọi tài sản khả dụng.",
@@ -3254,12 +3251,7 @@
         "more": "Thêm"
       },
       "repayDetail": {
-        "actions": "Trả nợ",
-        "tabs": {
-          "wallet": "Số dư ví",
-          "collateral": "Tài sản thế chấp"
-        },
-        "repayWith": "Trả nợ với"
+        "actions": "Trả nợ"
       },
       "supplyDetail": {
         "actions": "Cung cấp",
@@ -3280,7 +3272,6 @@
         "almostReachedError": "Số tiền tối đa có sẵn để vay bị giới hạn vì giới hạn vay của giao thức gần đạt.",
         "borrowingUnavailable": "Không thể vay tài sản này trong chế độ hiện tại.",
         "almostReachedWarning": "Mức giới hạn vay của giao thức cho tài sản này là 100%. Không có khả năng vay thêm.",
-        "swapDebt": "Hoán đổi",
         "borrowed": "Đã vay",
         "noSupplyDesc": "Để vay, bạn cần cung cấp tài sản làm tài sản thế chấp.",
         "noSupplyPrefix": "Chưa có khoản gửi:"
@@ -3392,79 +3383,18 @@
         "description": "Bật E-Mode giúp bạn tối đa hóa khả năng vay. Tuy nhiên, bạn chỉ có thể vay các tài sản thuộc danh mục đã chọn.",
         "unavailable": "• Không có sẵn",
         "unavailableTips": "Tài sản đang cung cấp hoặc vay của bạn không được hỗ trợ.",
-        "enabled": "• Đã kích hoạt",
-        "debtSwapSelector": {
-          "header": {
-            "assets": "Token/Số dư",
-            "borrow": "Các khoản vay của tôi",
-            "apy": "APY"
-          },
-          "title": "Chọn Token Vay"
-        },
-        "collateralSwapSelector": {
-          "header": {
-            "collateral": "Tài sản thế chấp của tôi",
-            "assets": "Token"
-          },
-          "title": "Chọn Token Đảm Bảo"
-        }
+        "enabled": "• Đã kích hoạt"
       },
       "disabled": "VÔ HIỆU HÓA",
-      "debtSwap": {
-        "actions": {
-          "select": "Chọn",
-          "swapTo": "Chuyển đổi sang",
-          "amount": "Số tiền",
-          "title": "Chuyển đổi nợ",
-          "borrowed": "Đã vay"
-        },
-        "overview": {
-          "borrowAPY": "APY vay",
-          "title": "Tổng quan giao dịch",
-          "borrowValueAfter": "Dư nợ sau khi chuyển đổi"
-        },
-        "button": {
-          "swap": "Chuyển đổi"
-        },
-        "borrowBalance": "Số dư vay",
-        "lpRiskWarning": "Hệ số sức khỏe sau khi hoán đổi ở mức thấp. Vị thế của bạn sẽ có nguy cơ thanh lý cao hơn.",
-        "lpDangerWarning": "Hệ số sức khỏe sau giao dịch này sẽ ở mức rất thấp và có thể dẫn đến thanh lý. Vui lòng chọn tài sản khác hoặc giảm số lượng hoán đổi để đảm bảo an toàn.",
-        "priceImpactTips": "Tác động giá cao ({{lostValue}}). Do thanh khoản thấp hoặc kích thước lệnh nhỏ, ước tính của tuyến này có thể lệch đáng kể.",
-        "title": "Chuyển đổi vị thế vay",
-        "maxLtvWarning": "Không đủ tài sản thế chấp để đảm bảo vị thế vay mới. Ví phải còn khả năng vay để thực hiện chuyển đổi nợ."
-      },
       "totalSupplied": "Tổng đã cung cấp",
       "netApy": "APY ròng",
       "totalBorrowed": "Tổng đã vay",
-      "repayWithCollateral": {
-        "action": {
-          "title": "Trả nợ bằng {{collateral}}"
-        },
-        "overview": {
-          "title": "Tổng quan giao dịch",
-          "borrowValueAfter": "Dư nợ sau khi trả",
-          "collateralValueAfter": "Số dư tài sản thế chấp sau khi trả"
-        },
-        "button": {
-          "repay": "Trả nợ"
-        },
-        "toRepay": "Số tiền kỳ vọng để trả nợ",
-        "collateralNotEnough": "Số dư tài sản thế chấp của bạn thấp hơn số tiền đã chọn.",
-        "repayWith": "Tài sản thế chấp dùng để trả nợ",
-        "insufficientLiquidity": "Không đủ thanh khoản.",
-        "flashLoanDisabled": "Việc chuyển đổi vị thế bị vô hiệu hóa đối với tài sản này vì lý do bảo mật.",
-        "frozenCollateral": "Tài sản này đã bị đóng băng do quyết định của cộng đồng Aave."
-      },
       "repayWithAToken": {
         "header": {
           "assets": "Token",
           "balance": "Số dư"
         },
-        "title": "Chọn token trả nợ",
-        "zeroLtvCollateralTips": "Bạn có các tài sản thế chấp LTV = 0 sau. Theo quy tắc trả nợ bằng tài sản thế chấp, bạn cần ưu tiên dùng các tài sản thế chấp này để trả nợ trước."
-      },
-      "signFallback": {
-        "preExecFailedUseFullSign": "Mô phỏng thất bại. Giao dịch này rất có thể sẽ thất bại do lỗi AAVE."
+        "title": "Chọn token trả nợ"
       }
     },
     "address": {
@@ -3472,20 +3402,6 @@
         "btnCopyAddress": "Sao chép địa chỉ",
         "title": "Nhận tài sản"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "Chọn nhà cung cấp Dự đoán"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableTitle": "Dịch vụ không khả dụng",
-      "serviceUnavailableDesc": "Dịch vụ không được hỗ trợ ở khu vực hiện tại của bạn."
-    },
-    "DAppFrame": {
-      "selectAWallet": "Chọn một ví",
-      "netWorth": "Giá trị ròng",
-      "walletBalance": "Ví/Số dư"
     },
     "meme": {
       "tokenHeader": {

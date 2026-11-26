@@ -6,10 +6,7 @@ import { useHomePostStartupReady } from '@/core/utils/homeStartupReady';
 import { useGasAccountGiftEligibility } from '@/hooks/useGasAccountEligibility';
 import { GasAccountBadge } from '@/screens/GasAccount/components/GasAccountBadge';
 import { useApprovalAlertTotal } from '../../hooks/approvals';
-import {
-  useHomeHistoryCount,
-  useHomePendingTxCount,
-} from '../../hooks/history';
+import { useHomePendingTxCount } from '../../hooks/history';
 import { BadgeText } from '../BadgeText';
 import { HomePendingBadge } from '../HomePending';
 import { LendingHF } from '../LendingHF';
@@ -18,15 +15,9 @@ import { PerpsPnl } from '../PerpsPnl';
 
 function HistoryBadge() {
   const pendingTxCount = useHomePendingTxCount();
-  const historyCount = useHomeHistoryCount();
 
-  if (pendingTxCount > 0) {
-    return <HomePendingBadge number={pendingTxCount} />;
-  }
-
-  const badge = historyCount?.fail || historyCount?.success;
-  return badge && badge > 0 ? (
-    <BadgeText count={badge} isSuccess={!historyCount?.fail} />
+  return pendingTxCount > 0 ? (
+    <HomePendingBadge number={pendingTxCount} />
   ) : null;
 }
 

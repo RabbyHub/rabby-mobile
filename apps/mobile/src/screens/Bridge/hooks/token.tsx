@@ -206,7 +206,10 @@ const useToken = (type: 'from' | 'to', active: boolean) => {
 
 export const useBridge = (
   isForMultipleAddress?: boolean,
-  { active = true }: { active?: boolean } = {},
+  {
+    active = true,
+    tabSelected = true,
+  }: { active?: boolean; tabSelected?: boolean } = {},
 ) => {
   const setTokenRefreshId = useSetTokenRefreshId();
 
@@ -730,6 +733,7 @@ export const useBridge = (
 
   useEffect(() => {
     if (
+      tabSelected &&
       slider === 100 &&
       useSlider &&
       fromToken?.amount &&
@@ -739,6 +743,7 @@ export const useBridge = (
       handleSlider100();
     }
   }, [
+    tabSelected,
     slider,
     useSlider,
     fromToken?.amount,
@@ -747,6 +752,18 @@ export const useBridge = (
     isTempoGasTokenLoading,
     handleSlider100,
   ]);
+
+  useEffect(() => {
+    if (tabSelected) {
+      return;
+    }
+    isMaxRef.current = false;
+    setAmount('');
+    setSlider(0);
+    setUseSlider(false);
+    setIsDraggingSlider(false);
+    setUseGasPrice(false);
+  }, [setIsDraggingSlider, setSlider, setUseSlider, tabSelected]);
 
   const fetchIdRef = useRef(0);
   const pendingQuoteUpdatesRef = useRef(new Map<string, SelectedBridgeQuote>());

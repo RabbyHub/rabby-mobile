@@ -18,20 +18,13 @@ const historyHitSlop = {
   right: 4,
 };
 
-type HistoryCount = {
-  success: number;
-  fail: number;
-};
-
 export function HeaderRightHistoryButton({
   pendingTxCount,
-  historyCount,
   onPress,
   style,
   rightSpace = 16,
 }: {
   pendingTxCount: number;
-  historyCount?: HistoryCount;
   onPress: (event?: GestureResponderEvent) => void;
   style?: StyleProp<ViewStyle>;
   rightSpace?: number;
@@ -62,22 +55,6 @@ export function HeaderRightHistoryButton({
             width={20}
             height={20}
           />
-          {Boolean(historyCount?.success || historyCount?.fail) && (
-            <View
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: 3,
-                backgroundColor:
-                  colors2024[
-                    historyCount?.fail ? 'red-default' : 'green-default'
-                  ],
-                position: 'absolute',
-                top: 0,
-                right: -4,
-              }}
-            />
-          )}
         </View>
       )}
     </CustomTouchableOpacity>

@@ -2908,9 +2908,6 @@
         "activatedSuccess": "Hyperliquidの取引手数料4%割引を有効にしました",
         "activatedFailed": "有効化に失敗しました"
       },
-      "dappSelect": {
-        "title": "無期限先物プロバイダーを選択"
-      },
       "search": {
         "placeholder": "無期限先物を検索",
         "empty": "結果が見つかりません"
@@ -3187,12 +3184,7 @@
         "lq": "ヘルスファクターが1を下回ると、清算される可能性があります。"
       },
       "repayDetail": {
-        "actions": "返済",
-        "tabs": {
-          "wallet": "ウォレット残高",
-          "collateral": "担保"
-        },
-        "repayWith": "返済元"
+        "actions": "返済"
       },
       "supplyDetail": {
         "actions": "預け入れ",
@@ -3213,7 +3205,6 @@
         "almostReachedError": "プロトコルの借入上限に近づいているため、借入可能な最大金額が制限されています。",
         "borrowingUnavailable": "現在のモードでは、この資産を借り入れることはできません。",
         "almostReachedWarning": "この資産のプロトコル借入上限は100%です。これ以上の借入はできません。",
-        "swapDebt": "スワップ",
         "borrowed": "借入済み",
         "noSupplyDesc": "借り入れるには、資産を担保として預け入れる必要があります。",
         "noSupplyPrefix": "預け入れなし："
@@ -3325,79 +3316,18 @@
         "unavailable": "• 利用不可",
         "title": "E-Modeを管理する",
         "description": "E-Modeを有効にすると、借入可能額を最大化できます。ただし、借り入れできるのは選択したカテゴリー内の資産に限られます。",
-        "enabled": "• 有効",
-        "debtSwapSelector": {
-          "header": {
-            "borrow": "借入額",
-            "assets": "トークン/残高",
-            "apy": "APY"
-          },
-          "title": "借入トークンを選択"
-        },
-        "collateralSwapSelector": {
-          "header": {
-            "collateral": "担保額",
-            "assets": "トークン"
-          },
-          "title": "担保トークンを選択"
-        }
+        "enabled": "• 有効"
       },
       "disabled": "無効",
-      "debtSwap": {
-        "actions": {
-          "amount": "金額",
-          "select": "選択",
-          "title": "債務スワップ",
-          "swapTo": "スワップ先",
-          "borrowed": "借入済み"
-        },
-        "overview": {
-          "borrowValueAfter": "スワップ後の借入残高",
-          "borrowAPY": "借入APY",
-          "title": "取引概要"
-        },
-        "button": {
-          "swap": "スワップ"
-        },
-        "borrowBalance": "借入残高",
-        "title": "借入ポジションをスワップ",
-        "lpRiskWarning": "スワップ後のヘルスファクターが低いため、ポジションの清算リスクが高まります。",
-        "priceImpactTips": "価格への影響が大きいです（{{lostValue}}）。流動性が低い、または注文サイズが小さいため、このルートの見積もりは大きくずれる可能性があります。",
-        "lpDangerWarning": "このスワップ後はヘルスファクターが極端に低くなり、清算される可能性があります。別の資産を選ぶか、スワップ額を減らしてください。",
-        "maxLtvWarning": "新しい借入ポジションに必要な担保が不足しています。債務スワップを行うには、ウォレットに借入可能額が残っている必要があります。"
-      },
       "totalSupplied": "預け入れ合計",
       "totalBorrowed": "合計借入額",
       "netApy": "正味APY",
-      "repayWithCollateral": {
-        "action": {
-          "title": "{{collateral}}で返済する"
-        },
-        "overview": {
-          "title": "取引概要",
-          "borrowValueAfter": "返済後の借入残高",
-          "collateralValueAfter": "返済後の担保残高"
-        },
-        "button": {
-          "repay": "返済"
-        },
-        "toRepay": "返済予定額",
-        "repayWith": "返済に使う担保",
-        "collateralNotEnough": "選択した金額よりも担保残高が低いです。",
-        "insufficientLiquidity": "流動性が不足しています。",
-        "flashLoanDisabled": "セキュリティ上の理由により、この資産ではポジションのスワップが無効になっています。",
-        "frozenCollateral": "この資産はAaveコミュニティの決定により凍結されています。"
-      },
       "repayWithAToken": {
         "header": {
           "assets": "トークン",
           "balance": "残高"
         },
-        "title": "返済トークンを選択",
-        "zeroLtvCollateralTips": "以下のLTV = 0の担保があります。担保による返済ルールに従い、まずこれらの担保で返済する必要があります。"
-      },
-      "signFallback": {
-        "preExecFailedUseFullSign": "シミュレーションに失敗しました。Aaveのエラーにより、このトランザクションは失敗する可能性が高いです。"
+        "title": "返済トークンを選択"
       }
     },
     "address": {
@@ -3405,20 +3335,6 @@
         "title": "資産を受け取る",
         "btnCopyAddress": "アドレスをコピー"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "予測プロバイダーを選択してください"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableTitle": "サービスは利用できません",
-      "serviceUnavailableDesc": "このサービスは現在の地域ではサポートされていません。"
-    },
-    "DAppFrame": {
-      "selectAWallet": "ウォレットを選択",
-      "walletBalance": "ウォレット/残高",
-      "netWorth": "純資産"
     },
     "meme": {
       "tokenHeader": {

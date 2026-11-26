@@ -30,11 +30,6 @@
     }
   },
   "page": {
-    "predict": {
-      "dappSelect": {
-        "title": "Select Predict Provider"
-      }
-    },
     "getStart": {
       "createNewAddress": "Create a new wallet",
       "alreadyHaveAddress": "I already have a wallet",
@@ -2143,10 +2138,6 @@
         "title": "Select Chain"
       }
     },
-    "dappPermission": {
-      "serviceUnavailableTitle": "Service Unavailable",
-      "serviceUnavailableDesc": "The service is not supported in your current region."
-    },
     "watchlist": {
       "empty": {
         "title": "No tokens in your watchlist yet"
@@ -2731,9 +2722,6 @@
           "averageFilledPrice": "Avg. Filled Price"
         }
       },
-      "dappSelect": {
-        "title": "Select Perps Provider"
-      },
       "assetPage": {
         "hyperliquidPosition": "Hyperliquid Position"
       },
@@ -3238,8 +3226,6 @@
           "totalBorrowed": "Total Borrowed"
         },
         "item": {
-          "__skip_translation": ["tvl"],
-          "tvl": "TVL",
           "wrapperToken": "Wrapped token for {{name}}"
         }
       },
@@ -3255,12 +3241,7 @@
         "risky": "Risky"
       },
       "repayDetail": {
-        "actions": "Repay",
-        "repayWith": "Repay with",
-        "tabs": {
-          "wallet": "Wallet balance",
-          "collateral": "Collateral"
-        }
+        "actions": "Repay"
       },
       "supplyDetail": {
         "actions": "Supply",
@@ -3301,7 +3282,6 @@
       },
       "borrowDetail": {
         "actions": "Borrow",
-        "swapDebt": "Swap",
         "borrowed": "Borrowed",
         "noSupplyPrefix": "No supply: ",
         "noSupplyDesc": "To borrow, you need to supply assets as collateral.",
@@ -3359,8 +3339,7 @@
         "header": {
           "assets": "Token",
           "balance": "Balance"
-        },
-        "zeroLtvCollateralTips": "You have following LTV = 0 collaterals and thus can only repay with these collaterals first according to collateral repay rules. "
+        }
       },
       "manageEmode": {
         "__skip_translation": ["emode"],
@@ -3388,21 +3367,6 @@
           "desc": "All borrow positions outside of this category must be closed to enable this category.",
           "placeholder": "Select"
         },
-        "debtSwapSelector": {
-          "title": "Select Borrow Token",
-          "header": {
-            "assets": "Token/Balance",
-            "apy": "APY",
-            "borrow": "My borrows"
-          }
-        },
-        "collateralSwapSelector": {
-          "title": "Select Collateral Token",
-          "header": {
-            "assets": "Token",
-            "collateral": "My collateral"
-          }
-        },
         "overview": {
           "title": "Asset category",
           "row": {
@@ -3411,51 +3375,6 @@
             "borrowable": "Borrowable"
           }
         }
-      },
-      "debtSwap": {
-        "title": "Swap Borrow Position",
-        "borrowBalance": "Borrow balance",
-        "actions": {
-          "title": "Debt Swap",
-          "amount": "Amount",
-          "borrowed": "Borrowed",
-          "swapTo": "Swap to",
-          "select": "Select"
-        },
-        "overview": {
-          "title": "Transaction Overview",
-          "borrowAPY": "Borrow apy",
-          "borrowValueAfter": "Borrow balance after swap"
-        },
-        "button": {
-          "swap": "Swap"
-        },
-        "priceImpactTips": "High price impact ({{lostValue}}). This route may return more due to low liquidity or small order size.",
-        "maxLtvWarning": "Insufficient collateral to cover new borrow position. Wallet must have borrowing power remaining to perform debt switch.",
-        "lpRiskWarning": "Low health factor after swap. Your position will carry a higher risk of liquidation.",
-        "lpDangerWarning": "Your health factor after this swap will be critically low and may result in liquidation. Please choose a different asset or reduce the swap amount to stay safe."
-      },
-      "repayWithCollateral": {
-        "toRepay": "Expected amount to repay",
-        "repayWith": "Collateral to repay with",
-        "action": {
-          "title": "Repay with {{collateral}}"
-        },
-        "collateralNotEnough": "Your collateral balance is lower than the selected amount.",
-        "insufficientLiquidity": "Insufficient liquidity.",
-        "flashLoanDisabled": "Position swaps are disabled for this asset due to security reasons.",
-        "frozenCollateral": "This asset is frozen due to an Aave community decision.",
-        "overview": {
-          "title": "Transaction Overview",
-          "borrowValueAfter": "Borrow balance after repay",
-          "collateralValueAfter": "Collateral balance after repay"
-        },
-        "button": {
-          "repay": "Repay"
-        }
-      },
-      "signFallback": {
-        "preExecFailedUseFullSign": "Simulation Failed. This transaction is very likely to fail due to AAVE errors."
       }
     },
     "address": {
@@ -3463,11 +3382,6 @@
         "title": "Receive assets",
         "btnCopyAddress": "Copy Address"
       }
-    },
-    "DAppFrame": {
-      "walletBalance": "Wallet/Balance",
-      "netWorth": "Net worth",
-      "selectAWallet": "Select a Wallet"
     },
     "convertDust": {
       "colValueAmount": "Value/Amount",
