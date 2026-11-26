@@ -8,9 +8,6 @@ import { ScrollView, TouchableOpacity, View } from 'react-native';
 
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import { getBottomButtonBottomOffset } from '@/constant/layout';
-import { ScreenHeaderAccountTitle } from '@/components/AccountSwitcher/OnScreenHeader';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { AutoFitCenterHeader } from '@/components/AutoFitCenterHeader';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { Text } from '@/components/Typography';
 import { toast } from '@/components2024/Toast';
@@ -38,21 +35,19 @@ import { getApproveTokeName } from './components/utils';
 import { isAddress } from 'viem';
 import { getTokenSymbol } from '@/utils/token';
 import { ProjectItemInDetail } from './components/ProjectItemInDetail';
-import { HistoryHeaderTitle } from './components/HistoryHeaderTitle';
 
 function HistoryDetailScreen(): JSX.Element {
   const route =
     useRoute<
       GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'HistoryDetail'>
     >();
-  const { data, isForMultipleAddress, title, account } = route.params || {};
+  const { data, isForMultipleAddress } = route.params || {};
 
   const { t } = useTranslation();
   const status = useMemo(() => data.tx?.status ?? 1, [data]);
 
   const isScam = data.is_scam;
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
 
   const { chainItem, touchable } = useMemo(() => {
     const info =
@@ -166,39 +161,6 @@ function HistoryDetailScreen(): JSX.Element {
     }
     return account;
   }, [accounts, data.address]);
-
-  const currentAccount = useMemo(() => {
-    return account && isSameAddress(account.address, data.address)
-      ? account
-      : accounts.find(item => isSameAddress(item.address, data.address));
-  }, [account, accounts, data.address]);
-
-  // The title used to sit inside the native header's title slot, which UIKit
-  // lays out right of centre by an amount that depends on the OS and on the
-  // title width (QA 1360 / 1440). Reuse the shared JS header instead: its slots
-  // are symmetric, so the title centres for every language, and it already
-  // reads `windowWidth` / `language` from the theme context (#2387).
-  const historyTitle = title || t('page.transactions.itemTitle.Default');
-  const getHeader = React.useCallback(
-    () => (
-      <AutoFitCenterHeader
-        title={historyTitle}
-        titleNode={
-          <ScreenHeaderAccountTitle
-            account={currentAccount}
-            titleText={<HistoryHeaderTitle>{historyTitle}</HistoryHeaderTitle>}
-          />
-        }
-      />
-    ),
-    [currentAccount, historyTitle],
-  );
-
-  React.useEffect(() => {
-    setNavigationOptions({
-      header: getHeader,
-    });
-  }, [setNavigationOptions, getHeader]);
 
   const contractInfo = useMemo(() => {
     if (data.cate_id === 'send' || data.cate_id === 'receive') {

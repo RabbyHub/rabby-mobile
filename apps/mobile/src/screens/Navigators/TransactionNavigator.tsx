@@ -25,6 +25,7 @@ import SendNFTScreen from '../SendNFT/SendNFT';
 import { HistoryDetailScreen } from '../Transaction/HistoryDetailScreen';
 import { BridgeDetailScreen } from '../Bridge/BridgeDetailScreen';
 import { HistoryLocalDetailScreen } from '../Transaction/HistoryLocalDetailScreen';
+import { HistoryDetailHeader } from '../Transaction/components/HistoryDetailHeader';
 import { TransactionNavigatorParamList } from '@/navigation-type';
 import ApprovalsScreen from '../Approvals';
 import { ApprovalsHeader } from '../Approvals/components/Headers/ApprovalsHeader';
@@ -276,20 +277,23 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.HistoryDetail}
         component={withScreenPropsInjection(HistoryDetailScreen)}
-        options={mergeScreenOptions({
-          title: '',
-          headerTintColor: colors['neutral-title-1'],
-          headerTitleStyle: {
-            fontSize: 20,
-            ...RoundedFontStyles.heavy,
-            color: colors['neutral-title-1'],
-          },
-          headerStyle: {
-            backgroundColor: !isLight
-              ? colors2024?.['neutral-bg-1']
-              : colors2024?.['neutral-bg-0'],
-          },
-        })}
+        options={({ route }) =>
+          mergeScreenOptions({
+            // Install the JS header on the route so the push transition starts
+            // with the same header it ends with; swapping the header type after
+            // mount made iOS animate the old native header out as a copy.
+            header: () => (
+              <HistoryDetailHeader
+                title={route.params?.title}
+                address={route.params?.data?.address}
+              />
+            ),
+            // The JS header draws its own back control.
+            headerBackVisible: false,
+            headerLeft: () => null,
+            unstable_headerLeftItems: () => [],
+          })
+        }
       />
       <TransactionStack.Screen
         name={RootNames.BridgeDetail}
@@ -307,20 +311,22 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.HistoryLocalDetail}
         component={withScreenPropsInjection(HistoryLocalDetailScreen)}
-        options={mergeScreenOptions({
-          title: '',
-          headerTintColor: colors['neutral-title-1'],
-          headerTitleStyle: {
-            fontSize: 20,
-            ...RoundedFontStyles.heavy,
-            color: colors['neutral-title-1'],
-          },
-          headerStyle: {
-            backgroundColor: !isLight
-              ? colors2024?.['neutral-bg-1']
-              : colors2024?.['neutral-bg-0'],
-          },
-        })}
+        options={({ route }) =>
+          mergeScreenOptions({
+            // Same JS header as HistoryDetail: one header type for the whole
+            // push transition, and it owns the back control.
+            header: () => (
+              <HistoryDetailHeader
+                title={route.params?.title}
+                address={route.params?.data?.address}
+                keyringType={route.params?.data?.keyringType}
+              />
+            ),
+            headerBackVisible: false,
+            headerLeft: () => null,
+            unstable_headerLeftItems: () => [],
+          })
+        }
       />
       <TransactionStack.Screen
         name={RootNames.GnosisTransactionQueue}

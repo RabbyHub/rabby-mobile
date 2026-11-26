@@ -9,7 +9,6 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ScreenHeaderAccountTitle } from '@/components/AccountSwitcher/OnScreenHeader';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import type { TransactionGroup } from '@/core/services/transactionHistory';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
@@ -18,7 +17,6 @@ import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { findAccountByPriority } from '@/utils/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { useTranslation } from 'react-i18next';
 import { ApproveNFT } from './components/Actions/ApproveNFT';
 import { ApproveNFTCollection } from './components/Actions/ApproveNFTCollection';
 import { ApproveToken } from './components/Actions/ApproveToken';
@@ -31,7 +29,6 @@ import { Send } from './components/Actions/Send';
 import { Swap } from './components/Actions/Swap';
 import { UnknownAction } from './components/Actions/UnknownAction';
 import { HistoryItemCateType } from './components/type';
-import { HistoryHeaderTitle } from './components/HistoryHeaderTitle';
 
 function HistoryLocalDetailScreen(): JSX.Element {
   const route =
@@ -45,16 +42,13 @@ function HistoryLocalDetailScreen(): JSX.Element {
     data: _data,
     // canCancel,
     isForMultipleAddress,
-    title,
     type,
     onPressAddToWhitelistButton,
-    account,
   } = route.params || {};
   const [data, setData] = React.useState<TransactionGroup>(_data);
   const isPending = useMemo(() => data.isPending, [data]);
   const isFailed = useMemo(() => data.isFailed, [data]);
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const { t } = useTranslation();
 
   const fetchRefreshData = useCallback(async () => {
     if (!isPending) {
@@ -77,8 +71,6 @@ function HistoryLocalDetailScreen(): JSX.Element {
   }, [isPending, data]);
 
   useInterval(fetchRefreshData, 5000);
-
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
 
   useEffect(() => {
     if (!data.isPending) {
@@ -121,31 +113,6 @@ function HistoryLocalDetailScreen(): JSX.Element {
     }
     return account;
   }, [accounts, data.address, data.keyringType]);
-
-  const currentAccount = useMemo(() => {
-    return account && isSameAddress(account.address, data.address)
-      ? account
-      : accounts.find(item => isSameAddress(item.address, data.address));
-  }, [account, accounts, data.address]);
-
-  const getHeaderTitle = React.useCallback(() => {
-    return (
-      <ScreenHeaderAccountTitle
-        account={currentAccount}
-        titleText={
-          <HistoryHeaderTitle>
-            {title || t('page.transactions.itemTitle.Default')}
-          </HistoryHeaderTitle>
-        }
-      />
-    );
-  }, [currentAccount, title, t]);
-
-  useEffect(() => {
-    setNavigationOptions({
-      headerTitle: getHeaderTitle,
-    });
-  }, [setNavigationOptions, getHeaderTitle]);
 
   const actionElement = data.maxGasTx?.action?.actionData?.approveToken ? (
     <ApproveToken
