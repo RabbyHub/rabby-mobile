@@ -354,6 +354,28 @@ export async function runBizMockAction(
       };
     }
 
+    if (action.action === 'home.openSingleAddress') {
+      const account = getFallbackAccountSnapshot();
+      if (!account) {
+        return {
+          ok: false,
+          action: action.action,
+          code: 'account-not-ready',
+          message: 'no current account',
+        };
+      }
+      const { apisSingleHome } = await import(
+        '@/screens/Home/hooks/singleHome'
+      );
+      apisSingleHome.navigateToSingleHome(account as any);
+      return {
+        ok: true,
+        action: action.action,
+        code: 'ok',
+        data: { address: account.address },
+      };
+    }
+
     if (action.action === 'env.setScreenE2E') {
       const { storeApiExpSettingData } = await import('@/hooks/appSettings');
       storeApiExpSettingData.setScreenE2EEnabled(action.enabled);

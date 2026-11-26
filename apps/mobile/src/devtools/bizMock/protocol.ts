@@ -39,6 +39,7 @@ export type BizMockAction =
       payload?: JsonObject;
       timeoutMs?: number;
     }
+  | { action: 'home.openSingleAddress' }
   | { action: 'env.setScreenE2E'; enabled: boolean };
 
 export type BizMockMeta = {
@@ -336,6 +337,14 @@ export function parseBizMockAction(
             ? parsedTimeout
             : undefined,
       },
+    };
+  }
+
+  if (command === 'home.openSingleAddress') {
+    return {
+      matched: true,
+      meta,
+      action: { action: 'home.openSingleAddress' },
     };
   }
 

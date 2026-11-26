@@ -154,6 +154,18 @@ describe('parseBizMockAction', () => {
     });
   });
 
+  it('parses home.openSingleAddress', () => {
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=home.openSingleAddress',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      action: { action: 'home.openSingleAddress' },
+    });
+  });
+
   it('does not match a different protocol or path', () => {
     expect(
       parseBizMockAction(
