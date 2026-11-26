@@ -155,11 +155,28 @@ const BalanceHeader = React.memo(function BalanceHeader({
     <View style={styles.titleSection}>
       <Text style={styles.sectionTitle}>{t('page.sendToken.newAmount')}</Text>
       {showIssue ? (
-        <Text style={styles.issueText} numberOfLines={1} ellipsizeMode="tail">
-          {balanceError
-            ? `${balanceError}: ${balanceIssueValueText}`
-            : balanceWarn}
-        </Text>
+        balanceError ? (
+          // Keep the exact balance fully visible: let the localized label
+          // ellipsize instead of truncating the value (issue on 375/382pt
+          // screens for de-DE / ru-RU).
+          <View style={[styles.issueBlock, styles.issueRow]}>
+            <Text
+              style={[styles.issueText, styles.issueLabel]}
+              numberOfLines={1}
+              ellipsizeMode="tail">
+              {balanceError}
+            </Text>
+            <Text
+              style={[styles.issueText, styles.issueValue]}
+              numberOfLines={1}>
+              {`: ${balanceIssueValueText}`}
+            </Text>
+          </View>
+        ) : (
+          <Text style={styles.issueText} numberOfLines={1} ellipsizeMode="tail">
+            {balanceWarn}
+          </Text>
+        )
       ) : (
         <View style={styles.titleRightSpacer} />
       )}
@@ -612,6 +629,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     issueBlock: {
       flexDirection: 'row',
       justifyContent: 'flex-end',
+    },
+
+    issueRow: {
+      flexShrink: 1,
+      maxWidth: 240,
+    },
+
+    issueLabel: {
+      flexShrink: 1,
+      textAlign: 'right',
+    },
+
+    issueValue: {
+      flexShrink: 0,
     },
 
     gasReserved: {
