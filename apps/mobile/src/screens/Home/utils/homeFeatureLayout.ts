@@ -134,3 +134,30 @@ export function moveHomeFeature(
     [to]: [key, ...layout[to].filter(item => item !== key)],
   };
 }
+
+/**
+ * How far a card travels when it is sent to the other floor: straight
+ * towards that floor until it is off the screen, and one card height
+ * further, as in the design's motion. Positive (down) from Home, negative
+ * (up) from the second floor.
+ *
+ * `cardTop` is the card's top edge in the window, or null when it could not
+ * be measured: the card then travels a whole window, which clears the screen
+ * from anywhere.
+ */
+export function getHomeFeatureLeaveOffset(
+  place: HomeFeaturePlace,
+  cardTop: number | null,
+  windowHeight: number,
+  cardHeight: number,
+) {
+  'worklet';
+  if (place === 'home') {
+    const toBottomEdge =
+      cardTop === null ? windowHeight : windowHeight - cardTop;
+    return Math.max(0, toBottomEdge) + cardHeight;
+  }
+
+  const toTopEdge = cardTop === null ? windowHeight : cardTop + cardHeight;
+  return -(Math.max(0, toTopEdge) + cardHeight);
+}

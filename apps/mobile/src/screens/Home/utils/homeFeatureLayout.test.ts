@@ -3,6 +3,7 @@ import {
   HOME_MOVABLE_FEATURES,
   HOME_PINNED_FEATURES,
   getDefaultHomeFeatureLayout,
+  getHomeFeatureLeaveOffset,
   isHomeFeatureMovable,
   isSameHomeFeatureLayout,
   moveHomeFeature,
@@ -161,5 +162,42 @@ describe('homeFeatureLayout', () => {
         home: [...layout.home].reverse(),
       }),
     ).toBe(false);
+  });
+});
+
+describe('getHomeFeatureLeaveOffset', () => {
+  const windowHeight = 852;
+  const cardHeight = 96;
+
+  it('sends a Home card down past the bottom edge by one card height', () => {
+    // Top at 400: 452 to the bottom edge, then one more card height.
+    expect(
+      getHomeFeatureLeaveOffset('home', 400, windowHeight, cardHeight),
+    ).toBe(452 + cardHeight);
+  });
+
+  it('sends a second-floor card up past the top edge by one card height', () => {
+    // Top at 170: 266 until its bottom edge is off, then one more card height.
+    expect(
+      getHomeFeatureLeaveOffset('more', 170, windowHeight, cardHeight),
+    ).toBe(-(266 + cardHeight));
+  });
+
+  it('still moves a card that is already past the edge', () => {
+    expect(
+      getHomeFeatureLeaveOffset('home', 900, windowHeight, cardHeight),
+    ).toBe(cardHeight);
+    expect(
+      getHomeFeatureLeaveOffset('more', -200, windowHeight, cardHeight),
+    ).toBe(-cardHeight);
+  });
+
+  it('crosses a whole window when the card could not be measured', () => {
+    expect(
+      getHomeFeatureLeaveOffset('home', null, windowHeight, cardHeight),
+    ).toBe(windowHeight + cardHeight);
+    expect(
+      getHomeFeatureLeaveOffset('more', null, windowHeight, cardHeight),
+    ).toBe(-(windowHeight + cardHeight));
   });
 });

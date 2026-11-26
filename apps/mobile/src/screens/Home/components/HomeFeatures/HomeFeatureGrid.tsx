@@ -8,11 +8,14 @@ import React, {
 import { PixelRatio, StyleSheet } from 'react-native';
 import Animated, {
   Easing,
-  interpolate,
+  measure,
   runOnJS,
+  runOnUI,
+  useAnimatedRef,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
+  type AnimatedRef,
 } from 'react-native-reanimated';
 
 import { ITEM_GRID_GAP, ITEM_LAYOUT_PADDING_HORIZONTAL } from '@/constant/home';
@@ -25,6 +28,7 @@ import {
   useIsHomeFeatureEditing,
 } from '../../hooks/homeFeatureLayout';
 import {
+  getHomeFeatureLeaveOffset,
   HOME_PINNED_FEATURES,
   isHomeFeatureMovable,
   type HomeFeaturePlace,
@@ -38,11 +42,15 @@ import {
 } from './useHomeFeatureMenu';
 
 const COLUMNS = 2;
-/** The remaining cards gliding into their new slots. */
-const SLOT_TIMING = { duration: 280, easing: Easing.out(Easing.cubic) };
-/** The tapped card travelling towards the floor it is moving to. */
-const LEAVE_TIMING = { duration: 240, easing: Easing.in(Easing.quad) };
-const LEAVE_DISTANCE = 140;
+/**
+ * The design's timing for a card move. The tapped card first travels off the
+ * screen towards the floor it is moving to, then the remaining cards close
+ * the gap; each takes 300ms on cubic-bezier(0.42, 0, 0.58, 1).
+ */
+const MOVE_TIMING = {
+  duration: 300,
+  easing: Easing.bezier(0.42, 0, 0.58, 1),
+};
 const PIXEL_RATIO = PixelRatio.get();
 
 /**
@@ -68,6 +76,9 @@ type SlotProps = {
   itemWidth: number;
   /** Distance between the left edges of two neighbouring columns. */
   columnStep: number;
+  /** The grid the slot is placed in, to find the card on the screen. */
+  gridRef: AnimatedRef<Animated.View>;
+  windowHeight: number;
   place: HomeFeaturePlace;
   editing: boolean;
   onPress: (key: MultiHomeFeatTitle) => void;
@@ -86,6 +97,8 @@ const HomeFeatureGridSlot = React.memo(function HomeFeatureGridSlot({
   index,
   itemWidth,
   columnStep,
+  gridRef,
+  windowHeight,
   place,
   editing,
   onPress,
@@ -97,7 +110,7 @@ const HomeFeatureGridSlot = React.memo(function HomeFeatureGridSlot({
     Math.floor(index / COLUMNS) * (HOME_FEATURE_CARD_HEIGHT + ITEM_GRID_GAP);
   const x = useSharedValue(targetX);
   const y = useSharedValue(targetY);
-  const leaving = useSharedValue(0);
+  const leaveOffset = useSharedValue(0);
   const isLeavingRef = useRef(false);
   const [isLeaving, setIsLeaving] = useState(false);
   const hasPlacedRef = useRef(false);
@@ -109,8 +122,8 @@ const HomeFeatureGridSlot = React.memo(function HomeFeatureGridSlot({
       hasPlacedRef.current = true;
       return;
     }
-    x.value = withTiming(targetX, SLOT_TIMING);
-    y.value = withTiming(targetY, SLOT_TIMING);
+    x.value = withTiming(targetX, MOVE_TIMING);
+    y.value = withTiming(targetY, MOVE_TIMING);
   }, [targetX, targetY, x, y]);
 
   const commitMove = useCallback(() => {
@@ -124,24 +137,36 @@ const HomeFeatureGridSlot = React.memo(function HomeFeatureGridSlot({
     isLeavingRef.current = true;
     setIsLeaving(true);
     triggerImpact();
-    // Commit even if the animation is cut short (the screen goes away): the
-    // user asked for the move, the animation is only how it is shown.
-    leaving.value = withTiming(1, LEAVE_TIMING, () => {
-      runOnJS(commitMove)();
-    });
-  }, [commitMove, leaving]);
+    runOnUI(() => {
+      'worklet';
+      // The slot's own transform lives on the UI thread, so the card is
+      // found from the grid's frame plus its current offset in the grid.
+      const gridFrame = measure(gridRef);
+      const cardTop = gridFrame ? gridFrame.pageY + y.value : null;
+      // Commit even if the animation is cut short (the screen goes away):
+      // the user asked for the move, the animation is only how it is shown.
+      leaveOffset.value = withTiming(
+        getHomeFeatureLeaveOffset(
+          place,
+          cardTop,
+          windowHeight,
+          HOME_FEATURE_CARD_HEIGHT,
+        ),
+        MOVE_TIMING,
+        () => {
+          runOnJS(commitMove)();
+        },
+      );
+    })();
+  }, [commitMove, gridRef, leaveOffset, place, windowHeight, y]);
 
-  // Down towards the second floor, up towards the first one.
-  const leaveDirection = place === 'home' ? 1 : -1;
+  // It stays opaque all the way: it leaves by going off the screen, down
+  // under the edit footer from Home, up under the title row from the second
+  // floor.
   const slotStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(leaving.value, [0, 0.4, 1], [1, 1, 0]),
     transform: [
       { translateX: snapToPixel(x.value) },
-      {
-        translateY: snapToPixel(
-          y.value + leaving.value * leaveDirection * LEAVE_DISTANCE,
-        ),
-      },
+      { translateY: snapToPixel(y.value + leaveOffset.value) },
     ],
   }));
 
@@ -180,7 +205,8 @@ export const HomeFeatureGrid = React.memo(function HomeFeatureGrid({
   const editing = useIsHomeFeatureEditing();
   const featureItems = useHomeFeatureItems();
   const handlePress = useHomeFeaturePress();
-  const { width: windowWidth } = useWindowDimensions();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const gridRef = useAnimatedRef<Animated.View>();
   // Both the card width and the column step sit on the pixel grid, and the
   // step is derived from the row width so the last column ends exactly at the
   // row's right edge.
@@ -205,7 +231,7 @@ export const HomeFeatureGrid = React.memo(function HomeFeatureGrid({
   }, [featureItems, movableKeys, place]);
 
   // Height is a layout prop, so this is the one place a layout pass rides an
-  // animation. It only runs for the ~280ms of a card move, a discrete tap,
+  // animation. It only runs for the 300ms of a card move, a discrete tap,
   // never along a gesture track; in exchange the content below the grid and
   // the scroll range settle smoothly instead of jumping a whole row.
   const height = getGridHeight(items.length);
@@ -216,7 +242,7 @@ export const HomeFeatureGrid = React.memo(function HomeFeatureGrid({
       hasSizedRef.current = true;
       return;
     }
-    animatedHeight.value = withTiming(height, SLOT_TIMING);
+    animatedHeight.value = withTiming(height, MOVE_TIMING);
   }, [animatedHeight, height]);
   const heightStyle = useAnimatedStyle(() => ({
     height: animatedHeight.value,
@@ -238,7 +264,7 @@ export const HomeFeatureGrid = React.memo(function HomeFeatureGrid({
   );
 
   return (
-    <Animated.View style={[styles.grid, heightStyle]}>
+    <Animated.View ref={gridRef} style={[styles.grid, heightStyle]}>
       {items.map((item, index) => (
         <HomeFeatureGridSlot
           key={item.key}
@@ -246,6 +272,8 @@ export const HomeFeatureGrid = React.memo(function HomeFeatureGrid({
           index={index}
           itemWidth={itemWidth}
           columnStep={columnStep}
+          gridRef={gridRef}
+          windowHeight={windowHeight}
           place={place}
           editing={editing}
           onPress={handlePress}
@@ -258,9 +286,12 @@ export const HomeFeatureGrid = React.memo(function HomeFeatureGrid({
 });
 
 const styles = StyleSheet.create({
+  // Above what follows it on the floor: a card leaving Home passes over the
+  // content under the grid on its way off the screen.
   grid: {
     width: '100%',
     position: 'relative',
+    zIndex: 1,
   },
   slot: {
     position: 'absolute',
