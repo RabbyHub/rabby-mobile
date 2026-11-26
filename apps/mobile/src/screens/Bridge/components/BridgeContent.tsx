@@ -427,6 +427,7 @@ export const BridgeContent = ({
     quoteBlockedByClosedMarket,
     slider,
     onChangeSlider,
+    clearPendingSlider,
   } = useBridge(isForMultipleAddress, { active: sceneActive });
 
   const isRegressionBridgePairMatched = useMemo(() => {
@@ -1526,6 +1527,7 @@ export const BridgeContent = ({
         if (chainItem?.enum !== fromChain) {
           switchFromChain(chainItem?.enum || CHAINS_ENUM.ETH);
         }
+        clearPendingSlider();
         handleAmountChange('');
         setFromToken(token);
       };

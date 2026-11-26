@@ -231,6 +231,10 @@ export const useBridge = (
   // 标记是否已经初始化过 toChain，避免重复初始化
   const isToChainInitializedRef = useRef(false);
 
+  // `clearPendingSlider` is created by `useSwapBridgeSlider` below (it needs
+  // `handleSlider100`), so the early switch handlers call it through a ref.
+  const clearPendingSliderRef = useRef<() => void>(() => {});
+
   // 包装 switchFromChain，更新初始化标记
   const wrappedSwitchFromChain = useCallback(
     (chain?: CHAINS_ENUM, resetToken?: boolean) => {
@@ -238,6 +242,7 @@ export const useBridge = (
       if (chain) {
         isFromChainInitializedRef.current = true;
       }
+      clearPendingSliderRef.current();
       switchFromChain(chain, resetToken);
     },
     [switchFromChain],
@@ -249,6 +254,7 @@ export const useBridge = (
       if (chain) {
         isToChainInitializedRef.current = true;
       }
+      clearPendingSliderRef.current();
       switchToChain(chain, false);
       if (resetToken) {
         // 入口参数只用于预填，切链时直接选默认币，避免被旧 To 参数拦截。
@@ -374,6 +380,7 @@ export const useBridge = (
   ]);
 
   const switchToken = useCallback(() => {
+    clearPendingSliderRef.current();
     wrappedSwitchFromChain(toChain, false);
     wrappedSwitchToChain(fromChain, false);
     setFromToken(toToken);
@@ -680,12 +687,15 @@ export const useBridge = (
     setUseSlider,
     isDraggingSlider,
     setIsDraggingSlider,
+    clearPendingSlider,
   } = useSwapBridgeSlider({
     setAmount,
     fromToken,
     handleSlider100,
     currentAmount: amount,
   });
+
+  clearPendingSliderRef.current = clearPendingSlider;
 
   const handleAmountChange = useCallback(
     (e: string) => {

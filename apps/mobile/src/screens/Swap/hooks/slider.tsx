@@ -3,6 +3,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { trigger } from 'react-native-haptic-feedback';
 import { tokenAmountBn } from '../utils';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  type PendingSliderGesture,
+  shouldReplayPendingSlider,
+} from './pendingSlider';
 
 const sliderHapticTriggerNumbers = [0, 50, 100];
 
@@ -28,15 +32,36 @@ export const useSwapBridgeSlider = ({
   /**
    * The page can be dragged before the from token (and its balance) is loaded.
    * Losing that gesture means no amount is ever set, so no quote is requested
-   * even after the token arrives. Keep the last position and replay it once
-   * `fromToken.amount` is available.
+   * even after the token arrives. Keep the last position, scoped to the token
+   * it was made on, and replay it once that token's balance is available.
    */
-  const pendingSliderRef = useRef<number | null>(null);
+  const pendingSliderRef = useRef<PendingSliderGesture | null>(null);
+  const lastTokenKeyRef = useRef('');
+
+  const clearPendingSlider = useCallback(() => {
+    pendingSliderRef.current = null;
+  }, []);
+
+  // Invalidate on an explicit token/chain change. A hydration from "no token"
+  // to the first token keeps the pending gesture (that is the intended case).
+  useEffect(() => {
+    const tokenKey = fromToken?.id ? `${fromToken.chain}:${fromToken.id}` : '';
+    const previousKey = lastTokenKeyRef.current;
+    lastTokenKeyRef.current = tokenKey;
+    if (!previousKey || previousKey === tokenKey) {
+      return;
+    }
+    pendingSliderRef.current = null;
+  }, [fromToken?.chain, fromToken?.id]);
 
   const onChangeSlider = useCallback(
     (v: number, syncAmount?: boolean) => {
       if (!fromToken?.amount) {
-        pendingSliderRef.current = v;
+        pendingSliderRef.current = {
+          value: v,
+          tokenId: fromToken?.id,
+          chainId: fromToken?.chain,
+        };
         if (syncAmount) {
           setIsDraggingSlider(false);
         }
@@ -85,15 +110,24 @@ export const useSwapBridgeSlider = ({
   // typed in the meantime wins, so the deferred gesture is dropped then.
   useEffect(() => {
     const pending = pendingSliderRef.current;
-    if (pending === null || !fromToken?.amount) {
+    if (!pending || !fromToken?.amount) {
       return;
     }
     pendingSliderRef.current = null;
+    if (!shouldReplayPendingSlider(pending, fromToken)) {
+      return;
+    }
     if (currentAmount) {
       return;
     }
-    onChangeSlider(pending, true);
-  }, [currentAmount, fromToken?.amount, fromToken?.id, onChangeSlider]);
+    onChangeSlider(pending.value, true);
+  }, [
+    currentAmount,
+    fromToken,
+    fromToken?.amount,
+    fromToken?.id,
+    onChangeSlider,
+  ]);
 
   return {
     slider,
@@ -103,5 +137,6 @@ export const useSwapBridgeSlider = ({
     isDraggingSlider,
     setIsDraggingSlider,
     onChangeSlider,
+    clearPendingSlider,
   };
 };
