@@ -22,6 +22,10 @@ import {
 } from '@/constant/swap';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useSwapSettings } from './settings';
+import {
+  type PendingSliderGesture,
+  shouldReplayPendingSlider,
+} from './pendingSlider';
 import type { QuoteProvider, TDexQuoteData } from './quote';
 import { useQuoteMethods } from './quote';
 import { formatTokenAmountInput } from '@/utils/number';
@@ -371,6 +375,19 @@ export const useTokenPair = ({
 }) => {
   const swapService = useSwapService();
   const userAddress = account?.address;
+
+  /**
+   * A slider gesture made before the pay token (or its balance) is loaded is
+   * remembered and replayed once that same token's balance exists. It is scoped
+   * to the token it was made on, and cleared on explicit token/chain changes, so
+   * it can never be replayed onto a different (possibly funded) token.
+   */
+  const pendingSliderRef = useRef<PendingSliderGesture | null>(null);
+  const lastPayTokenKeyRef = useRef('');
+
+  const clearPendingSlider = useCallback(() => {
+    pendingSliderRef.current = null;
+  }, []);
   const refreshId = useAtomValue(refreshIdAtom);
   const setTokenRefreshId = useSetTokenRefreshId();
   const setRefreshId = useSetAtom(refreshIdAtom);
@@ -584,6 +601,17 @@ export const useTokenPair = ({
     enabled: active,
   });
 
+  useEffect(() => {
+    const tokenKey = payToken?.id ? `${payToken.chain}:${payToken.id}` : '';
+    const previousKey = lastPayTokenKeyRef.current;
+    lastPayTokenKeyRef.current = tokenKey;
+    if (!previousKey || previousKey === tokenKey) {
+      return;
+    }
+    // An explicit token/chain change invalidates a deferred slider gesture.
+    pendingSliderRef.current = null;
+  }, [payToken?.chain, payToken?.id]);
+
   const {
     lowCreditToken,
     lowCreditVisible,
@@ -652,11 +680,19 @@ export const useTokenPair = ({
           setPayToken(undefined);
         }
       }
+      clearPendingSlider();
       setPayAmount('');
       setSlider(0);
       setActiveProvider(undefined);
     },
-    [chain, handleChain, setActiveProvider, setPayToken, setReceiveToken],
+    [
+      chain,
+      clearPendingSlider,
+      handleChain,
+      setActiveProvider,
+      setPayToken,
+      setReceiveToken,
+    ],
   );
 
   const switchSwapAgain = useCallback(
@@ -670,11 +706,18 @@ export const useTokenPair = ({
         ...getChainDefaultToken(c),
         id: receiveTokenId,
       });
+      clearPendingSlider();
       setPayAmount('');
       setSlider(0);
       setActiveProvider(undefined);
     },
-    [handleChain, setActiveProvider, setPayToken, setReceiveToken],
+    [
+      clearPendingSlider,
+      handleChain,
+      setActiveProvider,
+      setPayToken,
+      setReceiveToken,
+    ],
   );
 
   useAsyncInitializeChainList({
@@ -735,11 +778,18 @@ export const useTokenPair = ({
   }, [persistedSwapSelectionStatus, receiveToken, swapService]);
 
   const exchangeToken = useCallback(() => {
+    clearPendingSlider();
     setPayToken(receiveToken);
     setReceiveToken(payToken);
     setPayAmount('');
     setSlider(0);
-  }, [setPayToken, receiveToken, setReceiveToken, payToken]);
+  }, [
+    clearPendingSlider,
+    setPayToken,
+    receiveToken,
+    setReceiveToken,
+    payToken,
+  ]);
 
   useEffect(() => {
     if (payToken && receiveToken && payToken?.id === receiveToken?.id) {
@@ -1399,54 +1449,82 @@ export const useTokenPair = ({
   ]);
 
   const previousSlider = useRef<number>(0);
-
   const onChangeSlider = useCallback(
     (v: number, syncAmount?: boolean) => {
-      if (payToken) {
-        setIsDraggingSlider(true);
-        setSwapUseSlider(true);
-        setSlider(v);
-        setUseGasPrice(false);
-
-        if (
-          v !== previousSlider.current &&
-          sliderHapticTriggerNumbers.includes(v)
-        ) {
-          trigger('impactLight', {
-            enableVibrateFallback: true,
-            ignoreAndroidSystemSettings: false,
-          });
-        }
-
+      if (!payToken?.amount) {
+        pendingSliderRef.current = {
+          value: v,
+          tokenId: payToken?.id,
+          chainId: payToken?.chain,
+        };
         if (syncAmount) {
           setIsDraggingSlider(false);
         }
+        return;
+      }
 
-        previousSlider.current = v;
+      pendingSliderRef.current = null;
+      setIsDraggingSlider(true);
+      setSwapUseSlider(true);
+      setSlider(v);
+      setUseGasPrice(false);
 
-        if (v === 100) {
-          handleSlider100();
-          return;
-        }
-        const newAmountBn = new BigNumber(v)
-          .div(100)
-          .times(tokenAmountBn(payToken));
-        const isTooSmall = newAmountBn.lt(0.0001);
-        const nextPayAmount = isTooSmall
-          ? newAmountBn.toString(10)
-          : new BigNumber(newAmountBn.toFixed(4, 1)).toString(10);
-        if (nextPayAmount !== payAmount) {
-          setQuotesList([]);
-          setPayAmount(nextPayAmount);
-        }
+      if (
+        v !== previousSlider.current &&
+        sliderHapticTriggerNumbers.includes(v)
+      ) {
+        trigger('impactLight', {
+          enableVibrateFallback: true,
+          ignoreAndroidSystemSettings: false,
+        });
+      }
+
+      if (syncAmount) {
+        setIsDraggingSlider(false);
+      }
+
+      previousSlider.current = v;
+
+      if (v === 100) {
+        handleSlider100();
+        return;
+      }
+      const newAmountBn = new BigNumber(v)
+        .div(100)
+        .times(tokenAmountBn(payToken));
+      const isTooSmall = newAmountBn.lt(0.0001);
+      const nextPayAmount = isTooSmall
+        ? newAmountBn.toString(10)
+        : new BigNumber(newAmountBn.toFixed(4, 1)).toString(10);
+      if (nextPayAmount !== payAmount) {
+        setQuotesList([]);
+        setPayAmount(nextPayAmount);
       }
     },
     [handleSlider100, payAmount, payToken],
   );
 
+  // Replay a gesture captured before the balance was ready; a manual amount
+  // typed in the meantime wins and drops the deferred gesture.
+  useEffect(() => {
+    const pending = pendingSliderRef.current;
+    if (!pending || !payToken?.amount) {
+      return;
+    }
+    pendingSliderRef.current = null;
+    if (!shouldReplayPendingSlider(pending, payToken)) {
+      return;
+    }
+    if (payAmount) {
+      return;
+    }
+    onChangeSlider(pending.value, true);
+  }, [onChangeSlider, payAmount, payToken, payToken?.amount, payToken?.id]);
+
   /* slider end*/
 
   useEffect(() => {
+    pendingSliderRef.current = null;
     setPayAmount('');
     setSlider(0);
     setSwapUseSlider(false);
@@ -1558,6 +1636,7 @@ export const useTokenPair = ({
     slider,
     swapUseSlider,
     onChangeSlider,
+    clearPendingSlider,
 
     lowCreditToken,
     lowCreditVisible,

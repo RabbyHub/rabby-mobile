@@ -1898,6 +1898,7 @@ export function useSendTokenForm({
       },
       fromToken: currentToken,
       handleSlider100: handleSlider100,
+      currentAmount: formValues.amount,
     });
 
   const handleCurrentTokenChange = useMemoizedFn(async (token: TokenItem) => {

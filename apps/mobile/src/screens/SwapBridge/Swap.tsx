@@ -263,6 +263,7 @@ const Swap = ({
     passGasPrice,
     slider,
     onChangeSlider,
+    clearPendingSlider,
 
     lowCreditToken: _lowCreditToken,
     lowCreditVisible,
@@ -505,6 +506,8 @@ const Swap = ({
     handleAmountChange(value);
   });
   const handlePayTokenChange = useMemoizedFn((token: TokenItem) => {
+    // An explicit token selection invalidates a deferred slider gesture.
+    clearPendingSlider();
     const chainItem = findChainByServerID(token.chain);
     const normalSetChainToken = () => {
       if (chainItem?.enum !== chain) {
