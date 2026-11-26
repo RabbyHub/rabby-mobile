@@ -424,6 +424,25 @@ export const apisHomeTabIndex = {
     homeTabScrollerRef.current?.setIndex(val);
   },
   /**
+   * Reset the home tab while the pager is (re)mounting, e.g. right after a
+   * `navigation.reset` from another screen. The pager cannot report a settle
+   * when it mounts already at `val`, so this also publishes the shared
+   * index/name — otherwise the highlight and `isHomeAtFirstTab()` keep the tab
+   * the user came from (QA: NFT detail -> send -> home showed overview content
+   * with the NFT tab still selected).
+   */
+  resetTabIndex(val: number, tabName?: HomeTabName) {
+    tabIndexSvs.current = val;
+    tabIndexSvs.svIndexDecimal.value = val;
+    if (tabName) {
+      tabIndexSvs.svTabName.value = tabName;
+    }
+    if (tabIndexStore.getState().tabIndex !== val) {
+      tabIndexStore.setState({ tabIndex: val });
+    }
+    homeTabScrollerRef.current?.setIndex(val);
+  },
+  /**
    * Report a page the pager already settled on. This must never command the
    * pager: calling `setIndex` from the pager's own commit callback re-enters the
    * gesture and can overwrite an in-flight settle.
