@@ -29,15 +29,6 @@ export const QrCodeModal = registerAppScreen<
     })),
 });
 
-export const InnerDappWebViewPreloadEntry = registerAppScreen<
-  typeof import('@/components/WebView/InnerDappWebViewPreloadEntry').InnerDappWebViewPreloadEntry
->({
-  loader: () =>
-    import('@/components/WebView/InnerDappWebViewPreloadEntry').then(m => ({
-      default: m.InnerDappWebViewPreloadEntry,
-    })),
-});
-
 export const ApprovalTokenDetailSheetModalStub = registerAppScreen<
   typeof import('@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub').default
 >({

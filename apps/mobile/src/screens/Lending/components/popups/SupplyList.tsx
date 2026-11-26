@@ -4,10 +4,6 @@ import { TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import {
-  GlobalModalViewProps,
-  MODAL_NAMES,
-} from '@/components2024/GlobalBottomSheetModal/types';
-import {
   useLendingIsLoading,
   useLendingRemoteData,
   useLendingSummary,
@@ -472,18 +468,6 @@ export const LendingSupplyListContent: React.FC<
     </View>
   );
 };
-
-const LendingSupplyList: React.FC<
-  GlobalModalViewProps<MODAL_NAMES.LENDING_SUPPLY_LIST> & {
-    onBeforeSwapNavigate?: () => void;
-  }
-> = ({ onBeforeSwapNavigate }) => {
-  return (
-    <LendingSupplyListContent onBeforeSwapNavigate={onBeforeSwapNavigate} />
-  );
-};
-
-export default LendingSupplyList;
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {
   const wrapperTokenCardBgColor = colord(colors2024['neutral-line'])

@@ -5,12 +5,6 @@ import {
 } from '@aave/math-utils';
 import BigNumber from 'bignumber.js';
 
-export interface IconMapInterface {
-  iconSymbol?: string;
-  name?: string;
-  symbol?: string;
-}
-
 export type FormattedReservesAndIncentives = ReturnType<
   typeof formatReservesAndIncentives
 >[number] &

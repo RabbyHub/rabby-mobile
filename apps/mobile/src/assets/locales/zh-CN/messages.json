@@ -1324,7 +1324,8 @@
         },
         "notFound": {
           "title": "未找到设备",
-          "description": "开启蓝牙并解锁 OneKey"
+          "description": "开启蓝牙并解锁 OneKey",
+          "retry": "重新搜索"
         },
         "connect": {
           "title": "连接中",
@@ -1339,6 +1340,23 @@
           "title": "输入 PIN",
           "onDevice": "在设备上输入 PIN 码",
           "description": "根据设备屏幕上显示的数字布局输入 PIN 码。"
+        },
+        "error": {
+          "deviceNotFound": "未找到 OneKey。请确认设备已解锁、蓝牙已开启，并靠近手机。",
+          "disconnected": "OneKey 已断开连接。请保持设备解锁并靠近手机后重试。",
+          "deviceBusy": "OneKey 正在处理其他请求。请在设备上完成或取消后重试。",
+          "passphraseDisabled": "设备未开启 Passphrase。请在设备上开启，或重新导入该钱包。",
+          "firmwareTooOld": "OneKey 固件版本过低。请使用 OneKey App 升级后重试。",
+          "bluetoothOff": "蓝牙未开启。请打开蓝牙后重试。",
+          "bluetoothPermission": "Rabby 没有蓝牙权限。请在系统设置中为 Rabby 允许蓝牙（Android 11 及以下为定位）权限后重试。",
+          "locationServicesDisabled": "定位服务已关闭。搜索蓝牙设备需要开启定位服务。",
+          "bluetoothUnsupported": "此手机不支持蓝牙。",
+          "scanFailed": "蓝牙搜索失败，请重试。",
+          "pairingFailed": "蓝牙配对失败。请在手机和 OneKey 上确认配对请求后重试。",
+          "pairingInvalid": "蓝牙配对信息已失效。请在手机蓝牙设置中忽略 OneKey 后重新配对。",
+          "pinInvalid": "PIN 码错误，请重试。",
+          "cancelled": "请求已取消。",
+          "openSettings": "打开设置"
         }
       },
       "seedPhrase": {
@@ -2996,9 +3014,6 @@
         "activateNow": "立即激活",
         "activatedSuccess": "已启用 4% Hyperliquid 手续费减免"
       },
-      "dappSelect": {
-        "title": "选择永续合约服务商"
-      },
       "search": {
         "placeholder": "搜索永续合约",
         "empty": "未找到结果"
@@ -3272,12 +3287,7 @@
         "lq": "如果低于 1，可能触发清算。"
       },
       "repayDetail": {
-        "actions": "还款",
-        "tabs": {
-          "collateral": "抵押品",
-          "wallet": "钱包余额"
-        },
-        "repayWith": "还款来源"
+        "actions": "还款"
       },
       "supplyDetail": {
         "actions": "存入",
@@ -3298,7 +3308,6 @@
         "borrowingUnavailable": "当前模式下无法借入该资产。",
         "almostReachedWarning": "该资产的协议借款上限已达 100%，无法继续借入。",
         "almostReachedError": "由于协议借款上限即将达到，可借最大金额受到限制。",
-        "swapDebt": "转换",
         "borrowed": "已借入",
         "noSupplyDesc": "若要借款，您需要先存入资产作为抵押品。",
         "noSupplyPrefix": "没有存款："
@@ -3410,79 +3419,18 @@
         "unavailable": "• 不可用",
         "disableTitle": "禁用",
         "enabled": "• 已启用",
-        "description": "启用 E-Mode 可以最大化您的借款能力，但只能借入所选类别内的资产。",
-        "debtSwapSelector": {
-          "header": {
-            "assets": "代币/余额",
-            "borrow": "我的借款",
-            "apy": "APY"
-          },
-          "title": "选择借款代币"
-        },
-        "collateralSwapSelector": {
-          "header": {
-            "assets": "代币",
-            "collateral": "我的抵押品"
-          },
-          "title": "选择抵押品代币"
-        }
+        "description": "启用 E-Mode 可以最大化您的借款能力，但只能借入所选类别内的资产。"
       },
       "disabled": "已禁用",
-      "debtSwap": {
-        "actions": {
-          "title": "债务转换",
-          "swapTo": "转换为",
-          "select": "选择",
-          "amount": "金额",
-          "borrowed": "已借入"
-        },
-        "overview": {
-          "title": "交易概览",
-          "borrowAPY": "借款 APY",
-          "borrowValueAfter": "转换后借款余额"
-        },
-        "button": {
-          "swap": "转换"
-        },
-        "title": "转换借款头寸",
-        "borrowBalance": "借款余额",
-        "priceImpactTips": "价格影响较高（{{lostValue}}）。由于流动性较低或订单金额较小，该路径的预估结果可能偏离较大。",
-        "lpDangerWarning": "本次转换后，您的健康因子将严重偏低，可能导致清算。请选择其他资产或减少转换金额以降低风险。",
-        "lpRiskWarning": "转换后健康因子偏低，您的头寸将面临更高的清算风险。",
-        "maxLtvWarning": "抵押品不足以覆盖新的借款头寸。您需要保留足够的借款能力才能执行债务转换。"
-      },
       "totalBorrowed": "总借款",
       "netApy": "净 APY",
       "totalSupplied": "总存款",
-      "repayWithCollateral": {
-        "action": {
-          "title": "使用 {{collateral}} 还款"
-        },
-        "overview": {
-          "borrowValueAfter": "还款后借款余额",
-          "collateralValueAfter": "还款后抵押品余额",
-          "title": "交易概览"
-        },
-        "button": {
-          "repay": "还款"
-        },
-        "repayWith": "用于还款的抵押品",
-        "collateralNotEnough": "您的抵押品余额低于所选金额。",
-        "toRepay": "预计还款金额",
-        "insufficientLiquidity": "流动性不足。",
-        "flashLoanDisabled": "出于安全原因，该资产的头寸转换功能已禁用。",
-        "frozenCollateral": "该资产因 Aave 社区决议被冻结。"
-      },
       "repayWithAToken": {
         "header": {
           "assets": "代币",
           "balance": "余额"
         },
-        "title": "选择还款代币",
-        "zeroLtvCollateralTips": "您有以下 LTV = 0 的抵押品。根据抵押品还款规则，需要优先使用这些抵押品还款。"
-      },
-      "signFallback": {
-        "preExecFailedUseFullSign": "模拟失败。这笔交易很可能因 AAVE 错误而失败。"
+        "title": "选择还款代币"
       }
     },
     "address": {
@@ -3490,20 +3438,6 @@
         "btnCopyAddress": "复制地址",
         "title": "接收资产"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "选择预测提供商"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableDesc": "该服务在您当前的地区不受支持。",
-      "serviceUnavailableTitle": "服务不可用"
-    },
-    "DAppFrame": {
-      "walletBalance": "钱包/余额",
-      "selectAWallet": "选择一个钱包",
-      "netWorth": "净资产"
     },
     "meme": {
       "tokenHeader": {

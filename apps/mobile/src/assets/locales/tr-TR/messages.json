@@ -1223,7 +1223,8 @@
         },
         "notFound": {
           "title": "Aygıt Bulunamadı",
-          "description": "Bluetooth'u açın ve OneKey'in kilidini açın."
+          "description": "Bluetooth'u açın ve OneKey'in kilidini açın.",
+          "retry": "Tekrar ara"
         },
         "select": {
           "currentDevice": "mevcut",
@@ -1238,6 +1239,23 @@
           "onDevice": "Cihazda PIN kodunu girin",
           "description": "Cihaz ekranında görüntülenen numara düzenine göre PIN kodunu girin.",
           "title": "PIN'i girin"
+        },
+        "error": {
+          "deviceNotFound": "OneKey bulunamadı. Cihazın kilidinin açık, Bluetooth'un açık ve cihazın telefonunuza yakın olduğundan emin olun.",
+          "disconnected": "OneKey bağlantısı kesildi. Cihazın kilidini açık tutup telefonunuza yakın tutun, ardından tekrar deneyin.",
+          "deviceBusy": "OneKey başka bir isteği işliyor. İsteği cihazda tamamlayın veya iptal edin, ardından tekrar deneyin.",
+          "passphraseDisabled": "Cihazda şifre (passphrase) kapalı. Açın veya bu cüzdanı yeniden içe aktarın.",
+          "firmwareTooOld": "OneKey yazılımınız çok eski. OneKey uygulamasıyla güncelleyin, ardından tekrar deneyin.",
+          "bluetoothOff": "Bluetooth kapalı. Bluetooth'u açın ve tekrar deneyin.",
+          "bluetoothPermission": "Rabby'nin Bluetooth kullanma izni yok. Ayarlar'dan Rabby için Bluetooth'a (Android 11 ve öncesinde Konum'a) izin verin, ardından tekrar deneyin.",
+          "locationServicesDisabled": "Konum servisleri kapalı. Bluetooth cihazlarını aramak için açın.",
+          "bluetoothUnsupported": "Bu telefon Bluetooth'u desteklemiyor.",
+          "scanFailed": "Bluetooth araması başarısız oldu. Lütfen tekrar deneyin.",
+          "pairingFailed": "Bluetooth eşleştirmesi başarısız oldu. Telefonunuzda ve OneKey'de eşleştirme isteğini onaylayın, ardından tekrar deneyin.",
+          "pairingInvalid": "Bluetooth eşleştirmesi artık geçerli değil. Telefonunuzun Bluetooth ayarlarında OneKey'i unutun, ardından yeniden eşleştirin.",
+          "pinInvalid": "PIN yanlış. Lütfen tekrar deneyin.",
+          "cancelled": "İstek iptal edildi.",
+          "openSettings": "Ayarları Aç"
         }
       },
       "keystone": {
@@ -2846,9 +2864,6 @@
         "description": "Etkinleştirmek için Rabby kodunu kullanın",
         "activateNow": "Şimdi Etkinleştir"
       },
-      "dappSelect": {
-        "title": "Perps Sağlayıcısını Seçin"
-      },
       "search": {
         "placeholder": "Perps Ara",
         "empty": "Sonuç bulunamadı"
@@ -3125,12 +3140,7 @@
         "lq": "1'in altına düşerse, tasfiye tetiklenebilir."
       },
       "repayDetail": {
-        "actions": "Geri Ödeme",
-        "tabs": {
-          "collateral": "Teminat",
-          "wallet": "Cüzdan bakiyesi"
-        },
-        "repayWith": "Şununla geri öde"
+        "actions": "Geri Ödeme"
       },
       "supplyDetail": {
         "actions": "Yatır",
@@ -3151,7 +3161,6 @@
         "almostReachedError": "Maksimum borç alma miktarı, protokol borç limiti neredeyse ulaşıldığı için sınırlıdır.",
         "borrowingUnavailable": "Bu varlık mevcut modda ödünç alınamaz.",
         "almostReachedWarning": "Bu varlık için protokol borç limiti %100'e ulaştı. Daha fazla borç alınamaz.",
-        "swapDebt": "Değiştir",
         "borrowed": "Ödünç Alındı",
         "noSupplyDesc": "Borç almak için teminat olarak varlık sağlamanız gerekir.",
         "noSupplyPrefix": "Yatırım yok:"
@@ -3263,79 +3272,18 @@
         "unavailableTips": "Mevcut yatırma/borç alma varlıklarınız desteklenmiyor.",
         "disableTitle": "Devre dışı bırak",
         "enabled": "• Etkinleştirildi",
-        "description": "E-Mode'u etkinleştirmek, borçlanma gücünüzü en üst düzeye çıkarmanıza olanak tanır. Ancak, borçlanma, seçilen kategori içindeki varlıklarla sınırlıdır.",
-        "debtSwapSelector": {
-          "header": {
-            "assets": "Token/Bakiye",
-            "borrow": "Benim borçlarım",
-            "apy": "APY"
-          },
-          "title": "Borç Alınacak Token'ı Seçin"
-        },
-        "collateralSwapSelector": {
-          "header": {
-            "collateral": "Teminatım",
-            "assets": "Token"
-          },
-          "title": "Teminat Token Seçin"
-        }
+        "description": "E-Mode'u etkinleştirmek, borçlanma gücünüzü en üst düzeye çıkarmanıza olanak tanır. Ancak, borçlanma, seçilen kategori içindeki varlıklarla sınırlıdır."
       },
       "disabled": "DEVRE DIŞI",
-      "debtSwap": {
-        "actions": {
-          "title": "Borcu dönüştür",
-          "swapTo": "Şuna dönüştür",
-          "select": "Seçin",
-          "borrowed": "Borç alınan",
-          "amount": "Miktar"
-        },
-        "overview": {
-          "borrowValueAfter": "Dönüşüm sonrası borç bakiyesi",
-          "title": "İşlem Genel Bakışı",
-          "borrowAPY": "Borç APY"
-        },
-        "button": {
-          "swap": "Dönüştür"
-        },
-        "title": "Borç pozisyonunu dönüştür",
-        "borrowBalance": "Borç bakiyesi",
-        "lpRiskWarning": "Takas sonrasında Sağlık Faktörü düşük olacak. Pozisyonunuz daha yüksek tasfiye riski taşıyacak.",
-        "priceImpactTips": "Yüksek fiyat etkisi ({{lostValue}}). Düşük likidite veya küçük emir boyutu nedeniyle bu rotanın tahmini önemli ölçüde sapabilir.",
-        "lpDangerWarning": "Bu takas sonrası sağlık faktörünüz kritik derecede düşük olacak ve tasfiye ile sonuçlanabilir. Lütfen güvende kalmak için farklı bir varlık seçin veya takas miktarını azaltın.",
-        "maxLtvWarning": "Yeni borç pozisyonunu karşılayacak yeterli teminat yok. Borç değişimi için cüzdanınızda kullanılabilir borçlanma gücü kalmalıdır."
-      },
       "totalSupplied": "Toplam yatırılan",
       "totalBorrowed": "Toplam borçlanma",
       "netApy": "Net APY",
-      "repayWithCollateral": {
-        "action": {
-          "title": "{{collateral}} ile geri öde"
-        },
-        "overview": {
-          "title": "İşlem Genel Bakışı",
-          "collateralValueAfter": "Teminat bakiyesi geri ödeme sonrası",
-          "borrowValueAfter": "Borç bakiyesi geri ödeme sonrası"
-        },
-        "button": {
-          "repay": "Geri Ödeme"
-        },
-        "repayWith": "Geri ödeme için kullanılacak teminat",
-        "collateralNotEnough": "Teminat bakiyeniz seçilen tutardan daha düşük.",
-        "toRepay": "Beklenen geri ödeme tutarı",
-        "insufficientLiquidity": "Yetersiz likidite.",
-        "flashLoanDisabled": "Bu varlık için pozisyon dönüştürme işlemleri güvenlik nedenleriyle devre dışı bırakılmıştır.",
-        "frozenCollateral": "Bu varlık, Aave topluluğu kararı nedeniyle donduruldu."
-      },
       "repayWithAToken": {
         "header": {
           "balance": "Bakiye",
           "assets": "Token"
         },
-        "title": "Geri Ödeme Token'i Seçin",
-        "zeroLtvCollateralTips": "Aşağıdaki LTV = 0 teminatlarınız var. Teminatla geri ödeme kurallarına göre önce bu teminatlarla geri ödeme yapmanız gerekir."
-      },
-      "signFallback": {
-        "preExecFailedUseFullSign": "Simülasyon Başarısız. Bu işlem büyük olasılıkla AAVE hataları nedeniyle başarısız olacak."
+        "title": "Geri Ödeme Token'i Seçin"
       }
     },
     "address": {
@@ -3343,20 +3291,6 @@
         "title": "Varlıkları Al",
         "btnCopyAddress": "Adresi Kopyala"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "Tahmin Sağlayıcısını Seçin"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableDesc": "Hizmet mevcut bölgenizde desteklenmiyor.",
-      "serviceUnavailableTitle": "Hizmet Kullanılamıyor"
-    },
-    "DAppFrame": {
-      "selectAWallet": "Cüzdan Seçin",
-      "walletBalance": "Cüzdan/Bakiye",
-      "netWorth": "Net Değer"
     },
     "meme": {
       "tokenHeader": {

@@ -1422,7 +1422,8 @@
         },
         "notFound": {
           "title": "Dispositivo No Encontrado",
-          "description": "Activa el Bluetooth y desbloquea OneKey"
+          "description": "Activa el Bluetooth y desbloquea OneKey",
+          "retry": "Buscar de nuevo"
         },
         "select": {
           "description": "Selecciona un OneKey para conectarlo",
@@ -1441,6 +1442,23 @@
           "title": "Introduce el PIN",
           "onDevice": "Introduce el PIN en el dispositivo",
           "description": "Introduce el PIN según la disposición numérica que aparece en la pantalla del dispositivo"
+        },
+        "error": {
+          "deviceNotFound": "No se encontró OneKey. Asegúrate de que esté desbloqueado, de que el Bluetooth esté activado y de que esté cerca de tu teléfono.",
+          "disconnected": "OneKey se ha desconectado. Mantenlo desbloqueado y cerca de tu teléfono, y vuelve a intentarlo.",
+          "deviceBusy": "OneKey está procesando otra solicitud. Complétala o cancélala en el dispositivo y vuelve a intentarlo.",
+          "passphraseDisabled": "La contraseña (passphrase) está desactivada en el dispositivo. Actívala o vuelve a importar esta cartera.",
+          "firmwareTooOld": "El firmware de tu OneKey es demasiado antiguo. Actualízalo con la app de OneKey y vuelve a intentarlo.",
+          "bluetoothOff": "El Bluetooth está desactivado. Actívalo y vuelve a intentarlo.",
+          "bluetoothPermission": "Rabby no tiene permiso para usar el Bluetooth. Permite el acceso al Bluetooth (o a la ubicación en Android 11 y anteriores) para Rabby en Ajustes y vuelve a intentarlo.",
+          "locationServicesDisabled": "Los servicios de ubicación están desactivados. Actívalos para buscar dispositivos Bluetooth.",
+          "bluetoothUnsupported": "Este teléfono no es compatible con Bluetooth.",
+          "scanFailed": "La búsqueda por Bluetooth ha fallado. Inténtalo de nuevo.",
+          "pairingFailed": "El emparejamiento Bluetooth ha fallado. Acepta la solicitud de emparejamiento en tu teléfono y en OneKey, y vuelve a intentarlo.",
+          "pairingInvalid": "El emparejamiento Bluetooth ya no es válido. Olvida OneKey en los ajustes de Bluetooth de tu teléfono y vuelve a emparejarlo.",
+          "pinInvalid": "PIN incorrecto. Inténtalo de nuevo.",
+          "cancelled": "La solicitud se ha cancelado.",
+          "openSettings": "Abrir Ajustes"
         }
       },
       "createNewAddress": "Crear una cartera nueva",
@@ -3031,9 +3049,6 @@
         "activatedSuccess": "Ahorros de tarifas Hyperliquid del 4% activados",
         "hyperliquidFee": "Comisiones de trading de Hyperliquid."
       },
-      "dappSelect": {
-        "title": "Seleccionar proveedor de Perps"
-      },
       "search": {
         "placeholder": "Buscar Perps",
         "empty": "No se encontraron resultados"
@@ -3310,12 +3325,7 @@
         "lq": "Si cae por debajo de 1, se podría activar la liquidación."
       },
       "repayDetail": {
-        "actions": "Reembolsar",
-        "tabs": {
-          "collateral": "Colateral",
-          "wallet": "Saldo de la cartera"
-        },
-        "repayWith": "Reembolsar con"
+        "actions": "Reembolsar"
       },
       "supplyDetail": {
         "actions": "Depositar",
@@ -3336,7 +3346,6 @@
         "almostReachedError": "El importe máximo disponible para pedir prestado está limitado porque casi se ha alcanzado el límite de préstamo del protocolo.",
         "borrowingUnavailable": "Este activo no se puede pedir prestado en el modo actual.",
         "almostReachedWarning": "El límite de préstamo del protocolo está en el 100% para este activo. No se puede realizar más préstamos.",
-        "swapDebt": "Intercambiar",
         "borrowed": "Prestado",
         "noSupplyPrefix": "Sin depósitos:",
         "noSupplyDesc": "Para pedir prestado, necesitas proporcionar activos como garantía."
@@ -3448,79 +3457,18 @@
         "unavailableTips": "Tus activos actuales de préstamo y depósito no son compatibles.",
         "unavailable": "• No disponible",
         "title": "Gestionar E-Mode",
-        "description": "Habilitar E-Mode te permite maximizar tu poder de préstamo. Sin embargo, el préstamo está restringido a los activos dentro de la categoría seleccionada.",
-        "debtSwapSelector": {
-          "header": {
-            "assets": "Token/Saldo",
-            "borrow": "Mis préstamos",
-            "apy": "APY"
-          },
-          "title": "Seleccionar Token de Préstamo"
-        },
-        "collateralSwapSelector": {
-          "header": {
-            "collateral": "Mi garantía",
-            "assets": "Token"
-          },
-          "title": "Seleccionar Token de Colateral"
-        }
+        "description": "Habilitar E-Mode te permite maximizar tu poder de préstamo. Sin embargo, el préstamo está restringido a los activos dentro de la categoría seleccionada."
       },
       "disabled": "DESHABILITADO",
-      "debtSwap": {
-        "actions": {
-          "title": "Convertir deuda",
-          "swapTo": "Convertir a",
-          "amount": "Cantidad",
-          "select": "Seleccionar",
-          "borrowed": "Prestado"
-        },
-        "overview": {
-          "title": "Resumen de Transacciones",
-          "borrowAPY": "APY del préstamo",
-          "borrowValueAfter": "Saldo de préstamo tras la conversión"
-        },
-        "button": {
-          "swap": "Convertir"
-        },
-        "borrowBalance": "Saldo de préstamo",
-        "title": "Convertir posición de préstamo",
-        "lpRiskWarning": "Bajo factor de salud después del intercambio. Tu posición tendrá un mayor riesgo de liquidación.",
-        "priceImpactTips": "Impacto de precio alto ({{lostValue}}). Debido a la baja liquidez o a un tamaño de orden pequeño, la estimación de esta ruta puede desviarse considerablemente.",
-        "lpDangerWarning": "Tu factor de salud después de este swap será extremadamente bajo y puede provocar una liquidación. Elige otro activo o reduce el importe del swap para mantener una posición segura.",
-        "maxLtvWarning": "Colateral insuficiente para cubrir nueva posición de préstamo. La cartera debe tener poder de préstamo restante para realizar el cambio de deuda."
-      },
       "totalBorrowed": "Total prestado",
       "netApy": "APY neto",
       "totalSupplied": "Total depositado",
-      "repayWithCollateral": {
-        "action": {
-          "title": "Reembolsa con {{collateral}}"
-        },
-        "overview": {
-          "collateralValueAfter": "Saldo de colateral después del reembolso",
-          "borrowValueAfter": "Saldo del préstamo después del reembolso",
-          "title": "Resumen de Transacciones"
-        },
-        "button": {
-          "repay": "Reembolsar"
-        },
-        "collateralNotEnough": "Su saldo de colateral es menor que la cantidad seleccionada.",
-        "toRepay": "Cantidad esperada a reembolsar",
-        "repayWith": "Colateral para reembolsar",
-        "insufficientLiquidity": "Liquidez insuficiente.",
-        "flashLoanDisabled": "La conversión de posiciones está deshabilitada para este activo por motivos de seguridad.",
-        "frozenCollateral": "Este activo está congelado debido a una decisión de la comunidad de Aave."
-      },
       "repayWithAToken": {
         "header": {
           "assets": "Token",
           "balance": "Saldo"
         },
-        "title": "Seleccionar Token de Reembolso",
-        "zeroLtvCollateralTips": "Tienes los siguientes colaterales con LTV = 0. Según las reglas de reembolso con colateral, debes usar primero estos colaterales para reembolsar."
-      },
-      "signFallback": {
-        "preExecFailedUseFullSign": "Simulación fallida. Esta transacción muy probablemente fallará debido a errores de AAVE."
+        "title": "Seleccionar Token de Reembolso"
       }
     },
     "address": {
@@ -3528,20 +3476,6 @@
         "title": "Recibir activos",
         "btnCopyAddress": "Copiar Dirección"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "Seleccionar Proveedor de Predicción"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableTitle": "Servicio no disponible",
-      "serviceUnavailableDesc": "El servicio no está disponible en su región actual."
-    },
-    "DAppFrame": {
-      "selectAWallet": "Selecciona una cartera",
-      "netWorth": "Valor neto",
-      "walletBalance": "Cartera/Saldo"
     },
     "meme": {
       "tokenHeader": {

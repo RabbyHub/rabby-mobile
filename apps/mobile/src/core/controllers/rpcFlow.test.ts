@@ -100,10 +100,6 @@ jest.mock('@/core/serviceApi/customTestnet', () => ({
   },
 }));
 
-jest.mock('@/core/serviceApi/transactionHistory', () => ({
-  getTransactionHistoryTransactions: jest.fn(),
-}));
-
 jest.mock('./provider', () => ({
   __esModule: true,
   default: {
@@ -119,27 +115,8 @@ jest.mock('./provider', () => ({
   },
 }));
 
-jest.mock('./autoConnect', () => ({
-  shouldAutoConnect: jest.fn(() => false),
-  shouldAutoPersonalSign: jest.fn(() => false),
-}));
-
 jest.mock('../apis/dapp', () => ({
   connect: jest.fn(),
-}));
-
-jest.mock('../apis/account', () => ({
-  getAccountList: jest.fn(),
-}));
-
-jest.mock('@/core/utils/dappAccount', () => ({
-  getDappAccount: jest.fn(),
-}));
-
-jest.mock('../request', () => ({
-  openapi: {
-    getRecommendChains: jest.fn(),
-  },
 }));
 
 jest.mock('@/utils/events', () => ({
@@ -183,11 +160,6 @@ import rpcFlow from './rpcFlow';
 import type { ProviderRequest } from './type';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant/internalRequest';
 import { connect } from '../apis/dapp';
-import { getAccountList } from '../apis/account';
-import { getDappAccount } from '@/core/utils/dappAccount';
-import { getTransactionHistoryTransactions } from '@/core/serviceApi/transactionHistory';
-import { shouldAutoConnect } from './autoConnect';
-import { openapi } from '../request';
 
 const account = {
   address: '0x1111111111111111111111111111111111111111',
@@ -748,13 +720,6 @@ describe('rpcFlow disconnected dapps', () => {
       defaultAccount: account,
       defaultChain: 'eth',
     });
-    jest.mocked(shouldAutoConnect).mockReturnValue(true);
-    jest
-      .mocked(getAccountList)
-      .mockResolvedValue({ accounts: [account] } as never);
-    jest.mocked(getTransactionHistoryTransactions).mockResolvedValue([]);
-    jest.mocked(getDappAccount).mockReturnValue(account);
-    jest.mocked(openapi.getRecommendChains).mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -762,55 +727,54 @@ describe('rpcFlow disconnected dapps', () => {
     jest.restoreAllMocks();
   });
 
-  const request = (isFromMobileInnerDapp: boolean) =>
+  const request = () =>
     ({
       data: { method: 'eth_requestAccounts', params: [] },
       session: {
         origin: 'https://dapp.example',
         name: 'Dapp',
         icon: '',
-        $mobileCtx: { isFromMobileInnerDapp },
+        $mobileCtx: {},
       },
     } as ProviderRequest);
 
-  it.each([false, true])(
-    'requires approval after disconnect (inner dapp: %s)',
-    async isInnerDapp => {
-      mockGetDapp.mockReturnValue({ isConnected: false });
-      await expect(rpcFlow(request(isInnerDapp))).resolves.toEqual([
-        account.address,
-      ]);
-      expect(mockAutoConnect).not.toHaveBeenCalled();
-      expect(mockRequestApproval).toHaveBeenCalledWith(
-        expect.objectContaining({ approvalComponent: 'Connect' }),
-        expect.anything(),
-      );
-      expect(connect).toHaveBeenCalledWith(
-        expect.objectContaining({ isAutoConnect: false }),
-      );
-    },
-  );
+  it('requires approval after disconnect', async () => {
+    mockGetDapp.mockReturnValue({ isConnected: false });
+    await expect(rpcFlow(request())).resolves.toEqual([account.address]);
+    expect(mockAutoConnect).not.toHaveBeenCalled();
+    expect(mockRequestApproval).toHaveBeenCalledWith(
+      expect.objectContaining({ approvalComponent: 'Connect' }),
+      expect.anything(),
+    );
+    expect(connect).toHaveBeenCalledWith(
+      expect.objectContaining({ isAutoConnect: false }),
+    );
+  });
 
-  it.each([false, true])(
-    'preserves first-time automatic connection (inner dapp: %s)',
-    async isInnerDapp => {
-      if (!isInnerDapp) {
-        mockAutoConnect.mockResolvedValue({ defaultAccount: account });
-      }
-      await expect(rpcFlow(request(isInnerDapp))).resolves.toEqual([
-        account.address,
-      ]);
-      expect(mockRequestApproval).not.toHaveBeenCalled();
-      expect(connect).toHaveBeenCalledWith(
-        expect.objectContaining({ isAutoConnect: true }),
-      );
-    },
-  );
+  it('preserves first-time automatic connection', async () => {
+    mockAutoConnect.mockResolvedValue({ defaultAccount: account });
+    await expect(rpcFlow(request())).resolves.toEqual([account.address]);
+    expect(mockRequestApproval).not.toHaveBeenCalled();
+    expect(connect).toHaveBeenCalledWith(
+      expect.objectContaining({ isAutoConnect: true }),
+    );
+  });
+
+  it('requires approval when no automatic connection is available', async () => {
+    await expect(rpcFlow(request())).resolves.toEqual([account.address]);
+    expect(mockRequestApproval).toHaveBeenCalledWith(
+      expect.objectContaining({ approvalComponent: 'Connect' }),
+      expect.anything(),
+    );
+    expect(connect).toHaveBeenCalledWith(
+      expect.objectContaining({ isAutoConnect: false }),
+    );
+  });
 
   it('keeps a dapp disconnected when reconnection is rejected', async () => {
     mockGetDapp.mockReturnValue({ isConnected: false });
     mockRequestApproval.mockRejectedValue(new Error('User rejected'));
-    await expect(rpcFlow(request(true))).rejects.toThrow('User rejected');
+    await expect(rpcFlow(request())).rejects.toThrow('User rejected');
     expect(connect).not.toHaveBeenCalled();
     expect(mockEthRequestAccounts).not.toHaveBeenCalled();
   });

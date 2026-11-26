@@ -11,6 +11,10 @@ describe('store/balance', () => {
   const mockBatchGetAppChains = jest.fn();
   const mockGetAppChains = jest.fn();
   const mockEnsureAppChainStoreInitialized = jest.fn();
+  let mockAppChainMap: Record<string, unknown[]>;
+  let mockAppChainSubscribers: Array<
+    (state: { appChainMap: Record<string, unknown[]> }) => void
+  >;
   let mockAppStorageState: Record<string, unknown>;
 
   const flushResourceFlowPersist = async () => {
@@ -22,6 +26,8 @@ describe('store/balance', () => {
   beforeEach(() => {
     jest.resetModules();
     jest.clearAllMocks();
+    mockAppChainMap = {};
+    mockAppChainSubscribers = [];
     mockAppStorageState = {};
 
     jest.doMock('@/core/request', () => ({
@@ -31,7 +37,7 @@ describe('store/balance', () => {
       },
     }));
     jest.doMock('@/core/serviceApi/keyring', () => ({
-      bindKeyringEvent: jest.fn(),
+      bindKeyringEvent: jest.fn().mockResolvedValue(undefined),
       keyringServiceApi: {
         getAllAddresses: (...args: unknown[]) =>
           mockKeyringServiceGetAllAddresses(...args),
@@ -95,13 +101,23 @@ describe('store/balance', () => {
         mockEnsureAppChainStoreInitialized(...args),
       useAppChainStore: {
         getState: () => ({
-          appChainMap: {},
+          appChainMap: mockAppChainMap,
           getAppChainTotalUsdValue: (...args: unknown[]) =>
             mockGetAppChainTotalUsdValue(...args),
           batchGetAppChains: (...args: unknown[]) =>
             mockBatchGetAppChains(...args),
           getAppChains: (...args: unknown[]) => mockGetAppChains(...args),
         }),
+        subscribe: (
+          listener: (state: { appChainMap: Record<string, unknown[]> }) => void,
+        ) => {
+          mockAppChainSubscribers.push(listener);
+          return () => {
+            mockAppChainSubscribers = mockAppChainSubscribers.filter(
+              item => item !== listener,
+            );
+          };
+        },
       },
     }));
     jest.doMock('@rabby-wallet/base-utils/dist/isomorphic/address', () => ({
@@ -435,6 +451,154 @@ describe('store/balance', () => {
     expect(balanceModule.default.getAddressValue('0xabcd')).toMatchObject({
       evmBalance: 80,
       totalBalance: 105,
+    });
+  });
+
+  it('preserves previous appchain delta when batchGetAppChains fails for an address without cached appchains', async () => {
+    mockQueryBalanceCacheMapForStartup.mockResolvedValue({
+      '0xaaaa-core': {
+        total_usd_value: 650,
+        evm_usd_value: 1,
+        chain_list: [{ id: 'eth' }],
+      },
+      '0xbbbb-core': {
+        total_usd_value: 120,
+        evm_usd_value: 20,
+        chain_list: [{ id: 'eth' }],
+      },
+    });
+    await balanceModule.default.hydrateCachedBalancesForAccounts(
+      [
+        { address: '0xAAAA', type: 'SimpleKeyring' },
+        { address: '0xBBBB', type: 'SimpleKeyring' },
+      ],
+      { startupFastPath: true },
+    );
+
+    mockKeyringServiceGetAllAddresses.mockResolvedValue([
+      { address: '0xAAAA', type: 'SimpleKeyring' },
+      { address: '0xBBBB', type: 'SimpleKeyring' },
+    ]);
+    mockOpenapiGetTotalBalanceV2.mockImplementation(
+      async ({ address }: { address: string }) => ({
+        total_usd_value: address === '0xaaaa' ? 2 : 30,
+        chain_list: [{ id: 'eth' }],
+      }),
+    );
+    mockGetAppChainTotalUsdValue.mockReturnValue(0);
+    mockBatchGetAppChains.mockImplementationOnce(async () => {
+      mockAppChainMap = { '0xbbbb': [] };
+    });
+
+    await balanceModule.default.batchGetTotalBalance(
+      ['0xAAAA', '0xBBBB'],
+      true,
+      { scene: 'Home' },
+    );
+
+    expect(balanceModule.default.getAddressValue('0xaaaa')).toMatchObject({
+      evmBalance: 2,
+      totalBalance: 651,
+    });
+    expect(balanceModule.default.getAddressValue('0xbbbb')).toMatchObject({
+      evmBalance: 30,
+      totalBalance: 30,
+    });
+
+    await flushResourceFlowPersist();
+    expect(mockSyncBalance).toHaveBeenCalledWith('0xaaaa', true, {
+      total_usd_value: 651,
+      evm_usd_value: 2,
+      chain_list: [{ id: 'eth' }],
+    });
+    expect(mockSyncBalance).toHaveBeenCalledWith('0xbbbb', true, {
+      total_usd_value: 30,
+      evm_usd_value: 30,
+      chain_list: [{ id: 'eth' }],
+    });
+  });
+
+  it('preserves previous appchain delta when getTotalBalance fails to fetch appchains, and clears it on successful empty list', async () => {
+    mockQueryBalanceCacheMapForStartup.mockResolvedValue({
+      '0xabcd-core': {
+        total_usd_value: 650,
+        evm_usd_value: 1,
+        chain_list: [{ id: 'eth' }],
+      },
+    });
+    await balanceModule.default.hydrateCachedBalancesForAccounts(
+      [{ address: '0xABCD', type: 'SimpleKeyring' }],
+      { startupFastPath: true },
+    );
+
+    mockKeyringServiceGetAllAddresses.mockResolvedValue([
+      { address: '0xABCD', type: 'SimpleKeyring' },
+    ]);
+    mockGetAppChainTotalUsdValue.mockReturnValue(0);
+    mockGetAppChains.mockResolvedValueOnce(undefined);
+    mockOpenapiGetTotalBalanceV2.mockResolvedValueOnce({
+      total_usd_value: 3,
+      chain_list: [{ id: 'eth' }],
+    });
+
+    await balanceModule.default.getTotalBalance('0xABCD', true);
+    expect(balanceModule.default.getAddressValue('0xabcd')).toMatchObject({
+      evmBalance: 3,
+      totalBalance: 652,
+    });
+
+    mockAppChainMap = { '0xabcd': [] };
+    mockGetAppChains.mockResolvedValueOnce([]);
+    mockOpenapiGetTotalBalanceV2.mockResolvedValueOnce({
+      total_usd_value: 3,
+      chain_list: [{ id: 'eth' }],
+    });
+
+    await balanceModule.default.getTotalBalance('0xABCD', true);
+    expect(balanceModule.default.getAddressValue('0xabcd')).toMatchObject({
+      evmBalance: 3,
+      totalBalance: 3,
+    });
+  });
+
+  it('does not zero out unrelated addresses when appChainMap updates partially', async () => {
+    balanceModule.startProcessAddressBalanceEvents();
+
+    mockQueryBalanceCacheMapForStartup.mockResolvedValue({
+      '0xaaaa-core': {
+        total_usd_value: 650,
+        evm_usd_value: 1,
+        chain_list: [{ id: 'eth' }],
+      },
+      '0xbbbb-core': {
+        total_usd_value: 10,
+        evm_usd_value: 10,
+        chain_list: [{ id: 'eth' }],
+      },
+    });
+    await balanceModule.default.hydrateCachedBalancesForAccounts(
+      [
+        { address: '0xAAAA', type: 'SimpleKeyring' },
+        { address: '0xBBBB', type: 'SimpleKeyring' },
+      ],
+      { startupFastPath: true },
+    );
+
+    mockGetAppChainTotalUsdValue.mockImplementation((addr: string) =>
+      addr === '0xbbbb' ? 25 : 0,
+    );
+    mockAppChainMap = { '0xbbbb': [{ id: 'hl', netWorth: 25 }] };
+    mockAppChainSubscribers.forEach(listener =>
+      listener({ appChainMap: mockAppChainMap }),
+    );
+
+    expect(balanceModule.default.getAddressValue('0xaaaa')).toMatchObject({
+      evmBalance: 1,
+      totalBalance: 650,
+    });
+    expect(balanceModule.default.getAddressValue('0xbbbb')).toMatchObject({
+      evmBalance: 10,
+      totalBalance: 35,
     });
   });
 });
