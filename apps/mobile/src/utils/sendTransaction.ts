@@ -28,6 +28,7 @@ import {
 } from '@/components/Approval/components/SignTx/calc';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { eventBus, EVENTS } from './events';
+import { toSubmitTxError } from './onekeyError';
 import {
   fetchActionRequiredData,
   parseAction,
@@ -604,8 +605,7 @@ export const sendTransaction = async ({
       account,
     });
   } catch (e) {
-    const err = new Error((e as any).message);
-    err.name = FailedCode.SubmitTxFailed;
+    const err = toSubmitTxError(e);
     eventBus.emit(EVENTS.COMMON_HARDWARE.REJECTED, err.message);
     throw err;
   }
@@ -896,8 +896,7 @@ export const sendTransactionByMiniSignV2 = async ({
       account: account,
     });
   } catch (e) {
-    const err = new Error((e as any).message);
-    err.name = FailedCode.SubmitTxFailed;
+    const err = toSubmitTxError(e);
     eventBus.emit(EVENTS.COMMON_HARDWARE.REJECTED, err.message);
     throw err;
   }

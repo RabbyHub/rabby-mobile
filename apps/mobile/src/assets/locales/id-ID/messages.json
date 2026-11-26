@@ -1223,7 +1223,8 @@
         },
         "notFound": {
           "description": "Nyalakan Bluetooth dan buka kunci OneKey",
-          "title": "Perangkat Tidak Ditemukan"
+          "title": "Perangkat Tidak Ditemukan",
+          "retry": "Cari lagi"
         },
         "select": {
           "title": "Perangkat Tersedia",
@@ -1238,6 +1239,23 @@
           "onDevice": "Masukkan kode PIN di perangkat",
           "title": "Masukkan PIN",
           "description": "Masukkan kode PIN sesuai dengan tata letak angka yang ditampilkan di layar perangkat"
+        },
+        "error": {
+          "deviceNotFound": "OneKey tidak ditemukan. Pastikan perangkat tidak terkunci, Bluetooth menyala, dan perangkat berada di dekat ponsel Anda.",
+          "disconnected": "OneKey terputus. Biarkan perangkat tetap tidak terkunci dan dekat dengan ponsel Anda, lalu coba lagi.",
+          "deviceBusy": "OneKey sedang memproses permintaan lain. Selesaikan atau batalkan di perangkat, lalu coba lagi.",
+          "passphraseDisabled": "Passphrase dinonaktifkan di perangkat. Aktifkan, atau impor ulang dompet ini.",
+          "firmwareTooOld": "Firmware OneKey Anda terlalu lama. Perbarui melalui aplikasi OneKey, lalu coba lagi.",
+          "bluetoothOff": "Bluetooth mati. Nyalakan Bluetooth, lalu coba lagi.",
+          "bluetoothPermission": "Rabby tidak memiliki izin untuk menggunakan Bluetooth. Izinkan Bluetooth (atau Lokasi di Android 11 ke bawah) untuk Rabby di Pengaturan, lalu coba lagi.",
+          "locationServicesDisabled": "Layanan lokasi dinonaktifkan. Aktifkan untuk mencari perangkat Bluetooth.",
+          "bluetoothUnsupported": "Bluetooth tidak didukung di ponsel ini.",
+          "scanFailed": "Pencarian Bluetooth gagal. Silakan coba lagi.",
+          "pairingFailed": "Pemasangan Bluetooth gagal. Terima permintaan pemasangan di ponsel dan OneKey Anda, lalu coba lagi.",
+          "pairingInvalid": "Pemasangan Bluetooth sudah tidak valid. Lupakan OneKey di pengaturan Bluetooth ponsel Anda, lalu pasangkan lagi.",
+          "pinInvalid": "PIN salah. Silakan coba lagi.",
+          "cancelled": "Permintaan dibatalkan.",
+          "openSettings": "Buka Pengaturan"
         }
       },
       "keystone": {

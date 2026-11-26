@@ -1288,7 +1288,8 @@
         },
         "notFound": {
           "title": "Appareil non trouvé",
-          "description": "Activez Bluetooth et déverrouillez OneKey"
+          "description": "Activez Bluetooth et déverrouillez OneKey",
+          "retry": "Rechercher à nouveau"
         },
         "inputPin": {
           "title": "Entrez le code PIN",
@@ -1307,6 +1308,23 @@
           "currentDevice": "actuel",
           "title": "Appareils disponibles",
           "description": "Veuillez sélectionner un OneKey pour vous connecter"
+        },
+        "error": {
+          "deviceNotFound": "OneKey introuvable. Assurez-vous qu'il est déverrouillé, que le Bluetooth est activé et qu'il se trouve près de votre téléphone.",
+          "disconnected": "OneKey est déconnecté. Gardez-le déverrouillé et près de votre téléphone, puis réessayez.",
+          "deviceBusy": "OneKey traite une autre demande. Terminez-la ou annulez-la sur l'appareil, puis réessayez.",
+          "passphraseDisabled": "La phrase secrète est désactivée sur l'appareil. Activez-la ou réimportez ce portefeuille.",
+          "firmwareTooOld": "Le firmware de votre OneKey est trop ancien. Mettez-le à jour avec l'application OneKey, puis réessayez.",
+          "bluetoothOff": "Le Bluetooth est désactivé. Activez le Bluetooth, puis réessayez.",
+          "bluetoothPermission": "Rabby n'a pas l'autorisation d'utiliser le Bluetooth. Autorisez le Bluetooth (ou la localisation sur Android 11 et versions antérieures) pour Rabby dans les Réglages, puis réessayez.",
+          "locationServicesDisabled": "Les services de localisation sont désactivés. Activez-les pour rechercher des appareils Bluetooth.",
+          "bluetoothUnsupported": "Le Bluetooth n'est pas pris en charge sur ce téléphone.",
+          "scanFailed": "La recherche Bluetooth a échoué. Veuillez réessayer.",
+          "pairingFailed": "L'appairage Bluetooth a échoué. Acceptez la demande d'appairage sur votre téléphone et sur OneKey, puis réessayez.",
+          "pairingInvalid": "L'appairage Bluetooth n'est plus valide. Oubliez OneKey dans les réglages Bluetooth de votre téléphone, puis appairez-le à nouveau.",
+          "pinInvalid": "Code PIN incorrect. Veuillez réessayer.",
+          "cancelled": "La demande a été annulée.",
+          "openSettings": "Ouvrir les Réglages"
         }
       },
       "keystone": {

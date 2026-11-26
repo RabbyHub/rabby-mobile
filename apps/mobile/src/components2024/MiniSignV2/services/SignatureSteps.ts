@@ -58,6 +58,7 @@ import {
   sendTransactionByMiniSignV2 as sendTransaction,
 } from '@/utils/sendTransaction';
 import { isLedgerLockError } from '@/utils/ledger';
+import { isOneKeyDisconnectError } from '@/utils/onekeyError';
 import type { SignerCtx } from '../domain/ctx';
 import { buildFingerprint } from '../domain/ctx';
 import { openapi, testOpenapi } from '@/core/request';
@@ -1064,12 +1065,19 @@ export class SignatureSteps {
       const msg = e?.message || e?.name || 'unknown error';
       retryTxReset();
       const tx = txsCalc?.[i]?.tx;
-      await setRetryTxRecommendNonce({
-        from: tx.from,
-        chainId: tx.chainId,
-        account: account,
-        nonce: tx.nonce,
-      });
+      // Ledger lock and OneKey unplug are not nonce failures.
+      if (
+        !isLedgerLockError(msg) &&
+        !isOneKeyDisconnectError(e) &&
+        !isOneKeyDisconnectError(msg)
+      ) {
+        await setRetryTxRecommendNonce({
+          from: tx.from,
+          chainId: tx.chainId,
+          account: account,
+          nonce: tx.nonce,
+        });
+      }
 
       const _status =
         e.name === FailedCode.UserRejected ? 'REJECTED' : 'FAILED';

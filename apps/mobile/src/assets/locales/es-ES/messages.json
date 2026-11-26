@@ -1422,7 +1422,8 @@
         },
         "notFound": {
           "title": "Dispositivo No Encontrado",
-          "description": "Activa el Bluetooth y desbloquea OneKey"
+          "description": "Activa el Bluetooth y desbloquea OneKey",
+          "retry": "Buscar de nuevo"
         },
         "select": {
           "description": "Selecciona un OneKey para conectarlo",
@@ -1441,6 +1442,23 @@
           "title": "Introduce el PIN",
           "onDevice": "Introduce el PIN en el dispositivo",
           "description": "Introduce el PIN según la disposición numérica que aparece en la pantalla del dispositivo"
+        },
+        "error": {
+          "deviceNotFound": "No se encontró OneKey. Asegúrate de que esté desbloqueado, de que el Bluetooth esté activado y de que esté cerca de tu teléfono.",
+          "disconnected": "OneKey se ha desconectado. Mantenlo desbloqueado y cerca de tu teléfono, y vuelve a intentarlo.",
+          "deviceBusy": "OneKey está procesando otra solicitud. Complétala o cancélala en el dispositivo y vuelve a intentarlo.",
+          "passphraseDisabled": "La contraseña (passphrase) está desactivada en el dispositivo. Actívala o vuelve a importar esta cartera.",
+          "firmwareTooOld": "El firmware de tu OneKey es demasiado antiguo. Actualízalo con la app de OneKey y vuelve a intentarlo.",
+          "bluetoothOff": "El Bluetooth está desactivado. Actívalo y vuelve a intentarlo.",
+          "bluetoothPermission": "Rabby no tiene permiso para usar el Bluetooth. Permite el acceso al Bluetooth (o a la ubicación en Android 11 y anteriores) para Rabby en Ajustes y vuelve a intentarlo.",
+          "locationServicesDisabled": "Los servicios de ubicación están desactivados. Actívalos para buscar dispositivos Bluetooth.",
+          "bluetoothUnsupported": "Este teléfono no es compatible con Bluetooth.",
+          "scanFailed": "La búsqueda por Bluetooth ha fallado. Inténtalo de nuevo.",
+          "pairingFailed": "El emparejamiento Bluetooth ha fallado. Acepta la solicitud de emparejamiento en tu teléfono y en OneKey, y vuelve a intentarlo.",
+          "pairingInvalid": "El emparejamiento Bluetooth ya no es válido. Olvida OneKey en los ajustes de Bluetooth de tu teléfono y vuelve a emparejarlo.",
+          "pinInvalid": "PIN incorrecto. Inténtalo de nuevo.",
+          "cancelled": "La solicitud se ha cancelado.",
+          "openSettings": "Abrir Ajustes"
         }
       },
       "createNewAddress": "Crear una cartera nueva",
