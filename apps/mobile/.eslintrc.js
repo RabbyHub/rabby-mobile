@@ -24,6 +24,23 @@ module.exports = {
     'no-floating-deferred-service-api-calls': 'error',
     'no-persist-store-direct-mutation': 'error',
     'no-module-scope-dimensions': 'error',
+    'no-dynamic-header-options': [
+      'error',
+      {
+        // Migration allowlist (P1): shrink as each screen moves to a
+        // route-level header. Never add new entries.
+        allowFiles: [
+          'src/screens/Address/CreateNewAddress.tsx',
+          'src/screens/Address/SetPassword2024.tsx',
+          'src/screens/Bridge/BridgeDetailScreen.tsx',
+          'src/screens/Dapps/FavoriteDappsScreen/index.tsx',
+          'src/screens/GnosisQueue/index.tsx',
+          'src/screens/PerpsMarketDetail/index.tsx',
+          'src/screens/Receive/Receive.tsx',
+          'src/screens/Transaction/MultiAddressHistory.tsx',
+        ],
+      },
+    ],
     'import/no-cycle': [
       'warn',
       {
