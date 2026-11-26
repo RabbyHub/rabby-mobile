@@ -46,6 +46,7 @@ import { StartupRuntimePanelHost } from './screens/Settings/components/StartupRu
 import { NEED_DEVSETTINGBLOCKS } from './constant';
 import { AnimatedBootSplash } from './components/BootSplash/AnimatedBootSplash';
 import { RegressionScenarioHost } from '@/devtools/regressionScenarios/react';
+import SafeWindowFrame from '@/components/SafeWindowFrame';
 
 Safe.openapiService = openapi;
 
@@ -166,20 +167,22 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
     <AppErrorBoundary>
       <ThemeProvider theme={rneuiTheme}>
         <SafeAreaProvider>
-          <RootSiblingParent>
-            {RozeniteDevTools ? <RozeniteDevTools /> : null}
-            <SizeWatcher />
-            <Suspense fallback={null}>
-              {/* TODO: measure to check if memory leak occured when refresh on iOS */}
-              <GestureHandlerRootView style={{ flex: 1 }}>
-                {NEED_DEVSETTINGBLOCKS ? <StartupRuntimePanelHost /> : null}
-                <RegressionScenarioHost />
-                {/* read from native bundle on production */}
-                <MainScreen rabbitCode={rabbitCode} />
-              </GestureHandlerRootView>
-            </Suspense>
-            <AnimatedBootSplash />
-          </RootSiblingParent>
+          <SafeWindowFrame>
+            <RootSiblingParent>
+              {RozeniteDevTools ? <RozeniteDevTools /> : null}
+              <SizeWatcher />
+              <Suspense fallback={null}>
+                {/* TODO: measure to check if memory leak occured when refresh on iOS */}
+                <GestureHandlerRootView style={{ flex: 1 }}>
+                  {NEED_DEVSETTINGBLOCKS ? <StartupRuntimePanelHost /> : null}
+                  <RegressionScenarioHost />
+                  {/* read from native bundle on production */}
+                  <MainScreen rabbitCode={rabbitCode} />
+                </GestureHandlerRootView>
+              </Suspense>
+              <AnimatedBootSplash />
+            </RootSiblingParent>
+          </SafeWindowFrame>
         </SafeAreaProvider>
       </ThemeProvider>
     </AppErrorBoundary>

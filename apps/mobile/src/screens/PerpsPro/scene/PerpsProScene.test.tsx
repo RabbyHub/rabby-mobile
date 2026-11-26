@@ -31,13 +31,13 @@ import {
 import React from 'react';
 import {
   AppState,
-  Dimensions,
   Keyboard,
   Platform,
   StyleSheet,
   type AppStateStatus,
   type LayoutChangeEvent,
 } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 
 let mockIsLight = true;
 const mockUsePerpsProScene = jest.fn();
@@ -132,6 +132,7 @@ jest.mock('react-native-reanimated', () => {
       View: ReactNative.View,
     },
     cancelAnimation: jest.fn(),
+    makeMutable: (value: unknown) => ({ value }),
     dispatchCommand: (
       ref: { current: Record<string, (...args: unknown[]) => void> },
       name: string,
@@ -2448,7 +2449,7 @@ describe('PerpsProScene market loading states', () => {
       <PerpsProScene
         initialRegionAlertLayout={{
           height: 52,
-          width: Dimensions.get('window').width - 32,
+          width: getDimensionsSnapshot('window').width - 32,
         }}
         isModeSwitching={false}
         onSwitchToSimple={jest.fn()}
@@ -2519,7 +2520,7 @@ describe('PerpsProScene market loading states', () => {
       nativeEvent: {
         layout: {
           height: 52.25,
-          width: Dimensions.get('window').width - 32,
+          width: getDimensionsSnapshot('window').width - 32,
           x: 16,
           y: 56,
         },
@@ -2554,7 +2555,7 @@ describe('PerpsProScene market loading states', () => {
       <PerpsProScene
         initialRegionAlertLayout={{
           height: 34,
-          width: Dimensions.get('window').width - 32,
+          width: getDimensionsSnapshot('window').width - 32,
         }}
         isModeSwitching={false}
         onSwitchToSimple={jest.fn()}
@@ -2600,7 +2601,7 @@ describe('PerpsProScene market loading states', () => {
       nativeEvent: {
         layout: {
           height: 52,
-          width: Dimensions.get('window').width - 32,
+          width: getDimensionsSnapshot('window').width - 32,
           x: 16,
           y: 56,
         },
@@ -2710,7 +2711,9 @@ describe('PerpsProScene market loading states', () => {
   it('stops the retained Candle Feed while the app is in background', () => {
     let onAppStateChange: ((state: AppStateStatus) => void) | undefined;
     jest.spyOn(AppState, 'addEventListener').mockImplementation((event, cb) => {
-      if (event === 'change') onAppStateChange = cb;
+      if (event === 'change') {
+        onAppStateChange = cb;
+      }
       return { remove: jest.fn() } as never;
     });
     mockUsePerpsProScene.mockReturnValue(

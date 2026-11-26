@@ -415,12 +415,6 @@ export const LendingBorrowListContent: React.FC<
   );
 };
 
-const LendingBorrowList: React.FC = () => {
-  return <LendingBorrowListContent />;
-};
-
-export default LendingBorrowList;
-
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flex: 1,

@@ -1,4 +1,5 @@
 import React from 'react';
+// eslint-disable-next-line no-restricted-imports -- fixture reads the window height
 import { FlatList, View, StyleSheet, Dimensions } from 'react-native';
 import {
   fireEvent,

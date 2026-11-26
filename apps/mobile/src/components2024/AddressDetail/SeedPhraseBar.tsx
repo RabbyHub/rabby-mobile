@@ -63,7 +63,12 @@ export const SeedPhraseBar: React.FC<Props> = ({ account, onCancel }) => {
       <Text style={styles.text}>
         {t('page.addressDetail.manage-addresses-under-this-seed-phrase')}{' '}
       </Text>
-      <ArrowSVG color={colors2024['neutral-foot']} width={16} height={16} />
+      <ArrowSVG
+        style={styles.arrow}
+        color={colors2024['neutral-foot']}
+        width={16}
+        height={16}
+      />
     </TouchableOpacity>
   );
 };
@@ -78,11 +83,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     flexDirection: 'row',
+    gap: 8,
   },
   text: {
     fontSize: 16,
     color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
     lineHeight: 20,
+    // Let long locales wrap and grow the bar naturally; the arrow keeps its
+    // fixed slot on the right, so only the text side absorbs the width.
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  arrow: {
+    flexShrink: 0,
   },
 }));

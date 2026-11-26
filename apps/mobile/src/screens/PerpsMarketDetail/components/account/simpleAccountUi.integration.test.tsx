@@ -14,7 +14,6 @@ import {
 import {
   Animated,
   BackHandler,
-  Dimensions,
   Keyboard,
   Platform,
   StyleSheet,
@@ -22,6 +21,7 @@ import {
   View,
   type KeyboardEvent,
 } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import {
   BottomSheetModalProvider,
   useBottomSheetModalInternal,
@@ -1071,7 +1071,7 @@ it('releases iOS keyboard layout ownership when the position price input blurs',
     fireEvent(input, 'blur');
     const blurredGeometry = geometry();
     expect(blurredGeometry.maxHeight).toBe(
-      Dimensions.get('window').height - 32,
+      getDimensionsSnapshot('window').height - 32,
     );
     expect(listeners.size).toBe(0);
     // Even an event already queued before cleanup must not animate the later
@@ -1124,14 +1124,14 @@ it('corrects the iOS keyboard frame without moving the backdrop or the exiting c
         <View />
       </SimplePositionTpSlModal>,
     );
-  const screenHeight = Dimensions.get('window').height;
+  const screenHeight = getDimensionsSnapshot('window').height;
   const frame = (screenY: number): KeyboardEvent => ({
     duration: 0,
     easing: 'keyboard',
     endCoordinates: {
       screenX: 0,
       screenY,
-      width: Dimensions.get('window').width,
+      width: getDimensionsSnapshot('window').width,
       height: screenHeight - screenY,
     },
   });

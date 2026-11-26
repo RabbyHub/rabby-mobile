@@ -8,6 +8,7 @@ import {
   isKeyringUnlockedSnapshot,
 } from '@/core/serviceApi/keyring';
 import { urlUtils } from '@rabby-wallet/base-utils';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { browserApis } from './browser/useBrowser';
 import useMount from 'react-use/lib/useMount';
 import { toastWithIcon } from '@/components2024/Toast';
@@ -76,6 +77,15 @@ import {
   forceDebugChainStatsFor,
   toggleDebugChainStatsForced,
 } from '@/screens/Home/debugChainStats';
+import { executeOnUIRuntimeSync } from 'react-native-reanimated';
+import {
+  pagerOffsetStrategy,
+  type PagerOffsetStrategy,
+} from '@/screens/Home/pagerOffsetStrategy';
+import {
+  debugHomeChromeBridge,
+  type HomeChromeBridgeMode,
+} from '@/screens/Home/debugHomeChromeBridge';
 import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
 
 const nextAppLinkRef = {
@@ -107,7 +117,11 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-lending'
     | 'debug-open-target'
     | 'debug-create-address'
+    | 'debug-open-hd-address'
     | 'debug-set-language'
+    | 'debug-cloud-availability'
+    | 'toggle-pager-offset-sampling'
+    | 'toggle-home-chrome-bridge'
     | 'debug-import-test-accounts'
     | 'regression-scenario';
   target?: RabbyGoTarget;
@@ -142,11 +156,19 @@ type OnParseUrlAndProcessAction = (payload: {
   debugOpenTargetTab?: 'seedPhrase' | 'privateKey';
   /** Non-production only: force the app language, e.g. `pt-BR`. */
   debugLanguage?: string;
+  /** Non-production only: override cloud backup availability (null = auto). */
+  debugCloudAvailability?: boolean | null;
   /** Non-production only: address seeded by `debug-create-address`. */
   debugAddress?: string;
+  /** Non-production only: which seed-phrase address `debug-open-hd-address` opens. */
+  debugHdAddressPick?: 'first' | 'random';
   debugChainStatsLoading?: boolean;
   debugChainStatsLoadingForMs?: number;
   debugChainStatsLoadingOff?: boolean;
+  /** Non-production only: `undefined` toggles the native pager-offset sampler. */
+  pagerOffsetStrategy?: PagerOffsetStrategy;
+  /** Non-production only: `undefined` toggles the home chrome sample bridge. */
+  debugHomeChromeBridge?: HomeChromeBridgeMode;
   /** Device path of the test-account list read by the import command. */
   debugImportAccountsPath?: string;
   regressionScenarioCommand?: RegressionScenarioCommand | null;
@@ -521,6 +543,90 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     return {
       type: 'debug-create-address',
       debugAddress: address,
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: mock cloud (iCloud / Google Drive) availability so the
+  // "cloud unavailable" branch can be reproduced on a device.
+  // `?_cmd=debug-cloud-availability&value=unavailable|available|auto`
+  if (
+    rabbyGoCmd === 'debug-cloud-availability' ||
+    target === 'debug-cloud-availability'
+  ) {
+    const rawValue = (urlInfo.searchParams.get('value') || '').toLowerCase();
+    const parsed = ['available', '1', 'true', 'on'].includes(rawValue)
+      ? true
+      : ['unavailable', '0', 'false', 'off'].includes(rawValue)
+      ? false
+      : null;
+    return {
+      type: 'debug-cloud-availability',
+      debugCloudAvailability: parsed,
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: jump straight to the Wallet Detail page of a
+  // seed-phrase address, so a UI check can navigate there without taps.
+  // `?_cmd=debug-open-hd-address&pick=first|random` (default `first`).
+  if (
+    rabbyGoCmd === 'debug-open-hd-address' ||
+    target === 'debug-open-hd-address'
+  ) {
+    const pick = urlInfo.searchParams.get('pick');
+    return {
+      type: 'debug-open-hd-address',
+      debugHdAddressPick: pick === 'random' ? 'random' : 'first',
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: switch the home tab chrome between the JS-side
+  // interpolation fallback and the native per-frame pager offset (QA 1396).
+  // `?_cmd=toggle-pager-offset-sampling` toggles off <-> pull;
+  // `&value=on|push|pull|off` pins one delivery variant.
+  if (
+    rabbyGoCmd === 'toggle-pager-offset-sampling' ||
+    target === 'toggle-pager-offset-sampling'
+  ) {
+    const raw = (urlInfo.searchParams.get('value') || '').toLowerCase();
+    let mode: PagerOffsetStrategy | undefined;
+    if (raw === 'push' || raw === 'on' || raw === '1' || raw === 'true') {
+      mode = 'push';
+    } else if (raw === 'pull') {
+      mode = 'pull';
+    } else if (raw === 'off' || raw === '0' || raw === 'false') {
+      mode = 'off';
+    }
+    return {
+      type: 'toggle-pager-offset-sampling',
+      pagerOffsetStrategy: mode,
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: A/B the home tab chrome between the #2395 sample
+  // bridge and the previous raw sample stream (QA 1414).
+  // `?_cmd=toggle-home-chrome-bridge` flips the effective behaviour;
+  // `&value=on|off|auto` pins a mode.
+  if (
+    rabbyGoCmd === 'toggle-home-chrome-bridge' ||
+    target === 'toggle-home-chrome-bridge'
+  ) {
+    const raw = (urlInfo.searchParams.get('value') || '').toLowerCase();
+    let mode: HomeChromeBridgeMode | undefined;
+    if (raw === 'on' || raw === 'bridge' || raw === '1' || raw === 'true') {
+      mode = 'on';
+    } else if (
+      raw === 'off' ||
+      raw === 'legacy' ||
+      raw === '0' ||
+      raw === 'false'
+    ) {
+      mode = 'off';
+    } else if (raw === 'auto') {
+      mode = 'auto';
+    }
+    return {
+      type: 'toggle-home-chrome-bridge',
+      debugHomeChromeBridge: mode,
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -1137,12 +1243,100 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
         void openRabbyGoTarget(target);
       }, `debug-open-${payload.debugOpenTarget}`);
       break;
+    case 'debug-cloud-availability':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void import('@/core/utils/cloudBackup').then(
+        ({ setDebugCloudAvailabilityOverride }) =>
+          setDebugCloudAvailabilityOverride(
+            payload.debugCloudAvailability ?? null,
+          ),
+      );
+      break;
     case 'debug-set-language':
       if (!isNonPublicProductionEnv || !payload.debugLanguage) {
         return;
       }
       void import('@/hooks/lang').then(({ setAppLanguage }) =>
         setAppLanguage(payload.debugLanguage!),
+      );
+      break;
+    case 'debug-open-hd-address':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void import('@/core/apis/address').then(async ({ getAllAccounts }) => {
+        const accounts = await getAllAccounts();
+        const hdAccounts = accounts.filter(
+          account => account.type === KEYRING_TYPE.HdKeyring,
+        );
+        if (!hdAccounts.length) {
+          console.warn('[useUniversalLinkOnTop] no seed-phrase address found');
+          return;
+        }
+        const target =
+          payload.debugHdAddressPick === 'random'
+            ? hdAccounts[Math.floor(Math.random() * hdAccounts.length)]
+            : hdAccounts[0];
+
+        navigateDeprecated(RootNames.StackAddress, {
+          screen: RootNames.AddressDetail,
+          params: {
+            address: target.address,
+            type: target.type,
+            brandName: target.brandName,
+          },
+        } as any);
+      });
+      break;
+    case 'toggle-pager-offset-sampling':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      if (payload.pagerOffsetStrategy) {
+        pagerOffsetStrategy.set(payload.pagerOffsetStrategy);
+      } else {
+        pagerOffsetStrategy.toggle();
+      }
+      console.log('[pager-offset-strategy] mode:', pagerOffsetStrategy.mode);
+      if (__DEV__) {
+        // The getter lives on the Reanimated UI runtime, so probe it there.
+        setTimeout(() => {
+          try {
+            const probe = executeOnUIRuntimeSync(() => {
+              'worklet';
+              const hasOffset =
+                typeof (global as any).__pagerOffset === 'function';
+              const hasPages =
+                typeof (global as any).__pagerOffsetPages === 'function';
+              return hasOffset && hasPages
+                ? `offset=${(global as any).__pagerOffset()} pages=${(
+                    global as any
+                  ).__pagerOffsetPages()}`
+                : `missing offset=${hasOffset} pages=${hasPages}`;
+            })();
+            console.log('[pager-offset-strategy] ui-runtime bridge:', probe);
+          } catch (error) {
+            console.warn('[pager-offset-strategy] probe failed:', error);
+          }
+        }, 1500);
+      }
+      break;
+    case 'toggle-home-chrome-bridge':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      if (payload.debugHomeChromeBridge) {
+        debugHomeChromeBridge.set(payload.debugHomeChromeBridge);
+      } else {
+        debugHomeChromeBridge.toggle();
+      }
+      console.log(
+        '[debug-home-chrome-bridge] mode:',
+        debugHomeChromeBridge.mode,
+        'legacy:',
+        debugHomeChromeBridge.legacy,
       );
       break;
     case 'regression-scenario':

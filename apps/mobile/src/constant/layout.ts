@@ -7,7 +7,6 @@ import {
   ThemeColors2024,
 } from './theme';
 import { IS_ANDROID } from '@/core/native/utils';
-import { Dimensions } from 'react-native';
 
 export const BOTTOM_BUTTON_BOTTOM_OFFSET = 36;
 export const BOTTOM_BUTTON_TOP_OFFSET = 12;
@@ -52,8 +51,6 @@ export const ScreenLayouts = {
   dappWebViewNavBottomSheetHeight: 302,
   inConnectedDappWebViewNavBottomSheetHeight: 302 /*  - 120 */,
 };
-const SCREEN_WIDTH = Dimensions.get('window').width - 32;
-export const DEFI_CARD_WIDTH = (SCREEN_WIDTH - 12) / 2;
 export const ASSETS_ITEM_HEIGHT = 68;
 export const ASSETS_ITEM_HEIGHT_NEW = 70;
 export const DEFI_ITEM_HEIGHT = 200;
@@ -71,6 +68,70 @@ export const SWITCH_HEADER_GAP = 16;
 export const ADDRESS_ENTRY_HEIGHT = 78;
 export const ADDRESS_ENTRY_GAP = 12;
 export const TOGGLE_SPLIT_HEIGHT = 24;
+
+/**
+ * iPhone logical screen sizes in portrait (points), grouped by width tier.
+ *
+ * Source: Apple device specifications, compiled at
+ * https://www.ios-resolution.com/ (checked 2026-11-20).
+ *
+ * Width is the dimension that matters for horizontal layout. When a style
+ * needs a narrow-screen variant, gate it with `isNarrowScreenWidth()` (or
+ * compare against `NARROW_SCREEN_MAX_WIDTH`) so wider screens keep the
+ * regular layout untouched. Heights are listed only to identify the tier.
+ *
+ * Android phones can be narrower than 375dp too (Galaxy S series is 360dp),
+ * so anything `<= 375` takes the narrow variant on both platforms.
+ */
+export const IPHONE_SCREEN_TIERS = [
+  {
+    width: 320,
+    heights: [480, 568],
+    models: ['iPhone 4/4S', 'iPhone 5/5S/5C/SE 1st'],
+  },
+  {
+    width: 375,
+    heights: [667, 812],
+    models: [
+      'iPhone 6/6s/7/8/SE 2nd/SE 3rd',
+      'iPhone X/XS/11 Pro/12 mini/13 mini',
+    ],
+  },
+  {
+    width: 390,
+    heights: [844],
+    models: ['iPhone 12/12 Pro/13/13 Pro/14/16e/17e'],
+  },
+  { width: 393, heights: [852], models: ['iPhone 14 Pro/15/15 Pro/16'] },
+  { width: 402, heights: [874], models: ['iPhone 16 Pro/17/17 Pro/18 Pro'] },
+  {
+    width: 414,
+    heights: [736, 896],
+    models: ['iPhone 6/7/8 Plus', 'iPhone XR/XS Max/11/11 Pro Max'],
+  },
+  { width: 420, heights: [912], models: ['iPhone Air'] },
+  {
+    width: 428,
+    heights: [926],
+    models: ['iPhone 12/13 Pro Max', 'iPhone 14 Plus'],
+  },
+  {
+    width: 430,
+    heights: [932],
+    models: ['iPhone 14 Pro Max/15 Plus/15 Pro Max/16 Plus'],
+  },
+  {
+    width: 440,
+    heights: [956],
+    models: ['iPhone 16 Pro Max/17 Pro Max/18 Pro Max'],
+  },
+] as const;
+
+/** Narrowest tier that still ships: iPhone SE 2nd/3rd and the mini line. */
+export const NARROW_SCREEN_MAX_WIDTH = 375;
+
+export const isNarrowScreenWidth = (width?: number) =>
+  typeof width === 'number' && width > 0 && width <= NARROW_SCREEN_MAX_WIDTH;
 
 export const FOLD_ASSETS_HEADER_HEIGHT = 64;
 export const FOLD_ASSETS_HEADER_HEIGHT_WITH_PADDING = 64 + 32;
@@ -119,7 +180,6 @@ export const RootNames = {
   StackBottom: 'StackBottom',
   Home: 'Home',
   Points: 'Points',
-  Prediction: 'Prediction',
 
   StackDapps: 'StackDapps',
   Dapps: 'Dapps',
@@ -166,6 +226,8 @@ export const RootNames = {
   DevUIWalletConnect: 'DevUIWalletConnect',
   DevCapabilityFile: 'DevCapabilityFile',
   DevSwitches: 'DevSwitches',
+  DevScreenInjectionProbe: 'DevScreenInjectionProbe',
+  DevTabsHost: 'DevTabsHost',
   DevPerf: 'DevPerf',
   DebugLogViewer: 'DebugLogViewer',
   StartupPerformanceLogViewer: 'StartupPerformanceLogViewer',
@@ -373,7 +435,6 @@ function makeScreenSpecConfig() {
       // StackBottom
       [RootNames.Home]: transparentDefault2024Conf,
       [RootNames.Points]: transparentDefault2024Conf,
-      [RootNames.Prediction]: bg1Default2024Conf,
 
       // StackDapps
       [RootNames.Dapps]: bg1Default2024Conf,
@@ -416,6 +477,8 @@ function makeScreenSpecConfig() {
       [RootNames.DevUIWalletConnect]: bg1Default2024Conf,
       [RootNames.DevCapabilityFile]: bg1Default2024Conf,
       [RootNames.DevSwitches]: bg1Default2024Conf,
+      [RootNames.DevScreenInjectionProbe]: bg1Default2024Conf,
+      [RootNames.DevTabsHost]: bg1Default2024Conf,
       [RootNames.DevPerf]: bg1Default2024Conf,
       [RootNames.DebugLogViewer]: bg1Default2024Conf,
       [RootNames.StartupPerformanceLogViewer]: bg1Default2024Conf,

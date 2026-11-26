@@ -467,6 +467,24 @@ const config = {
         };
       }
 
+      // Workspace packages resolve these from the root node_modules while the
+      // app resolves its own copy. Two instances make `Gesture` undefined in
+      // the scene pager, so pin both to the app copy.
+      if (
+        moduleName === 'react-native-gesture-handler' ||
+        moduleName === 'react-native-reanimated'
+      ) {
+        return context.resolveRequest(
+          {
+            ...context,
+            originPackage: undefined,
+            originModulePath: path.join(projectRoot, 'index.js'),
+          },
+          moduleName,
+          platform,
+        );
+      }
+
       if (moduleName === '@walletconnect/keyvaluestorage') {
         return {
           filePath: walletConnectKeyValueStorageShim,

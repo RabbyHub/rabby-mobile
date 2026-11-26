@@ -5,7 +5,6 @@
 export { DuplicateAddressModal } from '@/screens/Address/components/DuplicateAddressModal';
 export { AliasNameEditModal } from '@/components2024/AliasNameEditModal/AliasNameEditModal';
 export { QrCodeModal } from '@/components2024/QrCodeModal/QrCodeModal';
-export { InnerDappWebViewPreloadEntry } from '@/components/WebView/InnerDappWebViewPreloadEntry';
 export { default as ApprovalTokenDetailSheetModalStub } from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
 export { BottomSheetBrowser } from '@/screens/Browser/BottomSheetBrowser';
 export { BrowserManagePopup } from '@/screens/Browser/BottomSheetBrowser';

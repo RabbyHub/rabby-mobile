@@ -195,6 +195,11 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevSwitches]?: {
     appLaunchLock?: boolean;
   };
+  [RootNames.DevScreenInjectionProbe]?: {};
+  [RootNames.DevTabsHost]?: {
+    screenId?: string;
+    params?: Record<string, unknown>;
+  };
   [RootNames.DevPerf]?: {};
   [RootNames.DebugLogViewer]?: {};
   [RootNames.StartupPerformanceLogViewer]?: {};
@@ -423,8 +428,6 @@ export type TransactionNavigatorParamList = {
     dappId?: string;
     market?: string;
     marketCandidates?: string[];
-    /** set when this screen is the underlay pushed beneath the market detail page */
-    fromSource?: 'homePagePositionList';
   };
   [RootNames.PerpsMarketList]?: {};
   [RootNames.PerpsHistory]?: {
@@ -435,12 +438,7 @@ export type TransactionNavigatorParamList = {
   };
   [RootNames.PerpsMarketDetail]: {
     market: string;
-    fromSource?:
-      | 'homePagePositionList'
-      | 'openPosition'
-      | 'marketDetail'
-      | 'searchPerps'
-      | '';
+    fromSource?: 'openPosition' | 'marketDetail' | 'searchPerps' | '';
     showOpenPosition?: boolean;
     direction?: 'Long' | 'Short';
   };
@@ -453,7 +451,6 @@ export type TransactionNavigatorParamList = {
   [RootNames.Lending]?: {
     dappId?: string;
   };
-  [RootNames.Prediction]?: {};
 };
 
 export type SettingNavigatorParamList = {

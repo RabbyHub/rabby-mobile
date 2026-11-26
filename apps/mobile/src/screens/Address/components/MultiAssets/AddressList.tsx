@@ -16,6 +16,7 @@ import { NotMatterAddressDialog } from '../../NotMatterAddressDialog';
 import AutoLockView from '@/components/AutoLockView';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
+import { navigateThenDismiss } from '@/utils/navigateThenDismiss';
 import { balance24hStore } from '@/store/balance24h';
 import addressBalanceStore from '@/store/balance';
 import {
@@ -115,15 +116,18 @@ const AddressList = ({
   const renderItem = useCallback(
     ({ item }) => {
       const gotoAddressDetail = () => {
-        onDone?.();
-        naviPush(RootNames.StackAddress, {
-          screen: RootNames.AddressDetail,
-          params: {
-            address: item.address,
-            type: item.type,
-            brandName: item.brandName,
-          },
-        });
+        navigateThenDismiss(
+          () =>
+            naviPush(RootNames.StackAddress, {
+              screen: RootNames.AddressDetail,
+              params: {
+                address: item.address,
+                type: item.type,
+                brandName: item.brandName,
+              },
+            }),
+          onDone,
+        );
       };
 
       return (

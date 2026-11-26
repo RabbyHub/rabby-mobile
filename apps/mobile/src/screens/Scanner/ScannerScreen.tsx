@@ -1,6 +1,7 @@
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Dimensions, View } from 'react-native';
+import { View } from 'react-native';
+import { useWindowDimensions } from '@/core/dimensions';
 import { useTheme2024 } from '@/hooks/theme';
 import { QRCodeScanner } from '@/components/QRCodeScanner/QRCodeScanner';
 import { colord } from 'colord';
@@ -21,8 +22,9 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import EventEmitter from 'events';
 import { throttle } from 'lodash';
 import { Text } from '@/components/Typography';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 
-const CAMERA_WIDTH = Dimensions.get('window').width - 70;
+const CAMERA_SIDE_ALLOWANCE = 70;
 
 const textAtom = atom<string | undefined>(undefined);
 
@@ -53,6 +55,10 @@ export const onScannerEvent = (
 
 export const ScannerScreen = () => {
   const { t } = useTranslation();
+  // Render-time read so the camera square follows a fold/rotation.
+  const { width: windowWidth } = useWindowDimensions();
+  const cameraWidth = Math.max(0, windowWidth - CAMERA_SIDE_ALLOWANCE);
+  const columnInset = useSystemColumnInset();
   const [_, setText] = useAtom(textAtom);
   const { styles } = useTheme2024({ getStyle: getStyles });
   const route = useRoute<GetRootScreenRouteProp<'Scanner'>>();
@@ -138,12 +144,19 @@ export const ScannerScreen = () => {
   }, [navigation]);
 
   return (
-    <View style={styles.main}>
+    <View
+      style={[
+        styles.main,
+        { paddingLeft: columnInset.left, paddingRight: columnInset.right },
+      ]}>
       <View style={styles.wrapper}>
         <QRCodeScanner
-          containerStyle={styles.containerStyle}
+          containerStyle={[
+            styles.containerStyle,
+            { width: cameraWidth, height: cameraWidth },
+          ]}
           onCodeScanned={handleCodeScanned}
-          size={CAMERA_WIDTH}
+          size={cameraWidth}
           showScanLine={navState?.syncExtension && currentCount > 0}
         />
         {navState?.syncExtension ? (
@@ -176,8 +189,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   wrapper: {},
   containerStyle: {
-    width: CAMERA_WIDTH,
-    height: CAMERA_WIDTH,
     borderColor: colord(ctx.colors2024['neutral-line']).alpha(0.5).toHex(),
     marginBottom: 40,
   },

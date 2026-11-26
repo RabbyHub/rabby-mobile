@@ -74,10 +74,6 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
     promise: Promise<void>;
   } | null>(null);
   const { navigation } = useSafeSetNavigationOptions();
-  const [historyCount, setHistoryCount] = useState<{
-    success: number;
-    fail: number;
-  }>();
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const { currentAccount } = useSingleHomeAccount();
@@ -100,19 +96,6 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
 
     const address = accountAddress;
     const request = (async () => {
-      const [failCount, successCount] = await Promise.all([
-        transactionHistoryServiceApi.getFailedCount(address),
-        transactionHistoryServiceApi.getSucceedCount(address),
-      ]);
-      if (activeRequestKeyRef.current !== requestKey || !isFocusedRef.current) {
-        return;
-      }
-
-      setHistoryCount({
-        success: successCount,
-        fail: failCount,
-      });
-
       if (isTokenHistory) {
         // A single-token history has no pending transaction badge.
         return;
@@ -227,7 +210,6 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
   return (
     <HeaderRightHistoryButton
       pendingTxCount={pendingTxCount}
-      historyCount={historyCount}
       onPress={openHistory}
     />
   );

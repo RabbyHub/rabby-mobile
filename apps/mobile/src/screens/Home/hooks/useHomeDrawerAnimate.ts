@@ -1,6 +1,7 @@
 import { IS_ANDROID } from '@/core/native/utils';
 
-import { Dimensions, Platform } from 'react-native';
+import { Platform } from 'react-native';
+import { svsLayout } from '@/hooks/useAppLayout';
 import { makeMutable, useAnimatedStyle } from 'react-native-reanimated';
 
 export const SCROLLABLE_STATUS = {
@@ -21,12 +22,13 @@ export const SCROLLABLE_DECELERATION_RATE_MAPPER = {
 };
 
 const PULL_THRESHOLD = 100;
-const scrWinHeight = Dimensions.get('screen').height;
 
 // export const THRESHOLD_PERCENT = (PULL_THRESHOLD / scrWinHeight) * 100;
 export const THRESHOLD_PERCENT = 8;
 
-export function getPullThreshold(height: number = scrWinHeight) {
+export function getPullThreshold(
+  height: number = svsLayout.screenLayout.value.height,
+) {
   'worklet';
   // return Math.min(height * 0.3, PULL_THRESHOLD);
   return Math.min(height * THRESHOLD_PERCENT * 0.01 + 16, PULL_THRESHOLD);
@@ -37,6 +39,15 @@ export const homeDrawerAnimateMutable = {
   pullPercent: makeMutable(0),
   isExpanded: makeMutable(false),
   translateY: makeMutable(0),
+  /**
+   * How far the drawer panel is "revealed" (0 -> 0.75 scale, 1 -> full size).
+   *
+   * It follows `pullPercent` while the drawer is opening, but it is latched
+   * while closing so the panel keeps its size and only translates down. The
+   * first floor only translates, so shrinking the panel during the close made
+   * the two layers move at different apparent speeds.
+   */
+  panelReveal: makeMutable(0),
 
   scrollViewContentHeight: makeMutable(0),
   scrollViewLayoutHeight: makeMutable(0),
