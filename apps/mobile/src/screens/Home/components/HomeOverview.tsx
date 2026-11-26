@@ -1009,9 +1009,9 @@ export const HomeOverview = React.memo(() => {
           icon: RcIconPerps,
         },
         {
-          key: MultiHomeFeatTitle.MemeCoin,
-          title: t('page.home.services.meme'),
-          icon: RcIconMemeCoinCC,
+          key: MultiHomeFeatTitle.Lending,
+          title: t('page.home.services.lending'),
+          icon: RcIconLending,
         },
         {
           key: MultiHomeFeatTitle.GasAccount,
@@ -1052,9 +1052,9 @@ export const HomeOverview = React.memo(() => {
           icon: RcIconConvertDustCC,
         },
         {
-          key: MultiHomeFeatTitle.Lending,
-          title: t('page.home.services.lending'),
-          icon: RcIconLending,
+          key: MultiHomeFeatTitle.MemeCoin,
+          title: t('page.home.services.meme'),
+          icon: RcIconMemeCoinCC,
         },
       ].filter(Boolean) as {
         key: MultiHomeFeatTitle;
