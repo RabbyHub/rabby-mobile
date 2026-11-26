@@ -39,17 +39,6 @@
     "IMPORTED_HD_KEYRING": "Importé avec une phrase de récupération"
   },
   "page": {
-    "securePreferences": {
-      "damagedTitle": "Certains paramètres de sécurité sont peut-être endommagés",
-      "damagedDescription": "Rétablissez les valeurs par défaut des paramètres ci-dessous. Vérifiez-les avant votre prochaine transaction.",
-      "unavailableTitle": "Les paramètres de sécurité sont temporairement indisponibles",
-      "unavailableDescription": "Rabby utilise les valeurs par défaut des paramètres qu’il n’a pas pu vérifier. Les modifications des paramètres ci-dessous ne seront pas enregistrées. Déverrouillez votre appareil et rouvrez Rabby.",
-      "reset": "Réinitialiser les paramètres",
-      "whitelist": "Liste blanche de transfert",
-      "contactBook": "Carnet d’adresses et notes",
-      "securityEngine": "Règles et listes de sécurité",
-      "rpc": "RPC personnalisé"
-    },
     "getStart": {
       "goToHome": "Accéder à l'accueil",
       "alreadyHaveAddress": "J’ai déjà un portefeuille",

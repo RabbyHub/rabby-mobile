@@ -214,17 +214,6 @@
     }
   },
   "page": {
-    "securePreferences": {
-      "damagedTitle": "Algunos ajustes de seguridad podrían estar dañados",
-      "damagedDescription": "Restablece los siguientes ajustes a sus valores predeterminados. Revísalos antes de tu próxima transacción.",
-      "unavailableTitle": "Los ajustes de seguridad no están disponibles temporalmente",
-      "unavailableDescription": "Rabby usa los valores predeterminados de los ajustes que no pudo verificar. Los cambios en los siguientes ajustes no se guardarán. Desbloquea el dispositivo y vuelve a abrir Rabby.",
-      "reset": "Restablecer ajustes",
-      "whitelist": "Lista de transferencias permitidas",
-      "contactBook": "Libreta de direcciones y notas",
-      "securityEngine": "Reglas y listas de seguridad",
-      "rpc": "RPC personalizado"
-    },
     "getStart": {
       "goToHome": "Ir al inicio",
       "alreadyHaveAddress": "Ya tengo una cartera",

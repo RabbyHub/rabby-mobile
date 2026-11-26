@@ -202,17 +202,6 @@
     }
   },
   "page": {
-    "securePreferences": {
-      "damagedTitle": "部分安全設定可能已損毀",
-      "damagedDescription": "請將以下設定恢復為預設值，並在下次交易前檢查這些設定。",
-      "unavailableTitle": "安全設定暫時無法使用",
-      "unavailableDescription": "Rabby 已對暫時無法驗證的設定使用預設值。對以下設定的變更無法儲存。請解鎖裝置並重新開啟 Rabby 後重試。",
-      "reset": "重設設定",
-      "whitelist": "轉帳白名單",
-      "contactBook": "通訊錄與備註",
-      "securityEngine": "安全引擎規則與名單",
-      "rpc": "自訂 RPC"
-    },
     "importSuccess": {
       "success": "{{type}} 成功！",
       "importMore": "從此助記詞新增更多錢包",

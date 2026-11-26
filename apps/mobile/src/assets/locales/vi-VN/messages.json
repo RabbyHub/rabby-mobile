@@ -147,17 +147,6 @@
     "failed": "Thất bại"
   },
   "page": {
-    "securePreferences": {
-      "damagedTitle": "Một số cài đặt bảo mật có thể bị hỏng",
-      "damagedDescription": "Đặt lại các cài đặt bên dưới về mặc định. Hãy kiểm tra các cài đặt này trước giao dịch tiếp theo.",
-      "unavailableTitle": "Tạm thời không thể truy cập cài đặt bảo mật",
-      "unavailableDescription": "Rabby dùng giá trị mặc định cho các cài đặt không thể xác minh. Thay đổi đối với các cài đặt bên dưới sẽ không được lưu. Hãy mở khóa thiết bị rồi mở lại Rabby.",
-      "reset": "Đặt lại cài đặt",
-      "whitelist": "Danh sách địa chỉ được phép chuyển",
-      "contactBook": "Sổ địa chỉ và ghi chú",
-      "securityEngine": "Quy tắc và danh sách bảo mật",
-      "rpc": "RPC tùy chỉnh"
-    },
     "transactions": {
       "explain": {
         "unknown": "Tương tác hợp đồng",

@@ -316,17 +316,6 @@
     }
   },
   "page": {
-    "securePreferences": {
-      "damagedTitle": "Einige Sicherheitseinstellungen sind möglicherweise beschädigt",
-      "damagedDescription": "Setze die folgenden Einstellungen auf die Standardwerte zurück. Überprüfe sie vor deiner nächsten Transaktion.",
-      "unavailableTitle": "Sicherheitseinstellungen sind vorübergehend nicht verfügbar",
-      "unavailableDescription": "Rabby verwendet Standardwerte für Einstellungen, die nicht überprüft werden konnten. Änderungen an den folgenden Einstellungen werden nicht gespeichert. Entsperre dein Gerät und öffne Rabby erneut.",
-      "reset": "Einstellungen zurücksetzen",
-      "whitelist": "Transfer-Whitelist",
-      "contactBook": "Adressbuch und Notizen",
-      "securityEngine": "Sicherheitsregeln und Listen",
-      "rpc": "Benutzerdefinierte RPCs"
-    },
     "transactions": {
       "explain": {
         "cancel": "Abgebrochene ausstehende Transaktion",
