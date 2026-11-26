@@ -14,6 +14,7 @@ import {
 import { getWalletConnectErrorMessage } from '@/core/walletconnect/error';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 
 function getFirstScannedValue(codes: Code[]) {
   return codes.find(code => !!code.value)?.value?.trim() || '';
@@ -31,6 +32,10 @@ export default function WalletConnectScreen() {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const navigation = useNavigation();
   const lastScannedValueRef = useRef('');
+  // `useWindowDimensions()` already reports the 382pt foldable content column,
+  // but this ScrollView still spans the full 466pt window and centres its
+  // content there. Keep the QR frame on the content column like the scanner.
+  const columnInset = useSystemColumnInset();
 
   const frameSize = Math.min(Math.max(width - 68, 260), 330);
   const scannerSize = frameSize - FRAME_INSET * 2;
@@ -73,7 +78,13 @@ export default function WalletConnectScreen() {
   return (
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[
+        styles.content,
+        {
+          paddingLeft: 20 + columnInset.left,
+          paddingRight: 20 + columnInset.right,
+        },
+      ]}
       bounces={false}>
       <View style={[styles.frame, { width: frameSize, height: frameSize }]}>
         <QRCodeScanner
