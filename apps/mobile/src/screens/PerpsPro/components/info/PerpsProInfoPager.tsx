@@ -256,6 +256,9 @@ const PerpsProInfoPagerInner = <Row,>(
   // UIPageViewController reports a swipe's selection only after its animation.
   // A drag that starts before then still owes the older swipe one selection.
   const iosSupersededSelections = useSharedValue(0);
+  const nativePageScrollState = useSharedValue<
+    'idle' | 'dragging' | 'settling'
+  >('idle');
   const activeTabRef = useRef(activeTab);
 
   useEffect(() => {
@@ -1022,6 +1025,8 @@ const PerpsProInfoPagerInner = <Row,>(
     useEvent<PageScrollStateChangedNativeEvent>(
       event => {
         'worklet';
+        const previousPageScrollState = nativePageScrollState.value;
+        nativePageScrollState.value = event.pageScrollState;
         if (!isPagerLaidOut.value) {
           return;
         }
@@ -1053,6 +1058,24 @@ const PerpsProInfoPagerInner = <Row,>(
           }
           pendingPageRequest.value = null;
           beginNativeGestureVisualTracking(touchSessionId);
+          // A touch that lands while a page is still settling is caught by the
+          // native pager on ACTION_DOWN. It disallows parent interception, so
+          // RNGH cancels the scene pan before it can classify the touch. That
+          // catch continues a page swipe; own it as horizontal instead of
+          // reverting the page it selects.
+          if (
+            authorizeNativePageGestures &&
+            scrollBridge &&
+            previousPageScrollState === 'settling' &&
+            scrollBridge.touchIntent.value !==
+              PERPS_PRO_INFO_TOUCH_INTENT.vertical &&
+            scrollBridge.touchIntent.value !==
+              PERPS_PRO_INFO_TOUCH_INTENT.horizontal
+          ) {
+            scrollBridge.touchIntent.value =
+              PERPS_PRO_INFO_TOUCH_INTENT.horizontal;
+            scrollBridge.horizontalTouchSessionId.value = touchSessionId;
+          }
           if (
             authorizeNativePageGestures &&
             !isPerpsProInfoHorizontalTouchAuthorized(
