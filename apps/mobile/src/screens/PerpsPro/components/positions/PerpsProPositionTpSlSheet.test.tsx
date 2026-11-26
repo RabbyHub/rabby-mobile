@@ -975,7 +975,7 @@ describe('PerpsProPositionTpSlSheet', () => {
     ).toMatchObject({
       flex: 1,
       flexDirection: 'row',
-      height: 36,
+      height: 40,
       minWidth: 0,
       overflow: 'visible',
       position: 'relative',
@@ -1000,7 +1000,7 @@ describe('PerpsProPositionTpSlSheet', () => {
       position: 'absolute',
       right: 0,
       textAlign: 'right',
-      top: 20,
+      top: 22,
     });
   });
 

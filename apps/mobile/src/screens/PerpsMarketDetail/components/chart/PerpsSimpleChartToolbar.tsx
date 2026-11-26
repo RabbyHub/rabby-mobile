@@ -14,7 +14,6 @@ import Interval from '@/assets2024/icons/perps/PerpsSimpleChart/interval.svg';
 import Chevron from '@/assets2024/icons/perps/PerpsSimpleChart/chevron.svg';
 import Area from '@/assets2024/icons/perps/PerpsSimpleChart/area.svg';
 import Candle from '@/assets2024/icons/perps/PerpsSimpleChart/candle.svg';
-import { SIMPLE_CHART_COLORS } from './visual';
 
 export const PerpsSimpleChartToolbar = React.memo(
   function PerpsSimpleChartToolbar({
@@ -184,8 +183,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   rangeTarget: { flex: 1, height: 40, justifyContent: 'center' },
   intervalTarget: { width: 84, height: 40, justifyContent: 'center' },
   iconTarget: { width: 24, height: 40, justifyContent: 'center' },
+  // Figma 88081:166784: bg-5 chip on the Light bg-1 chart; Dark keeps bg-2.
   selected: {
-    backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-2'],
+    backgroundColor: colors2024[isLight ? 'neutral-bg-5' : 'neutral-bg-2'],
+    borderRadius: 5,
+    borderCurve: 'continuous',
   },
   label: {
     fontFamily: 'SF Pro Rounded',
@@ -193,14 +195,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 16,
     fontWeight: '500',
     textAlign: 'center',
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-body'],
   },
   selectedLabel: {
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
-    color: SIMPLE_CHART_COLORS.accent,
+    color: colors2024['neutral-title-1'],
   },
-  manualLabel: { fontFamily: 'SF Pro Rounded', fontWeight: '700' },
+  manualLabel: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+  },
   // At 12pt, "30m" is wider than 24pt in both Medium and Bold.
   intervalLabel: { width: 32, flexShrink: 0 },
   pressed: { opacity: 0.6 },

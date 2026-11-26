@@ -305,7 +305,7 @@ describe('PerpsProClosePositionSheet', () => {
       );
       const colors = ThemeColors2024[mode];
       const cardColor =
-        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'];
+        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-3'];
       const fieldColor =
         colors[mode === 'light' ? 'neutral-bg-0' : 'neutral-bg-5'];
       for (const orderType of ['market', 'limit'] as const) {
@@ -343,7 +343,7 @@ describe('PerpsProClosePositionSheet', () => {
         const fields = screen
           .UNSAFE_getAllByType(View)
           .map(view => StyleSheet.flatten(view.props.style))
-          .filter(style => style?.borderRadius === 6);
+          .filter(style => style?.borderRadius === 8);
         expect(fields).toHaveLength(3);
         for (const field of fields) {
           expect(field.backgroundColor).toBe(fieldColor);
@@ -567,9 +567,13 @@ describe('PerpsProClosePositionSheet', () => {
     );
     fireEvent(amount, 'focus');
     expect(screen.getByLabelText('Amount').props.selection).toBeUndefined();
+    fireEvent(screen.getByTestId('close-position-slider'), 'slidingStart', 50);
     fireEvent(screen.getByTestId('close-position-slider'), 'valueChange', 50);
     expect(screen.getByLabelText('Amount').props.value).toBe('50% (≈0.5000)');
+    // A swipe starts with touch-down but never focuses; only focus clears.
     fireEvent(screen.getByLabelText('Amount'), 'pressIn');
+    expect(screen.getByLabelText('Amount').props.value).toBe('50% (≈0.5000)');
+    fireEvent(screen.getByLabelText('Amount'), 'focus');
     expect(screen.getByLabelText('Amount').props.value).toBe('');
     expect(screen.getByTestId('close-position-slider').props.value).toBe(0);
     fireEvent.changeText(amount, '0.25');
@@ -657,7 +661,6 @@ describe('PerpsProClosePositionSheet', () => {
     const amount = screen.getByLabelText('Amount');
     fireEvent(amount, 'focus');
     fireEvent.changeText(amount, '0.25');
-    fireEvent(screen.getByLabelText('Amount'), 'pressIn');
     fireEvent(screen.getByLabelText('Amount'), 'focus');
 
     expect(screen.getByLabelText('Amount').props.value).toBe('0.25');

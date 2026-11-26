@@ -255,6 +255,7 @@ const getStyle = createGetStyles2024(
         flex: 1,
         height: 46,
         borderRadius: 6,
+        borderCurve: 'continuous',
         backgroundColor: resolvePerpsProDialogFieldBackground(
           colors2024,
           isLight,

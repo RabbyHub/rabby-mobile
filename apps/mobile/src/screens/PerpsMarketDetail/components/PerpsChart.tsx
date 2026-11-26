@@ -1,6 +1,7 @@
 import { accountHeaderQuote, type AccountHeaderQuote } from './account/model';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import type { NativeGesture } from 'react-native-gesture-handler';
 import { PerpsSimplePriceAxis } from './chart/PerpsSimplePriceAxis';
 import { useTranslation } from 'react-i18next';
@@ -28,7 +29,12 @@ import { SIMPLE_CHART_COLORS } from './chart/visual';
 import { PerpsSimpleChartLoading } from './chart/PerpsSimpleChartLoading';
 
 const EMPTY_FILLS: SimpleChartFill[] = [];
-const SIMPLE_CHART_HEIGHT = 320;
+// Figma 88081:166498: 12pt top inset, 208pt pane, 4pt gap, 16pt time axis and
+// 8pt bottom inset; the WebView host applies the insets.
+const SIMPLE_CHART_HEIGHT = 248;
+// Figma 88081:166476: bg-1 behind the quote and chart, fading to the bg-0 page
+// across the range toolbar.
+const SIMPLE_CHART_FADE_HEIGHT = 40;
 
 export const PerpsChart = React.memo(function PerpsChart({
   marketName,
@@ -69,7 +75,7 @@ export const PerpsChart = React.memo(function PerpsChart({
       nativePriceAxis: Platform.OS === 'ios',
       showTradeMarkers: false,
       colors: {
-        background: colors2024['neutral-bg-0'],
+        background: colors2024['neutral-bg-1'],
         titleOutline: colors2024['neutral-bg-1'],
         selectionBackground: isLight
           ? colors2024['neutral-black']
@@ -152,6 +158,11 @@ export const PerpsChart = React.memo(function PerpsChart({
   }, [headerQuote, chart.active, onHeaderQuote]);
   return (
     <View style={styles.root}>
+      <LinearGradient
+        colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-0']]}
+        pointerEvents="none"
+        style={styles.fade}
+      />
       <PerpsSimpleChartHeader
         key={marketName}
         onPriceLayout={onPriceLayout}
@@ -184,7 +195,7 @@ export const PerpsChart = React.memo(function PerpsChart({
           variant="perps-simple"
           style={!chart.hasAppliedData ? styles.hidden : undefined}
           height={SIMPLE_CHART_HEIGHT}
-          backGroundColor={colors2024['neutral-bg-0']}
+          backGroundColor={colors2024['neutral-bg-1']}
           onChartReady={chart.onChartReady}
           onChartLoading={chart.onChartLoading}
           onChartError={chart.onChartError}
@@ -256,10 +267,22 @@ export const PerpsChart = React.memo(function PerpsChart({
     </View>
   );
 });
-const getStyle = createGetStyles2024(() => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   // Keep the full 40px toolbar inside this parent's touch bounds while using
   // the surrounding whitespace; the visible 24px controls keep their position.
-  root: { marginHorizontal: -12, marginBottom: -8, gap: 8 },
+  root: {
+    marginHorizontal: -12,
+    marginBottom: -8,
+    gap: 8,
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  fade: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: SIMPLE_CHART_FADE_HEIGHT,
+  },
   chart: { height: SIMPLE_CHART_HEIGHT },
   hidden: { opacity: 0 },
   touchGuard: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },

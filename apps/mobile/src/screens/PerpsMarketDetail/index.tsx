@@ -35,6 +35,10 @@ import { PerpsClosePositionPopup } from './components/PerpsClosePositionPopup';
 import { PerpsDepositCard } from './components/PerpsDepositCard';
 import { PerpsFooter } from './components/PerpsFooter';
 import { PerpsHeaderTitle } from './components/PerpsHeaderTitle';
+import {
+  PerpsMarketSelectorSheet,
+  type PerpsMarketSelectorSheetHandle,
+} from './components/PerpsMarketSelectorSheet';
 import { PerpsAbout } from './components/PerpsAbout';
 import { PerpsOpenPositionPopup } from './components/PerpsOpenPositionPopup';
 import { PerpsPosition } from './components/PerpsPosition';
@@ -60,6 +64,7 @@ import { isLimitOrder } from '@/utils/perps';
 import { Text } from '@/components/Typography';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
 import { withWalletUnlock } from '@/utils/walletUnlockGuard';
+import { PerpsProKeyboardAccessory } from '@/screens/PerpsPro/components/common/PerpsProKeyboardAccessory';
 
 export const PerpsMarketDetailScreen = () => {
   const scrollGesture = useMemo(
@@ -404,6 +409,19 @@ export const PerpsMarketDetailScreen = () => {
     priceMeasureId.current += 1;
   }, [coin, headerPresentation]);
 
+  const marketSelectorRef = useRef<PerpsMarketSelectorSheetHandle>(null);
+  const selectMarket = useCallback((market: string) => {
+    naviReplace(RootNames.StackTransaction, {
+      screen: RootNames.PerpsMarketDetail,
+      params: {
+        market,
+        fromSource: 'marketDetail',
+        showOpenPosition: false,
+        direction: 'Long',
+      },
+    });
+  }, []);
+
   const HeaderTitle = useCallback(() => {
     return (
       <PerpsHeaderTitle
@@ -415,15 +433,7 @@ export const PerpsMarketDetailScreen = () => {
         displayName={currentAssetCtx?.displayName || coin}
         coin={coin}
         logoUrl={currentAssetCtx?.logoUrl}
-        onSelectCoin={() => {
-          naviReplace(RootNames.StackTransaction, {
-            screen: RootNames.PerpsSearch,
-            params: {
-              openFromSource: 'marketDetail',
-              initialTab: 'topVolume',
-            },
-          });
-        }}
+        onSelectCoin={() => marketSelectorRef.current?.present()}
       />
     );
   }, [
@@ -451,8 +461,14 @@ export const PerpsMarketDetailScreen = () => {
   return (
     <>
       <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
+        {/* Owns the Done bar of the funding popups' amount inputs. */}
+        <PerpsProKeyboardAccessory />
         {!hasPermission ? <PerpsRegionAlert /> : null}
+        {/* Overscroll would expose the page's bg-0 between the bg-1 header
+            and chart, so the content stops at the top like Perps Pro. */}
         <PerpsSimpleChartScrollView
+          bounces={false}
+          overScrollMode="never"
           scrollGesture={scrollGesture}
           onScroll={onAccountScroll}
           scrollEventThrottle={16}
@@ -592,6 +608,11 @@ export const PerpsMarketDetailScreen = () => {
           />
         ) : null}
       </NormalScreenContainer2024>
+      <PerpsMarketSelectorSheet
+        currentMarket={coin}
+        onSelect={selectMarket}
+        ref={marketSelectorRef}
+      />
 
       <PerpsDepositPopup
         account={currentPerpsAccount}

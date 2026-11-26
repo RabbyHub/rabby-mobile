@@ -93,15 +93,14 @@ describe('PerpsProOpenOrdersControls', () => {
       ).toMatchObject({
         backgroundColor: isLight
           ? ThemeColors2024.dark['neutral-bg-0']
-          : colors['neutral-title-1'],
+          : colors['neutral-bg-2'],
         borderRadius: 8,
         height: 30,
         paddingHorizontal: 12,
       });
       expect(screen.getByText('Basic  2').props.style).toMatchObject({
-        color: isLight
-          ? ThemeColors2024.dark['neutral-title-1']
-          : colors['neutral-bg-0'],
+        // Dark keeps the Light selected copy (Figma 87900:97310).
+        color: ThemeColors2024.dark['neutral-title-1'],
         fontFamily: 'SF Pro Rounded',
         fontSize: 14,
         fontWeight: '700',

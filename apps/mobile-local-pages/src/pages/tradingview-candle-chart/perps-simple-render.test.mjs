@@ -88,6 +88,7 @@ function scene(
     createElementNS: (_namespace, name) => element(name),
   };
   const overlay = element('overlay');
+  const timeLabel = { ...element('timeLabel'), offsetWidth: 80 };
   const candles = (viewport?.closes ?? [selectedPrice ?? 100, 110]).map(
     (close, i) => ({
       time: 60 * (i + 1),
@@ -114,6 +115,12 @@ function scene(
   const context = {
     document,
     overlay,
+    timeLabel,
+    host: { clientWidth: 381, clientHeight: 294 },
+    timeLabelLayout: { timeHeight: 24 },
+    formatTime: time => `T${time}`,
+    getPerpsProCrosshairTimeLabelLeft: (x, width, containerWidth) =>
+      Math.min(Math.max(0, x - width / 2), containerWidth - width),
     candles,
     config: {
       style,
@@ -208,6 +215,16 @@ function scene(
       assert.ok(Number(cross.style.zIndex) > Number(ordinary.style.zIndex));
     assert.ok(Number(held.style.zIndex) > Number(cross.style.zIndex));
   } else assert.equal(cross, undefined);
+  // Candle hold shows Pro's time badge on the time axis; Area keeps none.
+  if (style === 'candle' && selectedPrice !== null && !viewport) {
+    assert.equal(timeLabel.style.display, 'flex');
+    assert.equal(timeLabel.style.visibility, 'visible');
+    assert.equal(timeLabel.textContent, 'T60');
+    assert.equal(timeLabel.style.background, colors.selectionBackground);
+    assert.equal(timeLabel.style.color, colors.selectionText);
+    assert.equal(timeLabel.style.left, '80px');
+    assert.equal(timeLabel.style.top, '272px');
+  } else if (!viewport) assert.equal(timeLabel.style.display, 'none');
   if (style === 'candle')
     for (const id of ['entry', 'tp', 'sl', 'liquidation'])
       assert.ok(guides.some(n => n.dataset.priceKind === id));

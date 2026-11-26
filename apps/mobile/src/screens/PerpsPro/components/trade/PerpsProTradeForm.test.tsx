@@ -1166,14 +1166,14 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(trade.endAmountEntry).toHaveBeenCalledTimes(1);
   });
 
-  it('begins manual Amount entry on press even when the input is already focused', () => {
+  it('begins manual Amount entry on focus, not on a swipe touch-down', () => {
     const trade = controller({ amount: '30%' });
     render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
     const amountInput = screen.getByLabelText('amount(USDC)');
 
-    fireEvent(amountInput, 'focus');
-    trade.beginAmountEntry.mockClear();
     fireEvent(amountInput, 'pressIn');
+    expect(trade.beginAmountEntry).not.toHaveBeenCalled();
+    fireEvent(amountInput, 'focus');
 
     expect(trade.beginAmountEntry).toHaveBeenCalledTimes(1);
   });

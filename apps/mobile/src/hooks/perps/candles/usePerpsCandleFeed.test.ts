@@ -79,7 +79,7 @@ describe('usePerpsCandleFeed', () => {
   });
 
   it.each([false, true])(
-    'bounds recovery retries and releases timers when disabled (Simple %s)',
+    'recovers Simple candles while enabled and releases timers when disabled (Simple %s)',
     async simplePresentation => {
       jest.useFakeTimers();
       mockCandleSnapshot.mockRejectedValue(new Error('offline'));
@@ -95,13 +95,24 @@ describe('usePerpsCandleFeed', () => {
       );
       try {
         await act(async () => {});
-        for (const delay of [1000, 3000, 10000, 60000]) {
+        // Scheduled quick recoveries stay in loading instead of offering retry.
+        expect(hook.result.current.status).toBe(
+          simplePresentation ? 'loading' : 'error',
+        );
+        for (const delay of [1000, 3000, 10000]) {
           await act(async () => {
             jest.advanceTimersByTime(delay);
           });
         }
+        expect(hook.result.current.status).toBe('error');
+        for (const delay of [10000, 10000]) {
+          await act(async () => {
+            jest.advanceTimersByTime(delay);
+          });
+        }
+        // Spent quick attempts continue at the slowest cadence.
         expect(mockCandleSnapshot).toHaveBeenCalledTimes(
-          simplePresentation ? 4 : 1,
+          simplePresentation ? 6 : 1,
         );
         expect(hook.result.current.status).toBe('error');
         act(() => hook.result.current.retry());

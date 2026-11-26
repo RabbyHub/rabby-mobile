@@ -37,11 +37,11 @@ const DISABLED_ACTION_BACKGROUND = colord(
   .toRgbString();
 
 // bg-0 and bg-1 resolve to the same Dark color. Preserve the Light design
-// binding while using Pro's existing raised surface token in Dark mode.
+// binding while Dark cards use bg-3 (Figma 87900:97324).
 export const resolvePerpsProDialogCardBackground = (
   colors: AppColors2024Variants,
   isLight: boolean | undefined,
-) => colors[isLight === false ? 'neutral-bg-2' : 'neutral-bg-1'];
+) => colors[isLight === false ? 'neutral-bg-3' : 'neutral-bg-1'];
 
 /** September dialog geometry; legacy Pro sheets keep their existing defaults. */
 export const getPerpsProDialogStyles = (
@@ -184,12 +184,22 @@ const getDialogFieldLayout = (height: number) => {
   } as const;
 };
 
-/** Dialog input fields: 46pt single-line or compact-label fields
- * (Figma 86609:344544, 86609:347557) and 56pt labeled fields
- * (Figma 86609:343152).
+/** Dialog input fields are 56pt with 8pt corners and a 14pt Bold unit
+ * (Figma 87936:196095).
  */
-export const PERPS_PRO_DIALOG_FIELD = getDialogFieldLayout(46);
-export const PERPS_PRO_DIALOG_LABELED_FIELD = getDialogFieldLayout(56);
+export const PERPS_PRO_DIALOG_FIELD = getDialogFieldLayout(56);
+export const PERPS_PRO_DIALOG_FIELD_RADIUS = 8;
+
+export const getPerpsProDialogFieldUnitStyle = (
+  colors: AppColors2024Variants,
+) =>
+  ({
+    color: colors['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
+  } as const);
 
 export const getPerpsProDialogCheckboxStyles = (
   colors: AppColors2024Variants,

@@ -89,6 +89,20 @@ export const parsePerpsTwapHistory = (
   };
 };
 
+/** Whether `fills` account for every slice the order has executed so far. */
+export const hasAllPerpsTwapFills = (
+  order: PerpsTwapRecord,
+  fills: readonly PerpsTwapFill[],
+) => {
+  const size = fills.reduce(
+    (total, fill) => total.plus(fill.sz),
+    new BigNumber(0),
+  );
+  return order.endedAt === null
+    ? size.gte(order.state.executedSz)
+    : size.eq(order.state.executedSz);
+};
+
 export const parsePerpsTwapFill = (value: unknown): PerpsTwapFill | null => {
   if (!object(value) || !integer(value.twapId) || !object(value.fill))
     return null;

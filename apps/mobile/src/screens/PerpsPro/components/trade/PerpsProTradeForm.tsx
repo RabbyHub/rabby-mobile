@@ -202,7 +202,6 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
         onBlur={controller.endAmountEntry}
         onChangeText={controller.setAmount}
         onFocus={controller.beginAmountEntry}
-        onPressIn={controller.beginAmountEntry}
         onToggleUnit={controller.toggleAmountUnit}
         ref={amountInputRef}
         unit={controller.amountUnitLabel}
@@ -232,6 +231,12 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
             }}
             showCaret={false}
             style={styles.flexItem}
+            // Locked modes stay pressable so setMarginMode can explain why.
+            textStyle={
+              controller.marginModeDisabledReason
+                ? styles.lockedMarginText
+                : undefined
+            }
           />
           <PerpsProTradeSelect
             disabled={!configurationReady}
@@ -679,6 +684,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   twapSliderDragging: { zIndex: 2 },
   doubleRow: { flexDirection: 'row', gap: 8 },
   flexItem: { flex: 1, minWidth: 0 },
+  lockedMarginText: { color: colors2024['neutral-secondary'] },
   twapOptions: { gap: 8 },
   optionsGroup: { gap: 8, marginTop: 8 },
   scaleOptions: { flexDirection: 'column-reverse', gap: 4 },

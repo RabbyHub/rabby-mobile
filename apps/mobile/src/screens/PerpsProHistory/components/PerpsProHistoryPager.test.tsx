@@ -10,6 +10,8 @@ const mockListRender = jest.fn();
 let mockTabsPosition: SharedValue<number> | null = null;
 let mockDeferRunOnJS = false;
 let mockRunOnJSQueue: Array<() => void> = [];
+let mockDeferRunOnUI = false;
+let mockRunOnUIQueue: Array<() => void> = [];
 
 jest.mock('@/hooks/useTipsPopup', () => ({
   useHideTipsPopup: () => mockHideFeeTipsPopup,
@@ -53,6 +55,15 @@ jest.mock('react-native-reanimated', () => {
           return;
         }
         callback(...args);
+      },
+    runOnUI:
+      (worklet: (...args: unknown[]) => void) =>
+      (...args: unknown[]) => {
+        if (mockDeferRunOnUI) {
+          mockRunOnUIQueue.push(() => worklet(...args));
+          return;
+        }
+        worklet(...args);
       },
     useEvent:
       (handler: (event: object) => void) => (event: { nativeEvent?: object }) =>
@@ -168,6 +179,8 @@ describe('PerpsProHistoryPager', () => {
     mockTabsPosition = null;
     mockDeferRunOnJS = false;
     mockRunOnJSQueue = [];
+    mockDeferRunOnUI = false;
+    mockRunOnUIQueue = [];
   });
 
   afterEach(() => {
@@ -295,6 +308,26 @@ describe('PerpsProHistoryPager', () => {
     expect(onChange).toHaveBeenCalledWith('trade');
   });
 
+  it('issues the Android page command only after UI owns the transition', () => {
+    useAndroidPagerEvents();
+    mockDeferRunOnUI = true;
+    const onChange = jest.fn();
+    renderPager({ onChange });
+
+    fireEvent.press(screen.getByTestId('perps-pro-history-tab-trade'));
+    expect(mockSetPage).not.toHaveBeenCalled();
+
+    mockRunOnUIQueue.shift()?.();
+    expect(mockSetPage).toHaveBeenCalledWith(1);
+
+    // ViewPager2 reports selection from inside setCurrentItem.
+    fireState('settling');
+    fireSelected(1);
+    fireScroll(1, 0);
+    fireState('idle');
+    expect(onChange).toHaveBeenCalledWith('trade');
+  });
+
   it('commits an iOS programmatic transition from native animation completion', () => {
     jest.replaceProperty(Platform, 'OS', 'ios');
     const terminalPositions: number[] = [];
@@ -319,13 +352,15 @@ describe('PerpsProHistoryPager', () => {
     renderPager({ onChange });
 
     fireEvent.press(screen.getByTestId('perps-pro-history-tab-trade'));
+    // The native command is issued once UI has configured the transition.
+    flushRunOnJSQueue();
     fireSelected(1);
     expect(mockTabsPosition?.value).toBe(1);
 
     fireEvent.press(screen.getByTestId('perps-pro-history-tab-orders'));
+    flushRunOnJSQueue();
     expect(mockSetPage.mock.calls).toEqual([[1], [0]]);
 
-    flushRunOnJSQueue();
     fireSelected(0);
     flushRunOnJSQueue();
 

@@ -158,6 +158,10 @@ jest.mock('./components/PerpsPopupGroup', () => {
   };
 });
 
+jest.mock(
+  '@/screens/PerpsPro/components/common/PerpsProKeyboardAccessory',
+  () => ({ PerpsProKeyboardAccessory: () => null }),
+);
 jest.mock('./components/PerpsAccountCard', () => ({
   PerpsAccountCard: () => null,
 }));

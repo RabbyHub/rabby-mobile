@@ -1,6 +1,9 @@
 import { apisPerps } from '@/core/apis/perps';
-import BigNumber from 'bignumber.js';
-import { parsePerpsTwapFill, mergePerpsTwapFills } from './twapReconciliation';
+import {
+  hasAllPerpsTwapFills,
+  mergePerpsTwapFills,
+  parsePerpsTwapFill,
+} from './twapReconciliation';
 import type { PerpsTwapFill, PerpsTwapRecord } from './types';
 
 /** Bounded overlapping windows; the TWAP ByTime endpoint has no documented page size. */
@@ -13,15 +16,7 @@ export const loadPerpsTwapFills = async (
   const end = order.endedAt === null ? Date.now() : order.endedAt + 999;
   let start = order.state.timestamp;
   let fills: readonly PerpsTwapFill[] = [];
-  const hasAllExecutedFills = () => {
-    const size = fills.reduce(
-      (total, fill) => total.plus(fill.sz),
-      new BigNumber(0),
-    );
-    return order.endedAt === null
-      ? size.gte(order.state.executedSz)
-      : size.eq(order.state.executedSz);
-  };
+  const hasAllExecutedFills = () => hasAllPerpsTwapFills(order, fills);
   const seen = new Set<string>();
   for (let request = 0; request < 20 && isCurrent(); request++) {
     const response = await client.getUserTwapSliceFillsByTime(user, start, end);

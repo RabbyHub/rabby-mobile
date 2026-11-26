@@ -49,6 +49,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import LinearGradient from 'react-native-linear-gradient';
 import Reanimated, { runOnUI, useSharedValue } from 'react-native-reanimated';
 
 import { PerpsProAccountState } from '../components/account/PerpsProAccountState';
@@ -64,6 +65,7 @@ import {
 } from '../components/chart/PerpsProKlineSheet';
 import { registerPerpsProKeyboardTradeScroll } from '../components/common/perpsProKeyboardSession';
 import { PerpsProEmptyState } from '../components/common/PerpsProEmptyState';
+import { getPerpsProInfoTabsGradientColors } from '../components/common/perpsProListVisual';
 import { PerpsProOverlayScrollBridge } from '../components/common/PerpsProOverlayScrollBridge';
 import { PerpsProFieldExplanationProvider } from '../components/common/PerpsProFieldExplanationProvider';
 import { triggerPerpsProLightHaptic } from '../components/common/triggerPerpsProLightHaptic';
@@ -76,6 +78,10 @@ import { PerpsProHeader } from '../components/header/PerpsProHeader';
 import { PerpsProAccountSelectorLayer } from '../components/header/PerpsProAccountSelectorLayer';
 import { usePerpsProHeaderCollapse } from '../components/header/usePerpsProHeaderCollapse';
 import { PERPS_PRO_HEADER_HEIGHT } from '../components/header/constants';
+import {
+  PerpsProInfoStickyHeaderContext,
+  type PerpsProInfoStickyHeaderContextValue,
+} from '../components/info/PerpsProInfoStickyHeader';
 import { PerpsProInfoTabs } from '../components/info/PerpsProInfoTabs';
 import {
   PERPS_PRO_INFO_TABS,
@@ -95,6 +101,8 @@ import {
   PERPS_PRO_INFO_TABS_HEIGHT,
   PERPS_PRO_INFO_SECTION_BOTTOM_PADDING,
   PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT,
+  PERPS_PRO_OPEN_ORDERS_CONTROLS_HEIGHT,
+  PERPS_PRO_POSITIONS_CONTROLS_HEIGHT,
 } from '../components/info/perpsProInfoTabsSticky';
 import {
   PerpsProMarketBarSkeleton,
@@ -170,12 +178,15 @@ type PerpsProSceneRow =
       key: 'account-summary';
       type: 'account-summary';
     }
-  | { key: 'positions-controls'; type: 'positions-controls' }
+  | {
+      key: 'positions-controls' | 'open-orders-controls';
+      tab: 'positions' | 'openOrders';
+      type: 'controls';
+    }
   | { key: 'positions-empty'; type: 'positions-empty' }
   | { key: string; position: PerpsPositionViewModel; type: 'position' }
   | { key: string; order: PerpsTwapRecord; type: 'twap' }
   | { key: 'twap-state'; type: 'twap-state' }
-  | { key: 'open-orders-controls'; type: 'open-orders-controls' }
   | { key: 'open-orders-empty'; type: 'open-orders-empty' }
   | { key: string; order: PerpsOpenOrderViewModel; type: 'open-order' };
 
@@ -238,7 +249,11 @@ export const PerpsProScene: React.FC<{
   onSwitchToSimple,
 }) => {
   const { width } = useWindowDimensions();
-  const { styles } = useTheme2024({ getStyle });
+  const { colors2024, styles } = useTheme2024({ getStyle });
+  const infoTabsLeadGradient = useMemo(
+    () => getPerpsProInfoTabsGradientColors(colors2024),
+    [colors2024],
+  );
   const { t } = useTranslation();
   const scene = usePerpsProScene();
   const activeAsset = useActiveAssetSubscription(
@@ -856,6 +871,7 @@ export const PerpsProScene: React.FC<{
   const renderScrollLeadIn = useCallback(
     (tab: PerpsProInfoTab, active: boolean) => (
       <View
+        style={styles.scrollLeadIn}
         testID={
           active
             ? 'perps-pro-scroll-lead-in'
@@ -895,7 +911,8 @@ export const PerpsProScene: React.FC<{
               : `perps-pro-trade-lead-in-spacer-${tab}`
           }
         />
-        <View
+        <LinearGradient
+          colors={infoTabsLeadGradient}
           style={styles.infoTabsSpacer}
           testID={
             active
@@ -906,16 +923,23 @@ export const PerpsProScene: React.FC<{
       </View>
     ),
     [
+      infoTabsLeadGradient,
       regionAlertLeadInStyle,
       showRegionAlert,
       styles.headerLeadInSpacer,
       styles.infoTabsSpacer,
       styles.marketLeadInSpacer,
+      styles.scrollLeadIn,
       tradeLeadInSpacerStyle,
     ],
   );
 
   const rowsByTab = useMemo<Record<PerpsProInfoTab, PerpsProSceneRow[]>>(() => {
+    const positionsControlsSpacerRow: PerpsProSceneRow = {
+      key: 'positions-controls',
+      tab: 'positions',
+      type: 'controls',
+    };
     const accountRows: PerpsProSceneRow[] = [];
     if (info.accountState === 'ready') {
       // Asset rows render inside the summary card (Figma 86609:327475).
@@ -944,15 +968,12 @@ export const PerpsProScene: React.FC<{
         ? [{ key: 'positions-empty', type: 'positions-empty' }]
         : info.positionCollectionPresentation === 'filteredEmpty'
         ? [
-            { key: 'positions-controls', type: 'positions-controls' },
+            positionsControlsSpacerRow,
             { key: 'positions-empty', type: 'positions-empty' },
           ]
         : info.positionCollectionPresentation === 'populated'
-        ? [
-            { key: 'positions-controls', type: 'positions-controls' },
-            ...positionDataRows,
-          ]
-        : [{ key: 'positions-controls', type: 'positions-controls' }];
+        ? [positionsControlsSpacerRow, ...positionDataRows]
+        : [positionsControlsSpacerRow];
 
     const openOrderDataRows: PerpsProSceneRow[] =
       info.openOrderCategory === 'twap'
@@ -967,7 +988,11 @@ export const PerpsProScene: React.FC<{
             type: 'open-order',
           }));
     const openOrderRows: PerpsProSceneRow[] = [
-      { key: 'open-orders-controls', type: 'open-orders-controls' },
+      {
+        key: 'open-orders-controls',
+        tab: 'openOrders',
+        type: 'controls',
+      },
       ...openOrderDataRows,
       ...(info.openOrderCategory === 'twap'
         ? info.twapReadiness !== 'ready'
@@ -1105,6 +1130,79 @@ export const PerpsProScene: React.FC<{
   ]);
 
   const setTradeOrderType = trade.setOrderType;
+  const showPositionsControls =
+    info.positionCollectionPresentation !== 'authoritativeEmpty';
+  const addTwap = useCallback(() => {
+    setTradeOrderType('twap');
+    runOnUI(() => {
+      'worklet';
+      interruptPerpsProInfoScrollBridge(infoScrollBridge);
+      scrollPerpsProInfoBridgeTarget(
+        infoScrollBridge,
+        infoScrollBridge.activeIndex.value,
+        0,
+      );
+    })();
+  }, [infoScrollBridge, setTradeOrderType]);
+  const {
+    openOrderCategory,
+    openOrderCommandCandidates,
+    setOpenOrderCategory,
+  } = info;
+  const cancelAllOpenOrders = useCallback(() => {
+    if (openOrderCategory !== 'twap') {
+      cancelOrders.confirmCancelAll(
+        openOrderCommandCandidates,
+        openOrderCategory,
+      );
+    }
+  }, [cancelOrders, openOrderCategory, openOrderCommandCandidates]);
+  const infoControlsPanels = useMemo(
+    () => ({
+      openOrders: (
+        <PerpsProOpenOrdersControls
+          twapCount={info.twapCount}
+          onAddTwap={addTwap}
+          basicCount={info.openOrderCounts.basic}
+          category={openOrderCategory}
+          conditionalCount={info.openOrderCounts.conditional}
+          hideOtherSymbols={info.hideOtherOpenOrderSymbols}
+          isCancelAllPending={cancelOrders.isCancelAllPending}
+          onCancelAll={cancelAllOpenOrders}
+          onSetCategory={setOpenOrderCategory}
+          onToggleHideOtherSymbols={toggleHideOtherOpenOrderSymbols}
+        />
+      ),
+      positions: showPositionsControls ? (
+        <PerpsProPositionsControls
+          actionDisabled={info.allPositionsCount === 0}
+          actionPending={closeAll.pending}
+          hideOtherSymbols={info.hideOtherPositionSymbols}
+          onCloseAll={closeAll.requestCloseAll}
+          onToggleHideOtherSymbols={toggleHideOtherPositionSymbols}
+        />
+      ) : null,
+    }),
+    [
+      addTwap,
+      cancelAllOpenOrders,
+      cancelOrders.isCancelAllPending,
+      closeAll.pending,
+      closeAll.requestCloseAll,
+      info.allPositionsCount,
+      info.hideOtherOpenOrderSymbols,
+      info.hideOtherPositionSymbols,
+      info.openOrderCounts.basic,
+      info.openOrderCounts.conditional,
+      info.twapCount,
+      openOrderCategory,
+      setOpenOrderCategory,
+      showPositionsControls,
+      toggleHideOtherOpenOrderSymbols,
+      toggleHideOtherPositionSymbols,
+    ],
+  );
+
   const renderItem = useCallback<ListRenderItem<PerpsProSceneRow>>(
     ({ item }) => {
       switch (item.type) {
@@ -1125,15 +1223,18 @@ export const PerpsProScene: React.FC<{
               onWithdraw={openWithdraw}
             />
           );
-        case 'positions-controls':
+        case 'controls':
+          // A sticky row of its own page: it swipes with the page and stops
+          // under the tabs (see PerpsProInfoStickyHeader).
           return (
-            <PerpsProPositionsControls
-              actionDisabled={info.allPositionsCount === 0}
-              actionPending={closeAll.pending}
-              hideOtherSymbols={info.hideOtherPositionSymbols}
-              onCloseAll={closeAll.requestCloseAll}
-              onToggleHideOtherSymbols={toggleHideOtherPositionSymbols}
-            />
+            <View
+              style={
+                item.tab === 'positions'
+                  ? styles.positionsControlsRow
+                  : styles.openOrdersControlsRow
+              }>
+              {infoControlsPanels[item.tab]}
+            </View>
           );
         case 'positions-empty':
           return (
@@ -1182,38 +1283,6 @@ export const PerpsProScene: React.FC<{
               />
             </Pressable>
           );
-        case 'open-orders-controls':
-          return (
-            <PerpsProOpenOrdersControls
-              twapCount={info.twapCount}
-              onAddTwap={() => {
-                setTradeOrderType('twap');
-                runOnUI(() => {
-                  'worklet';
-                  interruptPerpsProInfoScrollBridge(infoScrollBridge);
-                  scrollPerpsProInfoBridgeTarget(
-                    infoScrollBridge,
-                    infoScrollBridge.activeIndex.value,
-                    0,
-                  );
-                })();
-              }}
-              basicCount={info.openOrderCounts.basic}
-              category={info.openOrderCategory}
-              conditionalCount={info.openOrderCounts.conditional}
-              hideOtherSymbols={info.hideOtherOpenOrderSymbols}
-              isCancelAllPending={cancelOrders.isCancelAllPending}
-              onCancelAll={() =>
-                info.openOrderCategory !== 'twap' &&
-                cancelOrders.confirmCancelAll(
-                  info.openOrderCommandCandidates,
-                  info.openOrderCategory,
-                )
-              }
-              onSetCategory={info.setOpenOrderCategory}
-              onToggleHideOtherSymbols={toggleHideOtherOpenOrderSymbols}
-            />
-          );
         case 'open-orders-empty':
           return (
             <PerpsProEmptyState
@@ -1251,11 +1320,10 @@ export const PerpsProScene: React.FC<{
       twapDetail,
       requestedInfoTab,
       scene.routeFocused,
-      setTradeOrderType,
+      infoControlsPanels,
+      styles.openOrdersControlsRow,
+      styles.positionsControlsRow,
       trade.amountUnit,
-      infoScrollBridge,
-      closeAll.pending,
-      closeAll.requestCloseAll,
       info,
       manageMargin.open,
       isOpenOrderEditUnavailable,
@@ -1268,8 +1336,6 @@ export const PerpsProScene: React.FC<{
       openOpenOrderEdit,
       selectCardMarket,
       t,
-      toggleHideOtherOpenOrderSymbols,
-      toggleHideOtherPositionSymbols,
       transfer.open,
     ],
   );
@@ -1460,39 +1526,66 @@ export const PerpsProScene: React.FC<{
       ? androidScenePresentation.infoTabsAnimatedStyle
       : { transform: [{ translateY: infoTabsTranslateY }] };
 
+  const infoStickyHeaderIndices = useMemo(
+    () => ({
+      // 0 is each list's lead-in header; the controls are the first row.
+      openOrders: rowsByTab.openOrders[0]?.type === 'controls' ? [1] : [],
+      positions: rowsByTab.positions[0]?.type === 'controls' ? [1] : [],
+    }),
+    [rowsByTab],
+  );
+  const androidInfoTabsTranslateY = androidScenePresentation.infoTabsTranslateY;
+  const infoStickyHeaderContext = useMemo<PerpsProInfoStickyHeaderContextValue>(
+    () =>
+      Platform.OS === 'android'
+        ? {
+            platform: 'android',
+            scrollBridge: infoScrollBridge,
+            tabsTop: androidInfoTabsTranslateY,
+          }
+        : { platform: 'ios', tabsTop: infoTabsTranslateY },
+    [androidInfoTabsTranslateY, infoScrollBridge, infoTabsTranslateY],
+  );
+
   return (
     <PerpsProFieldExplanationProvider>
       <GestureDetector gesture={sceneScrollGesture}>
         <View collapsable={false} style={styles.container}>
           {settledInfoTab ? (
-            <PerpsProInfoPager
-              activeTab={settledInfoTab}
-              authorizeNativePageGestures={Platform.OS === 'android'}
-              contentContainerStyle={scrollContentStyles}
-              data={rowsByTab}
-              getActiveScrollOffset={headerCollapse.getScrollOffset}
-              initialRequestId={infoTabRequestIdRef.current}
-              keepAllTabsMounted={keepAllInfoTabListsMounted}
-              indicatorPosition={infoTabIndicatorPosition}
-              nativeVerticalScrollEnabled={Platform.OS !== 'android'}
-              offscreenPageLimit={infoPagerOffscreenPageLimit}
-              onActivateOffset={headerCollapse.syncScrollOffset}
-              onActiveScroll={
-                Platform.OS === 'android' ? undefined : headerCollapse.onScroll
-              }
-              onLayout={updateScrollViewportHeight}
-              onPageDragStart={beginInfoPageDrag}
-              onPagePreview={setPreviewInfoTab}
-              onPageRequestFinished={finishInfoTabRequest}
-              onPageSelected={commitInfoTab}
-              ref={infoPagerRef}
-              renderItem={renderItem}
-              renderListHeader={renderScrollLeadIn}
-              requestedTab={requestedInfoTab}
-              scrollBridge={infoScrollBridge}
-              stickyOffset={infoStickyOffset}
-              style={styles.scroll}
-            />
+            <PerpsProInfoStickyHeaderContext.Provider
+              value={infoStickyHeaderContext}>
+              <PerpsProInfoPager
+                activeTab={settledInfoTab}
+                authorizeNativePageGestures={Platform.OS === 'android'}
+                contentContainerStyle={scrollContentStyles}
+                data={rowsByTab}
+                getActiveScrollOffset={headerCollapse.getScrollOffset}
+                initialRequestId={infoTabRequestIdRef.current}
+                keepAllTabsMounted={keepAllInfoTabListsMounted}
+                indicatorPosition={infoTabIndicatorPosition}
+                nativeVerticalScrollEnabled={Platform.OS !== 'android'}
+                offscreenPageLimit={infoPagerOffscreenPageLimit}
+                onActivateOffset={headerCollapse.syncScrollOffset}
+                onActiveScroll={
+                  Platform.OS === 'android'
+                    ? undefined
+                    : headerCollapse.onScroll
+                }
+                onLayout={updateScrollViewportHeight}
+                onPageDragStart={beginInfoPageDrag}
+                onPagePreview={setPreviewInfoTab}
+                onPageRequestFinished={finishInfoTabRequest}
+                onPageSelected={commitInfoTab}
+                ref={infoPagerRef}
+                renderItem={renderItem}
+                renderListHeader={renderScrollLeadIn}
+                requestedTab={requestedInfoTab}
+                scrollBridge={infoScrollBridge}
+                stickyHeaderIndices={infoStickyHeaderIndices}
+                stickyOffset={infoStickyOffset}
+                style={styles.scroll}
+              />
+            </PerpsProInfoStickyHeaderContext.Provider>
           ) : null}
           <SceneOverlayView
             style={[styles.tradeOverlay, tradeOverlayMotionStyle]}
@@ -1843,6 +1936,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     zIndex: 1,
   },
   infoTabsSpacer: { height: PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT },
+  // Opaque bg-0, as the list, so stuck controls cover the cards below.
+  positionsControlsRow: {
+    backgroundColor: colors2024['neutral-bg-0'],
+    height: PERPS_PRO_POSITIONS_CONTROLS_HEIGHT,
+    overflow: 'hidden',
+  },
+  openOrdersControlsRow: {
+    backgroundColor: colors2024['neutral-bg-0'],
+    height: PERPS_PRO_OPEN_ORDERS_CONTROLS_HEIGHT,
+    overflow: 'hidden',
+  },
   scroll: {
     bottom: 0,
     left: 0,
@@ -1850,10 +1954,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     right: 0,
     top: 0,
   },
+  // The info list sits on bg-0 (Figma 86609:327462); the lead-in under the
+  // overlays stays bg-1.
   scrollContent: {
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-0'],
     flexGrow: 1,
   },
+  scrollLeadIn: { backgroundColor: colors2024['neutral-bg-1'] },
   headerLeadInSpacer: { height: PERPS_PRO_HEADER_HEIGHT },
   marketLeadInSpacer: { height: PERPS_PRO_MARKET_BAR_HEIGHT },
   columns: {

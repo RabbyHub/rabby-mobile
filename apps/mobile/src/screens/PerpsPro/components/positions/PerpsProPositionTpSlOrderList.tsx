@@ -5,7 +5,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import BigNumber from 'bignumber.js';
 import React, { useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, View, type StyleProp, type TextStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
   PERPS_PRO_DIALOG_TOKENS,
@@ -168,7 +168,8 @@ PerpsProPositionTpSlOrderList.displayName = 'PerpsProPositionTpSlOrderList';
 export const PerpsProPositionTpSlAddButton: React.FC<{
   pending: boolean;
   onAdd: () => void;
-}> = ({ pending, onAdd }) => {
+  textStyle?: StyleProp<TextStyle>;
+}> = ({ pending, onAdd, textStyle }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   return (
@@ -183,7 +184,7 @@ export const PerpsProPositionTpSlAddButton: React.FC<{
         height={16}
         width={16}
       />
-      <Text style={styles.addButtonText}>
+      <Text style={[styles.addButtonText, textStyle]}>
         {t('page.perps.pro.positionTpsl.addButton')}
       </Text>
     </Pressable>
@@ -475,6 +476,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
+    fontWeight: '500',
     lineHeight: 16,
   },
   orderMetrics: {
@@ -482,7 +484,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: ORDER_METRIC_GAP,
     marginTop: 8,
   },
-  orderMetric: { height: 36, minWidth: 0 },
+  // Figma 86609:326067: 12/500 labels, 14/700 values 6pt below.
+  orderMetric: { height: 40, minWidth: 0 },
   orderMetricRight: {
     alignItems: 'flex-end',
     // Keep right-anchored text in Yoga's natural-width measurement mode.
@@ -503,37 +506,38 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     position: 'absolute',
     right: 0,
     textAlign: 'right',
-    top: 20,
+    top: 22,
   },
   orderMetricLabel: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: ORDER_METRIC_LABEL_FONT_SIZE,
+    fontWeight: '500',
     lineHeight: 16,
   },
   orderMetricValue: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
-    marginTop: 4,
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
+    marginTop: 6,
   },
   positiveMetricValue: {
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
-    marginTop: 4,
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
+    marginTop: 6,
   },
   negativeMetricValue: {
     color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
-    marginTop: 4,
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
+    marginTop: 6,
   },
   takeProfitValue: {
     flexShrink: 1,
@@ -554,11 +558,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
   },
   halfAction: { flex: 1 },
-  orderActions: { flexDirection: 'row', gap: 12, marginTop: 8 },
+  orderActions: { flexDirection: 'row', gap: 12, marginTop: 16 },
   orderAction: {
     alignItems: 'center',
-    backgroundColor:
-      colors2024[isLight === false ? 'neutral-bg-5' : 'neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: 6,
     borderCurve: 'continuous',
     height: 32,

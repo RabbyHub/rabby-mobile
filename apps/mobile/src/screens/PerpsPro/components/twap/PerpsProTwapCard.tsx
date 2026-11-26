@@ -383,7 +383,8 @@ const PerpsProTwapElapsed = ({
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
     borderRadius: 12,
-    backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-2'],
+    borderCurve: 'continuous',
+    backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-3'],
     padding: 12,
     marginHorizontal: 12,
     marginBottom: 12,
@@ -400,6 +401,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 18,
     height: 18,
     borderRadius: 9,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-2'],
     alignItems: 'center',
     justifyContent: 'center',
@@ -428,6 +430,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     minWidth: 16,
     paddingHorizontal: 4,
     borderRadius: 4,
+    borderCurve: 'continuous',
     overflow: 'hidden',
     ...getPerpsProSolidSideTagTextStyle(colors2024),
     textAlign: 'center',
@@ -441,6 +444,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 4,
     paddingVertical: 1,
     borderRadius: 4,
+    borderCurve: 'continuous',
     overflow: 'hidden',
   },
   progressGroup: { alignItems: 'center', gap: 4 },
@@ -466,6 +470,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   progress: {
     borderRadius: 1,
+    borderCurve: 'continuous',
     height: 2,
     width: 32,
     backgroundColor: colors2024['neutral-line'],
@@ -473,6 +478,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   progressFilled: {
     borderRadius: 1,
+    borderCurve: 'continuous',
     height: 2,
     backgroundColor: colors2024['neutral-secondary'],
   },
@@ -505,6 +511,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     height: 32,
     borderRadius: 6,
+    borderCurve: 'continuous',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-5'],

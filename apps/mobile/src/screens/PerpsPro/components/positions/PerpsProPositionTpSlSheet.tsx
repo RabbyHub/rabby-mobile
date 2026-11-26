@@ -61,6 +61,11 @@ import type { PerpsProTradeAmountUnit } from '../../model/trade';
 import { usePerpsProPositionMark } from '../../scene/usePerpsProPositionMark';
 import { PerpsProPositionTpSlForm } from './PerpsProPositionTpSlForm';
 import {
+  TPSL_ACTION_FONT_SIZE,
+  TPSL_TAB_FONT_SIZE,
+} from './perpsProPositionTpSlTabRowFit';
+import { usePerpsProPositionTpSlTabRowFit } from './usePerpsProPositionTpSlTabRowFit';
+import {
   PerpsProPositionTpSlHeader,
   PerpsProPositionTpSlPageHeader,
 } from './PerpsProPositionTpSlHeader';
@@ -83,6 +88,10 @@ import {
 type PartialPage = 'add' | 'list' | 'modify';
 type KeyboardRestoreRequest = { pageKey: string };
 const LAYOUT_TOLERANCE = 1;
+// Non-text width of the tab row: two tabs (12 padding each side), the add
+// button (6 padding each side, 16 icon, 4 gap), Cancel All (8 padding each
+// side), the 4 gap between the actions and an 8 minimum gap to the tabs.
+const TPSL_TAB_ROW_CHROME_WIDTH = 2 * 24 + 32 + 16 + 4 + 8;
 
 export const PerpsProPositionTpSlSheet: React.FC<{
   amountUnit: PerpsProTradeAmountUnit;
@@ -617,36 +626,61 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       if (restoreLayoutReady) setRestoring(false);
     }, [restoreLayoutReady]);
 
+    const partialTabLabel = t('page.perps.pro.positions.tpsl');
+    const positionTabLabel = t('page.perps.pro.positions.positionTpsl');
+    const addLabel = t('page.perps.pro.positionTpsl.addButton');
+    const cancelAllLabel = t('page.perps.pro.openOrders.cancelAll');
+    const tabRowFit = usePerpsProPositionTpSlTabRowFit({
+      actionLabels: [addLabel, cancelAllLabel],
+      actionTextStyle: styles.cancelAllText,
+      chromeWidth: TPSL_TAB_ROW_CHROME_WIDTH,
+      enabled: isPartialList,
+      tabLabels: [partialTabLabel, positionTabLabel],
+      tabTextStyle: styles.activeTabText,
+    });
+    const { actionFontSize, tabFontSize, wrapped } = tabRowFit.fit;
+    const actionFontStyle =
+      actionFontSize === TPSL_ACTION_FONT_SIZE
+        ? undefined
+        : { fontSize: actionFontSize };
     const tabs = (
-      <View style={styles.tabRow}>
+      <View
+        onLayout={tabRowFit.onRowLayout}
+        style={[styles.tabRow, wrapped && styles.tabRowWrapped]}
+        testID="perps-pro-position-tpsl-tab-row">
+        {tabRowFit.probes}
         <View style={styles.tabs} testID="perps-pro-position-tpsl-tabs">
           <TabButton
             active={tab === 'partial'}
-            label={t('page.perps.pro.positions.tpsl')}
+            fontSize={tabFontSize}
+            label={partialTabLabel}
             onPress={() => switchTab('partial')}
           />
           <TabButton
             active={tab === 'position'}
-            label={t('page.perps.pro.positions.positionTpsl')}
+            fontSize={tabFontSize}
+            label={positionTabLabel}
             onPress={() => switchTab('position')}
           />
         </View>
         {isPartialList ? (
-          <View style={styles.listActions}>
+          <View
+            style={[styles.listActions, wrapped && styles.listActionsWrapped]}>
             <PerpsProPositionTpSlAddButton
               pending={interactionLocked}
               onAdd={() => {
                 if (!interactionLocked) setPartialPage('add');
               }}
+              textStyle={actionFontStyle}
             />
             <PerpsProPositionTpSlCancelAction
               disabled={interactionLocked || cancelingOids.length > 0}
-              label={t('page.perps.pro.openOrders.cancelAll')}
+              label={cancelAllLabel}
               loading={cancelAllOids !== null}
               remainingCount={remainingCancelCount}
               onPress={() => onCancelAllOrders(partialOrders)}
               style={styles.cancelAllButton}
-              textStyle={styles.cancelAllText}
+              textStyle={[styles.cancelAllText, actionFontStyle]}
             />
           </View>
         ) : null}
@@ -961,9 +995,10 @@ const RestoredSheetObserver = ({
 
 const TabButton: React.FC<{
   active: boolean;
+  fontSize: number;
   label: string;
   onPress: () => void;
-}> = ({ active, label, onPress }) => {
+}> = ({ active, fontSize, label, onPress }) => {
   const { styles } = useTheme2024({ getStyle });
   return (
     <Pressable
@@ -971,7 +1006,11 @@ const TabButton: React.FC<{
       accessibilityState={{ selected: active }}
       onPress={onPress}
       style={[styles.tab, active && styles.activeTab]}>
-      <Text style={active ? styles.activeTabText : styles.tabText}>
+      <Text
+        style={[
+          active ? styles.activeTabText : styles.tabText,
+          fontSize !== TPSL_TAB_FONT_SIZE && { fontSize },
+        ]}>
         {label}
       </Text>
     </Pressable>
@@ -1001,7 +1040,17 @@ const getStyle = createGetStyles2024(
         justifyContent: 'space-between',
         marginBottom: 8,
       },
+      // Actions drop under the tabs, still right-aligned, only when the
+      // minimum font size cannot fit the row.
+      tabRowWrapped: {
+        flexWrap: 'wrap',
+        height: 'auto',
+        minHeight: 40,
+        paddingVertical: 4,
+        rowGap: 8,
+      },
       listActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+      listActionsWrapped: { marginLeft: 'auto' },
       cancelAllButton: {
         alignItems: 'center',
         justifyContent: 'center',
@@ -1030,7 +1079,7 @@ const getStyle = createGetStyles2024(
       activeTab: {
         backgroundColor:
           isLight === false
-            ? colors2024['neutral-title-1']
+            ? colors2024['neutral-bg-2']
             : ThemeColors2024.dark['neutral-bg-0'],
         borderRadius: 6,
         borderCurve: 'continuous',
@@ -1043,10 +1092,7 @@ const getStyle = createGetStyles2024(
         lineHeight: 18,
       },
       activeTabText: {
-        color:
-          isLight === false
-            ? colors2024['neutral-bg-0']
-            : ThemeColors2024.dark['neutral-title-1'],
+        color: ThemeColors2024.dark['neutral-title-1'],
         fontFamily: 'SF Pro Rounded',
         fontSize: 14,
         fontWeight: '700',

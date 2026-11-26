@@ -25,7 +25,12 @@ type AndroidPresentation = {
 };
 
 /** Local UI ownership only. A late blur may never clear another input's hint. */
+const DEFAULT_KEYBOARD_OWNER = 'default';
+
 export const createPerpsProKeyboardSession = () => {
+  // Each focused route mounts its own accessory owner; a stacked route's late
+  // blur must not disable the owner that is now focused.
+  const enabledOwners = new Set<string>();
   let enabled = false;
   let focused: FocusedInput | null = null;
   let pendingFocus: FocusedInput | null = null;
@@ -81,8 +86,14 @@ export const createPerpsProKeyboardSession = () => {
         listeners.delete(listener);
       };
     },
-    setEnabled: (next: boolean) => {
-      enabled = next;
+    setEnabled: (next: boolean, owner: string = DEFAULT_KEYBOARD_OWNER) => {
+      if (next) {
+        enabledOwners.add(owner);
+      } else if (!enabledOwners.delete(owner) && enabledOwners.size > 0) {
+        // An already inactive owner never owns another route's current input.
+        return;
+      }
+      enabled = enabledOwners.size > 0;
       if (!next) {
         const previous = focused ?? pendingFocus;
         const changed = focused != null || presentation != null;

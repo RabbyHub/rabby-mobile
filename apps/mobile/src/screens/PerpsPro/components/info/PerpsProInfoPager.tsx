@@ -38,6 +38,10 @@ import { snapPerpsProTabIndicator } from '../common/PerpsProTabIndicator';
 import { usePerpsProPagerPreviewSession } from '../common/usePerpsProPagerPreviewSession';
 
 import { PERPS_PRO_INFO_TABS } from './perpsProInfoTabOrder';
+import {
+  PerpsProInfoPageTabContext,
+  PerpsProInfoStickyHeader,
+} from './PerpsProInfoStickyHeader';
 import { getPerpsProInfoPagerPreviewPosition } from './perpsProInfoPagerPreview';
 import {
   getPerpsProInfoScrollTarget,
@@ -138,6 +142,8 @@ type PerpsProInfoPagerProps<Row> = {
   renderListHeader: (tab: PerpsProInfoTab, active: boolean) => ReactElement;
   requestedTab: PerpsProInfoTab | null;
   scrollBridge?: PerpsProInfoScrollBridgeController;
+  /** FlatList sticky indices per page (0 is the list header). */
+  stickyHeaderIndices?: Partial<Record<PerpsProInfoTab, number[]>>;
   stickyOffset: number;
   style?: StyleProp<ViewStyle>;
 };
@@ -184,6 +190,7 @@ const PerpsProInfoPagerInner = <Row,>(
     renderListHeader,
     requestedTab,
     scrollBridge,
+    stickyHeaderIndices,
     stickyOffset,
     style,
   }: PerpsProInfoPagerProps<Row>,
@@ -246,6 +253,12 @@ const PerpsProInfoPagerInner = <Row,>(
   const programmaticSelectionTargetPosition = useSharedValue(-1);
   const previewGestureSessionId = useSharedValue(0);
   const previewPagePosition = useSharedValue(selectedIndexRef.current);
+  // UIPageViewController reports a swipe's selection only after its animation.
+  // A drag that starts before then still owes the older swipe one selection.
+  const iosSupersededSelections = useSharedValue(0);
+  const nativePageScrollState = useSharedValue<
+    'idle' | 'dragging' | 'settling'
+  >('idle');
   const activeTabRef = useRef(activeTab);
 
   useEffect(() => {
@@ -605,6 +618,37 @@ const PerpsProInfoPagerInner = <Row,>(
     ],
   );
 
+  const acceptSupersededIosSelection = useCallback(
+    (position: number) => {
+      'worklet';
+      // Commit the older swipe's page, but leave the live drag's indicator,
+      // preview and transition epoch with the drag that now owns them.
+      const changed = position !== settledPagePosition.value;
+      settledPagePosition.value = position;
+      visualSettledPagePosition.value = position;
+      if (scrollBridge) {
+        scrollBridge.activeIndex.value = position;
+        scrollBridge.epoch.value += 1;
+      }
+      runOnJS(commitNativePageSelection)(
+        position,
+        pageTransitionEpoch.value,
+        0,
+        changed,
+        true,
+        latestRequestId.value,
+      );
+    },
+    [
+      commitNativePageSelection,
+      latestRequestId,
+      pageTransitionEpoch,
+      scrollBridge,
+      settledPagePosition,
+      visualSettledPagePosition,
+    ],
+  );
+
   const startProgrammaticPage = useCallback(
     (request: PerpsProInfoPageRequest) => {
       'worklet';
@@ -614,6 +658,7 @@ const PerpsProInfoPagerInner = <Row,>(
         isNativeGestureVisualActive.value &&
         selectedTransitionEpoch.value !== pageTransitionEpoch.value;
       isPreviewGestureActive.value = false;
+      iosSupersededSelections.value = 0;
       closeNativeGestureVisual();
       runOnJS(finishPreviewSession)(previewGestureSessionId.value, true);
 
@@ -676,6 +721,7 @@ const PerpsProInfoPagerInner = <Row,>(
       finishPreviewSession,
       idleTransitionEpoch,
       indicatorPosition,
+      iosSupersededSelections,
       isIndicatorScrollActive,
       isNativeGestureVisualActive,
       isPreviewGestureActive,
@@ -873,6 +919,12 @@ const PerpsProInfoPagerInner = <Row,>(
         return;
       }
 
+      if (!authorizeNativePageGestures && iosSupersededSelections.value > 0) {
+        iosSupersededSelections.value -= 1;
+        acceptSupersededIosSelection(position);
+        return;
+      }
+
       const authorized =
         position === settledPagePosition.value ||
         !authorizeNativePageGestures ||
@@ -973,6 +1025,8 @@ const PerpsProInfoPagerInner = <Row,>(
     useEvent<PageScrollStateChangedNativeEvent>(
       event => {
         'worklet';
+        const previousPageScrollState = nativePageScrollState.value;
+        nativePageScrollState.value = event.pageScrollState;
         if (!isPagerLaidOut.value) {
           return;
         }
@@ -986,14 +1040,42 @@ const PerpsProInfoPagerInner = <Row,>(
           if (authorizeNativePageGestures && touchSessionId <= 0) {
             return;
           }
+          // Android can repeat dragging for one touch session. UIKit begins
+          // dragging once per drag and has no session id, so never skip it.
           if (
+            authorizeNativePageGestures &&
             isPreviewGestureActive.value &&
             nativeGestureVisualTouchSessionId.value === touchSessionId
           ) {
             return;
           }
+          if (
+            !authorizeNativePageGestures &&
+            isPreviewGestureActive.value &&
+            selectedTransitionEpoch.value !== pageTransitionEpoch.value
+          ) {
+            iosSupersededSelections.value += 1;
+          }
           pendingPageRequest.value = null;
           beginNativeGestureVisualTracking(touchSessionId);
+          // A touch that lands while a page is still settling is caught by the
+          // native pager on ACTION_DOWN. It disallows parent interception, so
+          // RNGH cancels the scene pan before it can classify the touch. That
+          // catch continues a page swipe; own it as horizontal instead of
+          // reverting the page it selects.
+          if (
+            authorizeNativePageGestures &&
+            scrollBridge &&
+            previousPageScrollState === 'settling' &&
+            scrollBridge.touchIntent.value !==
+              PERPS_PRO_INFO_TOUCH_INTENT.vertical &&
+            scrollBridge.touchIntent.value !==
+              PERPS_PRO_INFO_TOUCH_INTENT.horizontal
+          ) {
+            scrollBridge.touchIntent.value =
+              PERPS_PRO_INFO_TOUCH_INTENT.horizontal;
+            scrollBridge.horizontalTouchSessionId.value = touchSessionId;
+          }
           if (
             authorizeNativePageGestures &&
             !isPerpsProInfoHorizontalTouchAuthorized(
@@ -1007,6 +1089,8 @@ const PerpsProInfoPagerInner = <Row,>(
           return;
         }
         if (event.pageScrollState === 'idle') {
+          // Idle ends every transition; UIKit cancels any unfinished swipe.
+          iosSupersededSelections.value = 0;
           const transitionEpoch = pageTransitionEpoch.value;
           idleTransitionEpoch.value = transitionEpoch;
           const selectionSeen =
@@ -1216,6 +1300,8 @@ const PerpsProInfoPagerInner = <Row,>(
       testID="perps-pro-info-pager">
       {PERPS_PRO_INFO_TABS.map(tab => {
         const active = tab === activeTab;
+        const pageStickyHeaderIndices = stickyHeaderIndices?.[tab];
+        const hasStickyHeader = !!pageStickyHeaderIndices?.length;
         return (
           <View
             accessibilityElementsHidden={!active}
@@ -1226,45 +1312,57 @@ const PerpsProInfoPagerInner = <Row,>(
             style={styles.page}
             testID={`perps-pro-info-page-${tab}`}>
             {preparedTabs.has(tab) ? (
-              <Animated.FlatList
-                ListHeaderComponent={renderListHeader(tab, active)}
-                contentContainerStyle={contentContainerStyle[tab]}
-                data={data[tab] as never}
-                initialNumToRender={6}
-                keyboardShouldPersistTaps="handled"
-                keyExtractor={(item, index) =>
-                  String((item as { key?: string }).key ?? index)
-                }
-                onContentSizeChange={(_width, height) =>
-                  recordContentHeight(tab, height)
-                }
-                onLayout={event => recordViewportHeight(tab, event, active)}
-                onMomentumScrollEnd={event => recordScrollEnd(tab, event)}
-                onScroll={active ? onActiveScroll : undefined}
-                onScrollBeginDrag={
-                  active && nativeVerticalScrollEnabled && scrollBridge
-                    ? () => interruptPerpsProInfoScrollBridge(scrollBridge)
-                    : undefined
-                }
-                onScrollEndDrag={event => recordScrollEnd(tab, event)}
-                ref={list => {
-                  listRefs.current[tab] =
-                    list as unknown as PerpsProInfoListHandle;
-                  if (scrollBridge) {
-                    getPerpsProInfoScrollTarget(scrollBridge, tab)?.ref(
-                      list as never,
-                    );
+              <PerpsProInfoPageTabContext.Provider value={tab}>
+                <Animated.FlatList
+                  ListHeaderComponent={renderListHeader(tab, active)}
+                  StickyHeaderComponent={
+                    hasStickyHeader
+                      ? (PerpsProInfoStickyHeader as never)
+                      : undefined
                   }
-                  applyPendingActiveCorrection(tab);
-                }}
-                renderItem={renderItem}
-                scrollEnabled={active && nativeVerticalScrollEnabled}
-                scrollEventThrottle={16}
-                scrollsToTop={active}
-                showsVerticalScrollIndicator={false}
-                style={styles.list}
-                testID={active ? 'perps-pro-scroll' : `perps-pro-scroll-${tab}`}
-              />
+                  stickyHeaderIndices={
+                    hasStickyHeader ? pageStickyHeaderIndices : undefined
+                  }
+                  contentContainerStyle={contentContainerStyle[tab]}
+                  data={data[tab] as never}
+                  initialNumToRender={6}
+                  keyboardShouldPersistTaps="handled"
+                  keyExtractor={(item, index) =>
+                    String((item as { key?: string }).key ?? index)
+                  }
+                  onContentSizeChange={(_width, height) =>
+                    recordContentHeight(tab, height)
+                  }
+                  onLayout={event => recordViewportHeight(tab, event, active)}
+                  onMomentumScrollEnd={event => recordScrollEnd(tab, event)}
+                  onScroll={active ? onActiveScroll : undefined}
+                  onScrollBeginDrag={
+                    active && nativeVerticalScrollEnabled && scrollBridge
+                      ? () => interruptPerpsProInfoScrollBridge(scrollBridge)
+                      : undefined
+                  }
+                  onScrollEndDrag={event => recordScrollEnd(tab, event)}
+                  ref={list => {
+                    listRefs.current[tab] =
+                      list as unknown as PerpsProInfoListHandle;
+                    if (scrollBridge) {
+                      getPerpsProInfoScrollTarget(scrollBridge, tab)?.ref(
+                        list as never,
+                      );
+                    }
+                    applyPendingActiveCorrection(tab);
+                  }}
+                  renderItem={renderItem}
+                  scrollEnabled={active && nativeVerticalScrollEnabled}
+                  scrollEventThrottle={16}
+                  scrollsToTop={active}
+                  showsVerticalScrollIndicator={false}
+                  style={styles.list}
+                  testID={
+                    active ? 'perps-pro-scroll' : `perps-pro-scroll-${tab}`
+                  }
+                />
+              </PerpsProInfoPageTabContext.Provider>
             ) : null}
           </View>
         );

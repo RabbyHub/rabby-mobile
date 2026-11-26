@@ -79,8 +79,9 @@ describe('PerpsProInfoControls', () => {
     expect(
       StyleSheet.flatten(screen.getByRole('button').props.style),
     ).toMatchObject({
+      backgroundColor: 'neutral-bg-5',
       borderRadius: 6,
-      height: 26,
+      height: 24,
       minWidth: 64,
       paddingHorizontal: 8,
     });

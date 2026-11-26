@@ -11,7 +11,9 @@ import {
   sanitizePerpsProPriceInput,
 } from '../../model/trade';
 import {
+  getPerpsProDialogFieldUnitStyle,
   PERPS_PRO_DIALOG_FIELD,
+  PERPS_PRO_DIALOG_FIELD_RADIUS,
   resolvePerpsProDialogFieldBackground,
 } from '../common/perpsProDialogVisual';
 import { resolvePerpsProFittedFontSize } from '../common/perpsProFitFontSize';
@@ -240,7 +242,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   field: {
     alignItems: 'center',
     backgroundColor: resolvePerpsProDialogFieldBackground(colors2024, isLight),
-    borderRadius: 6,
+    borderRadius: PERPS_PRO_DIALOG_FIELD_RADIUS,
     borderCurve: 'continuous',
     borderColor: 'transparent',
     borderWidth: 1,
@@ -280,7 +282,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
     position: 'absolute',
     right: 0,
-    // A lone 18pt line centered in the 46pt field (Figma 86609:305215).
+    // A lone 18pt line centered in the field (Figma 87936:196133).
     top: (PERPS_PRO_DIALOG_FIELD.height - 18) / 2,
   },
   formattedValue: {
@@ -329,11 +331,5 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     height: PERPS_PRO_DIALOG_FIELD.height,
     justifyContent: 'flex-end',
   },
-  unit: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
-  },
+  unit: getPerpsProDialogFieldUnitStyle(colors2024),
 }));

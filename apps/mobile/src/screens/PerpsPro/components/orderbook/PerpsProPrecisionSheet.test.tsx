@@ -133,7 +133,7 @@ describe.each(['light', 'dark'] as const)(
         screen.getByTestId('perps-pro-precision-5-null').props.style,
       );
       expect(unselected.backgroundColor).toBe(
-        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
+        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-3'],
       );
       expect(unselected.backgroundColor).not.toBe(
         StyleSheet.flatten(sheet.props.backgroundStyle).backgroundColor,
