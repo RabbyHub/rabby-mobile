@@ -10,7 +10,6 @@ import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Animated,
-  Dimensions,
   ImageBackground,
   Platform,
   Pressable,
@@ -55,7 +54,6 @@ import {
 export type { RelatedDeFiType, TokenFromAddressItem } from './types';
 
 const isAndroid = Platform.OS === 'android';
-const ScreenWidth = Dimensions.get('window').width;
 
 const TokenDetailContent = () => {
   const route =
@@ -498,8 +496,8 @@ const getStyle = createGetStyles2024(ctx => {
     topWrapper: {
       position: 'absolute',
       top: 0,
+      left: 0,
       right: 0,
-      width: ScreenWidth,
       overflow: 'hidden',
     },
     balanceOverviewContainer: {
@@ -528,6 +526,7 @@ const getStyle = createGetStyles2024(ctx => {
       paddingHorizontal: 12,
       borderRadius: 16,
       borderBottomRightRadius: 2,
+      borderCurve: 'continuous',
     },
     marketDataBarContent: {
       height: 48,
@@ -538,6 +537,7 @@ const getStyle = createGetStyles2024(ctx => {
       backgroundColor: colors2024['neutral-bg-1'],
       borderRadius: 16,
       borderBottomRightRadius: 2,
+      borderCurve: 'continuous',
     },
     upShadow: {
       ...Platform.select({
@@ -598,6 +598,7 @@ const getStyle = createGetStyles2024(ctx => {
       width: 14,
       height: 14,
       borderRadius: 999,
+      borderCurve: 'continuous',
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -605,14 +606,14 @@ const getStyle = createGetStyles2024(ctx => {
       color: colors2024['neutral-title-1'],
       fontSize: 14,
       lineHeight: 18,
-      fontWeight: '900',
+      fontWeight: '800',
       fontFamily: 'SF Pro Rounded',
     },
     floatPriceChange: {
       color: colors2024['neutral-title-1'],
       fontSize: 14,
       lineHeight: 18,
-      fontWeight: '900',
+      fontWeight: '800',
       fontFamily: 'SF Pro Rounded',
     },
     noChangePriceChange: {
@@ -630,7 +631,7 @@ const getStyle = createGetStyles2024(ctx => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 18,
       lineHeight: 22,
-      fontWeight: '900',
+      fontWeight: '800',
     },
     historyHeader: {
       flexDirection: 'row',

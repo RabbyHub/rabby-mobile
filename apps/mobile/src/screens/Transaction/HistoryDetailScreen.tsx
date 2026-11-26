@@ -10,6 +10,7 @@ import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import { getBottomButtonBottomOffset } from '@/constant/layout';
 import { ScreenHeaderAccountTitle } from '@/components/AccountSwitcher/OnScreenHeader';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { AutoFitCenterHeader } from '@/components/AutoFitCenterHeader';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { Text } from '@/components/Typography';
 import { toast } from '@/components2024/Toast';
@@ -172,28 +173,32 @@ function HistoryDetailScreen(): JSX.Element {
       : accounts.find(item => isSameAddress(item.address, data.address));
   }, [account, accounts, data.address]);
 
-  const getHeaderTitle = React.useCallback(() => {
-    // The native back item is wider than the old JS header button, so UIKit
-    // lays this title container out right of the screen centre (QA 1360).
-    return (
-      <View style={{ transform: [{ translateX: -12 }] }}>
-        <ScreenHeaderAccountTitle
-          account={currentAccount}
-          titleText={
-            <HistoryHeaderTitle>
-              {title || t('page.transactions.itemTitle.Default')}
-            </HistoryHeaderTitle>
-          }
-        />
-      </View>
-    );
-  }, [currentAccount, title, t]);
+  // The title used to sit inside the native header's title slot, which UIKit
+  // lays out right of centre by an amount that depends on the OS and on the
+  // title width (QA 1360 / 1440). Reuse the shared JS header instead: its slots
+  // are symmetric, so the title centres for every language, and it already
+  // reads `windowWidth` / `language` from the theme context (#2387).
+  const historyTitle = title || t('page.transactions.itemTitle.Default');
+  const getHeader = React.useCallback(
+    () => (
+      <AutoFitCenterHeader
+        title={historyTitle}
+        titleNode={
+          <ScreenHeaderAccountTitle
+            account={currentAccount}
+            titleText={<HistoryHeaderTitle>{historyTitle}</HistoryHeaderTitle>}
+          />
+        }
+      />
+    ),
+    [currentAccount, historyTitle],
+  );
 
   React.useEffect(() => {
     setNavigationOptions({
-      headerTitle: getHeaderTitle,
+      header: getHeader,
     });
-  }, [setNavigationOptions, getHeaderTitle]);
+  }, [setNavigationOptions, getHeader]);
 
   const contractInfo = useMemo(() => {
     if (data.cate_id === 'send' || data.cate_id === 'receive') {
@@ -531,6 +536,7 @@ const getStyle = createGetStyles2024(
       width: '100%',
       marginTop: 12,
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
       paddingTop: 12,
       paddingBottom: 4,
@@ -556,6 +562,7 @@ const getStyle = createGetStyles2024(
       backgroundColor: makeHistoryDetailColors({ isLight, colors2024 })
         .cardInner,
       borderRadius: 12,
+      borderCurve: 'continuous',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
       marginHorizontal: 12,
@@ -592,6 +599,7 @@ const getStyle = createGetStyles2024(
     },
     scamContainer: {
       borderRadius: 6,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-bg-5'],
       paddingHorizontal: 16,
       paddingVertical: 6,

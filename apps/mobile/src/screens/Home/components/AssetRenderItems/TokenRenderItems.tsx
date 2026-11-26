@@ -618,6 +618,7 @@ const getStyles = createGetStyles2024(ctx => ({
       ? colord(ctx.colors2024['neutral-bg-1']).alpha(0.9).toRgbString()
       : ctx.colors2024['neutral-bg-2'],
     borderRadius: TOKEN_ROW_BORDER_RADIUS,
+    borderCurve: 'continuous',
     overflow: 'hidden',
     paddingLeft: 12,
     paddingRight: 16,
@@ -630,6 +631,7 @@ const getStyles = createGetStyles2024(ctx => ({
     bottom: 0,
     left: 0,
     borderRadius: TOKEN_ROW_BORDER_RADIUS,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-1']
@@ -710,6 +712,7 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingHorizontal: 0,
     paddingVertical: 2,
     borderRadius: 12,
+    borderCurve: 'continuous',
     paddingRight: 4,
   },
   fourMemeIcon: {
@@ -741,6 +744,7 @@ const getStyles = createGetStyles2024(ctx => ({
       ? ctx.colors2024['neutral-bg-2']
       : ctx.colors2024['neutral-bg-1'],
     borderRadius: 8,
+    borderCurve: 'continuous',
     // marginTop: 12,
     position: 'relative',
   },
@@ -824,6 +828,7 @@ const getStyles = createGetStyles2024(ctx => ({
     width: 70,
     marginTop: 2,
     borderRadius: 6,
+    borderCurve: 'continuous',
     backgroundColor: ctx.colors2024['brand-light-1'],
     flexDirection: 'row',
     justifyContent: 'center',
@@ -840,6 +845,7 @@ const getStyles = createGetStyles2024(ctx => ({
     width: 100,
     justifyContent: 'center',
     borderRadius: 100,
+    borderCurve: 'continuous',
     display: 'flex',
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-1']

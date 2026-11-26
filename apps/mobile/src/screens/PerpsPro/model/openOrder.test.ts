@@ -27,6 +27,27 @@ const makeOrder = (overrides: Partial<OpenOrder> = {}): OpenOrder => ({
 });
 
 describe('Perps Pro open order model', () => {
+  it('allows only independent Scale limits through the existing cloid edit guard', () => {
+    const cloid = '0x5ca1e001000000000000000000000001';
+    const orders = buildPerpsOpenOrders([
+      makeOrder({ cloid, oid: 1 }),
+      makeOrder({ cloid: '0x00000000000000000000000000000001', oid: 2 }),
+      makeOrder({ cloid, oid: 3, isTrigger: true, orderType: 'Stop Market' }),
+      makeOrder({
+        cloid,
+        oid: 4,
+        children: [
+          makeOrder({ oid: 5, isTrigger: true, orderType: 'Stop Market' }),
+        ],
+      }),
+    ]);
+    expect(orders.find(order => order.oid === 1)?.editKind).toBe('limit');
+    expect(
+      orders
+        .filter(order => order.oid !== 1)
+        .every(order => order.editKind === null),
+    ).toBe(true);
+  });
   it('classifies Basic, Conditional and unsupported orders exactly once', () => {
     expect(classifyPerpsOpenOrder(makeOrder())).toBe('basic');
     expect(

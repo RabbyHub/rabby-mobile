@@ -1,6 +1,42 @@
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+jest.mock('./PerpsProTwapDurationSheet', () => ({
+  PerpsProTwapDurationSheet: ({ visible }: { visible: boolean }) =>
+    visible
+      ? require('react').createElement(require('react-native').View, {
+          testID: 'twap-duration-sheet',
+        })
+      : null,
+}));
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react-native';
 import React from 'react';
 import { Keyboard, Platform, StyleSheet } from 'react-native';
+
+// This form unit suite tests field/keyboard behavior, not the native help sheet.
+jest.mock('./PerpsProScaleDistributionSheet', () => ({
+  PerpsProScaleDistributionSheet: () => null,
+}));
+
+jest.mock(
+  '@/assets2024/icons/perps/PerpsProScaleAscending.svg',
+  () => require('react-native').View,
+);
+jest.mock(
+  '@/assets2024/icons/perps/PerpsProScaleDescending.svg',
+  () => require('react-native').View,
+);
+jest.mock(
+  '@/assets2024/icons/perps/PerpsProScaleRadioSelected.svg',
+  () => require('react-native').View,
+);
+jest.mock(
+  '@/assets2024/icons/perps/PerpsProScaleRadio.svg',
+  () => require('react-native').View,
+);
 
 jest.mock('react-native-haptic-feedback', () => ({
   trigger: jest.fn(),
@@ -119,7 +155,12 @@ jest.mock('@/components/perps/PerpsGestureSlider', () => ({
 }));
 
 jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key.split('.').pop() || key }),
+  useTranslation: () => ({
+    t: (key: string, values?: { amount?: string }) =>
+      values?.amount
+        ? `${key.split('.').pop()} ${values.amount}`
+        : key.split('.').pop() || key,
+  }),
 }));
 
 jest.mock('../common/PerpsProDottedUnderlineText', () => ({
@@ -127,7 +168,12 @@ jest.mock('../common/PerpsProDottedUnderlineText', () => ({
 }));
 
 const mockDismissKeyboardThen = jest.fn((action: () => void) => action());
+const mockOpenFieldExplanation = jest.fn();
 const mockBboSheetProps = jest.fn();
+
+jest.mock('../common/PerpsProFieldExplanationContext', () => ({
+  usePerpsProFieldExplanation: () => mockOpenFieldExplanation,
+}));
 
 jest.mock('../common/usePerpsProDismissKeyboard', () => ({
   usePerpsProDismissKeyboard: () => mockDismissKeyboardThen,
@@ -167,7 +213,9 @@ jest.mock('./PerpsProTpSlModeSheet', () => ({
   PerpsProTpSlModeSheet: () => null,
 }));
 
+import { getPerpsProColumnLayout } from '../../model/layout';
 import { createPerpsProTradeFormState } from '../../model/trade';
+import { validatePerpsProTwapDraft } from '../../model/twapOrder';
 import type { PerpsProTradeController } from '../../scene/usePerpsProTrade';
 import { PerpsProTradeForm } from './PerpsProTradeForm';
 import { PERPS_PRO_PRICE_FILL_ANIMATION } from './PerpsProTradePriceField';
@@ -206,6 +254,7 @@ const controller = (
     getEstimatedLiquidationPrice: jest.fn(() => null),
     getMaxDisplayAmount: jest.fn(() => '1000'),
     getSliderButtonDisplayAmount: jest.fn(() => null),
+    getTwapValidation: jest.fn(() => ({ amountError: null, valid: false })),
     leverage: 25,
     leveragePending: false,
     marginMode: 'isolated',
@@ -261,6 +310,240 @@ describe('PerpsProTradeForm order matrix', () => {
     mockWithTiming.mockClear();
   });
 
+  it('opens TWAP time from the whole field and writes presets in minutes', () => {
+    const trade = controller({ orderType: 'twap' });
+    render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
+
+    fireEvent.press(screen.getByRole('button', { name: '12h' }));
+    expect(trade.patchForm).toHaveBeenCalledWith({ twapDuration: '720' });
+    expect(screen.queryByTestId('twap-duration-sheet')).toBeNull();
+    fireEvent.press(screen.getByRole('button', { name: 'durationFieldLabel' }));
+    expect(screen.getByTestId('twap-duration-sheet')).toBeTruthy();
+  });
+
+  it('keeps the same Amount host and active slider when dragging through the TWAP minimum to zero', () => {
+    const trade = controller({ orderType: 'twap' });
+    const columns = getPerpsProColumnLayout(390);
+    const formForPercentage = (percentage: number) => (
+      <PerpsProTradeForm
+        columnLayout={columns}
+        controller={{
+          ...trade,
+          form: { ...trade.form, amount: percentage ? `${percentage}%` : '' },
+          percentage,
+          amountSource: percentage ? 'slider' : 'manual',
+          getTwapValidation: () =>
+            validatePerpsProTwapDraft({
+              baseSize: (percentage / 10000).toFixed(4),
+              midPrice: '50000',
+              szDecimals: 5,
+              durationDraft: '30',
+            }),
+        }}
+        onAddFunds={jest.fn()}
+      />
+    );
+    const view = render(formForPercentage(100));
+    const anchor = screen.getByTestId('perps-pro-twap-amount-anchor');
+    const input = screen.getByLabelText('amount(USDC)');
+    const slider = screen.getByTestId('rne-slider');
+    expect(anchor.props.collapsable).toBe(false);
+    expect(anchor).toHaveStyle({ zIndex: 1 });
+    fireEvent(slider, 'slidingStart');
+    for (const percent of [20, 10, 1, 0]) {
+      fireEvent(slider, 'valueChange', percent);
+      view.rerender(formForPercentage(percent));
+      expect(trade.setPercentage).toHaveBeenLastCalledWith(percent);
+      expect(screen.getByTestId('perps-pro-twap-amount-anchor')).toBe(anchor);
+      expect(anchor).toHaveStyle({ zIndex: 1 });
+      expect(screen.getByLabelText('amount(USDC)')).toBe(input);
+      expect(screen.getByTestId('rne-slider')).toBe(slider);
+      expect(
+        screen.getByTestId('perps-pro-trade-amount-slider-tooltip'),
+      ).toBeTruthy();
+      if (percent > 0 && percent < 20) {
+        const hint = screen.getByRole('alert');
+        expect(hint).toHaveStyle({
+          position: 'absolute',
+          bottom: '100%',
+          right: 0,
+          left: -(columns.orderBookWidth + columns.gap),
+        });
+        expect(hint.props.pointerEvents).toBe('none');
+      } else {
+        expect(screen.queryByRole('alert')).toBeNull();
+      }
+    }
+    fireEvent(slider, 'slidingComplete', 0);
+    expect(
+      screen.queryByTestId('perps-pro-trade-amount-slider-tooltip'),
+    ).toBeNull();
+  });
+
+  it('keeps the focused TWAP input mounted when typing across the minimum', () => {
+    const trade = controller({ orderType: 'twap' });
+    const formForAmount = (amount: string) => (
+      <PerpsProTradeForm
+        controller={{
+          ...trade,
+          form: { ...trade.form, amount },
+          getTwapValidation: () =>
+            validatePerpsProTwapDraft({
+              baseSize: (Number(amount) / 50000).toFixed(5),
+              midPrice: '50000',
+              szDecimals: 5,
+              durationDraft: '30',
+            }),
+        }}
+        onAddFunds={jest.fn()}
+      />
+    );
+    const view = render(formForAmount(''));
+    const input = screen.getByLabelText('amount(USDC)');
+    fireEvent(input, 'focus');
+    for (const amount of ['1', '18', '184']) {
+      fireEvent.changeText(input, amount);
+      view.rerender(formForAmount(amount));
+      expect(screen.getByLabelText('amount(USDC)')).toBe(input);
+      expect(input.props.value).toBe(amount);
+      expect(!!screen.queryByRole('alert')).toBe(Number(amount) < 100);
+    }
+    expect(trade.endAmountEntry).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['quote', '100.20 USDC ≈ 0.00167 BTC'],
+    ['base', '0.00167 BTC'],
+  ] as const)(
+    'shows the TWAP minimum in %s units using the same tradable amount',
+    (amountUnit, expected) => {
+      const trade = controller({ orderType: 'twap', amountUnit, amount: '1' });
+      trade.market = {
+        ...trade.market!,
+        marketData: {
+          ...trade.market!.marketData,
+          midPx: '60000',
+          szDecimals: 5,
+        },
+      };
+      trade.getTwapValidation = () =>
+        ({ amountError: 'amountTooSmall' } as never);
+      render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
+      expect(
+        within(screen.getByRole('alert')).getByText(`minimum ${expected}`),
+      ).toBeTruthy();
+    },
+  );
+
+  it.each([
+    { index: 0, label: 'size (BTC)', field: 'amount' as const, value: '0.12' },
+    { index: 1, label: 'count', field: 'scaleCount' as const, value: '17' },
+  ])(
+    'keeps the Scale $field host stable through floating-label edits',
+    ({ index, label, field, value }) => {
+      const trade = controller({
+        orderType: 'scale',
+        amountUnit: 'base',
+        scaleCount: '',
+      });
+      const view = render(
+        <PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />,
+      );
+      const fieldView = within(
+        screen.getAllByTestId('perps-pro-trade-amount-field')[index],
+      );
+      const input = screen.getByLabelText(label);
+      const inputStyle = StyleSheet.flatten(input.props.style);
+      expect(inputStyle).toMatchObject({ height: 34, textAlign: 'center' });
+      expect(
+        fieldView.getByTestId('perps-pro-amount-placeholder'),
+      ).toHaveTextContent(label);
+      expect(screen.queryByTestId('perps-pro-trade-amount-unit')).toBeNull();
+
+      fireEvent(input, 'focus');
+      expect(
+        fieldView.queryByTestId('perps-pro-amount-placeholder'),
+      ).toBeNull();
+      expect(fieldView.getByTestId('perps-pro-amount-label')).toHaveStyle({
+        fontSize: 10,
+        lineHeight: 12,
+      });
+      fireEvent.changeText(input, value.slice(0, 1));
+      fireEvent.changeText(input, value);
+      if (field === 'amount') {
+        expect(trade.beginAmountEntry).toHaveBeenCalledTimes(1);
+        expect(trade.setAmount).toHaveBeenLastCalledWith(value);
+      } else {
+        expect(trade.patchForm).toHaveBeenLastCalledWith({ scaleCount: value });
+        expect(input.props.keyboardType).toBe('number-pad');
+      }
+      view.rerender(
+        <PerpsProTradeForm
+          controller={{ ...trade, form: { ...trade.form, [field]: value } }}
+          onAddFunds={jest.fn()}
+        />,
+      );
+      expect(screen.getByLabelText(label)).toBe(input);
+      expect(input.props.selection).toBeUndefined();
+      expect(StyleSheet.flatten(input.props.style)).toEqual(inputStyle);
+      fireEvent(input, 'blur');
+      expect(fieldView.getByTestId('perps-pro-amount-label')).toBeTruthy();
+      fireEvent(input, 'focus');
+      fireEvent.changeText(input, '');
+      view.rerender(
+        <PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />,
+      );
+      fireEvent(input, 'blur');
+      expect(
+        fieldView.getByTestId('perps-pro-amount-placeholder'),
+      ).toBeTruthy();
+      expect(StyleSheet.flatten(input.props.style)).toEqual(inputStyle);
+    },
+  );
+
+  it.each(['buy', 'sell'])(
+    'focuses empty Scale Size before the %s preview',
+    side => {
+      const trade = controller({ orderType: 'scale', amountUnit: 'base' });
+      render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
+      fireEvent.press(screen.getByTestId(`perps-pro-trade-button-${side}`));
+      expect(mockFocusTextInput).toHaveBeenCalledWith('size (BTC)');
+      expect(trade.requestReview).not.toHaveBeenCalled();
+    },
+  );
+
+  it('opens Randomize help without toggling the TWAP option', () => {
+    const trade = controller({ orderType: 'twap', twapRandomize: true });
+    render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
+    fireEvent.press(screen.getByText('randomize'));
+    expect(mockOpenFieldExplanation).toHaveBeenCalledWith('randomize');
+    expect(trade.patchForm).not.toHaveBeenCalled();
+
+    fireEvent.press(screen.getByRole('checkbox', { name: 'randomize' }));
+    expect(trade.patchForm).toHaveBeenCalledWith({ twapRandomize: false });
+    expect(mockOpenFieldExplanation).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows Scale inputs and preview while account configuration is preparing', () => {
+    const trade = controller({
+      orderType: 'scale',
+      amountUnit: 'base',
+      amount: '5',
+    });
+    render(
+      <PerpsProTradeForm
+        configurationReady={false}
+        controller={trade}
+        onAddFunds={jest.fn()}
+      />,
+    );
+    expect(
+      screen.getByTestId('perps-pro-trade-inputs').props.pointerEvents,
+    ).toBe('auto');
+    fireEvent.press(screen.getByTestId('perps-pro-trade-button-buy'));
+    expect(trade.requestReview).toHaveBeenCalledWith('buy');
+  });
+
   it('keeps the real form frame visible but fail-closed while configuration is preparing', () => {
     const trade = controller();
     render(
@@ -271,7 +554,7 @@ describe('PerpsProTradeForm order matrix', () => {
       />,
     );
 
-    expect(screen.getByTestId('perps-pro-trade-form').props).toMatchObject({
+    expect(screen.getByTestId('perps-pro-trade-inputs').props).toMatchObject({
       accessibilityState: { disabled: true },
       pointerEvents: 'none',
     });
@@ -1070,6 +1353,21 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(trade.requestReview).not.toHaveBeenCalled();
   });
 
+  it.each(['buy', 'sell'])(
+    'focuses Amount when %s is pressed on an empty TWAP draft',
+    side => {
+      const trade = controller({ orderType: 'twap' });
+      render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
+
+      const button = screen.getByTestId(`perps-pro-trade-button-${side}`);
+      expect(button).toBeEnabled();
+      fireEvent.press(button);
+      expect(mockFocusTextInput).toHaveBeenCalledWith('amount(USDC)');
+      expect(mockDismissKeyboardThen).not.toHaveBeenCalled();
+      expect(trade.requestReview).not.toHaveBeenCalled();
+    },
+  );
+
   it('focuses an empty Conditional Trigger Price before submitting a valid Amount', () => {
     const trade = controller({
       amount: '10',
@@ -1104,19 +1402,24 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(trade.requestReview).not.toHaveBeenCalled();
   });
 
-  it('keeps a Slider percentage as valid input when Buy is pressed', () => {
-    const trade = controller({ amount: '25%' }) as any;
-    trade.amountSource = 'slider';
-    trade.percentage = 25;
-    render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
+  it.each(['market', 'twap'] as const)(
+    'preserves the %s slider amount when requesting review',
+    orderType => {
+      const trade = {
+        ...controller({ amount: '25%', orderType }),
+        amountSource: 'slider' as const,
+        percentage: 25,
+      };
+      render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
 
-    fireEvent.press(screen.getByTestId('perps-pro-trade-button-buy'));
+      fireEvent.press(screen.getByTestId('perps-pro-trade-button-buy'));
 
-    expect(trade.beginAmountEntry).not.toHaveBeenCalled();
-    expect(trade.requestReview).toHaveBeenCalledWith('buy');
-    expect(trade.form.amount).toBe('25%');
-    expect(trade.percentage).toBe(25);
-  });
+      expect(trade.beginAmountEntry).not.toHaveBeenCalled();
+      expect(trade.requestReview).toHaveBeenCalledWith('buy');
+      expect(trade.form.amount).toBe('25%');
+      expect(trade.percentage).toBe(25);
+    },
+  );
 
   it('makes the Available value and USDC text part of the Deposit target', () => {
     const onDeposit = jest.fn();
@@ -1160,6 +1463,19 @@ describe('PerpsProTradeForm order matrix', () => {
 
     expect(screen.getByTestId('perps-pro-trade-tif-caret')).toBeTruthy();
     expect(screen.queryByText('⌄')).toBeNull();
+  });
+
+  it('raises the TWAP slider above Amount only while dragging', () => {
+    const trade = controller({ orderType: 'twap' });
+    render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
+    const container = screen.getByTestId('perps-pro-trade-amount-slider');
+    const slider = screen.getByTestId('rne-slider');
+
+    expect(container).not.toHaveStyle({ zIndex: 2 });
+    fireEvent(slider, 'slidingStart', 0);
+    expect(container).toHaveStyle({ zIndex: 2 });
+    fireEvent(slider, 'slidingComplete', 50);
+    expect(container).not.toHaveStyle({ zIndex: 2 });
   });
 
   it('dismisses Amount focus when Slider interaction takes ownership', () => {

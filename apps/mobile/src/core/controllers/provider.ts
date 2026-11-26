@@ -674,6 +674,7 @@ class ProviderController extends BaseController {
     return account ? [account.address.toLowerCase()] : [];
   };
 
+  @Reflect.metadata('SAFE', true)
   ethCoinbase = async ({
     session: { origin },
     account,
@@ -1063,6 +1064,16 @@ class ProviderController extends BaseController {
         typeof e === 'object'
           ? { message: e.message }
           : ({ message: e } as any);
+      // 107 and 109 both say "Device interrupted". Mini-sign skips the nonce
+      // bump only when the SDK code is still on the error.
+      if (e && typeof e === 'object') {
+        if (e.code !== undefined) {
+          errObj.code = e.code;
+        }
+        if (e.errorCode !== undefined) {
+          errObj.errorCode = e.errorCode;
+        }
+      }
       errObj.method = EVENTS.COMMON_HARDWARE.REJECTED;
 
       throw errObj;

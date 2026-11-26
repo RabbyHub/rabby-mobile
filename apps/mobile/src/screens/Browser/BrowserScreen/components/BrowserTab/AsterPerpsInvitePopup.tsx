@@ -153,7 +153,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   title: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: '800',
     lineHeight: 24,
     color: colors2024['neutral-title-1'],
     textAlign: 'center',
@@ -166,6 +166,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 23,
     height: 23,
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
   body: {
     flex: 1,
@@ -174,6 +175,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   content: {
     borderRadius: 16,
+    borderCurve: 'continuous',
     // backgroundColor: isLight
     //   ? colors2024['neutral-bg-1']
     //   : colors2024['neutral-bg-2'],
@@ -200,7 +202,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
-    fontWeight: '900',
+    fontWeight: '800',
     color: colors2024['neutral-title-1'],
   },
   footer: {

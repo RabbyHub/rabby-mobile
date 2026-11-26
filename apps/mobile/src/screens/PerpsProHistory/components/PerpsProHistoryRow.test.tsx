@@ -1,3 +1,6 @@
+jest.mock('./rows/PerpsProTwapHistoryRow', () => ({
+  PerpsProTwapHistoryRowView: () => null,
+}));
 import type {
   SpotMeta,
   UserHistoricalOrders,

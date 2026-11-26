@@ -5,13 +5,37 @@ import {
 } from '@rabby-wallet/react-native-fs';
 
 let captureEnabled = false;
+import type * as AppSettings from '@/hooks/appSettings';
+import type * as LockApi from '@/core/apis/lock';
+
 let allowAnyApproval = false;
 
 export function setAllowAnyApproval(value: boolean) {
   allowAnyApproval = value;
 }
 
+/**
+ * `debug-capture-requests&allowAnyApproval=1` is process-global, so it must not
+ * outlive the automation session: report (and clear) it once Screen E2E is
+ * disarmed or the wallet is locked.
+ */
 export function isAllowAnyApproval() {
+  if (!allowAnyApproval) {
+    return false;
+  }
+  // Load these on demand: their module graphs reach the toast/text components
+  // and the lock service, which plain controller tests must not have to mount
+  // just to import this module.
+  const { storeApiExpSettingData } =
+    require('@/hooks/appSettings') as typeof AppSettings;
+  const { isUnlocked, isUnlockSessionValid } =
+    require('@/core/apis/lock') as typeof LockApi;
+  if (
+    !storeApiExpSettingData.getScreenE2EEnabled() ||
+    !(isUnlocked() || isUnlockSessionValid())
+  ) {
+    allowAnyApproval = false;
+  }
   return allowAnyApproval;
 }
 

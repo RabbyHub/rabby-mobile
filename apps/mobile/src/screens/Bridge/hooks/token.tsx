@@ -41,6 +41,10 @@ import { getQuotePollingResumeDelay } from '@/utils/quotePolling';
 import { isTokenMarketClosed } from '@/utils/token';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 import { getQuoteList as getBridgeQuoteList } from '@rabby-wallet/rabby-bridge';
+import {
+  reportBridgeSdkError,
+  reportBridgeSdkException,
+} from '@/core/bridgeSdkReport';
 import { convert18RawToTokenRaw, isTempoChain } from '@/utils/tempo';
 import type { SelectedBridgeQuote } from '../types';
 import { createBridgeInitializationController } from '../bridgeInitialization';
@@ -202,7 +206,10 @@ const useToken = (type: 'from' | 'to', active: boolean) => {
 
 export const useBridge = (
   isForMultipleAddress?: boolean,
-  { active = true }: { active?: boolean } = {},
+  {
+    active = true,
+    tabSelected = true,
+  }: { active?: boolean; tabSelected?: boolean } = {},
 ) => {
   const setTokenRefreshId = useSetTokenRefreshId();
 
@@ -726,6 +733,7 @@ export const useBridge = (
 
   useEffect(() => {
     if (
+      tabSelected &&
       slider === 100 &&
       useSlider &&
       fromToken?.amount &&
@@ -735,6 +743,7 @@ export const useBridge = (
       handleSlider100();
     }
   }, [
+    tabSelected,
     slider,
     useSlider,
     fromToken?.amount,
@@ -743,6 +752,18 @@ export const useBridge = (
     isTempoGasTokenLoading,
     handleSlider100,
   ]);
+
+  useEffect(() => {
+    if (tabSelected) {
+      return;
+    }
+    isMaxRef.current = false;
+    setAmount('');
+    setSlider(0);
+    setUseSlider(false);
+    setIsDraggingSlider(false);
+    setUseGasPrice(false);
+  }, [setIsDraggingSlider, setSlider, setUseSlider, tabSelected]);
 
   const fetchIdRef = useRef(0);
   const pendingQuoteUpdatesRef = useRef(new Map<string, SelectedBridgeQuote>());
@@ -865,9 +886,13 @@ export const useBridge = (
                     .div(100)
                     .toString(10),
                   feeRate: Number(feeRate),
+                  onError: reportBridgeSdkError,
                 },
                 openapi,
-              ).catch(() => undefined);
+              ).catch(error => {
+                reportBridgeSdkException(error);
+                return undefined;
+              });
 
               if (data && currentFetchId === fetchIdRef.current) {
                 originData.push(...data);

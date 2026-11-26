@@ -216,6 +216,7 @@ const getStyles = createGetStyles2024(ctx => ({
   importItem: {
     // height: 88,
     borderRadius: 20,
+    borderCurve: 'continuous',
     paddingHorizontal: 20,
     paddingVertical: 20,
     display: 'flex',

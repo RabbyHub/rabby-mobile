@@ -6,11 +6,6 @@ import {
 } from '@aave/math-utils';
 import { CHAINS_ENUM } from '@debank/common';
 
-export interface IWalletBalance {
-  address: string;
-  amount: string;
-}
-
 export type DisplayPoolReserveInfo = ComputedUserReserve<
   ReserveDataHumanized & FormatReserveUSDResponse
 > & {
@@ -26,10 +21,6 @@ export type UserSummary = FormatUserSummaryAndIncentivesResponse<
 export type PopupDetailProps = {
   reserve: DisplayPoolReserveInfo;
   userSummary: UserSummary;
-  onClose?: () => void;
-};
-export type OpenDetailProps = {
-  underlyingAsset: string;
   onClose?: () => void;
 };
 

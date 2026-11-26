@@ -245,6 +245,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     height: 48,
     borderRadius: 12,
+    borderCurve: 'continuous',
     // backgroundColor: colors2024['neutral-InvertHighlight'],
     borderWidth: 1,
     borderColor: colors2024['brand-default'],

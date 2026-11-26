@@ -32,6 +32,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   text: {
     fontSize: 14,

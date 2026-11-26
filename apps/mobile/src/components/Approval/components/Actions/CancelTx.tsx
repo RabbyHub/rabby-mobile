@@ -22,6 +22,7 @@ const getStyle = (colors: AppColorsVariants) =>
       borderColor: colors['blue-default'],
       borderWidth: 1,
       borderRadius: 6,
+      borderCurve: 'continuous',
       padding: 12,
       position: 'relative',
       marginBottom: 16,

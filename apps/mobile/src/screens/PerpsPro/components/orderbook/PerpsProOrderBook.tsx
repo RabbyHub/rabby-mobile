@@ -547,6 +547,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 6,
+    borderCurve: 'continuous',
     flexDirection: 'row',
     height: 24,
     justifyContent: 'space-between',
@@ -595,17 +596,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['green-default'],
     borderBottomLeftRadius: 2,
     borderTopLeftRadius: 2,
+    borderCurve: 'continuous',
     flexBasis: 0,
   },
   sellRatioTrack: {
     backgroundColor: colors2024['red-default'],
     borderBottomRightRadius: 2,
     borderTopRightRadius: 2,
+    borderCurve: 'continuous',
     flexBasis: 0,
   },
   emptyRatioTrack: {
     backgroundColor: colors2024['neutral-line'],
     borderRadius: 2,
+    borderCurve: 'continuous',
     flex: 1,
   },
 }));

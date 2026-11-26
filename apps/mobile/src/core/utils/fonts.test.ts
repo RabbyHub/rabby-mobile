@@ -31,7 +31,7 @@ describe('rounded font styles', () => {
       });
       expect(getRoundedFontStyle(businessWeight, 'android')).toEqual({
         fontFamily: `SF-Pro-Rounded-${androidFace}`,
-        fontWeight: undefined,
+        fontWeight: 'normal',
       });
       expect(
         getRoundedFontStyle(
@@ -108,7 +108,7 @@ describe('single-weight font cleanup', () => {
     };
     expect(cleanSpecialSoloWeightFont(input)).toEqual({
       ...input,
-      fontWeight: undefined,
+      fontWeight: 'normal',
     });
     expect(input.fontWeight).toBe('900');
   });

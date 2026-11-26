@@ -199,6 +199,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 29,
     marginBottom: 0,
     borderRadius: 16,
+    borderCurve: 'continuous',
   },
   btnContainer: {
     width: '100%',
@@ -240,7 +241,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   title: {
     color: colors2024['neutral-title-1'],
-    fontWeight: '900',
+    fontWeight: '800',
     fontSize: 20,
     fontFamily: 'SF Pro Rounded',
     lineHeight: 24,

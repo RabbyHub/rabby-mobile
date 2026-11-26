@@ -34,6 +34,7 @@ const getStyle = createGetStyles2024(() => ({
     width: 17,
     height: 17,
     borderRadius: 1000,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: '#FFFFFF',
     alignItems: 'center',
@@ -43,7 +44,7 @@ const getStyle = createGetStyles2024(() => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 11,
     lineHeight: 14,
-    fontWeight: '900',
+    fontWeight: '800',
     color: '#000000',
   },
 }));

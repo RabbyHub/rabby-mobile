@@ -2,7 +2,8 @@ import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { Dimensions, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { createGetStyles2024 } from '@/utils/styles';
 import { type CurvePoint, warmupCurveForAddress } from '@/hooks/useCurve';
 import { E2E_ID } from '@/constant/e2e';
@@ -40,8 +41,6 @@ import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerTe
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
-
-const ScreenWidth = Dimensions.get('screen').width;
 
 const MAX_NETWORTH_FS = 38;
 const MIN_NETWORTH_FS = 24;
@@ -212,7 +211,7 @@ export const HomeTopChart = memo(function Chart({
               !chartData.length ? null : !isLoadingChartData ? (
                 <LineChart
                   height={104}
-                  width={ScreenWidth - 32}
+                  width={getDimensionsSnapshot('screen').width - 32}
                   shape={d3Shape.curveCatmullRom}
                   style={styles.chart}>
                   <LineChart.Path
@@ -500,12 +499,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginLeft: 8,
     marginRight: 8,
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
   },
   skeletonChange: {
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
@@ -516,7 +517,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'column',
     paddingLeft: 8,
     gap: 2,
-    width: ScreenWidth - 32,
+    width: getDimensionsSnapshot('screen').width - 32,
   },
   leftContainer: {
     flexDirection: 'column',
@@ -558,14 +559,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   container: {
-    width: ScreenWidth,
+    width: getDimensionsSnapshot('screen').width,
     overflow: 'hidden',
   },
   chartContainer: {
     paddingLeft: 14,
   },
   loading: {
-    width: ScreenWidth - 32,
+    width: getDimensionsSnapshot('screen').width - 32,
     paddingTop: 20,
     paddingHorizontal: 0,
   },

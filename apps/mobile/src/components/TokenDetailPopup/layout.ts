@@ -1,4 +1,4 @@
-import { Dimensions } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 
 export const TOKEN_DETAIL_HISTORY_SIZES = {
   sheetModalHorizontalPercentage: 0.8,
@@ -9,7 +9,8 @@ export const TOKEN_DETAIL_HISTORY_SIZES = {
   headerTokenLogo: 24,
   get maxEmptyHeight() {
     const modalHeight = Math.floor(
-      Dimensions.get('window').height * this.sheetModalHorizontalPercentage,
+      getDimensionsSnapshot('window').height *
+        this.sheetModalHorizontalPercentage,
     );
 
     return (

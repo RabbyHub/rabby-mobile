@@ -606,6 +606,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       width: '100%',
       height: 106,
       borderRadius: 16,
+      borderCurve: 'continuous',
     },
 
     issueBlock: {
@@ -657,6 +658,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       paddingVertical: 10,
       paddingTop: 16,
       borderRadius: 4,
+      borderCurve: 'continuous',
       position: 'relative',
       justifyContent: 'center',
       borderWidth: 1,
@@ -718,6 +720,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       width: 14,
       height: 14,
       borderRadius: 14,
+      borderCurve: 'continuous',
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: colors2024['neutral-bg-1'],
@@ -726,6 +729,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       width: 10,
       height: 10,
       borderRadius: 10,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['brand-default'],
     },
   };

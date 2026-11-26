@@ -14,6 +14,7 @@ import MarketItem from './MarketItem';
 import { CustomMarket, MarketDataType, marketsData } from '../config/market';
 import { Text, TextInput } from '@/components/Typography';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { useMainnetChainList } from '@/hooks/useChainList';
 import useProtocolListStore from '@/store/protocols';
 import type { IProtocolItem } from '@/types/assets';
 import { useLendingSummaryCard } from '../hooks';
@@ -31,6 +32,7 @@ const MARKETS_HIDDEN_FROM_SELECTOR = new Set<CustomMarket>([
   CustomMarket.proto_zksync_v3,
   CustomMarket.proto_metis_v3,
   CustomMarket.proto_gnosis_v3,
+  CustomMarket.proto_megaeth_v3,
 ]);
 
 const marketList: MarketDataType[] = Object.values(marketsData).filter(
@@ -58,6 +60,7 @@ export default function SelectLendingChain({ value, onChange }: IProps) {
   const [canSearch, setCanSearch] = useState(false);
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [search, setSearch] = useState('');
+  const mainnetList = useMainnetChainList();
   const { finalSceneCurrentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
@@ -125,13 +128,14 @@ export default function SelectLendingChain({ value, onChange }: IProps) {
 
   const filterMarketList: MarketDataType[] = useMemo(() => {
     const formatKey = search.trim().toLowerCase();
+    const supportedChainIds = new Set(mainnetList.map(chain => chain.id));
     return marketList
-      .filter(item => {
-        if (!formatKey) {
-          return true;
-        }
-        return item.marketTitle.toLowerCase().includes(formatKey);
-      })
+      .filter(
+        item =>
+          (supportedChainIds.size === 0 ||
+            supportedChainIds.has(item.chainId)) &&
+          item.marketTitle.toLowerCase().includes(formatKey),
+      )
       .sort((a, b) => {
         if (hasUserMarketValue) {
           const aUserValue = marketUsdValueMap.get(a.market) || 0;
@@ -151,7 +155,7 @@ export default function SelectLendingChain({ value, onChange }: IProps) {
           (marketTotalMarketSizeMap[a.market] || 0)
         );
       });
-  }, [hasUserMarketValue, marketUsdValueMap, search]);
+  }, [hasUserMarketValue, mainnetList, marketUsdValueMap, search]);
 
   const handleToggleSearch = () => {
     if (!canSearch) {
@@ -260,7 +264,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   titleText: {
     color: colors2024['neutral-title-1'],
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
     lineHeight: 24,
@@ -296,9 +300,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   sectionFirst: {
     borderTopLeftRadius: RADIUS_VALUE,
     borderTopRightRadius: RADIUS_VALUE,
+    borderCurve: 'continuous',
   },
   sectionLast: {
     borderBottomLeftRadius: RADIUS_VALUE,
     borderBottomRightRadius: RADIUS_VALUE,
+    borderCurve: 'continuous',
   },
 }));

@@ -8,13 +8,13 @@ import React, {
 } from 'react';
 import {
   Alert,
-  Dimensions,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useNavigation } from '@react-navigation/native';
@@ -1742,7 +1742,6 @@ function DevSwitches(): JSX.Element {
   );
 }
 
-const CONTENT_W = Dimensions.get('screen').width - 24;
 const getStyles = createGetStyles2024(ctx =>
   StyleSheet.create({
     screen: {
@@ -1770,6 +1769,7 @@ const getStyles = createGetStyles2024(ctx =>
     heroCard: {
       padding: 20,
       borderRadius: 24,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-card-1'],
       borderWidth: 1,
       borderColor: ctx.colors2024['neutral-line'],
@@ -1799,6 +1799,7 @@ const getStyles = createGetStyles2024(ctx =>
       justifyContent: 'flex-start',
       padding: 18,
       borderRadius: 20,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-card-1'],
       borderWidth: 1,
       borderColor: ctx.colors2024['neutral-line'],
@@ -1894,6 +1895,7 @@ const getStyles = createGetStyles2024(ctx =>
       width: '100%',
       maxWidth: 360,
       borderRadius: 20,
+      borderCurve: 'continuous',
       padding: 20,
       backgroundColor: ctx.colors2024['neutral-bg-1'],
     },
@@ -1917,7 +1919,7 @@ const getStyles = createGetStyles2024(ctx =>
     propertyDesc: {
       flexDirection: 'row',
       width: '100%',
-      maxWidth: CONTENT_W,
+      maxWidth: getDimensionsSnapshot('screen').width - 24,
       flexWrap: 'wrap',
       alignItems: 'flex-start',
       justifyContent: 'flex-start',

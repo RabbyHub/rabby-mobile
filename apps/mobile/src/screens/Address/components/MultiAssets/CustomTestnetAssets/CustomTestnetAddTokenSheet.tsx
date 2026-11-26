@@ -319,7 +319,7 @@ const getStyle = createGetStyles2024(ctx =>
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '900',
+      fontWeight: '800',
       textAlign: 'center',
     },
     keyboardAvoidingContent: {
@@ -343,6 +343,7 @@ const getStyle = createGetStyles2024(ctx =>
     chainField: {
       height: 56,
       borderRadius: 16,
+      borderCurve: 'continuous',
       paddingHorizontal: 16,
       flexDirection: 'row',
       alignItems: 'center',
@@ -360,6 +361,7 @@ const getStyle = createGetStyles2024(ctx =>
     addressInputWrap: {
       height: 140,
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-2'],
       overflow: 'hidden',
     },
@@ -391,6 +393,7 @@ const getStyle = createGetStyles2024(ctx =>
       alignSelf: 'flex-start',
       minHeight: 36,
       borderRadius: 6,
+      borderCurve: 'continuous',
       paddingHorizontal: 8,
       paddingVertical: 4,
       flexDirection: 'row',
@@ -415,6 +418,7 @@ const getStyle = createGetStyles2024(ctx =>
       borderWidth: 0.8,
       borderColor: ctx.colors2024['neutral-bg-1'],
       borderRadius: 3,
+      borderCurve: 'continuous',
     },
     foundTokenSymbol: {
       color: ctx.colors2024['neutral-title-1'],
@@ -448,10 +452,12 @@ const getStyle = createGetStyles2024(ctx =>
     },
     cancelButton: {
       borderRadius: 12,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-5'],
     },
     confirmButton: {
       borderRadius: 12,
+      borderCurve: 'continuous',
     },
     cancelButtonText: {
       color: ctx.colors2024['neutral-title-1'],

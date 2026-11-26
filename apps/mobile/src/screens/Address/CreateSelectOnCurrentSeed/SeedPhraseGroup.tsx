@@ -134,9 +134,11 @@ export const SeedPhraseGroup: React.FC<Props> = ({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   main: {
     borderRadius: 6,
+    borderCurve: 'continuous',
   },
   walletLogo: {
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   itemInfo: {
     marginLeft: 8,
@@ -178,6 +180,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 2,
     backgroundColor: colors2024['neutral-bg-0'],
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   moreText: {
     paddingLeft: 14,
@@ -219,6 +222,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-0'],
     flexDirection: 'row',
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   footer: {
     paddingHorizontal: 16,
@@ -229,6 +233,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['brand-light-1'],
     height: 48,
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   buttonText: {
     color: colors2024['brand-default'],

@@ -213,6 +213,7 @@ jest.mock('@/core/serviceApi/gasAccount', () => ({
 
 import providerController from './provider';
 import { clearBlockedAddressCache } from '../utils/blockedAddress';
+import { isOneKeyDisconnectError, toSubmitTxError } from '@/utils/onekeyError';
 
 const DAPP_ORIGIN = 'https://attacker.example';
 
@@ -221,6 +222,27 @@ const ACCOUNT = {
   type: KEYRING_TYPE.SimpleKeyring,
   brandName: 'Rabby',
 };
+
+describe('provider passive account queries', () => {
+  it.each([
+    ['ethAccounts', []],
+    ['ethCoinbase', null],
+  ] as const)(
+    'keeps %s passive and respects disconnection',
+    async (method, empty) => {
+      const request = { session: { origin: DAPP_ORIGIN }, account: ACCOUNT };
+      expect(Reflect.getMetadata('SAFE', providerController, method)).toBe(
+        true,
+      );
+      mockGetDappSnapshot.mockReturnValue({ isConnected: false });
+      await expect(providerController[method](request)).resolves.toEqual(empty);
+      mockGetDappSnapshot.mockReturnValue({ isConnected: true });
+      await expect(providerController[method](request)).resolves.toEqual(
+        method === 'ethAccounts' ? [ACCOUNT.address] : ACCOUNT.address,
+      );
+    },
+  );
+});
 
 const TX_PARAMS = {
   from: ACCOUNT.address,
@@ -445,6 +467,54 @@ describe('provider.ethSendTransaction broadcast chain pinning', () => {
     expect(mockHasCustomRPC).toHaveBeenCalledWith(BSC_CHAIN.enum);
     expect(mockGetCustomTestnetClient).not.toHaveBeenCalled();
     expect(mockSubmitTxV2).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['code', 107],
+    ['code', 109],
+    ['errorCode', 109],
+  ] as const)(
+    'keeps SDK %s %s on a Device interrupted signing failure',
+    async (field, value) => {
+      mockSignTransaction.mockRejectedValue(
+        Object.assign(new Error('Device interrupted'), { [field]: value }),
+      );
+
+      await expect(
+        providerController.ethSendTransaction(makeOptions()),
+      ).rejects.toMatchObject({
+        message: 'Device interrupted',
+        [field]: value,
+        method: 'COMMON_HARDWARE_REJECTED',
+      });
+    },
+  );
+
+  it('keeps both code and errorCode, so mini-sign still sees a disconnect', async () => {
+    mockSignTransaction.mockRejectedValue(
+      Object.assign(new Error('Device interrupted'), {
+        code: 107,
+        errorCode: 109,
+      }),
+    );
+
+    try {
+      await providerController.ethSendTransaction(makeOptions());
+    } catch (error) {
+      expect(error).toMatchObject({
+        message: 'Device interrupted',
+        code: 107,
+        errorCode: 109,
+      });
+      const submitError = toSubmitTxError(error);
+      expect(submitError).toMatchObject({
+        code: 107,
+        message: 'Device interrupted',
+      });
+      expect(isOneKeyDisconnectError(submitError)).toBe(true);
+      return;
+    }
+    throw new Error('expected signing to reject');
   });
 });
 

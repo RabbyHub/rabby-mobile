@@ -319,6 +319,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 8,
+    borderCurve: 'continuous',
     paddingHorizontal: 0,
     width: '100%',
     // height: '100%',
@@ -343,6 +344,7 @@ const styles = StyleSheet.create({
   primaryButtonContainer: {
     width: '100%',
     borderRadius: 26,
+    borderCurve: 'continuous',
   },
   primaryButton: {
     height: 52,
@@ -382,6 +384,7 @@ const getMiniButtonStyle = createGetStyles2024(({ colors, colors2024 }) => {
       paddingHorizontal: 8,
       backgroundColor: colors2024['brand-light-2'],
       borderRadius: 4,
+      borderCurve: 'continuous',
     },
     miniBtnTextView: {
       color: colors2024['brand-default'],

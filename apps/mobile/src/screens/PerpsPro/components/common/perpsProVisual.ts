@@ -39,6 +39,7 @@ export const PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE: TextStyle = {
 
 export const PERPS_PRO_CONFIRM_BUTTON_STYLE: ViewStyle = {
   borderRadius: 8,
+  borderCurve: 'continuous',
 };
 
 export const getPerpsProTradeControlMediumTextStyle = (
@@ -70,12 +71,14 @@ export const getPerpsProBottomSheetChromeStyles = (
     modal: {
       borderTopLeftRadius: PERPS_PRO_SHEET_CORNER_RADIUS,
       borderTopRightRadius: PERPS_PRO_SHEET_CORNER_RADIUS,
+      borderCurve: 'continuous',
       overflow: 'hidden',
     },
     background: {
       backgroundColor,
       borderTopLeftRadius: PERPS_PRO_SHEET_CORNER_RADIUS,
       borderTopRightRadius: PERPS_PRO_SHEET_CORNER_RADIUS,
+      borderCurve: 'continuous',
     },
     handle: {
       backgroundColor,
@@ -86,6 +89,7 @@ export const getPerpsProBottomSheetChromeStyles = (
     handleIndicator: {
       backgroundColor: colors2024['neutral-sheet-handle'],
       borderRadius: 2,
+      borderCurve: 'continuous',
       height: 4,
       width: 40,
     },

@@ -66,6 +66,7 @@ const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     dialog: {
       borderRadius: 16,
+      borderCurve: 'continuous',
       padding: 0,
       backgroundColor: colors['neutral-bg-1'],
       width: 353,

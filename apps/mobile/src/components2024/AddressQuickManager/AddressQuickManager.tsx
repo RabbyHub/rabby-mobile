@@ -4,7 +4,8 @@ import {
   usePinAddresses,
 } from '@/hooks/account';
 import React, { useCallback } from 'react';
-import { Dimensions, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AddressItemInner2024 } from '@/screens/Address/components/AddressItemInner2024';
@@ -37,7 +38,9 @@ export interface Props {
   onCancel: () => void;
 }
 
-const maxHeight = Dimensions.get('window').height - 104;
+function getMaxHeight() {
+  return getDimensionsSnapshot('window').height - 104;
+}
 
 // eslint-disable-next-line react-native/no-inline-styles
 const ItemSeparatorComponent = () => <View style={{ height: 12 }} />;
@@ -108,7 +111,7 @@ export const AddressQuickManager: React.FC<Props> = ({
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.ADDRESS_QUICK_MANAGER,
       bottomSheetModalProps: {
-        snapPoints: [Math.min(contentHeight, maxHeight)],
+        snapPoints: [Math.min(contentHeight, getMaxHeight())],
       },
       type: 'watch-address',
       onCancel: () => {
@@ -126,7 +129,7 @@ export const AddressQuickManager: React.FC<Props> = ({
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.ADDRESS_QUICK_MANAGER,
       bottomSheetModalProps: {
-        snapPoints: [Math.min(contentHeight, maxHeight)],
+        snapPoints: [Math.min(contentHeight, getMaxHeight())],
       },
       type: 'safe-address',
       onCancel: () => {
@@ -247,6 +250,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   addressItem: {
     borderRadius: 20,
+    borderCurve: 'continuous',
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
@@ -276,6 +280,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colors2024['neutral-bg-2'],
     padding: 5,
     borderRadius: 30,
+    borderCurve: 'continuous',
   },
   titleTextWrapper: {
     // flex: 1,
@@ -287,6 +292,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginBottom: 22,
     padding: 16,
     borderRadius: 20,
+    borderCurve: 'continuous',
   },
   footerMain: {
     height: 46,
@@ -305,7 +311,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   titleText: {
     color: colors2024['neutral-title-1'],
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
     lineHeight: 24,

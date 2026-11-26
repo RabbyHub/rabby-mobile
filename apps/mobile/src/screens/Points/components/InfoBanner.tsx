@@ -26,6 +26,7 @@ export const InfoBanner = () => {
 const getStyles = createGetStyles2024(ctx => ({
   banner: {
     borderRadius: 12,
+    borderCurve: 'continuous',
     padding: 20,
     backgroundColor: ctx.colors2024['brand-light-1'],
     flexDirection: 'row',
@@ -36,7 +37,7 @@ const getStyles = createGetStyles2024(ctx => ({
   bannerTitle: {
     fontSize: 18,
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '900',
+    fontWeight: '800',
     color: ctx.colors2024['neutral-title-1'],
     lineHeight: 22,
     marginBottom: 6,

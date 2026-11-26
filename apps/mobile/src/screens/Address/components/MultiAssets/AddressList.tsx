@@ -16,6 +16,7 @@ import { NotMatterAddressDialog } from '../../NotMatterAddressDialog';
 import AutoLockView from '@/components/AutoLockView';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
+import { navigateThenDismiss } from '@/utils/navigateThenDismiss';
 import { balance24hStore } from '@/store/balance24h';
 import addressBalanceStore from '@/store/balance';
 import {
@@ -115,15 +116,18 @@ const AddressList = ({
   const renderItem = useCallback(
     ({ item }) => {
       const gotoAddressDetail = () => {
-        onDone?.();
-        naviPush(RootNames.StackAddress, {
-          screen: RootNames.AddressDetail,
-          params: {
-            address: item.address,
-            type: item.type,
-            brandName: item.brandName,
-          },
-        });
+        navigateThenDismiss(
+          () =>
+            naviPush(RootNames.StackAddress, {
+              screen: RootNames.AddressDetail,
+              params: {
+                address: item.address,
+                type: item.type,
+                brandName: item.brandName,
+              },
+            }),
+          onDone,
+        );
       };
 
       return (
@@ -325,7 +329,7 @@ const getStyles = createGetStyles2024(ctx => ({
   title: {
     marginTop: 20,
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: '800',
     lineHeight: 24,
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
@@ -349,6 +353,7 @@ const getStyles = createGetStyles2024(ctx => ({
     marginBottom: 22,
     padding: 16,
     borderRadius: 20,
+    borderCurve: 'continuous',
   },
   footerMain: {
     height: 46,
@@ -428,6 +433,7 @@ const getStyles = createGetStyles2024(ctx => ({
     borderWidth: 2,
     borderColor: ctx.colors2024['neutral-bg-1'],
     borderRadius: 10,
+    borderCurve: 'continuous',
   },
   horizontalLine: {
     // width: 100,

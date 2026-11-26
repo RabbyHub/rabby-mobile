@@ -49,6 +49,7 @@ const getAccountInfoInTokenRowStyle = createGetStyles2024(({ colors2024 }) => {
     },
     accountContainer: {
       borderRadius: 12,
+      borderCurve: 'continuous',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
@@ -60,6 +61,7 @@ const getAccountInfoInTokenRowStyle = createGetStyles2024(({ colors2024 }) => {
       width: 14,
       height: 14,
       borderRadius: 4,
+      borderCurve: 'continuous',
       flexShrink: 0,
     },
     accountAddress: {

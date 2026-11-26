@@ -25,9 +25,9 @@ Overriding from the command line still works and always wins:
 
 Measured effect on `:app:assembleRegression` (dry run, task count only):
 
-| ABIs | `buildCMakeRelWithDebInfo` tasks |
-| --- | --- |
-| all four | 44 (11 targets x 4) |
+| ABIs        | `buildCMakeRelWithDebInfo` tasks                    |
+| ----------- | --------------------------------------------------- |
+| all four    | 44 (11 targets x 4)                                 |
 | `arm64-v8a` | 11 (+3 from one module that hardcodes its own list) |
 
 ## ccache
@@ -73,10 +73,10 @@ Two things had to be fixed for that to actually cache:
 Measured on simulator Regression builds, first run (cold) vs second run against
 the same DerivedData root:
 
-| machine | compile calls via ccache | 2nd-run hits | wall time |
-| --- | --- | --- | --- |
-| Mac Studio (local) | 2284 / 2285 | 252 / 504 (50%) | 5m35s -> 3m33s |
-| Mac mini M4 (.60) | 2284 / 2285 | 252 / 2536 (10%) | 5mxx -> 3m24s |
+| machine            | compile calls via ccache | 2nd-run hits     | wall time      |
+| ------------------ | ------------------------ | ---------------- | -------------- |
+| Mac Studio (local) | 2284 / 2285              | 252 / 504 (50%)  | 5m35s -> 3m33s |
+| Mac mini M4 (.60)  | 2284 / 2285              | 252 / 2536 (10%) | 5mxx -> 3m24s  |
 
 Hits need a stable DerivedData path: forcing a new `--derived-data-root` per run
 changes `-fdebug-prefix-map`/`-ivfsstatcache` arguments and misses everything,

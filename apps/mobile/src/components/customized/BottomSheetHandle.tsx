@@ -25,6 +25,7 @@ export const AppBottomSheetHandle = (
         {
           borderTopLeftRadius: 20,
           borderTopRightRadius: 20,
+          borderCurve: 'continuous',
           flexDirection: 'row',
           alignItems: 'flex-start',
           justifyContent: 'center',

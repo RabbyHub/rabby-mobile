@@ -175,9 +175,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 58,
     height: 58,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   media: {
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   fromTokenBox: {
     position: 'absolute',

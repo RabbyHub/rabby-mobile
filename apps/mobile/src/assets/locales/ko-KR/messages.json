@@ -1511,7 +1511,25 @@
         },
         "notFound": {
           "description": "블루투스를 켜고 OneKey 잠금을 해제하세요.",
-          "title": "디바이스를 찾을 수 없습니다."
+          "title": "디바이스를 찾을 수 없습니다.",
+          "retry": "다시 검색"
+        },
+        "error": {
+          "deviceNotFound": "OneKey를 찾을 수 없습니다. 기기의 잠금이 해제되어 있고 Bluetooth가 켜져 있으며 휴대폰 가까이에 있는지 확인하세요.",
+          "disconnected": "OneKey 연결이 끊어졌습니다. 기기의 잠금을 해제한 상태로 휴대폰 가까이에 두고 다시 시도하세요.",
+          "deviceBusy": "OneKey가 다른 요청을 처리하고 있습니다. 기기에서 완료하거나 취소한 후 다시 시도하세요.",
+          "passphraseDisabled": "기기에서 암호 구문이 꺼져 있습니다. 암호 구문을 켜거나 이 지갑을 다시 가져오세요.",
+          "firmwareTooOld": "OneKey 펌웨어가 너무 오래되었습니다. OneKey 앱으로 업데이트한 후 다시 시도하세요.",
+          "bluetoothOff": "Bluetooth가 꺼져 있습니다. Bluetooth를 켠 후 다시 시도하세요.",
+          "bluetoothPermission": "Rabby에 Bluetooth 사용 권한이 없습니다. 설정에서 Rabby의 Bluetooth(Android 11 이하에서는 위치) 권한을 허용한 후 다시 시도하세요.",
+          "locationServicesDisabled": "위치 서비스가 꺼져 있습니다. Bluetooth 기기를 검색하려면 위치 서비스를 켜세요.",
+          "bluetoothUnsupported": "이 휴대폰은 Bluetooth를 지원하지 않습니다.",
+          "scanFailed": "Bluetooth 검색에 실패했습니다. 다시 시도하세요.",
+          "pairingFailed": "Bluetooth 페어링에 실패했습니다. 휴대폰과 OneKey에서 페어링 요청을 수락한 후 다시 시도하세요.",
+          "pairingInvalid": "Bluetooth 페어링 정보가 더 이상 유효하지 않습니다. 휴대폰의 Bluetooth 설정에서 OneKey 등록을 해제한 후 다시 페어링하세요.",
+          "pinInvalid": "PIN이 올바르지 않습니다. 다시 시도하세요.",
+          "cancelled": "요청이 취소되었습니다.",
+          "openSettings": "설정 열기"
         }
       },
       "hd": {
@@ -1868,7 +1886,6 @@
       "dataAnalysis": "Rabby 개선에 참여하기",
       "dataAnalysisDesc": "익명 사용 데이터를 공유하여 Rabby 개선에 도움을 주세요. 수집된 데이터는 사용자 또는 사용자의 계정과 연결되지 않습니다.",
       "bugReportChat": "채팅으로 피드백 보내기",
-      "features": "기능",
       "manageWallets": "지갑 관리"
     },
     "settings": {
@@ -2236,7 +2253,10 @@
           "attachedTpSlUnresolved": "이 마켓에 이전에 제출한 TP/SL의 결과가 아직 확정되지 않았습니다. 다시 시도하기 전에 미체결 주문과 포지션을 확인하세요.",
           "orderFilled": "주문이 체결되었습니다.",
           "orderPlaced": "주문이 접수되었습니다.",
-          "orderFailed": "주문에 실패했습니다."
+          "orderFailed": "주문에 실패했습니다.",
+          "scale": "분할 주문",
+          "scaleDescription": "가격 범위를 설정하고 여러 지정가 하위 주문을 제출합니다",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "즉시 체결되지 않도록 포스트 온리 가격은 최우선 매도호가보다 낮아야 합니다.",
@@ -2250,6 +2270,9 @@
           "tpSl": {
             "title": "TP/SL",
             "description": "기본 시장가 TP/SL 주문을 설정합니다. 부분 TP/SL 같은 고급 기능은 보유 중인 포지션에서 TP/SL을 설정하세요."
+          },
+          "randomize": {
+            "description": "무작위화는 최대 거래 규모 및 기타 한도를 준수하면서 각 분할 거래의 규모를 최대 ±20%까지 변동시킵니다."
           },
           "reduceOnly": {
             "title": "감소 전용",
@@ -2347,7 +2370,8 @@
             "orders": "주문 내역",
             "trade": "체결 내역",
             "transaction": "입출금 내역",
-            "funding": "펀딩비"
+            "funding": "펀딩비",
+            "twap": "TWAP 내역"
           },
           "empty": {
             "orders": "주문 내역 없음",
@@ -2529,6 +2553,101 @@
           "cancelPartial": "주문 {{success}}건 취소, {{failed}}건 실패",
           "cancelFailed": "주문 취소에 실패했습니다",
           "cancelContextChanged": "계정이 변경되었습니다. 다시 시도하세요."
+        },
+        "scaleOrder": {
+          "lowerPrice": "최저 가격",
+          "upperPrice": "최고 가격",
+          "size": "수량",
+          "count": "주문 수 (2–100)",
+          "distribution": "수량 분배",
+          "flat": "균등",
+          "ascending": "오름차순",
+          "descending": "내림차순",
+          "flatDescription": "각 주문에 동일한 수량을 배분합니다",
+          "ascendingDescription": "가격이 높아질수록 주문 수량이 증가합니다",
+          "descendingDescription": "가격이 낮아질수록 주문 수량이 증가합니다",
+          "previewBuy": "매수 미리보기",
+          "previewSell": "매도 미리보기",
+          "totalSize": "총 수량",
+          "averagePrice": "평균 가격",
+          "result": "접수 {{accepted}}건, 거부 {{rejected}}건, 확인 대기 {{unresolved}}건",
+          "unknown": "주문 결과 확인 대기 중입니다. 새 주문 전에 미체결 주문과 거래 내역을 확인하세요.",
+          "errors": {
+            "range": "유효한 가격을 입력하세요. 최고 가격은 최저 가격보다 높아야 합니다.",
+            "count": "2~100 사이의 정수를 입력하세요.",
+            "size": "0보다 크고 이 시장의 수량 정밀도 요건을 충족하는 주문 수량을 입력하세요.",
+            "duplicatePrice": "가격 정밀도에 맞게 조정한 후 일부 주문 가격이 중복됩니다. 가격 범위를 넓히거나 주문 수를 줄이세요.",
+            "minimum": "수량 정밀도에 맞게 조정한 후 각 하위 주문 금액은 $10 이상이어야 합니다.",
+            "maximum": "총 주문 금액이 이 시장에서 허용되는 한도를 초과합니다.",
+            "capacity": "이 주문 묶음을 제출할 거래 여력이 부족합니다.",
+            "reduceOnly": "총 주문 수량이 현재 청산 가능한 포지션 수량을 초과합니다."
+          }
+        },
+        "twap": {
+          "description": "사용자가 지정한 간격으로 주문합니다",
+          "totalTime": "총 시간",
+          "durationFieldLabel": "총 시간 (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}}분",
+          "minuteValue_one": "{{t}}분",
+          "confirmationDuration": "{{t}}분",
+          "totalSize": "총 수량",
+          "selectTime": "총 시간 선택",
+          "reset": "초기화",
+          "randomize": "무작위화",
+          "randomized": "무작위화됨",
+          "durationHint": "TWAP 주문 실행 시간은 5~1439분입니다.",
+          "minimum": "최소 총 수량은 {{amount}}입니다",
+          "filled": "체결 수량",
+          "duration": "경과 시간",
+          "runtime": "실행 시간",
+          "averagePrice": "평균 가격",
+          "end": "종료",
+          "detail": "상세",
+          "add": "추가",
+          "detailTitle": "TWAP 실행 상세",
+          "historyDetailTitle": "TWAP 내역 상세",
+          "trades": "체결",
+          "size": "수량",
+          "fee": "수수료",
+          "noTrades": "아직 체결 내역이 없습니다",
+          "endTitle": "TWAP 주문 종료 확인",
+          "endMessage": "확인하면 TWAP 주문이 중단되고 이 TWAP의 미체결 주문이 자동으로 취소됩니다.",
+          "ending": "종료 중…",
+          "ended": "TWAP 주문이 종료되었습니다.",
+          "placed": "{{coin}} TWAP 주문이 제출되었습니다.",
+          "unknownOutcome": "{{coin}} TWAP 결과를 확인 중입니다. 다시 주문하기 전에 주문과 내역을 확인하세요.",
+          "unknown": "TWAP 결과를 확인 중입니다. 다시 시도하기 전에 주문과 내역을 확인하세요.",
+          "loadError": "TWAP 주문을 불러올 수 없습니다. 탭하여 다시 시도하세요.",
+          "endedLabel": "종료됨",
+          "skipConfirmation": "TWAP 주문의 추가 확인을 다시 표시하지 않습니다.",
+          "averageFilledPrice": "평균 체결가",
+          "status": {
+            "working": "실행 중",
+            "waiting": "대기 중",
+            "filled": "체결 완료",
+            "cancelled": "취소됨",
+            "expired": "만료됨",
+            "unknown": "알 수 없음"
+          },
+          "fills": {
+            "loading": "체결 내역을 불러오는 중…",
+            "error": "체결 내역을 불러올 수 없습니다. 탭하여 다시 시도하세요."
+          },
+          "errors": {
+            "amountRequired": "주문 수량을 입력하세요.",
+            "amountTooSmall": "TWAP 주문 금액은 $100 이상이어야 합니다.",
+            "amountExceedsMaximum": "주문이 사용 가능한 최대치를 초과합니다.",
+            "invalidPrecision": "이 시장의 수량 정밀도에 맞는 수량을 입력하세요.",
+            "priceUnavailable": "현재 가격을 가져올 수 없습니다. 다시 시도하세요.",
+            "durationRequired": "총 시간을 입력하세요.",
+            "durationInvalid": "분 단위 정수를 입력하세요.",
+            "durationTooShort": "TWAP 최소 실행 시간은 5분입니다.",
+            "durationTooLong": "TWAP 최대 실행 시간은 1439분입니다.",
+            "capacity": "이 주문을 실행할 거래 여력이 부족합니다.",
+            "reduceOnly": "주문 수량이 청산 가능한 포지션 수량을 초과합니다.",
+            "contextChanged": "계정, 주문 또는 시장이 변경되었습니다. 주문을 다시 확인하세요."
+          }
         }
       },
       "limitOrders": "지정가 주문",
@@ -2744,9 +2863,6 @@
         "hyperliquidFee": "하이퍼리퀴드 거래 수수료.",
         "activatedFailed": "활성화 실패",
         "activateNow": "지금 활성화하세요"
-      },
-      "dappSelect": {
-        "title": "무기한 선물 제공자 선택"
       },
       "search": {
         "placeholder": "무기한 선물 검색",
@@ -3024,12 +3140,7 @@
         "lq": "1 이하로 떨어지면 청산이 발생할 수 있습니다."
       },
       "repayDetail": {
-        "actions": "상환",
-        "tabs": {
-          "collateral": "담보",
-          "wallet": "지갑 잔액"
-        },
-        "repayWith": "상환 수단"
+        "actions": "상환"
       },
       "supplyDetail": {
         "actions": "예치",
@@ -3050,7 +3161,6 @@
         "borrowingUnavailable": "현재 모드에서는 이 자산을 빌릴 수 없습니다.",
         "almostReachedWarning": "이 자산에 대한 프로토콜 대출 한도가 100%입니다. 추가 대출이 불가능합니다.",
         "almostReachedError": "대출할 수 있는 최대 금액은 프로토콜 대출 한도가 거의 도달했기 때문에 제한됩니다.",
-        "swapDebt": "스왑",
         "borrowed": "차입액",
         "noSupplyPrefix": "예치 없음:",
         "noSupplyDesc": "빌리려면 담보로 자산을 제공해야 합니다."
@@ -3162,79 +3272,18 @@
         "description": "E-모드를 활성화하면 대출 능력을 극대화할 수 있습니다. 그러나 대출은 선택한 카테고리 내의 자산으로 제한됩니다.",
         "unavailableTips": "귀하의 기존 대출/차입 자산은 지원되지 않습니다.",
         "enabled": "• 활성화됨",
-        "title": "E-모드 관리",
-        "debtSwapSelector": {
-          "header": {
-            "assets": "토큰/잔액",
-            "borrow": "내 차입",
-            "apy": "APY"
-          },
-          "title": "대출 토큰 선택"
-        },
-        "collateralSwapSelector": {
-          "header": {
-            "collateral": "내 담보",
-            "assets": "토큰"
-          },
-          "title": "담보 토큰 선택"
-        }
+        "title": "E-모드 관리"
       },
       "disabled": "비활성화됨",
-      "debtSwap": {
-        "actions": {
-          "swapTo": "전환 대상",
-          "borrowed": "차입됨",
-          "amount": "금액",
-          "title": "부채 전환",
-          "select": "선택하세요"
-        },
-        "overview": {
-          "borrowAPY": "차입 APY",
-          "title": "거래 개요",
-          "borrowValueAfter": "전환 후 차입 잔액"
-        },
-        "button": {
-          "swap": "전환"
-        },
-        "borrowBalance": "차입 잔액",
-        "title": "차입 포지션 전환",
-        "lpDangerWarning": "이 스왑 후 귀하의 건강 지수가 심각하게 낮아져 청산이 발생할 수 있습니다. 안전을 위해 다른 자산을 선택하거나 스왑 금액을 줄여 주십시오.",
-        "priceImpactTips": "가격 영향이 큽니다({{lostValue}}). 유동성이 낮거나 주문 규모가 작아 이 경로의 예상 결과가 크게 달라질 수 있습니다.",
-        "lpRiskWarning": "스왑 후 낮은 건강 지수. 귀하의 포지션은 청산 위험이 더 높습니다.",
-        "maxLtvWarning": "새 차입 포지션을 감당할 담보가 부족합니다. 부채를 전환하려면 지갑에 남은 차입 한도가 있어야 합니다."
-      },
       "totalSupplied": "총 예치액",
       "totalBorrowed": "총 차입금",
       "netApy": "순 APY",
-      "repayWithCollateral": {
-        "action": {
-          "title": "{{collateral}}로 상환하기"
-        },
-        "overview": {
-          "collateralValueAfter": "대출 상환 후 담보 잔고",
-          "title": "거래 개요",
-          "borrowValueAfter": "상환 후 차입 잔액"
-        },
-        "button": {
-          "repay": "상환"
-        },
-        "repayWith": "상환에 사용할 담보",
-        "collateralNotEnough": "귀하의 담보 잔액이 선택한 금액보다 낮습니다.",
-        "toRepay": "상환 예상 금액",
-        "insufficientLiquidity": "유동성이 부족합니다.",
-        "flashLoanDisabled": "보안상의 이유로 이 자산에 대한 포지션 전환이 비활성화되어 있습니다.",
-        "frozenCollateral": "이 자산은 Aave 커뮤니티 결정으로 인해 동결되었습니다."
-      },
       "repayWithAToken": {
         "header": {
           "balance": "잔고",
           "assets": "토큰"
         },
-        "title": "상환 토큰 선택",
-        "zeroLtvCollateralTips": "다음 LTV = 0 담보가 있습니다. 담보 상환 규칙에 따라 먼저 이 담보들로 상환해야 합니다."
-      },
-      "signFallback": {
-        "preExecFailedUseFullSign": "시뮬레이션 실패. 이 거래는 AAVE 오류로 인해 실패할 가능성이 높습니다."
+        "title": "상환 토큰 선택"
       }
     },
     "address": {
@@ -3242,20 +3291,6 @@
         "title": "자산 받기",
         "btnCopyAddress": "주소 복사"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "예측 제공자 선택"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableTitle": "서비스를 이용할 수 없습니다",
-      "serviceUnavailableDesc": "현재 지역에서는 이 서비스가 지원되지 않습니다."
-    },
-    "DAppFrame": {
-      "netWorth": "순자산",
-      "walletBalance": "지갑/잔액",
-      "selectAWallet": "지갑 선택"
     },
     "meme": {
       "tokenHeader": {
@@ -3421,7 +3456,7 @@
       "title": "소액 전환"
     },
     "walletConnect": {
-      "screenTitle": "지갑 연결",
+      "screenTitle": "스캔하여 연결",
       "connectingToRabby": "Rabby에 연결 중",
       "pairingFailed": "WalletConnect 페어링에 실패했습니다.",
       "proposalNotReceived": "WalletConnect QR 코드가 만료되었을 수 있습니다. 새로 고친 후 다시 시도하세요.",

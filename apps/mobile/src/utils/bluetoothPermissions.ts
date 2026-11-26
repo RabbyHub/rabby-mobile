@@ -152,3 +152,42 @@ export const checkAndRequestAndroidBluetooth = async (): Promise<boolean> => {
   }
   return false;
 };
+
+/**
+ * Android runtime permissions needed to scan for and connect to BLE hardware
+ * wallets: BLUETOOTH_SCAN + BLUETOOTH_CONNECT on Android 12+ (API 31+, the
+ * manifest declares SCAN with neverForLocation), ACCESS_FINE_LOCATION before.
+ *
+ * Unlike checkAndRequestAndroidBluetooth this does not ask for location on
+ * Android 12+ and does not show the Ledger-specific alert; the caller shows
+ * its own message when this returns false.
+ */
+export const requestAndroidBleScanPermissions = async (): Promise<boolean> => {
+  if (Platform.OS !== 'android') {
+    return true;
+  }
+  const permissions: AndroidPermission[] =
+    Number(Platform.Version) >= 31
+      ? [
+          PERMISSIONS.ANDROID.BLUETOOTH_SCAN,
+          PERMISSIONS.ANDROID.BLUETOOTH_CONNECT,
+        ]
+      : [PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION];
+
+  const isOk = (value?: string) =>
+    value === RESULTS.GRANTED ||
+    value === RESULTS.LIMITED ||
+    // Not applicable on this OS version / device; let the SDK decide.
+    value === RESULTS.UNAVAILABLE;
+
+  const current = await checkForMultiplePermissions(permissions);
+  const missing = permissions.filter(p => !isOk(current[p]));
+  if (missing.length === 0) {
+    return true;
+  }
+  if (missing.some(p => current[p] === RESULTS.BLOCKED)) {
+    return false;
+  }
+  const requested = await requestMultiplePermissions(missing);
+  return missing.every(p => isOk(requested[p]));
+};

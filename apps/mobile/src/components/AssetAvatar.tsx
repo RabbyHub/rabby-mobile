@@ -80,7 +80,12 @@ export const AssetAvatar = memo(
           chainIconPosition === 'br' && styles.chainIconBR,
           chainIconPosition === 'tr' && styles.chainIconTR,
           innerChainStyle,
-          { width: chainSize, height: chainSize, borderRadius: chainSize / 2 },
+          {
+            width: chainSize,
+            height: chainSize,
+            borderRadius: chainSize / 2,
+            borderCurve: 'continuous',
+          },
         ]),
       [chainSize, chainIconPosition, styles, innerChainStyle],
     );
@@ -111,6 +116,7 @@ export const AssetAvatar = memo(
             width: size,
             height: size,
             borderRadius: logoStyle?.borderRadius ?? size / 2,
+            borderCurve: 'continuous' as const,
           },
         ]),
       [size, logoStyle, styles.iconStyle],

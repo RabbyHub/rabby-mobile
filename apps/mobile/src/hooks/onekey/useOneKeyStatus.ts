@@ -1,5 +1,11 @@
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { toastIndicator } from '@/components2024/Toast';
+import { toast, toastIndicator } from '@/components2024/Toast';
+import i18n from '@/utils/i18n';
+import {
+  getOneKeyErrorCode,
+  getOneKeyErrorMessage,
+  isOneKeyUserCancelError,
+} from '@/utils/onekeyError';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -8,6 +14,18 @@ import { apiOneKey } from '@/core/apis';
 import { atom, getDefaultStore, useAtom } from 'jotai';
 import { noop } from 'lodash';
 import React from 'react';
+
+function toastOneKeyConnectError(e: any) {
+  console.error('OneKey connect error', e);
+  if (isOneKeyUserCancelError(getOneKeyErrorCode(e))) {
+    return;
+  }
+  toast.show(
+    getOneKeyErrorMessage(e, i18n.t.bind(i18n)) ||
+      e?.message ||
+      i18n.t('page.newAddress.onekey.error.disconnected'),
+  );
+}
 
 export const oneKeyStatusAtom = atom<'CONNECTED' | 'DISCONNECTED' | undefined>(
   'CONNECTED',
@@ -56,6 +74,7 @@ export const useOneKeyStatus = (
             isConnected = true;
             cb?.();
           } catch (e) {
+            toastOneKeyConnectError(e);
             rej?.();
             setStatus('DISCONNECTED');
           } finally {
@@ -128,6 +147,7 @@ export const callConnectOneKeyModal = ({
         setOneKeyStatus(true);
         cb?.();
       } catch (e) {
+        toastOneKeyConnectError(e);
         setOneKeyStatus(false);
         rej?.();
       } finally {

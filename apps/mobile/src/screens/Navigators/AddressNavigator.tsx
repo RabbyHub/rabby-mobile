@@ -53,6 +53,7 @@ import { APP_TEST_PASSWORD } from '@/constant';
 import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { ImportMethodsHeader } from '../Address/ImportMethodsHeader';
 import { AutoFitCenterHeader } from '@/components/AutoFitCenterHeader';
+import { SafeWindowHeaderInset } from '@/components/SafeWindowFrame/headerInset';
 
 const AddressStack = createNativeStackNavigator<AddressNavigatorParamList>();
 const RegressionSyncExtensionPasswordScreen = withRegressionScenario(
@@ -85,7 +86,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   headerTitleText: {
     color: colors2024['neutral-title-1'],
-    fontWeight: '900',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
   },
@@ -95,7 +96,6 @@ export function AddressNavigator() {
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
   const { colors, colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
@@ -153,7 +153,11 @@ export function AddressNavigator() {
           headerTintColor: colors2024['neutral-title-1'],
           headerTitleStyle: styles.headerTitleText,
           // eslint-disable-next-line react/no-unstable-nested-components
-          headerRight: () => <AddressListScreenButton type="watch-address" />,
+          headerRight: () => (
+            <SafeWindowHeaderInset>
+              <AddressListScreenButton type="watch-address" />
+            </SafeWindowHeaderInset>
+          ),
         })}
       />
       <AddressStack.Screen
@@ -165,7 +169,11 @@ export function AddressNavigator() {
           headerTintColor: colors2024['neutral-title-1'],
           headerTitleStyle: styles.headerTitleText,
           // eslint-disable-next-line react/no-unstable-nested-components
-          headerRight: () => <AddressListScreenButton type="safe-address" />,
+          headerRight: () => (
+            <SafeWindowHeaderInset>
+              <AddressListScreenButton type="safe-address" />
+            </SafeWindowHeaderInset>
+          ),
         })}
       />
 
@@ -190,6 +198,7 @@ export function AddressNavigator() {
           header: () => (
             <AutoFitCenterHeader
               title={t('screens.addressStackTitle.ImportHardwareAddress')}
+              titleKey="screens.addressStackTitle.ImportHardwareAddress"
             />
           ),
         })}
@@ -226,6 +235,7 @@ export function AddressNavigator() {
           header: () => (
             <AutoFitCenterHeader
               title={t('screens.addressStackTitle.ImportWatchAddress2024')}
+              titleKey="screens.addressStackTitle.ImportWatchAddress2024"
             />
           ),
         })}
@@ -239,7 +249,9 @@ export function AddressNavigator() {
             // Fully custom header: a long translation used to overflow the
             // native title slot (QA 1352), so the row now owns the leading
             // slot and truncates the title inside the content width.
-            header: () => <ImportMethodsHeader />,
+            header: () => (
+              <ImportMethodsHeader titleKey="screens.addressStackTitle.ImportMethods" />
+            ),
             title: t('screens.addressStackTitle.ImportMethods'),
             headerTintColor: colors['neutral-title-1'],
             headerTitleStyle: styles.headerTitleText,
@@ -261,6 +273,7 @@ export function AddressNavigator() {
           header: () => (
             <AutoFitCenterHeader
               title={t('screens.addressStackTitle.ImportSafeAddress2024')}
+              titleKey="screens.addressStackTitle.ImportSafeAddress2024"
             />
           ),
         })}
@@ -308,13 +321,21 @@ export function AddressNavigator() {
         name={RootNames.CreateChooseBackup}
         component={withScreenPropsInjection(CreateChooseBackup)}
         options={e => {
+          // Native iOS headers shift a long title right when the back button
+          // sits next to it (QA 1439 on the SE: +20pt in English, centred in
+          // Chinese). The JS header keeps equal leading/trailing slots, so the
+          // title stays centred for every language.
+          const title = e.route.params?.isFirstCreate
+            ? t('screens.addressStackTitle.CreateChooseBackup')
+            : t('screens.addressStackTitle.ChooseBackup');
+          const titleKey = e.route.params?.isFirstCreate
+            ? 'screens.addressStackTitle.CreateChooseBackup'
+            : 'screens.addressStackTitle.ChooseBackup';
           return mergeScreenOptions({
-            headerTitle: e.route.params?.isFirstCreate
-              ? t('screens.addressStackTitle.CreateChooseBackup')
-              : t('screens.addressStackTitle.ChooseBackup'),
-            title: e.route.params?.isFirstCreate
-              ? t('screens.addressStackTitle.CreateChooseBackup')
-              : t('screens.addressStackTitle.ChooseBackup'),
+            title,
+            header: () => (
+              <AutoFitCenterHeader title={title} titleKey={titleKey} />
+            ),
             headerStyle: {
               backgroundColor: colors2024['neutral-bg-1'],
             },

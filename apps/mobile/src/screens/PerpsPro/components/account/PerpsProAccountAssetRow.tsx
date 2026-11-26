@@ -129,6 +129,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   ledgerTag: {
     backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: 4,
+    borderCurve: 'continuous',
     paddingHorizontal: 4,
     paddingVertical: 1,
   },
@@ -169,6 +170,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: 6,
+    borderCurve: 'continuous',
     height: 30,
     justifyContent: 'center',
     width: 68,

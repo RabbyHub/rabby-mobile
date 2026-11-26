@@ -178,6 +178,33 @@ describe('utils/walletUnlock', () => {
     expect(mockVerifyPasswordOrUnlock).toHaveBeenCalledWith('custom-password');
   });
 
+  it('hides a keyboard owned by another input before showing the password modal', async () => {
+    const { walletUnlock, mockShowAuthenticationModal } = await setup({
+      isAuthenticatedByBiometrics: false,
+    });
+    const { Keyboard } =
+      require('react-native') as typeof import('react-native');
+    let hideListener: (() => void) | undefined;
+    jest.spyOn(Keyboard, 'isVisible').mockReturnValue(true);
+    jest.spyOn(Keyboard, 'addListener').mockImplementation(((
+      _event: string,
+      listener: () => void,
+    ) => {
+      hideListener = listener;
+      return { remove: jest.fn() };
+    }) as never);
+    const dismiss = jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => {
+      Promise.resolve().then(() => hideListener?.());
+    });
+
+    await walletUnlock.ensureWalletUnlocked();
+
+    expect(dismiss).toHaveBeenCalledTimes(1);
+    expect(dismiss.mock.invocationCallOrder[0]).toBeLessThan(
+      mockShowAuthenticationModal.mock.invocationCallOrder[0],
+    );
+  });
+
   it('falls back to the custom password modal for old Android biometrics auth settings when enrollment is gone', async () => {
     const {
       walletUnlock,

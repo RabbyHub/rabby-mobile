@@ -575,6 +575,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
+    borderCurve: 'continuous',
     boxShadow: '0px -4px 16px 0px rgba(0, 0, 0, 0.1)',
   },
   header: {
@@ -585,6 +586,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignSelf: 'center',
     backgroundColor: colors2024['neutral-sheet-handle'],
     borderRadius: 2,
+    borderCurve: 'continuous',
     height: 4,
     position: 'absolute',
     top: 10,

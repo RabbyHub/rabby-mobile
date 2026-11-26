@@ -69,7 +69,7 @@ export const AliasNameEditView: React.FC<Props> = ({
       {accoutnIconUri ? (
         <Image
           source={{ uri: accoutnIconUri }}
-          style={{ borderRadius: iconBorderRadius }}
+          style={{ borderRadius: iconBorderRadius, borderCurve: 'continuous' }}
           width={iconSize}
           height={iconSize}
         />

@@ -36,6 +36,7 @@ export const TokenAmountItem: React.FC<Props> = ({
       onPress={onEdit}
       style={StyleSheet.flatten({
         borderRadius: 4,
+        borderCurve: 'continuous',
         paddingVertical: 4,
         paddingHorizontal: 7,
         borderWidth: 0.5,

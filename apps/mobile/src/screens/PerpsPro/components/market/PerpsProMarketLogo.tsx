@@ -29,6 +29,7 @@ const PerpsProMarketLogoComponent: React.FC<PerpsProMarketLogoProps> = ({
   const imageStyle = useMemo(
     () => ({
       borderRadius: size / 2,
+      borderCurve: 'continuous' as const,
       height: size,
       width: size,
     }),

@@ -184,16 +184,19 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   border: {
     padding: 1,
     borderRadius: 6,
+    borderCurve: 'continuous',
     height: 32,
     overflow: 'hidden',
   },
   borderGradient: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: 6,
+    borderCurve: 'continuous',
   },
   inner: {
     backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 6,
+    borderCurve: 'continuous',
     paddingHorizontal: 6,
     justifyContent: 'center',
     height: 30,
@@ -205,6 +208,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   enabledInner: {
     borderRadius: 5,
+    borderCurve: 'continuous',
   },
   text: {
     fontSize: 12,

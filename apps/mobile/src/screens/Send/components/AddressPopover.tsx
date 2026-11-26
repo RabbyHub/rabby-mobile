@@ -56,6 +56,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   bubble: {
     borderRadius: 12,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-4'],
     paddingHorizontal: 15.5,
     paddingVertical: 15,
@@ -94,6 +95,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   loadingBubble: {
     borderRadius: 12,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-4'],
     paddingHorizontal: 15.5,
     paddingVertical: 15,

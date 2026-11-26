@@ -345,6 +345,7 @@ const Address = ({
         paddingHorizontal: 6,
         paddingVertical: 3,
         borderRadius: 900,
+        borderCurve: 'continuous',
       })}>
       <Text
         style={StyleSheet.flatten({

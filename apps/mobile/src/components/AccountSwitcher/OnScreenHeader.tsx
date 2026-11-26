@@ -1,7 +1,8 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { useMemo } from 'react';
-import { Dimensions, View } from 'react-native';
+import { View, useWindowDimensions } from 'react-native';
 
 // caret-down-cc.svg
 import { default as RcCaretDownCircleCC } from './icons/caret-down-circle.svg';
@@ -64,6 +65,7 @@ export function ScreenHeaderAccountTitle({
   account?: KeyringAccountWithAlias | null;
 }) {
   const { styles } = useTheme2024({ getStyle });
+  const { width: windowWidth } = useWindowDimensions();
 
   return (
     <View style={styles.container}>
@@ -73,7 +75,11 @@ export function ScreenHeaderAccountTitle({
         titleText
       )}
       {account ? (
-        <View style={styles.wrapperAddressRow}>
+        <View
+          style={[
+            styles.wrapperAddressRow,
+            { width: getAddressRowWidth(windowWidth) },
+          ]}>
           <HeaderAccountRow account={account} />
         </View>
       ) : null}
@@ -91,6 +97,7 @@ export function ScreenHeaderAccountSwitcher({
     disableSwitch?: boolean;
   }>) {
   const { colors2024, styles, isLight } = useTheme2024({ getStyle });
+  const { width: windowWidth } = useWindowDimensions();
   const { t } = useTranslation();
 
   const { isVisible: isOpen, toggleSceneVisible } =
@@ -151,7 +158,11 @@ export function ScreenHeaderAccountSwitcher({
         }
       }}>
       {titleTextNode}
-      <View style={styles.wrapperAddressRow}>
+      <View
+        style={[
+          styles.wrapperAddressRow,
+          { width: getAddressRowWidth(windowWidth) },
+        ]}>
         {!isSceneUsingAllAccounts ? (
           !!finalSceneCurrentAccount && (
             <HeaderAccountRow
@@ -194,7 +205,12 @@ export function ScreenHeaderAccountSwitcher({
   );
 }
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
+// The address row keeps a fixed side allowance so the caret never clips, but the
+// width is resolved per render: foldable windows (and the safe-area-adjusted
+// width published by SafeWindowFrame) can change while the app is mounted.
+const ADDRESS_ROW_SIDE_ALLOWANCE = 140;
+const getAddressRowWidth = (windowWidth: number) =>
+  Math.max(0, windowWidth - ADDRESS_ROW_SIDE_ALLOWANCE);
 const getStyle = createGetStyles2024(ctx => {
   return {
     container: {
@@ -206,8 +222,8 @@ const getStyle = createGetStyles2024(ctx => {
       marginTop: -4,
     },
     titleText: {
-      fontFamily: 'SF Pro Rounded',
-      fontWeight: '900',
+      // Resolved Heavy (800) to match the baseline header weight.
+      ...RoundedFontStyles.heavy,
       lineHeight: 24,
       fontSize: 20,
       // Fabric/Android keeps the platform font padding on the title, which
@@ -221,7 +237,6 @@ const getStyle = createGetStyles2024(ctx => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      width: SCREEN_WIDTH - 140,
       marginTop: -2,
     },
     addressRow: {
@@ -236,6 +251,7 @@ const getStyle = createGetStyles2024(ctx => {
     },
     walletIcon: {
       borderRadius: 4,
+      borderCurve: 'continuous',
       width: 18,
       height: 18,
       marginRight: 4,

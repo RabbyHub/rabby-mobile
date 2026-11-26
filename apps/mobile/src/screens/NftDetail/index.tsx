@@ -1,7 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useCallback, useEffect, useMemo } from 'react';
 import dayjs from 'dayjs';
-import { Dimensions, StyleSheet, View, ScrollView } from 'react-native';
+import { StyleSheet, View, ScrollView } from 'react-native';
 import BigNumber from 'bignumber.js';
 import { getCHAIN_ID_LIST } from '@/constant/projectLists';
 import { useTheme2024 } from '@/hooks/theme';
@@ -20,15 +20,10 @@ import {
 import { useRoute } from '@react-navigation/native';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import type { GetRootScreenRouteProp } from '@/navigation-type';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { HeaderBackPressable } from '@/hooks/navigation';
-import { ellipsisOverflowedText } from '@/utils/text';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Button } from '@/components2024/Button';
 import { useTranslation } from 'react-i18next';
 import { naviPush } from '@/utils/navigation';
-import { useMemoizedFn } from 'ahooks';
-import FastImage from 'react-native-fast-image';
 import { useMyAccounts } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -63,74 +58,8 @@ const ListItem = (props: {
 export const NFTDetailScreen = () => {
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
   const route = useRoute<GetRootScreenRouteProp<'NftDetail'>>();
   const { token, isSingleAddress, account: routeAccount } = route.params || {};
-  type NonListType = Exclude<typeof token, TokenItem[]>;
-
-  const chain = getCHAIN_ID_LIST().get((token as NonListType).chain);
-  const iconUri = chain?.logo;
-
-  const TokenDetailHeaderArea = useMemoizedFn(() => {
-    return (
-      <View style={styles.headerArea}>
-        <HeaderBackPressable
-          style={styles.headerBack}
-          tintColor={colors2024['neutral-title-1']}
-        />
-        <View style={styles.avator}>
-          <View
-            style={StyleSheet.flatten([
-              styles.imagesView,
-              {
-                width: 40,
-                height: 40,
-              },
-            ])}>
-            <Media
-              failedPlaceholder={<IconDefaultNFT width="100%" height="100%" />}
-              type="image_url"
-              src={(token as NFTItem)?.thumbnail_url}
-              thumbnail={(token as NFTItem)?.thumbnail_url}
-              mediaStyle={styles.imagesAvatar}
-              style={styles.imagesAvatar}
-              playIconSize={36}
-            />
-          </View>
-          {iconUri ? (
-            <FastImage
-              source={{
-                uri: iconUri,
-              }}
-              style={styles.chainIcon}
-            />
-          ) : null}
-        </View>
-        <Text style={styles.tokenSymbol} numberOfLines={1} ellipsizeMode="tail">
-          {/* {token?.name} */}
-          {ellipsisOverflowedText(
-            (token as NFTItem)?.name || t('global.unknownNFT'),
-            20,
-          )}
-        </Text>
-      </View>
-    );
-  });
-
-  React.useLayoutEffect(() => {
-    setNavigationOptions({
-      headerTitle: TokenDetailHeaderArea,
-      // The row renders its own back button so the avatar always follows it
-      // with the same gap on every device; the native item reserves much more
-      // space than the glyph on iOS 26.
-      headerTitleAlign: 'left',
-      headerBackVisible: false,
-      headerLeft: () => null,
-      // mergeScreenOptions installs a native back bar item on iOS; clear it so
-      // only the row's own back button is rendered.
-      unstable_headerLeftItems: () => [],
-    });
-  }, [TokenDetailHeaderArea, setNavigationOptions]);
 
   const calPrice = useCallback((iToken: NFTItem) => {
     if (iToken?.usd_price) {
@@ -324,7 +253,7 @@ export const NFTDetailScreen = () => {
               style={styles.images}
               mediaStyle={styles.innerImages}
               playable={true}
-              poster={iToken?.content}
+              poster={iToken?.thumbnail_url}
             />
           </View>
           <View style={styles.bottom}>
@@ -427,8 +356,6 @@ export const NFTDetailScreen = () => {
   );
 };
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
-
 const getStyle = createGetStyles2024(
   ({ colors2024, colors, safeAreaInsets }) => ({
     screenRoot: {
@@ -460,6 +387,7 @@ const getStyle = createGetStyles2024(
       width: 18,
       height: 18,
       borderRadius: 4,
+      borderCurve: 'continuous',
     },
     relative: {
       position: 'relative',
@@ -475,19 +403,11 @@ const getStyle = createGetStyles2024(
     },
     imagesView: {
       borderRadius: 4,
+      borderCurve: 'continuous',
       justifyContent: 'center',
       alignItems: 'center',
       position: 'relative',
       marginBottom: 0,
-    },
-    headerArea: {
-      // Full row: our own back button + avatar + name, laid out from 16pt.
-      width: SCREEN_WIDTH - 32,
-      height: 'auto',
-      display: 'flex',
-      flexDirection: 'row',
-      gap: 8,
-      alignItems: 'center',
     },
     headerBack: {
       marginLeft: 0,
@@ -514,6 +434,7 @@ const getStyle = createGetStyles2024(
     },
     innerImages: {
       borderRadius: 16,
+      borderCurve: 'continuous',
       // width: '100%',
       // height: 'auto',
     },
@@ -528,6 +449,7 @@ const getStyle = createGetStyles2024(
       width: 16,
       height: 16,
       borderRadius: 16,
+      borderCurve: 'continuous',
       position: 'absolute',
       bottom: 0,
       right: 0,
@@ -536,6 +458,7 @@ const getStyle = createGetStyles2024(
       width: '100%',
       height: '100%',
       borderRadius: 8,
+      borderCurve: 'continuous',
     },
     imageContainer: {
       width: '100%',

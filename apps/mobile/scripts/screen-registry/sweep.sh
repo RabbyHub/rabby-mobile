@@ -30,17 +30,18 @@ mkdir -p "$SHOT_DIR"
 IDS=${IDS:?set IDS=<file with screen ids>}
 URL_BASE='rabbygo-debug://go.rabby.io/mobile-debug/?_cmd=debug-open-screen&screen='
 
+# Sets PLATFORM (and DEVICE when it can be discovered) in the current shell.
+# Running this through `$(...)` would keep DEVICE inside the subshell.
 detect_platform() {
   if [ -n "${PLATFORM:-}" ]; then
-    printf '%s' "$PLATFORM"
     return
   fi
   if [ -n "${DEVICE:-}" ] && adb devices | awk '$2=="device"{print $1}' | grep -qx "$DEVICE"; then
-    printf 'android'
+    PLATFORM=android
     return
   fi
   if [ -n "${DEVICE:-}" ] && xcrun simctl list devices | grep -q "$DEVICE"; then
-    printf 'ios'
+    PLATFORM=ios
     return
   fi
   local devices count
@@ -52,12 +53,12 @@ detect_platform() {
   fi
   if [ "$count" -eq 1 ]; then
     DEVICE=$(printf '%s' "$devices" | head -1)
-    printf 'android'
+    PLATFORM=android
     return
   fi
   DEVICE=$(xcrun simctl list devices booted | awk '/(Booted)/ { print $(NF-1) }' | tr -d '()' | head -1)
   [ -n "$DEVICE" ] || { echo 'no device (set DEVICE=)' >&2; exit 64; }
-  printf 'ios'
+  PLATFORM=ios
 }
 
 ios_probe_file() {
@@ -166,7 +167,7 @@ record_result() {
   fi
 }
 
-PLATFORM=$(detect_platform)
+detect_platform
 echo "platform=$PLATFORM device=$DEVICE"
 if [ "$PLATFORM" = "ios" ]; then
   sweep_ios

@@ -49,6 +49,7 @@ const getStyles = (colors: AppColorsVariants) =>
       flexWrap: 'wrap',
       backgroundColor: colors['neutral-card-1'],
       borderRadius: 8,
+      borderCurve: 'continuous',
     },
     gridItem: {
       width: '50%',

@@ -199,7 +199,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   historyTitle: {
     paddingTop: ModalLayouts.titleTopOffset,
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '900',
+    fontWeight: '800',
     fontSize: 20,
     lineHeight: 24,
     marginBottom: 10,
@@ -220,6 +220,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   walletIcon: {
     borderRadius: 4,
+    borderCurve: 'continuous',
     width: 18,
     height: 18,
     marginRight: 4,

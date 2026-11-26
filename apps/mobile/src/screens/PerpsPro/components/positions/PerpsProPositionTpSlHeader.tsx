@@ -204,6 +204,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
     backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
     borderRadius: 12,
+    borderCurve: 'continuous',
     paddingBottom: 8,
     paddingHorizontal: 12,
     paddingTop: 12,

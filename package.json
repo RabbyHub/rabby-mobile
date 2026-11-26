@@ -20,6 +20,7 @@
     "build:docs": "yarn workspaces foreach --parallel --interlaced --verbose run build:docs",
     "build:watch": "yarn run build --watch",
     "changelog:validate": "yarn workspaces foreach --parallel --interlaced --verbose run changelog:validate",
+    "check:pinned-dependencies": "node scripts/check-pinned-dependencies.js",
     "child-workspace-package-names-as-json": "ts-node scripts/child-workspace-package-names-as-json.ts",
     "postinstall": "yarn build && RABBY_MOBILE_SKIP_BUILD_DEPS=1 yarn apps/mobile postinstall",
     "install-husky": "husky install",
@@ -120,7 +121,8 @@
     "@gorhom/bottom-sheet@5.2.8": "patch:@gorhom/bottom-sheet@npm%3A5.2.8#./.yarn/patches/@gorhom-bottom-sheet-npm-5.2.8-1ad4b8f529.patch",
     "react-native@0.81.6": "patch:react-native@npm%3A0.81.6#./.yarn/patches/react-native-npm-0.81.6-e0b80aa8aa.patch",
     "lightweight-charts@5.0.8": "patch:lightweight-charts@npm%3A5.0.8#./.yarn/patches/lightweight-charts-npm-5.0.8-893c5d8ffa.patch",
-    "@onekeyfe/react-native-ble-utils@npm:^0.1.4": "patch:@onekeyfe/react-native-ble-utils@npm%3A0.1.4#~/.yarn/patches/@onekeyfe-react-native-ble-utils-npm-0.1.4-13fecc0d9b.patch"
+    "@onekeyfe/react-native-ble-utils@npm:0.1.9": "patch:@onekeyfe/react-native-ble-utils@npm%3A0.1.9#~/.yarn/patches/@onekeyfe-react-native-ble-utils-npm-0.1.9-thread-safety.patch",
+    "protobufjs@^6.11.2": "6.11.6"
   },
   "devDependencies": {
     "@babel/plugin-transform-class-static-block": "7.28.3",

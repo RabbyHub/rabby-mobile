@@ -25,6 +25,7 @@ let mockNativeTextInput: React.ElementType | undefined;
 
 jest.mock('@/core/native/utils', () => ({ IS_ANDROID: true }));
 jest.mock('react-native-reanimated', () => ({
+  makeMutable: (value: unknown) => ({ value }),
   useAnimatedReaction: jest.fn(),
 }));
 

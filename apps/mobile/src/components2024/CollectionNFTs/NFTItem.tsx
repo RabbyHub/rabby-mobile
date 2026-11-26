@@ -5,7 +5,8 @@ import { MEDIA_TYPE, Media } from '@/components/Media';
 import { useTheme2024 } from '@/hooks/theme';
 import { abbreviateNumber } from '@/utils/math';
 import React, { useMemo } from 'react';
-import { StyleSheet, View, Dimensions } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { createGetStyles2024 } from '@/utils/styles';
 
@@ -13,12 +14,10 @@ type ItemProps = {
   item: NFTItem;
   onPress: () => void;
 };
-const width = Dimensions.get('window').width;
-
-const detailWidth = (width - 88) / 3;
-
 export const Item = ({ item, onPress }: ItemProps) => {
   const { styles } = useTheme2024({ getStyle });
+  const width = getDimensionsSnapshot('window').width;
+  const detailWidth = (width - 88) / 3;
 
   const numberDisplay = useMemo(() => {
     let v = abbreviateNumber(item.amount || 0);
@@ -61,6 +60,7 @@ export const Item = ({ item, onPress }: ItemProps) => {
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   imagesView: {
     borderRadius: 4,
+    borderCurve: 'continuous',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -71,6 +71,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     height: '100%',
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
   corner: {
     backgroundColor: colors2024['neutral-black'],
@@ -80,6 +81,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 4,
     paddingVertical: 1,
     borderRadius: 3,
+    borderCurve: 'continuous',
     alignItems: 'center',
     opacity: 0.8,
   },

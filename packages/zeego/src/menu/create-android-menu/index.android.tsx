@@ -204,7 +204,10 @@ If you want to use a custom component as your <Content />, you can use the creat
 
     const colorScheme = useColorScheme();
     const isDarkMode = colorScheme === 'dark';
-    const defaultTextColor = isDarkMode ? 'white' : 'dark';
+    // Always send a valid color. Without one, the native item inherits the
+    // app theme's `android:textColor`, which follows the night resources and
+    // can turn white on the light popup after a system dark-mode change.
+    const defaultTextColor = isDarkMode ? 'white' : 'black';
     const themeVariant = isDarkMode ? 'dark' : 'light';
 
     const androidMenuViewRef = props.androidMenuViewRef || null;

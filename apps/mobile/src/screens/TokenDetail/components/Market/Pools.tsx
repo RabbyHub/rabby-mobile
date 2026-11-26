@@ -537,6 +537,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     backgroundColor: colors2024['neutral-line'],
     borderRadius: 6,
+    borderCurve: 'continuous',
     overflow: 'hidden',
   },
   content: {
@@ -592,6 +593,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     backgroundColor: colors2024['green-light-1'],
     borderRadius: 6,
+    borderCurve: 'continuous',
     lineHeight: 26,
     height: 26,
     textAlign: 'center',
@@ -713,6 +715,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   switchTabItemActive: {
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-line']
       : colors2024['neutral-bg-4'],
@@ -737,6 +740,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   detailWrapper: {
     borderRadius: 16,
+    borderCurve: 'continuous',
     overflow: 'hidden',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
@@ -758,6 +762,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   holderContainer: {
     position: 'relative',
     borderRadius: 16,
+    borderCurve: 'continuous',
     overflow: 'hidden',
     paddingVertical: 12,
     paddingHorizontal: 12,
@@ -770,6 +775,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 24,
     height: 24,
     borderRadius: 1000,
+    borderCurve: 'continuous',
   },
   projectNameContainer: {
     display: 'flex',
@@ -788,6 +794,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   skeletonBlock: {
     height: 250,
     borderRadius: 16,
+    borderCurve: 'continuous',
     marginBottom: 12,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']

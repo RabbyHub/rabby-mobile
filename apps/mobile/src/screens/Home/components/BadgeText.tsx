@@ -37,6 +37,7 @@ const getStyles = createGetStyles2024(ctx => ({
   badgeBg: {
     backgroundColor: ctx.colors2024['red-default'],
     borderRadius: BADGE_SIZE,
+    borderCurve: 'continuous',
     paddingVertical: 1,
     minWidth: BADGE_SIZE,
     height: BADGE_SIZE,

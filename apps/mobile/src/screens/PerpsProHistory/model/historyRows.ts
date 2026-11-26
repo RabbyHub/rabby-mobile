@@ -23,6 +23,9 @@ export const mapPerpsProHistoryRawRows = (
   spotMeta?: SpotMeta | null,
 ): PerpsProHistoryRow[] => {
   switch (tab) {
+    // TWAP uses the shared account-scoped reducer, not ordinary order/fill mapping.
+    case 'twap':
+      return [];
     case 'orders':
       return (
         rawItems as Parameters<typeof mapPerpsProOrderHistoryFact>[0][]

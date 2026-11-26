@@ -217,6 +217,7 @@ export const getStyles = (colors: AppColorsVariants) => {
     swipeContainer: {
       width: '100%',
       borderRadius: 8,
+      borderCurve: 'continuous',
       opacity: 1,
     },
     box: {
@@ -247,6 +248,7 @@ export const getStyles = (colors: AppColorsVariants) => {
       width: 32,
       height: 32,
       borderRadius: 32,
+      borderCurve: 'continuous',
     },
     copyIcon: {
       marginLeft: 4,
@@ -273,6 +275,7 @@ export const getStyles = (colors: AppColorsVariants) => {
       width: 20,
       height: 20,
       borderRadius: 20,
+      borderCurve: 'continuous',
     },
     tagIcon: {
       width: 16,

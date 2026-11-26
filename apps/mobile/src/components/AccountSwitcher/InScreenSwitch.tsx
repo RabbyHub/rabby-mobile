@@ -96,6 +96,7 @@ const getStyle = createGetStyles2024(ctx => {
   return {
     container: {
       borderRadius: 16,
+      borderCurve: 'continuous',
       paddingHorizontal: 16,
       paddingVertical: 16,
       backgroundColor: ctx.colors2024['neutral-bg-2'],
@@ -105,7 +106,7 @@ const getStyle = createGetStyles2024(ctx => {
     },
     titleText: {
       fontFamily: 'SF Pro Rounded',
-      fontWeight: '900',
+      fontWeight: '800',
       lineHeight: 24,
       fontSize: 20,
       color: ctx.colors2024['neutral-title-1'],
@@ -125,6 +126,7 @@ const getStyle = createGetStyles2024(ctx => {
     },
     walletIcon: {
       borderRadius: 7,
+      borderCurve: 'continuous',
       width: 24,
       height: 24,
       marginRight: 8,

@@ -40,7 +40,8 @@ import { AddressQuickManager } from '../AddressQuickManager/AddressQuickManager'
 import { AddressDetail } from '../AddressDetail/AddressDetail';
 import { ImportMoreAddress } from '../ImportMoreAddress/ImportMoreAddress';
 import { NoLongerSupports } from '../NoLongerSupports/NoLongerSupports';
-import { Dimensions, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { CollectionNFTs } from '../CollectionNFTs';
 import { AddWhitelistSelectMethod } from '@/components/AddWhitelistSelectMethod';
 import ConfirmAddress from '@/screens/Send/components/ConfirmAddress';
@@ -61,14 +62,9 @@ import { ManageEmodeModal } from '@/screens/Lending/modals/ManageEmode';
 import ManageEmodeFullModal from '@/screens/Lending/modals/ManangeEmodeFullModal';
 import SelectCategoryModal from '@/screens/Lending/components/EmodeCategory/SelectCategoryModal';
 import DisableEmodeOverviewModal from '@/screens/Lending/modals/DisableOverViewModal';
-import LendingSupplyList from '@/screens/Lending/components/popups/SupplyList';
-import LendingBorrowList from '@/screens/Lending/components/popups/BorrowList';
 import LendingTokenList from '@/screens/Lending/components/popups/LendingTokenList';
-import DebtTokenSelectModal from '@/screens/Lending/components/DebtTokenSelect';
-import DebtSwapModal from '@/screens/Lending/modals/DebtSwapModal';
 import { SeedPhraseQrCode } from '../AddressDetail/SeedPhraseQrCode';
 import { LpTokenDescription } from '../LpTokenDescription';
-import CollateralTokenSelectModal from '@/screens/Lending/components/CollateralTokenSelect';
 import TokenGroupDetailSheet from '@/screens/Address/components/MultiAssets/TokenGroupDetailSheet';
 import { CustomTestnetAddTokenSheet } from '@/screens/Address/components/MultiAssets/CustomTestnetAssets/CustomTestnetAddTokenSheet';
 import { RemoveTokenConfirmPopup } from '@/components2024/RemoveTokenConfirmPopup';
@@ -78,11 +74,17 @@ import {
   WalletConnectPairingLoading,
 } from '@/components2024/WalletConnect/WalletConnectSheets';
 
-export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
+// Static modal registry: these snap-point heights are baked into a module-level
+// map, so they cannot read the window per render without turning the whole map
+// into a factory. Only the window *height* is used here, and the letterboxed
+// foldable width does not change it, so the import-time snapshot stays correct.
+/* eslint-disable no-module-scope-dimensions */
+export const MODAL_MAX_HEIGHT = getDimensionsSnapshot('window').height - 104;
 const RECEIVE_ADDRESS_LIST_MODAL_HEIGHT = Math.max(
-  Dimensions.get('window').height - 200,
+  getDimensionsSnapshot('window').height - 200,
   453,
 );
+/* eslint-enable no-module-scope-dimensions */
 
 function getDefaultViewTypePropsPreset(
   input?: Partial<GlobalBottomSheetModalProps>,
@@ -163,6 +165,9 @@ export const MODAL_CONFIGS = {
   [MODAL_NAMES.COLLECTION_NFTS]: {
     snapPoints: [422],
     Component: CollectionNFTs,
+    // Same as NFT_DETAIL: the grid is a BottomSheetScrollView, so the sheet has
+    // to own content panning and must not wrap it in BottomSheetView.
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.CONNECT_KEYSTONE]: {
     snapPoints: ['95%'],
@@ -280,6 +285,9 @@ export const MODAL_CONFIGS = {
   [MODAL_NAMES.NFT_DETAIL]: {
     snapPoints: ['85%'],
     Component: NFTDetailPopupInner,
+    // Its content is a BottomSheetScrollView: content panning has to be on and
+    // the host must not wrap the sheet content in BottomSheetView.
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.DESCRIPTION]: {
     snapPoints: [674],
@@ -358,37 +366,15 @@ export const MODAL_CONFIGS = {
     snapPoints: ['85%'],
     Component: SelectCategoryModal,
   },
-  [MODAL_NAMES.LENDING_SUPPLY_LIST]: {
-    snapPoints: [MODAL_MAX_HEIGHT],
-    Component: LendingSupplyList,
-    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
-  },
-  [MODAL_NAMES.LENDING_BORROW_LIST]: {
-    snapPoints: [MODAL_MAX_HEIGHT],
-    Component: LendingBorrowList,
-    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
-  },
   [MODAL_NAMES.LENDING_TOKEN_LIST]: {
     snapPoints: [MODAL_MAX_HEIGHT],
     Component: LendingTokenList,
     globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
-  [MODAL_NAMES.DEBT_TOKEN_SELECT]: {
-    snapPoints: ['85%'],
-    Component: DebtTokenSelectModal,
-  },
-  [MODAL_NAMES.DEBT_SWAP]: {
-    snapPoints: [MODAL_MAX_HEIGHT],
-    Component: DebtSwapModal,
-  },
   [MODAL_NAMES.LP_TOKEN_DETAIL]: {
     snapPoints: [241],
     Component: LpTokenDescription,
     globalModalPropsPreset: getDefaultViewTypePropsPreset(),
-  },
-  [MODAL_NAMES.COLLATERAL_TOKEN_SELECT]: {
-    snapPoints: ['85%'],
-    Component: CollateralTokenSelectModal,
   },
   [MODAL_NAMES.TOKEN_GROUP_DETAIL]: {
     snapPoints: [MODAL_MAX_HEIGHT],

@@ -33,7 +33,7 @@ import {
   RcScreenshotReport,
   RcIconCurrency,
   RcNotification,
-  RcWalletConnect,
+  RcScanToConnect,
   RcAutolock,
   RcDataAnalysis,
   RcBugReport,
@@ -107,10 +107,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DevForceLocalVersionSelector, {
   useLocalVersionSelectorModalVisible,
 } from './sheetModals/DevForceLocalVersionSelector';
-import InnerDappPreloadStrategySelector, {
-  useInnerDappPreloadStrategySelectorModalVisible,
-} from './sheetModals/InnerDappPreloadStrategySelector';
-import { useInnerDappPreloadRetention } from '@/config/innerDappPreloadRetention';
 import { useShowUserAgreementLikeModal } from '../ManagePassword/components/UserAgreementLikeModalInner';
 import WalletLockTestItemModal, {
   useWalletLockTestItemModalVisible,
@@ -212,17 +208,6 @@ function TransactionNotificationSwitch() {
       onValueChange={handleToggle}
     />
   );
-}
-
-function getInnerDappPreloadStrategyLabel(strategy: string) {
-  switch (strategy) {
-    case 'legacy':
-      return 'Legacy';
-    case 'screen':
-      return 'Screen';
-    default:
-      return strategy;
-  }
 }
 
 function getBuildInfoErrorMessage(error: unknown) {
@@ -498,7 +483,11 @@ function ClearAppCacheSettingItem() {
                     <CustomSkeleton
                       width={64}
                       height={16}
-                      style={{ borderRadius: 8, marginRight: 8 }}
+                      style={{
+                        borderRadius: 8,
+                        borderCurve: 'continuous',
+                        marginRight: 8,
+                      }}
                     />
                   ) : (
                     <AppCacheSizeText
@@ -678,19 +667,11 @@ function SettingsBlocks() {
 
   const settingsBlocks: Record<string, SettingBlock> = (() => {
     return {
-      features: {
-        label: t('page.setting.features'),
+      scanToConnect: {
         items: [
           {
-            label: t('page.setting.manageWallets'),
-            icon: RcManageWallet,
-            onPress: () => {
-              handleWalletsListPress();
-            },
-          },
-          {
-            label: 'WalletConnect',
-            icon: RcWalletConnect,
+            label: t('page.walletConnect.screenTitle'),
+            icon: RcScanToConnect,
             onPress: () => {
               navigation.dispatch(
                 StackActions.push(RootNames.StackSettings, {
@@ -704,6 +685,13 @@ function SettingsBlocks() {
       settings: {
         label: t('page.setting.screenTitle'),
         items: [
+          {
+            label: t('page.setting.manageWallets'),
+            icon: RcManageWallet,
+            onPress: () => {
+              handleWalletsListPress();
+            },
+          },
           {
             label: biometricsComputed.systemAuthSettingsLabel,
             icon: isUsingDevicePasscodeForSettings
@@ -986,6 +974,10 @@ function SettingsBlocks() {
             key={l1key}
             label={block.label}
             style={[
+              idx === 0 &&
+                !block.label && {
+                  marginTop: 8,
+                },
               idx > 0 &&
                 !!block.label && {
                   marginTop: 16,
@@ -1060,16 +1052,6 @@ function DevSettingsBlocks({
 
   const { currentLocalVersion, setLocalVersionSelectorModalVisible } =
     useLocalVersionSelectorModalVisible();
-  const {
-    currentStrategy: innerDappPreloadStrategy,
-    setVisible: setInnerDappPreloadStrategySelectorVisible,
-  } = useInnerDappPreloadStrategySelectorModalVisible();
-  const innerDappPreloadRetention = useInnerDappPreloadRetention();
-  const innerDappRetentionLabel =
-    innerDappPreloadStrategy === 'screen' ? 1 : innerDappPreloadRetention;
-  const innerDappPreloadLabel = `${getInnerDappPreloadStrategyLabel(
-    innerDappPreloadStrategy,
-  )} · ${innerDappRetentionLabel}`;
 
   const { setWalletTestItemModalVisible } = useWalletLockTestItemModalVisible();
   const { setDevUIPlaygroundModalVisible } = useDevUIPlaygroundModalVisible();
@@ -1161,19 +1143,6 @@ function DevSettingsBlocks({
                 </Text>
               ),
               // TODO: only show in non-production mode
-              visible: NEED_DEVSETTINGBLOCKS,
-            },
-            {
-              label: 'Inner Dapp Preload',
-              icon: RcCode,
-              onPress: () => {
-                setInnerDappPreloadStrategySelectorVisible(true);
-              },
-              rightTextNode: (
-                <Text style={{ color: colors['neutral-body'] }}>
-                  {innerDappPreloadLabel}
-                </Text>
-              ),
               visible: NEED_DEVSETTINGBLOCKS,
             },
             {
@@ -1272,18 +1241,6 @@ function DevSettingsBlocks({
           label: 'Dev Lab',
           icon: RcEarth,
           items: [
-            {
-              label: 'Inner Dapp Preload',
-              icon: RcCode,
-              onPress: () => {
-                setInnerDappPreloadStrategySelectorVisible(true);
-              },
-              rightTextNode: (
-                <Text style={{ color: colors['neutral-body'] }}>
-                  {innerDappPreloadLabel}
-                </Text>
-              ),
-            },
             // {
             //   label: 'WebView Test',
             //   icon: RcEarth,
@@ -1417,7 +1374,6 @@ function DevSettingsBlocks({
       })}
 
       <DevForceLocalVersionSelector />
-      <InnerDappPreloadStrategySelector />
 
       <WalletLockTestItemModal />
       <DevUIPlaygroundModal />

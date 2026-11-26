@@ -101,6 +101,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
     borderRadius: 16,
+    borderCurve: 'continuous',
   },
   item: {
     width: '100%',
@@ -129,6 +130,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     paddingHorizontal: 4,
     borderRadius: 4,
+    borderCurve: 'continuous',
     overflow: 'hidden',
     alignSelf: 'flex-start',
   },

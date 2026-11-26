@@ -218,6 +218,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       isLight,
     }),
     borderRadius: 6,
+    borderCurve: 'continuous',
     flexDirection: 'row',
     gap: 6,
     height: 40,

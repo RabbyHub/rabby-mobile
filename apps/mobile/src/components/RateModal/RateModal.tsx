@@ -1,10 +1,10 @@
 import {
-  Dimensions,
   Keyboard,
   KeyboardAvoidingView,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -262,13 +262,14 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => {
       paddingHorizontal: MODAL_H_PADDING,
     },
     modal: {
-      maxWidth: Dimensions.get('window').width - MODAL_H_PADDING * 2,
+      maxWidth: getDimensionsSnapshot('window').width - MODAL_H_PADDING * 2,
       width: '100%',
       paddingTop: 21,
       paddingBottom: 13,
       paddingHorizontal: 24,
       backgroundColor: colors2024['neutral-bg-1'],
       borderRadius: 20,
+      borderCurve: 'continuous',
       position: 'relative',
       alignItems: 'center',
       justifyContent: 'center',
@@ -345,6 +346,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => {
       width: '100%',
       height: 56,
       borderRadius: 12,
+      borderCurve: 'continuous',
     },
     rateButtonText: {
       fontFamily: 'SF Pro Rounded',
@@ -429,6 +431,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => {
     feedbackButton: {
       height: 56,
       borderRadius: 12,
+      borderCurve: 'continuous',
     },
     feedbackButtonText: {
       fontFamily: 'SF Pro Rounded',

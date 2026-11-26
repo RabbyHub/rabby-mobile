@@ -202,6 +202,7 @@ const getStyle = createGetStyles2024(ctx => ({
   tipContainer: {
     backgroundColor: ctx.colors2024['orange-light-1'],
     borderRadius: 8,
+    borderCurve: 'continuous',
     paddingHorizontal: 16,
     paddingVertical: 8,
     paddingLeft: 42,
@@ -234,6 +235,7 @@ const getStyle = createGetStyles2024(ctx => ({
     padding: 16,
     paddingRight: 20,
     borderRadius: 20,
+    borderCurve: 'continuous',
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,

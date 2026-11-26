@@ -55,6 +55,10 @@ detect_platform() {
 pinned_sha256() {
   case "$1" in
     darwin-arm64) echo '5fd2e024d15c0231165661f792b3e7d16f43b788526c857c734948c5503022da' ;;
+    # Built from the 4.14.3 source in an Ubuntu 20.04 container (gcc-11,
+    # static libstdc++/libgcc) so it runs on the legacy 20.04 builders; it only
+    # needs the system libzstd.
+    linux-x86_64) echo '1314ad507ade7d8fc394e99eeaca021e3bcbe07a1662fb6492cac54fbaebc92f' ;;
     *) echo '' ;;
   esac
 }
@@ -158,6 +162,15 @@ trap 'if [ -n "${CCACHE_TMP_DIR:-}" ]; then rm -rf "$CCACHE_TMP_DIR"; fi' EXIT
 
 bin="$(resolve_ccache || true)"
 if [ -z "$bin" ]; then
+  # A platform we never published a bundle for is a capability gap, not a
+  # broken install: those runners (e.g. the legacy x86 Linux builders) simply
+  # build without ccache. Real failures (download/checksum/sidecar mismatch)
+  # still honour RABBY_MOBILE_CCACHE_STRICT below.
+  platform="$(detect_platform)"
+  if [ -n "$platform" ] && [ -z "$(pinned_sha256 "$platform")" ]; then
+    log "no managed ccache bundle is published for $platform; building without ccache"
+    exit 0
+  fi
   if [ "$STRICT" = "true" ]; then
     log "no usable ccache (>= $MIN_VERSION) was found and the managed bundle could not be installed."
     log "Provide a managed bundle at s3://${BUCKET:-<bucket>}/_private/toolchains/ccache/$VERSION/<platform>.tar.gz,"

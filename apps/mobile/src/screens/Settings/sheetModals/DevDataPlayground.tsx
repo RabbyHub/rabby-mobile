@@ -294,6 +294,7 @@ const getStyles = createGetStyles((colors, ctx) => {
         ? colors['neutral-card1']
         : colors['neutral-bg1'],
       borderRadius: 8,
+      borderCurve: 'continuous',
 
       flexDirection: 'row',
       justifyContent: 'space-between',

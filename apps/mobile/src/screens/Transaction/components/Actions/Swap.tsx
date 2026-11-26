@@ -8,7 +8,8 @@ import { HistoryDetailArrow } from '../HistoryDetailArrow';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
-import { Dimensions, ScrollView, TouchableOpacity, View } from 'react-native';
+import { ScrollView, TouchableOpacity, View } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import type { TransactionGroup } from '@/core/services/transactionHistory';
 
 import RcIconSwitchArrow from '@/assets2024/icons/history/IconSwitchArrow.svg';
@@ -394,6 +395,7 @@ const getStyle = createGetStyles2024(
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
       borderRadius: 200,
+      borderCurve: 'continuous',
       width: 45,
       height: 45,
       alignItems: 'center',
@@ -432,6 +434,7 @@ const getStyle = createGetStyles2024(
       alignItems: 'center',
       justifyContent: 'center',
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: !isLight
         ? colors2024['neutral-bg-2']
         : colors2024['neutral-bg-1'],
@@ -444,6 +447,7 @@ const getStyle = createGetStyles2024(
       alignItems: 'center',
       justifyContent: 'center',
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: !isLight
         ? colors2024['neutral-bg-2']
         : colors2024['neutral-bg-1'],
@@ -457,6 +461,7 @@ const getStyle = createGetStyles2024(
       justifyContent: 'space-between',
       alignContent: 'center',
       borderRadius: 16,
+      borderCurve: 'continuous',
       padding: 16,
       flexDirection: 'row',
     },
@@ -483,6 +488,7 @@ const getStyle = createGetStyles2024(
 
       backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
       borderRadius: 16,
+      borderCurve: 'continuous',
       padding: 16,
     },
     swapTitle: {
@@ -495,7 +501,7 @@ const getStyle = createGetStyles2024(
     },
     singleColomnBox: {
       // flex: 1,
-      width: Dimensions.get('window').width - 160,
+      width: getDimensionsSnapshot('window').width - 160,
       flexDirection: 'column',
       // alignItems: 'center',
     },
@@ -523,6 +529,7 @@ const getStyle = createGetStyles2024(
       width: 33,
       height: 33,
       borderRadius: 4,
+      borderCurve: 'continuous',
     },
 
     buttonContainer: {
@@ -554,6 +561,7 @@ const getStyle = createGetStyles2024(
       borderWidth: 1,
       borderColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
       borderRadius: 1000,
+      borderCurve: 'continuous',
     },
   }),
 );

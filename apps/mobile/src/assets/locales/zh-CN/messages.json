@@ -1324,7 +1324,8 @@
         },
         "notFound": {
           "title": "未找到设备",
-          "description": "开启蓝牙并解锁 OneKey"
+          "description": "开启蓝牙并解锁 OneKey",
+          "retry": "重新搜索"
         },
         "connect": {
           "title": "连接中",
@@ -1339,6 +1340,23 @@
           "title": "输入 PIN",
           "onDevice": "在设备上输入 PIN 码",
           "description": "根据设备屏幕上显示的数字布局输入 PIN 码。"
+        },
+        "error": {
+          "deviceNotFound": "未找到 OneKey。请确认设备已解锁、蓝牙已开启，并靠近手机。",
+          "disconnected": "OneKey 已断开连接。请保持设备解锁并靠近手机后重试。",
+          "deviceBusy": "OneKey 正在处理其他请求。请在设备上完成或取消后重试。",
+          "passphraseDisabled": "设备未开启 Passphrase。请在设备上开启，或重新导入该钱包。",
+          "firmwareTooOld": "OneKey 固件版本过低。请使用 OneKey App 升级后重试。",
+          "bluetoothOff": "蓝牙未开启。请打开蓝牙后重试。",
+          "bluetoothPermission": "Rabby 没有蓝牙权限。请在系统设置中为 Rabby 允许蓝牙（Android 11 及以下为定位）权限后重试。",
+          "locationServicesDisabled": "定位服务已关闭。搜索蓝牙设备需要开启定位服务。",
+          "bluetoothUnsupported": "此手机不支持蓝牙。",
+          "scanFailed": "蓝牙搜索失败，请重试。",
+          "pairingFailed": "蓝牙配对失败。请在手机和 OneKey 上确认配对请求后重试。",
+          "pairingInvalid": "蓝牙配对信息已失效。请在手机蓝牙设置中忽略 OneKey 后重新配对。",
+          "pinInvalid": "PIN 码错误，请重试。",
+          "cancelled": "请求已取消。",
+          "openSettings": "打开设置"
         }
       },
       "seedPhrase": {
@@ -1500,7 +1518,7 @@
       "connectWallet": "连接钱包"
     },
     "walletConnect": {
-      "screenTitle": "连接钱包",
+      "screenTitle": "扫码连接",
       "connectingToRabby": "正在连接到 Rabby",
       "pairingFailed": "WalletConnect 配对失败。",
       "proposalNotReceived": "WalletConnect 二维码可能已失效，请刷新后重试。",
@@ -2015,7 +2033,6 @@
       "dataAnalysis": "帮助改进 Rabby",
       "dataAnalysisDesc": "分享匿名使用数据以帮助改进 Rabby。收集的数据不会与您或您的账户关联。",
       "bugReportChat": "通过聊天分享反馈",
-      "features": "功能",
       "manageWallets": "管理钱包"
     },
     "settings": {
@@ -2386,7 +2403,10 @@
           "attachedTpSlUnresolved": "该市场此前有一笔 TP/SL 提交尚未确认。重试前请检查未成交订单和仓位。",
           "orderFilled": "订单已成交。",
           "orderPlaced": "订单已挂出。",
-          "orderFailed": "订单失败。"
+          "orderFailed": "订单失败。",
+          "scale": "分段委托",
+          "scaleDescription": "设置价格区间并下达多笔限价子单",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "仅挂单模式下，买入价必须低于当前最低卖价，以避免立即成交。",
@@ -2400,6 +2420,9 @@
           "tpSl": {
             "title": "TP/SL",
             "description": "提交基础市价 TP/SL 订单。如需部分 TP/SL 等高级功能，请在已有仓位上设置 TP/SL。"
+          },
+          "randomize": {
+            "description": "随机化会使每笔子交易的数量在 ±20% 的范围内变化，同时遵守最大交易数量及其他限制。"
           },
           "reduceOnly": {
             "title": "只减仓",
@@ -2497,7 +2520,8 @@
             "orders": "委托历史",
             "trade": "成交历史",
             "transaction": "资金流水",
-            "funding": "资金费"
+            "funding": "资金费",
+            "twap": "TWAP 历史"
           },
           "empty": {
             "orders": "暂无委托历史",
@@ -2679,6 +2703,101 @@
           "cancelPartial": "已取消 {{success}} 笔订单；{{failed}} 笔失败",
           "cancelFailed": "取消订单失败",
           "cancelContextChanged": "账户已发生变化，请重试。"
+        },
+        "scaleOrder": {
+          "lowerPrice": "最低价",
+          "upperPrice": "最高价",
+          "size": "数量",
+          "count": "订单数 (2–100)",
+          "distribution": "数量分布",
+          "flat": "固定",
+          "ascending": "升序",
+          "descending": "降序",
+          "flatDescription": "总数量中的每笔订单分配相同数量",
+          "ascendingDescription": "订单数量随价格升高而递增",
+          "descendingDescription": "订单数量随价格降低而递增",
+          "previewBuy": "预览买单",
+          "previewSell": "预览卖单",
+          "totalSize": "总数量",
+          "averagePrice": "平均价格",
+          "result": "已受理 {{accepted}} 笔，已拒绝 {{rejected}} 笔，待确认 {{unresolved}} 笔",
+          "unknown": "下单结果待确认。请先检查当前委托和交易历史，再下新订单。",
+          "errors": {
+            "range": "请输入有效价格，最高价必须高于最低价。",
+            "count": "请输入 2 至 100 之间的整数。",
+            "size": "请输入大于 0 且符合该市场数量精度的委托数量。",
+            "duplicatePrice": "按价格精度调整后，部分委托价格重复。请扩大价格区间或减少订单数。",
+            "minimum": "按数量精度调整后，每笔子订单金额不得低于 $10。",
+            "maximum": "委托总金额超过该市场允许的上限。",
+            "capacity": "当前可交易额度不足以提交整批订单。",
+            "reduceOnly": "委托总数量超过当前可平仓数量。"
+          }
+        },
+        "twap": {
+          "description": "按自定义时间间隔下单",
+          "totalTime": "总时间",
+          "durationFieldLabel": "总时间 (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} 分钟",
+          "minuteValue_one": "{{t}} 分钟",
+          "confirmationDuration": "{{t}} 分钟",
+          "totalSize": "总数量",
+          "selectTime": "选择总运行时间",
+          "reset": "重置",
+          "randomize": "随机化",
+          "randomized": "已随机化",
+          "durationHint": "TWAP 运行时长为 5–1439 分钟。",
+          "minimum": "最小总数量为 {{amount}}",
+          "filled": "已成交",
+          "duration": "持续时间",
+          "runtime": "运行时间",
+          "averagePrice": "平均成交价",
+          "end": "结束",
+          "detail": "详情",
+          "add": "添加",
+          "detailTitle": "TWAP 运行详情",
+          "historyDetailTitle": "TWAP 历史详情",
+          "trades": "成交",
+          "size": "数量",
+          "fee": "费用",
+          "noTrades": "暂无成交",
+          "endTitle": "确认结束 TWAP",
+          "endMessage": "确认后，TWAP 订单将停止执行，该 TWAP 的所有未成交挂单将自动撤销。",
+          "ending": "正在结束…",
+          "ended": "TWAP 订单已结束。",
+          "placed": "{{coin}} TWAP 订单已提交。",
+          "unknownOutcome": "{{coin}} TWAP 结果待确认。再次下单前请检查订单和历史。",
+          "unknown": "TWAP 结果待确认。重试前请检查订单和历史。",
+          "loadError": "无法加载 TWAP 订单，点击重试。",
+          "status": {
+            "working": "运行中",
+            "waiting": "等待中",
+            "filled": "已成交",
+            "cancelled": "已取消",
+            "expired": "已终止",
+            "unknown": "未知"
+          },
+          "fills": {
+            "loading": "正在加载成交…",
+            "error": "无法加载成交记录，点击重试。"
+          },
+          "errors": {
+            "amountRequired": "请输入下单金额。",
+            "amountTooSmall": "TWAP 订单总额不能低于 100 美元。",
+            "amountExceedsMaximum": "订单超过当前可用上限。",
+            "invalidPrecision": "请输入符合该市场数量精度的金额。",
+            "priceUnavailable": "当前价格不可用，请稍后重试。",
+            "durationRequired": "请输入总时间。",
+            "durationInvalid": "请输入整数分钟。",
+            "durationTooShort": "TWAP 最短运行时间为 5 分钟。",
+            "durationTooLong": "TWAP 最长运行时间为 1439 分钟。",
+            "capacity": "当前可用交易额度不足。",
+            "reduceOnly": "订单数量超过当前可平仓数量。",
+            "contextChanged": "账户、订单或市场已变更，请重新确认订单。"
+          },
+          "endedLabel": "已结束",
+          "skipConfirmation": "TWAP 订单不再显示二次确认。",
+          "averageFilledPrice": "平均成交价"
         }
       },
       "limitOrders": "限价单",
@@ -2894,9 +3013,6 @@
         "description": "使用 Rabby 邀请码启用",
         "activateNow": "立即激活",
         "activatedSuccess": "已启用 4% Hyperliquid 手续费减免"
-      },
-      "dappSelect": {
-        "title": "选择永续合约服务商"
       },
       "search": {
         "placeholder": "搜索永续合约",
@@ -3171,12 +3287,7 @@
         "lq": "如果低于 1，可能触发清算。"
       },
       "repayDetail": {
-        "actions": "还款",
-        "tabs": {
-          "collateral": "抵押品",
-          "wallet": "钱包余额"
-        },
-        "repayWith": "还款来源"
+        "actions": "还款"
       },
       "supplyDetail": {
         "actions": "存入",
@@ -3197,7 +3308,6 @@
         "borrowingUnavailable": "当前模式下无法借入该资产。",
         "almostReachedWarning": "该资产的协议借款上限已达 100%，无法继续借入。",
         "almostReachedError": "由于协议借款上限即将达到，可借最大金额受到限制。",
-        "swapDebt": "转换",
         "borrowed": "已借入",
         "noSupplyDesc": "若要借款，您需要先存入资产作为抵押品。",
         "noSupplyPrefix": "没有存款："
@@ -3309,79 +3419,18 @@
         "unavailable": "• 不可用",
         "disableTitle": "禁用",
         "enabled": "• 已启用",
-        "description": "启用 E-Mode 可以最大化您的借款能力，但只能借入所选类别内的资产。",
-        "debtSwapSelector": {
-          "header": {
-            "assets": "代币/余额",
-            "borrow": "我的借款",
-            "apy": "APY"
-          },
-          "title": "选择借款代币"
-        },
-        "collateralSwapSelector": {
-          "header": {
-            "assets": "代币",
-            "collateral": "我的抵押品"
-          },
-          "title": "选择抵押品代币"
-        }
+        "description": "启用 E-Mode 可以最大化您的借款能力，但只能借入所选类别内的资产。"
       },
       "disabled": "已禁用",
-      "debtSwap": {
-        "actions": {
-          "title": "债务转换",
-          "swapTo": "转换为",
-          "select": "选择",
-          "amount": "金额",
-          "borrowed": "已借入"
-        },
-        "overview": {
-          "title": "交易概览",
-          "borrowAPY": "借款 APY",
-          "borrowValueAfter": "转换后借款余额"
-        },
-        "button": {
-          "swap": "转换"
-        },
-        "title": "转换借款头寸",
-        "borrowBalance": "借款余额",
-        "priceImpactTips": "价格影响较高（{{lostValue}}）。由于流动性较低或订单金额较小，该路径的预估结果可能偏离较大。",
-        "lpDangerWarning": "本次转换后，您的健康因子将严重偏低，可能导致清算。请选择其他资产或减少转换金额以降低风险。",
-        "lpRiskWarning": "转换后健康因子偏低，您的头寸将面临更高的清算风险。",
-        "maxLtvWarning": "抵押品不足以覆盖新的借款头寸。您需要保留足够的借款能力才能执行债务转换。"
-      },
       "totalBorrowed": "总借款",
       "netApy": "净 APY",
       "totalSupplied": "总存款",
-      "repayWithCollateral": {
-        "action": {
-          "title": "使用 {{collateral}} 还款"
-        },
-        "overview": {
-          "borrowValueAfter": "还款后借款余额",
-          "collateralValueAfter": "还款后抵押品余额",
-          "title": "交易概览"
-        },
-        "button": {
-          "repay": "还款"
-        },
-        "repayWith": "用于还款的抵押品",
-        "collateralNotEnough": "您的抵押品余额低于所选金额。",
-        "toRepay": "预计还款金额",
-        "insufficientLiquidity": "流动性不足。",
-        "flashLoanDisabled": "出于安全原因，该资产的头寸转换功能已禁用。",
-        "frozenCollateral": "该资产因 Aave 社区决议被冻结。"
-      },
       "repayWithAToken": {
         "header": {
           "assets": "代币",
           "balance": "余额"
         },
-        "title": "选择还款代币",
-        "zeroLtvCollateralTips": "您有以下 LTV = 0 的抵押品。根据抵押品还款规则，需要优先使用这些抵押品还款。"
-      },
-      "signFallback": {
-        "preExecFailedUseFullSign": "模拟失败。这笔交易很可能因 AAVE 错误而失败。"
+        "title": "选择还款代币"
       }
     },
     "address": {
@@ -3389,20 +3438,6 @@
         "btnCopyAddress": "复制地址",
         "title": "接收资产"
       }
-    },
-    "predict": {
-      "dappSelect": {
-        "title": "选择预测提供商"
-      }
-    },
-    "dappPermission": {
-      "serviceUnavailableDesc": "该服务在您当前的地区不受支持。",
-      "serviceUnavailableTitle": "服务不可用"
-    },
-    "DAppFrame": {
-      "walletBalance": "钱包/余额",
-      "selectAWallet": "选择一个钱包",
-      "netWorth": "净资产"
     },
     "meme": {
       "tokenHeader": {

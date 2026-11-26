@@ -3,12 +3,15 @@ import { RoundedFontStyles } from '@/core/utils/fonts';
 import 'react-native-gesture-handler';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IS_IOS } from '@/core/native/utils';
 
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
 import { HeaderBackPressable, useStackScreenConfig } from '@/hooks/navigation';
+import { useCustomHeaderTop } from '@/hooks/useAppLayout';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { isFoldableSideColumnPosture } from '@/core/utils/foldableDevice';
 import {
   RootNames,
   makeHeadersPresets,
@@ -50,9 +53,6 @@ import { PerpsSearchScreen } from '../PerpsSearch';
 import LendingHistory from '../Lending/components/LendingHistory';
 import LendingScreen from '../Lending';
 import { renderLendingHeader } from '../Lending/components/LendingHeaderTitle';
-import PredictionScreen from '../Prediction';
-import { PredictionScreenWithPreload } from '../InnerDapp/InnerDappPreloadScreens';
-import { useInnerDappPreloadStrategy } from '@/config/innerDappPreloadStrategy';
 import { Text } from '@/components/Typography';
 import { createGetStyles2024 } from '@/utils/styles';
 import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
@@ -91,10 +91,19 @@ function ConvertDustHeader({
   disableSwitch?: boolean;
 }) {
   const { styles } = useTheme2024({ getStyle: getConvertDustHeaderStyle });
-  const { top } = useSafeAreaInsets();
+  const headerTop = useCustomHeaderTop();
+  const columnInset = useSystemColumnInset();
 
   return (
-    <View style={[styles.convertDustHeaderOuter, { marginTop: top }]}>
+    <View
+      style={[
+        styles.convertDustHeaderOuter,
+        {
+          marginTop: headerTop,
+          paddingLeft: 12 + columnInset.left,
+          paddingRight: 20 + columnInset.right,
+        },
+      ]}>
       <View style={styles.convertDustHeaderInner}>
         <View style={styles.convertDustHeaderLeft}>
           <HeaderBackPressable style={styles.convertDustHeaderBackButton} />
@@ -112,6 +121,25 @@ function ConvertDustHeader({
   );
 }
 
+function SingleAddressHistoryTitle({ children }: React.PropsWithChildren) {
+  const insets = useSafeAreaInsets();
+  const foldableOuter = isFoldableSideColumnPosture({
+    top: insets.top,
+    right: insets.right,
+  });
+
+  return (
+    <View
+      style={foldableOuter ? undefined : { transform: [{ translateX: -12 }] }}>
+      <ScreenHeaderAccountSwitcher
+        forScene="History"
+        titleText={children}
+        disableSwitch
+      />
+    </View>
+  );
+}
+
 export default function TransactionNavigator() {
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
   // console.log('============== TransactionNavigator Render =========');
@@ -119,12 +147,7 @@ export default function TransactionNavigator() {
   const { t } = useTranslation();
   const { colors, colors2024, isLight } = useTheme2024();
   const headerPresets = makeHeadersPresets({ colors, colors2024 });
-  const innerDappStrategy = useInnerDappPreloadStrategy();
 
-  const PredictionComponent =
-    innerDappStrategy === 'screen'
-      ? PredictionScreenWithPreload
-      : PredictionScreen;
   return (
     <TransactionStack.Navigator
       screenOptions={mergeScreenOptions({
@@ -232,20 +255,16 @@ export default function TransactionNavigator() {
         )}
         options={{
           title: 'Transactions',
-          headerTitle: ctx => {
-            // The native back item is wider than the old JS header button, so
-            // UIKit lays this title container out ~12pt right of the screen
-            // centre (QA 1360). Pull the content back.
-            return (
-              <View style={{ transform: [{ translateX: -12 }] }}>
-                <ScreenHeaderAccountSwitcher
-                  forScene="History"
-                  titleText={ctx.children}
-                  disableSwitch
-                />
-              </View>
-            );
-          },
+          // The native back item is wider than the old JS header button, so
+          // UIKit lays this title container out ~12pt right of the screen
+          // centre (QA 1360). Pull the content back only on the native header;
+          // the Duo outer screen uses the shared JS replica header, where that
+          // correction would push the title left.
+          headerTitle: ctx => (
+            <SingleAddressHistoryTitle>
+              {ctx.children}
+            </SingleAddressHistoryTitle>
+          ),
           headerStyle: {
             backgroundColor: makeTxPageBackgroundColors({
               isLight,
@@ -532,17 +551,6 @@ export default function TransactionNavigator() {
           },
         })}
       />
-      <TransactionStack.Screen
-        name={RootNames.Prediction}
-        component={withScreenPropsInjection(PredictionComponent)}
-        options={mergeScreenOptions({
-          headerStyle: {
-            backgroundColor: colors2024['neutral-bg-1'],
-          },
-          // headerShown: false,
-          // gestureEnabled: true,
-        })}
-      />
     </TransactionStack.Navigator>
   );
 }
@@ -578,7 +586,7 @@ const getConvertDustHeaderStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '900',
+    fontWeight: '800',
     color: colors2024['neutral-title-1'],
   },
   convertDustHeaderAccountSwitcher: {

@@ -50,6 +50,7 @@ import {
   TokenDetailScreen,
   TokenMarketInfoScreen,
 } from '@/perfs/loadables/screens';
+import { NftDetailHeader } from '@/screens/NftDetail/NftDetailHeader';
 import UnlockScreen from '@/screens/Unlock/Unlock';
 import { TokenDetailHeader } from '@/screens/TokenDetail/components/HeaderArea';
 import SetupWallet from '@/screens/Address/SetupWallet';
@@ -89,7 +90,6 @@ import {
   GlobalSecurityTipStubModal,
   GlobalSignerPortal,
   GlobalTipsPopup,
-  InnerDappWebViewPreloadEntry,
   QrCodeModal,
   ToggleCollateralModal,
   UpgradePromptModal,
@@ -431,7 +431,6 @@ function AppNavigationPostUnlockGlobals({ enabled }: { enabled: boolean }) {
   return (
     <>
       <ApprovalTokenDetailSheetModalStub />
-      <InnerDappWebViewPreloadEntry />
       <BottomSheetBrowser />
       <BrowserManagePopup />
       <BrowserFavoritePopup />
@@ -692,6 +691,7 @@ export default function AppNavigation() {
                             title={t(
                               'page.newUserOnboarding.restoreWallet.title',
                             )}
+                            titleKey="page.newUserOnboarding.restoreWallet.title"
                           />
                         ),
                       },
@@ -721,6 +721,7 @@ export default function AppNavigation() {
                             title={t(
                               'screens.addressStackTitle.MoreImportMethods',
                             )}
+                            titleKey="screens.addressStackTitle.MoreImportMethods"
                           />
                         ),
                       },
@@ -741,6 +742,7 @@ export default function AppNavigation() {
                             title={t(
                               'page.nextComponent.addAddress.selectAddMethod',
                             )}
+                            titleKey="page.nextComponent.addAddress.selectAddMethod"
                           />
                         ),
                       },
@@ -752,8 +754,16 @@ export default function AppNavigation() {
                     options={mergeScreenOptions2024([
                       {
                         headerShown: true,
-                        headerTitle: t(
-                          'screens.addressStackTitle.ChooseBackup',
+                        title: t('screens.addressStackTitle.ChooseBackup'),
+                        // Native iOS headers shift a long title away from the
+                        // back button (QA 1439 on the SE: the English title sat
+                        // +20pt right, the shorter Chinese one stayed centred).
+                        // The JS header keeps equal leading/trailing slots.
+                        header: () => (
+                          <AutoFitCenterHeader
+                            title={t('screens.addressStackTitle.ChooseBackup')}
+                            titleKey="screens.addressStackTitle.ChooseBackup"
+                          />
                         ),
                       },
                     ])}
@@ -771,21 +781,25 @@ export default function AppNavigation() {
                     <RootStack.Screen
                       name={RootNames.NftDetail}
                       component={withScreenPropsInjection(NFTDetailScreen)}
-                      options={mergeScreenOptions({
-                        headerShown: true,
-                        // QA 1343: the detail rows draw their own back button.
-                        // Hide the native one from the first frame so the push
-                        // transition cannot show it (and a shifted title) first.
-                        headerTitleAlign: 'left',
-                        headerBackVisible: false,
-                        headerLeft: () => null,
-                        unstable_headerLeftItems: () => [],
-                        headerTitle: '',
-                        headerStyle: {
-                          // backgroundColor: colors['neutral-bg-2'],
-                          backgroundColor: 'transparent',
-                        },
-                      })}
+                      options={({ route }) =>
+                        mergeScreenOptions({
+                          headerShown: true,
+                          // QA 1343: the row draws its own back button, so the
+                          // native item must not exist even for the first frame
+                          // of the push transition.
+                          headerBackVisible: false,
+                          headerLeft: () => null,
+                          unstable_headerLeftItems: () => [],
+                          header: () => (
+                            <NftDetailHeader
+                              token={route.params?.token as any}
+                            />
+                          ),
+                          headerStyle: {
+                            backgroundColor: 'transparent',
+                          },
+                        })
+                      }
                     />
                     <RootStack.Screen
                       name={RootNames.TokenDetail}
