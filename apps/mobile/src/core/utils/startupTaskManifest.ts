@@ -22,6 +22,15 @@ export const STARTUP_TASKS = {
     priority: 'critical',
     budgetMs: 8,
   }),
+  keyringVaultUpgrade: defineStartupTask({
+    label: 'keyring.vaultUpgrade',
+    owner: 'keyring',
+    reason: 're-encrypt legacy credentials after successful unlock',
+    stage: 'homePostStartupIdle',
+    priority: 'low',
+    fallbackMs: 5000,
+    budgetMs: 16,
+  }),
   setupGasAccountInfoFetch: defineStartupTask({
     label: 'setup.gasAccountInfoFetch',
     owner: 'gas-account',

@@ -43,13 +43,15 @@ import { setTxRpcClient } from '../utils/tx';
 import { perfEvents } from '../utils/perf';
 import { traceAndroidInstant } from '../utils/androidTrace';
 import { recordKeyringRuntimePerfDiagnostic } from '../utils/startupDiagnostics';
+import { runStartupTask } from '../utils/startupScheduler';
+import { STARTUP_TASKS } from '../utils/startupTaskManifest';
 import {
   onCreateKeyring,
   onSetAddressAlias,
   onSetAddressAliases,
 } from './keyringParams';
 import { callCoreService, registerCoreServices } from './serviceRegistry';
-import RNEncryptor from './encryptor';
+import RNEncryptor, { DERIVATION_OPTIONS_OWASP2023 } from './encryptor';
 
 function captureStartupCoreException(error: Error) {
   void import('@sentry/react-native')
@@ -175,8 +177,13 @@ export async function loadStartupCoreServices() {
     onDiagnostic: recordKeyringStorageDiagnostic,
   });
   const keyringService = new KeyringService({
-    encryptor: new RNEncryptor(),
+    encryptor: new RNEncryptor({
+      keyDerivationOptions: DERIVATION_OPTIONS_OWASP2023,
+    }),
     onPersistVaultUpgrade: keyringPersistence.persistVaultUpgrade,
+    scheduleVaultUpgrade: upgrade => {
+      runStartupTask(upgrade, STARTUP_TASKS.keyringVaultUpgrade);
+    },
     keyringClasses,
     onSetAddressAlias,
     onSetAddressAliases,

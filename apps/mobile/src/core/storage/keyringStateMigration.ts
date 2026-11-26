@@ -389,8 +389,9 @@ function hasInvalidKeyringState(states: KeyringStateReadResult[]) {
 }
 
 /**
- * Persists a new value in the established primary keyring file with a
- * one-generation rollback copy.
+ * Persists a new value in the primary keyring file with a rollback copy.
+ * When re-encrypting the same payload, checkpoint the verified replacement
+ * so a completed KDF upgrade does not leave a live lower-cost copy.
  *
  * The checkpoint is intentionally written and verified before mutating the
  * primary file. It is a separate encrypted MMKV file, so a primary decode
@@ -403,11 +404,13 @@ export function persistKeyringState({
   keyringStorage,
   checkpointStorage,
   value,
+  checkpointNewState = false,
 }: {
   key: string;
   keyringStorage: KeyringStateStorage;
   checkpointStorage: KeyringStateStorage;
   value: PersistedKeyringState;
+  checkpointNewState?: boolean;
 }): KeyringStatePersistenceResult {
   if (!isPersistedKeyringState(value)) {
     throw new Error('Refusing to persist an invalid keyring state shape.');
@@ -427,15 +430,13 @@ export function persistKeyringState({
   }
 
   if (primary.status === 'valid') {
-    // Keep the last verified primary generation before applying the new state.
+    // Keep a recoverable state in the checkpoint before updating the primary.
     writePersistedKeyringStateAndVerify({
       storage: checkpointStorage,
       key,
-      value: primary.value,
+      value: checkpointNewState ? value : primary.value,
       ensureMMKVGuard: true,
     });
-    // Do not advance the checkpoint after a failed primary verification: it
-    // is the last known-good primary generation used for restart recovery.
     writePersistedKeyringStateAndVerify({
       storage: keyringStorage,
       key,
@@ -457,7 +458,7 @@ export function persistKeyringState({
     writePersistedKeyringStateAndVerify({
       storage: checkpointStorage,
       key,
-      value: checkpoint.value,
+      value: checkpointNewState ? value : checkpoint.value,
       ensureMMKVGuard: true,
     });
     writePersistedKeyringStateAndVerify({
