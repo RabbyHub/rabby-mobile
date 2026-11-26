@@ -327,6 +327,12 @@ export async function runBizMockAction(
     if (action.action === 'approval.rejectAll') {
       setAllowAnyApproval(false);
       rejectAllNotificationApprovalsSync();
+      try {
+        const { closeApprovalPopup } = await import('@/hooks/useApprovalPopup');
+        closeApprovalPopup();
+      } catch {
+        // The popup host may not be mounted (e.g. early startup).
+      }
       return { ok: true, action: action.action, code: 'ok' };
     }
 
@@ -429,6 +435,12 @@ export async function runBizMockAction(
         '@/components2024/GlobalBottomSheetModal'
       );
       removeAllGlobalBottomSheetModals2024();
+      try {
+        const { closeApprovalPopup } = await import('@/hooks/useApprovalPopup');
+        closeApprovalPopup();
+      } catch {
+        // The approval popup host may not be mounted.
+      }
       return { ok: true, action: action.action, code: 'ok' };
     }
 
