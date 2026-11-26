@@ -4,7 +4,7 @@ import { HeaderHeightContext } from '@react-navigation/elements';
 import { ScreenLayouts } from '@/constant/layout';
 import { Dimensions, Platform, StatusBar, type ScaledSize } from 'react-native';
 import { useContext, useMemo } from 'react';
-import { makeMutable } from 'react-native-reanimated';
+import { makeMutable, type SharedValue } from 'react-native-reanimated';
 import { isEqual } from 'lodash';
 import { zCreate } from '@/core/utils/reexports';
 import { isFoldableSideColumnPosture } from '@/core/utils/foldableDevice';
@@ -28,15 +28,29 @@ const isAndroid = Platform.OS === 'android';
  */
 const FOLDABLE_HEADER_TOP = 22;
 
+/**
+ * `makeMutable` returns a real SharedValue at runtime, but reanimated's Jest
+ * mock maps it to the identity function, so the initial value comes back as a
+ * plain object without `.value`. Fill it in when that happens; the integration
+ * lane renders style factories that read `.value` synchronously.
+ */
+function createLayoutMutable<T extends object>(initial: T): SharedValue<T> {
+  const mutable = makeMutable(initial) as SharedValue<T>;
+  if (mutable.value === undefined) {
+    mutable.value = initial;
+  }
+  return mutable;
+}
+
 export const svsLayout = {
-  insets: makeMutable<Metrics['insets']>({
+  insets: createLayoutMutable<Metrics['insets']>({
     top: 0,
     bottom: 0,
     left: 0,
     right: 0,
   }),
-  winLayout: makeMutable(Dimensions.get('window')),
-  screenLayout: makeMutable(Dimensions.get('screen')),
+  winLayout: createLayoutMutable(Dimensions.get('window')),
+  screenLayout: createLayoutMutable(Dimensions.get('screen')),
 };
 
 export function startWatchLayoutChange() {
