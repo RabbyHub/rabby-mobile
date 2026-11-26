@@ -1395,54 +1395,82 @@ export const useTokenPair = ({
   ]);
 
   const previousSlider = useRef<number>(0);
+  /**
+   * Same deferral as `useSwapBridgeSlider`: a gesture made before the pay token
+   * (or its balance) is loaded is remembered and replayed once `payToken.amount`
+   * exists, otherwise the drag never turns into an amount and no quote starts.
+   */
+  const pendingSliderRef = useRef<number | null>(null);
 
   const onChangeSlider = useCallback(
     (v: number, syncAmount?: boolean) => {
-      if (payToken) {
-        setIsDraggingSlider(true);
-        setSwapUseSlider(true);
-        setSlider(v);
-        setUseGasPrice(false);
-
-        if (
-          v !== previousSlider.current &&
-          sliderHapticTriggerNumbers.includes(v)
-        ) {
-          trigger('impactLight', {
-            enableVibrateFallback: true,
-            ignoreAndroidSystemSettings: false,
-          });
-        }
-
+      if (!payToken?.amount) {
+        pendingSliderRef.current = v;
         if (syncAmount) {
           setIsDraggingSlider(false);
         }
+        return;
+      }
 
-        previousSlider.current = v;
+      pendingSliderRef.current = null;
+      setIsDraggingSlider(true);
+      setSwapUseSlider(true);
+      setSlider(v);
+      setUseGasPrice(false);
 
-        if (v === 100) {
-          handleSlider100();
-          return;
-        }
-        const newAmountBn = new BigNumber(v)
-          .div(100)
-          .times(tokenAmountBn(payToken));
-        const isTooSmall = newAmountBn.lt(0.0001);
-        const nextPayAmount = isTooSmall
-          ? newAmountBn.toString(10)
-          : new BigNumber(newAmountBn.toFixed(4, 1)).toString(10);
-        if (nextPayAmount !== payAmount) {
-          setQuotesList([]);
-          setPayAmount(nextPayAmount);
-        }
+      if (
+        v !== previousSlider.current &&
+        sliderHapticTriggerNumbers.includes(v)
+      ) {
+        trigger('impactLight', {
+          enableVibrateFallback: true,
+          ignoreAndroidSystemSettings: false,
+        });
+      }
+
+      if (syncAmount) {
+        setIsDraggingSlider(false);
+      }
+
+      previousSlider.current = v;
+
+      if (v === 100) {
+        handleSlider100();
+        return;
+      }
+      const newAmountBn = new BigNumber(v)
+        .div(100)
+        .times(tokenAmountBn(payToken));
+      const isTooSmall = newAmountBn.lt(0.0001);
+      const nextPayAmount = isTooSmall
+        ? newAmountBn.toString(10)
+        : new BigNumber(newAmountBn.toFixed(4, 1)).toString(10);
+      if (nextPayAmount !== payAmount) {
+        setQuotesList([]);
+        setPayAmount(nextPayAmount);
       }
     },
     [handleSlider100, payAmount, payToken],
   );
 
+  // Replay a gesture captured before the balance was ready; a manual amount
+  // typed in the meantime wins and drops the deferred gesture.
+  useEffect(() => {
+    const pending = pendingSliderRef.current;
+    if (pending === null || !payToken?.amount) {
+      return;
+    }
+    pendingSliderRef.current = null;
+    if (payAmount) {
+      return;
+    }
+    onChangeSlider(pending, true);
+  }, [onChangeSlider, payAmount, payToken?.amount, payToken?.id]);
+
   /* slider end*/
 
   useEffect(() => {
+    pendingSliderRef.current = null;
     setPayAmount('');
     setSlider(0);
     setSwapUseSlider(false);
