@@ -102,10 +102,10 @@ describe('HistoryDetailHeader', () => {
     const hd = makeAccount('HDKeyring');
     const simple = makeAccount('SimpleKeyring');
 
-    renderHeader({ title: 'Approved', address: ADDRESS, keyringType: 'SimpleKeyring' }, [
-      hd,
-      simple,
-    ]);
+    renderHeader(
+      { title: 'Approved', address: ADDRESS, keyringType: 'SimpleKeyring' },
+      [hd, simple],
+    );
 
     expect(screen.getByTestId('account-title')).toHaveTextContent(
       `SimpleKeyring:${ADDRESS}`,

@@ -119,6 +119,9 @@ jest.mock('../Transaction/HistoryDetailScreen', () => ({
 jest.mock('../Transaction/HistoryLocalDetailScreen', () => ({
   HistoryLocalDetailScreen: () => null,
 }));
+jest.mock('../Transaction/components/HistoryDetailHeader', () => ({
+  HistoryDetailHeader: () => null,
+}));
 jest.mock('../Approvals', () => () => null);
 jest.mock('../Receive/Receive', () => () => null);
 jest.mock('../ConvertDust', () => ({ ConvertDustScreen: () => null }));
