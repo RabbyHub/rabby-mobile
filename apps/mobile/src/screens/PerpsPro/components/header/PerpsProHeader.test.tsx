@@ -12,6 +12,10 @@ let mockAccount = {
   brandName: 'metamask',
 };
 
+jest.mock('@/screens/PerpsSpot/openSpotMarkets', () => ({
+  openPerpsSpotMarkets: jest.fn(),
+}));
+
 jest.mock('@/core/apis', () => ({
   apiContact: {
     getAliasName: (...args: unknown[]) => mockGetAliasName(...args),
