@@ -1,5 +1,8 @@
 describe('core/apis/keychain current facade', () => {
-  const setup = async (version: '9.0.0' | '10.0.0') => {
+  const setup = async (
+    version: '9.0.0' | '10.0.0',
+    platform: 'ios' | 'android' = 'android',
+  ) => {
     jest.resetModules();
 
     const mockV9RequestGenericPassword = jest.fn(async () => 'v9-request');
@@ -18,6 +21,20 @@ describe('core/apis/keychain current facade', () => {
       sourceLabel: 'v10-label',
       hasEntry: true,
     }));
+    const makeRawKeychain = () => ({
+      ACCESSIBLE: {
+        AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY:
+          'AccessibleAfterFirstUnlockThisDeviceOnly',
+      },
+      getGenericPassword: jest.fn<
+        Promise<false | { username: string; password: string }>,
+        []
+      >(async () => false),
+      setGenericPassword: jest.fn(async () => true),
+    });
+    const mockRawV9 = makeRawKeychain();
+    const mockRawV10 = makeRawKeychain();
+    const mockNativeUpdate = jest.fn(async () => undefined);
     const mockKeychainMMKVSet = jest.fn();
     const mockLoggerInfo = jest.fn();
     const mockLoggerWarn = jest.fn();
@@ -26,7 +43,11 @@ describe('core/apis/keychain current facade', () => {
       getCurrentKeychainVersion: jest.fn(() => version),
     }));
     jest.doMock('react-native', () => ({
-      Platform: { OS: 'android' },
+      Platform: { OS: platform },
+    }));
+    jest.doMock('../native/specs/NativeReactNativeSecurity', () => ({
+      __esModule: true,
+      default: { updateGenericPassword: mockNativeUpdate },
     }));
     jest.doMock('@/utils/logger', () => ({
       logger: {
@@ -53,6 +74,7 @@ describe('core/apis/keychain current facade', () => {
         BIOMETRICS_OR_PASSCODE: 4,
       },
       KEYCHAIN_DEFAULT_SERVICE: 'com.debank',
+      KEYCHAIN_STORAGE_TYPES: { AES_GCM_NO_AUTH: 'KeystoreAESGCM_NoAuth' },
       KEYCHAIN_ERROR_CODES: {
         NIL_KEYCHAIN_OBJECT: 'NIL_KEYCHAIN_OBJECT',
         BROKEN_BIOMETRICS_ENTRY: 'BROKEN_BIOMETRICS_ENTRY',
@@ -81,6 +103,7 @@ describe('core/apis/keychain current facade', () => {
     }));
     jest.doMock('./keychainV9_0_0', () => ({
       KEYCHAIN_SOURCE_LABEL: 'v9-label',
+      rawKeychain: mockRawV9,
       makeSecureKeyChainInstance: jest.fn(() => 'v9-instance'),
       requestGenericPassword: mockV9RequestGenericPassword,
       getSupportedBiometryType: jest.fn(async () => 'Fingerprint'),
@@ -103,6 +126,7 @@ describe('core/apis/keychain current facade', () => {
     }));
     jest.doMock('./keychainV10_0_0', () => ({
       KEYCHAIN_SOURCE_LABEL: 'v10-label',
+      rawKeychain: mockRawV10,
       makeSecureKeyChainInstance: jest.fn(() => 'v10-instance'),
       requestGenericPassword: mockV10RequestGenericPassword,
       getSupportedBiometryType: jest.fn(async () => 'Fingerprint'),
@@ -131,6 +155,9 @@ describe('core/apis/keychain current facade', () => {
 
     return {
       module,
+      mockRawV9,
+      mockRawV10,
+      mockNativeUpdate,
       mockV9RequestGenericPassword,
       mockV10RequestGenericPassword,
       mockV9SetGenericPassword,
@@ -144,6 +171,63 @@ describe('core/apis/keychain current facade', () => {
       mockLoggerWarn,
     };
   };
+
+  it.each(['9.0.0', '10.0.0'] as const)(
+    'uses the raw Android %s backend and its no-auth cipher for configuration integrity',
+    async version => {
+      const { module, mockRawV9, mockRawV10, mockNativeUpdate } = await setup(
+        version,
+      );
+      const active = version === '9.0.0' ? mockRawV9 : mockRawV10;
+      const inactive = version === '9.0.0' ? mockRawV10 : mockRawV9;
+      const keychain = module.createConfigIntegrityKeychain();
+      const options = {
+        service: 'com.debank.config-integrity',
+        cloudSync: false,
+      };
+      expect(await keychain.read()).toBeNull();
+      expect(active.getGenericPassword).toHaveBeenCalledWith(options);
+      active.getGenericPassword.mockResolvedValueOnce({
+        username: 'config-integrity',
+        password: 'test-record',
+      });
+      expect(await keychain.read()).toBe('test-record');
+      await keychain.create('test-record');
+      await keychain.update('updated-record');
+      const androidOptions = { ...options, storage: 'KeystoreAESGCM_NoAuth' };
+      expect(active.setGenericPassword.mock.calls).toEqual([
+        ['config-integrity', 'test-record', androidOptions],
+        ['config-integrity', 'updated-record', androidOptions],
+      ]);
+      expect(inactive.getGenericPassword).not.toHaveBeenCalled();
+      expect(mockNativeUpdate).not.toHaveBeenCalled();
+    },
+  );
+
+  it('creates a device-only iOS Keychain entry and advances it with the native updater', async () => {
+    const { module, mockRawV9, mockNativeUpdate } = await setup('9.0.0', 'ios');
+    const keychain = module.createConfigIntegrityKeychain();
+    const options = {
+      service: 'com.debank.config-integrity',
+      cloudSync: false,
+    };
+    await keychain.create('test-record');
+    expect(mockRawV9.setGenericPassword).toHaveBeenCalledWith(
+      'config-integrity',
+      'test-record',
+      { ...options, accessible: 'AccessibleAfterFirstUnlockThisDeviceOnly' },
+    );
+    mockNativeUpdate.mockRejectedValueOnce(new Error('update unavailable'));
+    await expect(keychain.update('updated-record')).rejects.toThrow(
+      'update unavailable',
+    );
+    expect(mockNativeUpdate).toHaveBeenCalledWith(
+      'config-integrity',
+      'updated-record',
+      options,
+    );
+    expect(mockRawV9.setGenericPassword).toHaveBeenCalledTimes(1);
+  });
 
   it('routes facade calls to the configured v9 implementation', async () => {
     const {

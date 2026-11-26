@@ -1,3 +1,4 @@
+import { configIntegrity } from '../configIntegrity/storage';
 import {
   ContactBookService,
   ContactBookStore,
@@ -152,7 +153,7 @@ export function loadStartupCoreServices() {
   );
 
   const contactService = new ContactBookService({
-    storageAdapter: appStorage,
+    storageAdapter: configIntegrity.storage,
   });
   contactService.subscribeStoreFields((key, value) => {
     if (key === 'aliases') {

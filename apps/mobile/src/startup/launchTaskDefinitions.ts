@@ -153,6 +153,17 @@ export function createLaunchTaskDefinitions(
       },
     },
     {
+      taskKey: 'configIntegrity',
+      run: async () => {
+        const { startConfigIntegrity } = await loadLaunchModule(
+          'configIntegrity',
+          'core/configIntegrity/startup',
+          loaders.configIntegrity,
+        );
+        await startConfigIntegrity();
+      },
+    },
+    {
       taskKey: 'transactionWatchersStart',
       run: async () => {
         const { ensureServiceApiReady } = await loadLaunchModule(

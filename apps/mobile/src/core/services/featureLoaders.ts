@@ -1,3 +1,4 @@
+import { configIntegrity } from '../configIntegrity/storage';
 import { appStorage } from '../storage/mmkv';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 import { migrateService } from '@/migrations/migrations';
@@ -153,7 +154,7 @@ export function loadSecurityEngineService() {
   return loadFeatureService('securityEngineService', async () => {
     const { SecurityEngineService } = await import('./securityEngine');
     const securityEngineService = new SecurityEngineService({
-      storageAdapter: appStorage,
+      storageAdapter: configIntegrity.storage,
     });
     await securityEngineService.init();
     registerService('securityEngineService', securityEngineService);
@@ -202,7 +203,7 @@ export function loadCustomRPCService() {
     registerService(
       'customRPCService',
       new CustomRPCService({
-        storageAdapter: appStorage,
+        storageAdapter: configIntegrity.storage,
       }),
     );
   });
@@ -363,7 +364,7 @@ export function loadWhitelistService() {
   return loadFeatureService('whitelistService', async () => {
     const { WhitelistService } = await import('./whitelist');
     const whitelistService = new WhitelistService({
-      storageAdapter: appStorage,
+      storageAdapter: configIntegrity.storage,
     });
     migrateService(APP_STORE_NAMES.whitelist, whitelistService);
     registerService('whitelistService', whitelistService);

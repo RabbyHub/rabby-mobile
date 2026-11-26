@@ -385,6 +385,59 @@ export async function repairBiometricsAfterPasswordUnlock(
   }
 }
 
+// This entry uses raw Keychain IO and never enters wallet authentication or
+// recovery. Pin one backend for the lifetime of the integrity coordinator.
+export const CONFIG_INTEGRITY_KEYCHAIN_SERVICE = `${KEYCHAIN_DEFAULT_SERVICE}.config-integrity`;
+
+export function createConfigIntegrityKeychain() {
+  const keychain = getKeychainApiByVersion(
+    getCurrentKeychainVersion(),
+  ).rawKeychain;
+  const service = CONFIG_INTEGRITY_KEYCHAIN_SERVICE;
+  const username = 'config-integrity';
+  const options = { service, cloudSync: false };
+  const create = async (value: string) => {
+    const saved = await keychain.setGenericPassword(username, value, {
+      ...options,
+      ...(isAndroid
+        ? { storage: KEYCHAIN_STORAGE_TYPES.AES_GCM_NO_AUTH }
+        : {
+            accessible: keychain.ACCESSIBLE.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
+          }),
+    });
+    if (!saved) {
+      throw new Error('Configuration integrity Keychain write failed');
+    }
+  };
+
+  return {
+    async read() {
+      const entry = await keychain.getGenericPassword(options);
+      if (entry === false) {
+        return null;
+      }
+      if (entry.username !== username || typeof entry.password !== 'string') {
+        throw new Error('Invalid configuration integrity Keychain entry');
+      }
+      return entry.password;
+    },
+    create,
+    async update(value: string) {
+      if (isAndroid) {
+        await create(value);
+        return;
+      }
+      const { default: nativeSecurity } = await import(
+        '../native/specs/NativeReactNativeSecurity'
+      );
+      if (!nativeSecurity) {
+        throw new Error('Configuration integrity Keychain update unavailable');
+      }
+      await nativeSecurity.updateGenericPassword(username, value, options);
+    },
+  };
+}
+
 export const resetGenericPassword = (
   ...args: Parameters<KeychainBusinessApi['resetGenericPassword']>
 ) => getCurrentKeychainApi().resetGenericPassword(...args);

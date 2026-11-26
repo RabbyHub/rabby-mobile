@@ -15,6 +15,9 @@ export type LaunchTaskLoaderCatalog = {
   bootstrapI18nReady: LaunchTaskModuleLoader<{
     startSubscribeLangChange: () => unknown;
   }>;
+  configIntegrity: LaunchTaskModuleLoader<{
+    startConfigIntegrity: () => unknown | Promise<unknown>;
+  }>;
   computationWorkerPrewarm: LaunchTaskModuleLoader<{
     requestComputationThreadStart: (reason?: string) => unknown;
   }>;

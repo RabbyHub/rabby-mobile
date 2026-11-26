@@ -31,8 +31,11 @@ import {
   type SecureKeyChainInstance,
 } from './keychainCommon';
 
+export const rawKeychain =
+  OfficialKeychain as unknown as KeychainCompatibleModule;
+
 const keychainApi = createBusinessKeychainApi({
-  keychainModule: OfficialKeychain as unknown as KeychainCompatibleModule,
+  keychainModule: rawKeychain,
   debugNativeModuleName: 'RNKeychainManager',
   sourceLabel: 'react-native-keychain@10.0.0',
   supportedAndroidStorageTypes: [

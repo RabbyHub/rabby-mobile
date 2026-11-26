@@ -6,6 +6,8 @@ import androidx.annotation.NonNull;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.Promise;
+import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.module.annotations.ReactModule;
 import android.view.WindowManager;
 
@@ -51,5 +53,10 @@ public class ReactNativeSecurityModule extends NativeReactNativeSecuritySpec {
         }
       });
     }
+  }
+
+  @Override
+  public void updateGenericPassword(String username, String value, ReadableMap options, Promise promise) {
+    promise.reject("E_KEYCHAIN_UPDATE_UNSUPPORTED", "Use Android Keystore-backed storage");
   }
 }
