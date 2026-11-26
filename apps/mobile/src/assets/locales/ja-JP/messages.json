@@ -859,8 +859,9 @@
       },
       "moreFeatures": {
         "title": "その他の機能",
-        "empty": "その他の機能はまだありません。左にスワイプしてウェブサイトを探索してください",
-        "swipeDown": "下にスワイプしてホームを表示",
+        "empty": "その他の機能はありません",
+        "goWebsites": "ウェブサイトへ →",
+        "swipeDown": "下にスワイプしてホームに戻る",
         "swipeDownEdit": "下にスワイプしてホームを編集"
       },
       "featureEdit": {

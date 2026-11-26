@@ -1205,8 +1205,9 @@
       },
       "moreFeatures": {
         "title": "Thêm tính năng",
-        "empty": "Chưa có tính năng nào khác. Vuốt sang trái để khám phá trang web",
-        "swipeDown": "Kéo xuống để khám phá Trang chủ",
+        "empty": "Không còn tính năng nào khác",
+        "goWebsites": "Đến trang web →",
+        "swipeDown": "Kéo xuống để quay lại Trang chủ",
         "swipeDownEdit": "Kéo xuống để chỉnh sửa Trang chủ"
       },
       "featureEdit": {

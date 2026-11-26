@@ -965,8 +965,9 @@
       },
       "moreFeatures": {
         "title": "Daha Fazla Özellik",
-        "empty": "Henüz başka özellik yok. Web sitelerini keşfetmek için sola kaydırın",
-        "swipeDown": "Ana sayfayı keşfetmek için aşağı kaydırın",
+        "empty": "Başka özellik yok",
+        "goWebsites": "Web sitelerine git →",
+        "swipeDown": "Ana sayfaya dönmek için aşağı kaydırın",
         "swipeDownEdit": "Ana sayfayı düzenlemek için aşağı kaydırın"
       },
       "featureEdit": {

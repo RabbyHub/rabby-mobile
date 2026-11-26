@@ -987,8 +987,9 @@
       },
       "moreFeatures": {
         "title": "More Features",
-        "empty": "No more features yet. Swipe left to explore websites",
-        "swipeDown": "Swipe down to explore Home",
+        "empty": "No More Features",
+        "goWebsites": "Go Websites →",
+        "swipeDown": "Swipe down to back Home",
         "swipeDownEdit": "Swipe down to edit Home"
       },
       "featureEdit": {

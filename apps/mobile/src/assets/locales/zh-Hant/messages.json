@@ -874,8 +874,9 @@
       },
       "moreFeatures": {
         "title": "更多功能",
-        "empty": "暫無更多功能，左滑看看網站吧",
-        "swipeDown": "下滑探索首頁",
+        "empty": "暫無更多功能",
+        "goWebsites": "前往網站 →",
+        "swipeDown": "下滑返回首頁",
         "swipeDownEdit": "下滑編輯首頁"
       },
       "featureEdit": {

@@ -837,8 +837,9 @@
       },
       "moreFeatures": {
         "title": "Plus de fonctionnalités",
-        "empty": "Aucune autre fonctionnalité pour le moment. Faites glisser vers la gauche pour explorer les sites web",
-        "swipeDown": "Faites glisser vers le bas pour explorer l'accueil",
+        "empty": "Aucune autre fonctionnalité",
+        "goWebsites": "Voir les sites web →",
+        "swipeDown": "Faites glisser vers le bas pour revenir à l'accueil",
         "swipeDownEdit": "Faites glisser vers le bas pour modifier l'accueil"
       },
       "featureEdit": {

@@ -928,8 +928,9 @@
       },
       "moreFeatures": {
         "title": "Más funciones",
-        "empty": "Aún no hay más funciones. Desliza a la izquierda para explorar sitios web",
-        "swipeDown": "Desliza hacia abajo para explorar Inicio",
+        "empty": "No hay más funciones",
+        "goWebsites": "Ir a sitios web →",
+        "swipeDown": "Desliza hacia abajo para volver a Inicio",
         "swipeDownEdit": "Desliza hacia abajo para editar Inicio"
       },
       "featureEdit": {

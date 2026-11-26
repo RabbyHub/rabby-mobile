@@ -7,10 +7,12 @@ import { IS_ANDROID } from '@/core/native/utils';
 import type { DappInfo } from '@/core/services/dappService';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useTheme2024 } from '@/hooks/theme';
-import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
+import { useWindowDimensions } from '@/core/dimensions';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 import { createGetStyles2024 } from '@/utils/styles';
+import { stringUtils } from '@rabby-wallet/base-utils';
 import { useMemoizedFn } from 'ahooks';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import type { FlatListProps } from 'react-native';
 import { FlatList as RNFlatList, TouchableOpacity, View } from 'react-native';
 import type { NativeGesture } from 'react-native-gesture-handler';
@@ -29,6 +31,8 @@ import {
   SCROLLABLE_DECELERATION_RATE_MAPPER,
   SCROLLABLE_STATUS,
 } from '../../hooks/useHomeDrawerAnimate';
+import { DRAWER_DAPP_CARD_GAP, DRAWER_WEBSITES_CONTENT_TOP } from './constants';
+import { HomeDrawerDappCard } from './HomeDrawerDappCard';
 
 const AnimatedFlatList =
   Animated.createAnimatedComponent<FlatListProps<DappInfo>>(RNFlatList);
@@ -55,6 +59,19 @@ export const DappFavoriteList: React.FC<{
   const { styles, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { openTab, setPartialBrowserState } = useBrowser();
+  const { height: windowHeight } = useWindowDimensions();
+  const { safeHeaderTop } = useSafeSizes();
+  // The design centres the empty state on the screen, as on "More
+  // Features". The list starts at `safeHeaderTop +
+  // DRAWER_WEBSITES_CONTENT_TOP` on the open second floor, and an absolute
+  // child is placed from its parent's padding edge, so the list's own top
+  // padding does not count.
+  const emptyPositionStyle = useMemo(
+    () => ({
+      top: windowHeight / 2 - safeHeaderTop - DRAWER_WEBSITES_CONTENT_TOP,
+    }),
+    [safeHeaderTop, windowHeight],
+  );
 
   const scrollableRef = useAnimatedRef<Animated.FlatList<DappInfo>>();
   const localScrollOffsetY = useSharedValue(0);
@@ -114,10 +131,7 @@ export const DappFavoriteList: React.FC<{
         keyExtractor={item => item.url || item.origin}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled
-        contentContainerStyle={[
-          { flexGrow: 1, paddingTop: 12 },
-          bookmarkList.length ? null : { justifyContent: 'center' },
-        ]}
+        contentContainerStyle={styles.listContentContainer}
         ref={scrollableRef}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
@@ -134,18 +148,20 @@ export const DappFavoriteList: React.FC<{
                 </TouchableOpacity>
               ) : null}
               <View style={styles.listItemContent}>
-                <BrowserSiteCard
-                  data={item}
+                <HomeDrawerDappCard
+                  dapp={item}
+                  title={item.name}
+                  description={stringUtils.unPrefix(item.origin, 'https://')}
                   onPress={handleDappPress}
-                  isShowDesc={false}
-                  ignorePressMoveThreshold={10}
                 />
               </View>
             </View>
           );
         }}
         ListEmptyComponent={
-          <View style={styles.empty}>
+          <View
+            style={[styles.empty, emptyPositionStyle]}
+            pointerEvents="box-none">
             {isLight ? (
               <RcIconEmpty style={styles.emptyIcon} />
             ) : (
@@ -158,6 +174,8 @@ export const DappFavoriteList: React.FC<{
             </Text>
             <Button
               title={t('page.home.DappDrawer.search')}
+              noShadow
+              containerStyle={styles.searchButtonContainer}
               buttonStyle={styles.searchButton}
               titleStyle={styles.searchButtonText}
               onPress={() => {
@@ -181,24 +199,29 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   list: {
     // minHeight: 0,
   },
+  listContentContainer: {
+    flexGrow: 1,
+    paddingTop: DRAWER_DAPP_CARD_GAP,
+  },
   listItem: {
-    marginBottom: 12,
+    marginBottom: DRAWER_DAPP_CARD_GAP,
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
   },
   listItemContent: {
-    width: '100%',
+    flex: 1,
+    minWidth: 0,
   },
+  // Out of the flow and centred on `emptyPositionStyle.top`.
   empty: {
-    paddingVertical: 20,
-    display: 'flex',
-    flexDirection: 'column',
+    position: 'absolute',
+    left: 0,
+    right: 0,
     alignItems: 'center',
-    gap: 6,
-    marginHorizontal: 4,
-    marginTop: -100,
+    gap: 4,
+    transform: [{ translateY: '-50%' }],
   },
   emptyIcon: {
     width: 163,
@@ -212,16 +235,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
     textAlign: 'center',
   },
+  // 16 under the text: the group's own gap of 4, plus 12.
+  searchButtonContainer: {
+    marginTop: 12,
+  },
   searchButton: {
-    marginTop: 16,
-    height: 42,
-    width: 143,
-    borderRadius: 6,
+    height: 36,
+    width: 121,
+    borderRadius: 8,
     borderCurve: 'continuous',
   },
   searchButtonText: {
-    fontSize: 18,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
   },

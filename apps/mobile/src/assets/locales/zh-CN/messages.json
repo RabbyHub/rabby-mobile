@@ -797,8 +797,9 @@
       },
       "moreFeatures": {
         "title": "更多功能",
-        "empty": "暂无更多功能，左滑看看网站吧",
-        "swipeDown": "下滑探索首页",
+        "empty": "暂无更多功能",
+        "goWebsites": "前往网站 →",
+        "swipeDown": "下滑返回首页",
         "swipeDownEdit": "下滑编辑首页"
       },
       "featureEdit": {

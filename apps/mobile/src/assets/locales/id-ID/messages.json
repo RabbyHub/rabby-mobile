@@ -965,8 +965,9 @@
       },
       "moreFeatures": {
         "title": "Fitur Lainnya",
-        "empty": "Belum ada fitur lainnya. Geser ke kiri untuk menjelajahi situs web",
-        "swipeDown": "Geser ke bawah untuk menjelajahi Beranda",
+        "empty": "Tidak ada fitur lainnya",
+        "goWebsites": "Buka situs web →",
+        "swipeDown": "Geser ke bawah untuk kembali ke Beranda",
         "swipeDownEdit": "Geser ke bawah untuk mengedit Beranda"
       },
       "featureEdit": {

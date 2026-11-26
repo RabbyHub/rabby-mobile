@@ -14,10 +14,8 @@ import { useTranslation } from 'react-i18next';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import type { TabBarProps } from 'react-native-collapsible-tab-view';
 
-import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import type { DappInfo } from '@/core/services/dappService';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
-import CustomLabel from '@/screens/TokenDetail/components/CustomLabel';
 import type { NativeGesture } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
@@ -36,7 +34,6 @@ import {
   updateDappSync,
 } from '@/core/serviceApi/dapp';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { triggerImpact } from '@/utils/common';
 import { DappFavoriteList } from './DappFavoriteList';
 import { IS_ANDROID } from '@/core/native/utils';
@@ -52,16 +49,16 @@ import {
 } from '../../hooks/homeFeatureLayout';
 import {
   DRAWER_CATEGORY_BAR_HEIGHT,
+  DRAWER_CATEGORY_CHIP_HEIGHT,
   DRAWER_WEBSITES_CONTENT_TOP,
 } from './constants';
 import {
   HomeDrawerTabBar,
   type HomeDrawerTabBarAction,
 } from './HomeDrawerTabBar';
+import { HomeDrawerCategoryChip } from './HomeDrawerCategoryChip';
 import { HomeMoreFeatures } from './HomeMoreFeatures';
 
-const TAB_GAP = 8;
-const FIRST_TAB_GAP = 12;
 const TAB_BAR_HEIGHT = DRAWER_CATEGORY_BAR_HEIGHT;
 
 /** A website category page. */
@@ -80,42 +77,6 @@ const MORE_TAB = 'more';
 type DrawerTabKey = typeof MORE_TAB | TabKey;
 /** Longer than either platform's animated page change. */
 const JUMP_SETTLE_TIMEOUT_MS = 800;
-
-const FavoriteTabLabel = ({
-  index,
-  indexDecimal,
-  activeColor,
-  inactiveColor,
-  tabLabelStyle,
-  containerStyle,
-}: {
-  index: number;
-  indexDecimal: Animated.SharedValue<number>;
-  activeColor: string;
-  inactiveColor: string;
-  tabLabelStyle: React.ComponentProps<typeof CustomLabel>['style'];
-  containerStyle: React.ComponentProps<typeof CustomLabel>['containerStyle'];
-}) => {
-  const indexDecimalValue = useValueFromSharedValue(indexDecimal);
-  const isActive = Math.abs(index - indexDecimalValue) < 0.5;
-
-  return (
-    <CustomLabel
-      index={index}
-      indexDecimal={indexDecimal}
-      text=""
-      style={tabLabelStyle}
-      containerStyle={containerStyle}
-      icon={
-        <RcIconFavorite
-          width={18}
-          height={18}
-          color={isActive ? activeColor : inactiveColor}
-        />
-      }
-    />
-  );
-};
 
 const DAPP_ACTIVE_TAB_STORAGE_KEY = '@dapp.activeTab';
 const dappTabAtom = atomByMMKV<TabKey>(DAPP_ACTIVE_TAB_STORAGE_KEY, 'all', {
@@ -209,7 +170,7 @@ export const HomeDappDrawerContent: React.FC<{
   drawerScrollOffsetY: Animated.SharedValue<number>;
   scrollableStatus: Animated.SharedValue<SCROLLABLE_STATUS>;
 }> = ({ drawerScrollableGesture, drawerScrollOffsetY, scrollableStatus }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
 
   const { isExpanded } = homeDrawerAnimateMutable;
   const { t } = useTranslation();
@@ -329,26 +290,17 @@ export const HomeDappDrawerContent: React.FC<{
 
   const renderFavoriteLabel = useCallback(
     ({ index, indexDecimal }: any) => (
-      <FavoriteTabLabel
-        index={index}
-        indexDecimal={indexDecimal}
-        activeColor={colors2024['orange-default']}
-        inactiveColor={colors2024['neutral-info']}
-        tabLabelStyle={styles.tabLabel}
-        containerStyle={styles.favoriteLabelContainer}
-      />
+      <HomeDrawerCategoryChip index={index} indexDecimal={indexDecimal} />
     ),
-    [colors2024, styles.favoriteLabelContainer, styles.tabLabel],
+    [],
   );
 
   const renderCategoryLabel = useMemoizedFn(
     ({ index, indexDecimal, label }) => (
-      <CustomLabel
+      <HomeDrawerCategoryChip
         index={index}
-        style={styles.tabLabel}
-        containerStyle={styles.categoryLabelContainer}
         indexDecimal={indexDecimal}
-        text={label}
+        label={label}
       />
     ),
   );
@@ -532,6 +484,7 @@ export const HomeDappDrawerContent: React.FC<{
           drawerScrollOffsetY={drawerScrollOffsetY}
           scrollableStatus={scrollableStatus}
           isActive={currentTab === tabKey}
+          onPressWebsites={handlePressWebsitesTab}
         />
       );
     }
@@ -656,27 +609,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       elevation: 0,
       backgroundColor: bgColor,
     },
+    // One chip of the category strip: the chip draws itself
+    // (`HomeDrawerCategoryChip`), this only sizes its pressable. Chips sit
+    // side by side, each with its own 12 of padding.
     tabBar: {
-      height: TAB_BAR_HEIGHT,
+      height: DRAWER_CATEGORY_CHIP_HEIGHT,
       width: 'auto',
       flexShrink: 0,
       flex: 0,
       paddingHorizontal: 0,
-      marginHorizontal: 4,
-    },
-    firstTabBar: {
-      marginRight: FIRST_TAB_GAP,
-    },
-    restTabBar: {
-      marginRight: TAB_GAP,
-    },
-    tabsBarContainer: {
-      display: 'flex',
-      paddingLeft: 20,
-      position: 'relative',
-      height: TAB_BAR_HEIGHT,
-      backgroundColor: bgColor,
-      overflow: 'hidden',
     },
     materialTabsBar: {
       height: TAB_BAR_HEIGHT,
@@ -684,41 +625,23 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       flexGrow: 0,
       flexShrink: 0,
       backgroundColor: bgColor,
-      borderBottomWidth: 1,
-      borderBottomColor: colors2024['neutral-bg-5'],
     },
     materialTabsBarContent: {
-      paddingLeft: 20,
+      paddingHorizontal: 16,
+      alignItems: 'center',
       backgroundColor: bgColor,
     },
+    // The selected chip carries its own background, so the strip has no
+    // sliding underline.
     indicator: {
-      backgroundColor: colors2024['neutral-body'],
-      height: 4,
-      borderRadius: 100,
-    },
-
-    favoriteLabelContainer: {
-      height: TAB_BAR_HEIGHT,
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingBottom: 4,
-    },
-
-    categoryLabelContainer: {
-      height: TAB_BAR_HEIGHT,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-
-    tabLabel: {
-      marginTop: 0,
+      height: 0,
     },
     //
     // The tab bar floats over the pager on both platforms, so every website
     // page starts below it.
     content: {
       flex: 1,
-      paddingHorizontal: 16,
+      paddingHorizontal: 12,
       paddingTop: DRAWER_WEBSITES_CONTENT_TOP,
     },
     list: {},

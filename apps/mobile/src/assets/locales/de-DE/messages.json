@@ -1030,8 +1030,9 @@
       },
       "moreFeatures": {
         "title": "Weitere Funktionen",
-        "empty": "Noch keine weiteren Funktionen. Wischen Sie nach links, um Websites zu entdecken",
-        "swipeDown": "Wischen Sie nach unten, um die Startseite zu erkunden",
+        "empty": "Keine weiteren Funktionen",
+        "goWebsites": "Zu den Webseiten →",
+        "swipeDown": "Wischen Sie nach unten, um zur Startseite zurückzukehren",
         "swipeDownEdit": "Wischen Sie nach unten, um die Startseite zu bearbeiten"
       },
       "featureEdit": {

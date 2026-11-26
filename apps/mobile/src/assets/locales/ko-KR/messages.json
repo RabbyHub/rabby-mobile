@@ -736,8 +736,9 @@
       },
       "moreFeatures": {
         "title": "더 많은 기능",
-        "empty": "아직 추가 기능이 없습니다. 왼쪽으로 스와이프하여 웹사이트를 탐색하세요",
-        "swipeDown": "아래로 스와이프하여 홈 탐색하기",
+        "empty": "추가 기능이 없습니다",
+        "goWebsites": "웹사이트로 이동 →",
+        "swipeDown": "아래로 스와이프하여 홈으로 돌아가기",
         "swipeDownEdit": "아래로 스와이프하여 홈 편집하기"
       },
       "featureEdit": {
