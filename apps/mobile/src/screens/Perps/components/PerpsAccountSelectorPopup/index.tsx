@@ -69,13 +69,28 @@ export const PerpsAccountSelectorPopup: React.FC<{
     return height - 200;
   }, [height]);
 
+  /**
+   * Single close path for this permanently-mounted sheet. `close()` only
+   * animates back to the closed index and can be ignored when it lands while
+   * another sheet animation is in flight, which left the sheet on screen after
+   * the account had already switched (QA 1218). Dismiss it from the provider
+   * stack instead — same treatment as the GasAccount token picker (QA 1465).
+   */
+  const dismissAndClose = useMemoizedFn(() => {
+    // gorhom types `dismiss` as `(force?: boolean)` but forwards the argument to
+    // `forceClose(animationConfigs)`: it must be an animation config object (or
+    // omitted) — a boolean throws `right operand of 'in' is not an object`.
+    modalRef.current?.dismiss({ duration: 250 });
+    onClose?.();
+  });
+
   useEffect(() => {
     if (visible) {
       modalRef.current?.present();
     } else {
-      modalRef.current?.close();
+      dismissAndClose();
     }
-  }, [visible]);
+  }, [visible, dismissAndClose]);
 
   const { data: lastUsedAccount, runAsync: runGetLastUsedAccount } = useRequest(
     () => {
@@ -203,12 +218,7 @@ export const PerpsAccountSelectorPopup: React.FC<{
           error,
         );
       })
-      .finally(() => {
-        // Close once the attempt settles, whether or not the login succeeded.
-        // The callers only closed on success, which left the sheet on screen
-        // and made the picker look stuck after the account had already switched.
-        onClose?.();
-      });
+      .finally(dismissAndClose);
   });
 
   useEffect(() => {
