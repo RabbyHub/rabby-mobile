@@ -1093,6 +1093,49 @@ describe('PerpsProInfoPager', () => {
     expect(onPageSelected).not.toHaveBeenCalled();
   });
 
+  it('keeps an Android swipe that catches a settling page before the pan classifies it', () => {
+    const onPageSelected = jest.fn();
+    const scrollBridge = createScrollBridge();
+    scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.horizontal;
+    scrollBridge.touchSessionId.value = 1;
+    scrollBridge.horizontalTouchSessionId.value = 1;
+    renderPager({
+      authorizeNativePageGestures: true,
+      onPageSelected,
+      scrollBridge,
+    });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    // First swipe is released and still settling (no idle yet).
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'settling' },
+    });
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+
+    // The pager catches the next touch on ACTION_DOWN; RNGH cancels the
+    // scene pan before it classifies, leaving the new session idle.
+    scrollBridge.touchSessionId.value = 2;
+    scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.idle;
+    scrollBridge.horizontalTouchSessionId.value = 0;
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.4, position: 1 },
+    });
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 2 } });
+
+    expect(mockSetPageWithoutAnimation).not.toHaveBeenCalled();
+    expect(onPageSelected).toHaveBeenLastCalledWith(
+      'account',
+      expect.any(Number),
+    );
+    expect(scrollBridge.activeIndex.value).toBe(2);
+  });
+
   it('commits an Android selection authorized by the current horizontal touch', () => {
     const indicatorPosition = { value: 0 } as SharedValue<number>;
     const onPageSelected = jest.fn();
