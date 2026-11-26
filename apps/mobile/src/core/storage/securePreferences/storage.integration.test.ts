@@ -175,7 +175,7 @@ describe('secure preference persistence', () => {
     });
   });
 
-  it('uses defaults immediately and replaces only the damaged record after confirmation', async () => {
+  it('reports a mismatched HMAC while keeping the stored settings usable', async () => {
     const env = fixture();
     env.seed(whitelist, whitelistData);
     env.seed(contactBook, {
@@ -185,7 +185,10 @@ describe('secure preference persistence', () => {
     const recordKey = `secure-preference:${whitelist}`;
     const contactKey = `secure-preference:${contactBook}`;
     const otherRecord = env.disk.read(contactKey);
-    const modified = env.disk.read(recordKey)!.replace(address, replacement);
+    const modified = JSON.stringify({
+      ...JSON.parse(env.disk.read(recordKey)!),
+      hmac: '0'.repeat(64),
+    });
     env.disk.write(recordKey, modified);
 
     const storage = env.restart();
@@ -194,18 +197,23 @@ describe('secure preference persistence', () => {
       { name: whitelist, template: whitelistDefault },
       { storage: adapter },
     );
-    expect(controller.getSnapshot()).toEqual(whitelistDefault);
-    expect(storage.getIssues()).toEqual([{ name: whitelist, kind: 'damaged' }]);
+    expect(controller.getSnapshot()).toEqual(whitelistData);
     expect(env.reports).toEqual([
       { name: whitelist, kind: 'damaged', stage: 'record-verify' },
     ]);
     expect(env.disk.read(recordKey)).toBe(modified);
 
-    await storage.reset([whitelist]);
-    expect(storage.getIssues()).toEqual([]);
+    controller.update(draft => {
+      draft.enabled = false;
+    });
+    controller.flushNow();
     expect(env.disk.read(contactKey)).toBe(otherRecord);
     const restarted = await env.restart().getAdapter(whitelist);
-    expect(restarted.getItem(whitelist)).toEqual({});
+    expect(restarted.getItem(whitelist)).toEqual({
+      ...whitelistData,
+      enabled: false,
+    });
+    expect(env.reports).toHaveLength(1);
   });
 
   it('checks protected records when the key exists and enrolls legacy values when it is missing', async () => {
@@ -390,7 +398,10 @@ describe('secure preference persistence', () => {
     const original = env.disk.read(recordKey)!;
     adapter.setItem(rpc, { customRPC, defaultRPC, defaultRPCLastUpdateAt: 2 });
     expect(env.disk.read(recordKey)).toBe(original);
-    env.disk.write(recordKey, original.replace('custom.test', 'modified.test'));
+    env.disk.write(
+      recordKey,
+      original.replace('https://custom.test', 'invalid'),
+    );
 
     const storage = env.restart();
     const safeAdapter = await storage.getAdapter(rpc);
