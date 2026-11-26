@@ -53,7 +53,7 @@ jobs:
       # 1.3GB link (~4-5 min on ubuntu-latest) into a state check (~5-20s).
       # The install step stays: it repairs any drift a restored key may carry.
       - name: Cache node_modules
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             node_modules
@@ -68,7 +68,7 @@ jobs:
       # lockfile: a `packages/**` change must never reuse an older `dist`.
       # No restore-keys here on purpose - a miss has to fall back to a rebuild.
       - name: Cache workspace build output
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             packages/*/dist
@@ -127,7 +127,7 @@ jobs:
       # 1.3GB link (~4-5 min on ubuntu-latest) into a state check (~5-20s).
       # The install step stays: it repairs any drift a restored key may carry.
       - name: Cache node_modules
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             node_modules
@@ -142,7 +142,7 @@ jobs:
       # lockfile: a `packages/**` change must never reuse an older `dist`.
       # No restore-keys here on purpose - a miss has to fall back to a rebuild.
       - name: Cache workspace build output
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             packages/*/dist
@@ -197,7 +197,7 @@ jobs:
       # 1.3GB link (~4-5 min on ubuntu-latest) into a state check (~5-20s).
       # The install step stays: it repairs any drift a restored key may carry.
       - name: Cache node_modules
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             node_modules
@@ -212,7 +212,7 @@ jobs:
       # lockfile: a `packages/**` change must never reuse an older `dist`.
       # No restore-keys here on purpose - a miss has to fall back to a rebuild.
       - name: Cache workspace build output
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             packages/*/dist
