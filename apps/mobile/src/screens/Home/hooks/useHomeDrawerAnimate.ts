@@ -52,6 +52,13 @@ export const homeDrawerAnimateMutable = {
   scrollViewContentHeight: makeMutable(0),
   scrollViewLayoutHeight: makeMutable(0),
   swipeUpHintHeight: makeMutable(0),
+
+  /**
+   * Page position of the second floor's own pager: 0 is "More Features",
+   * 1 and up are the website categories. Written by the drawer's tab bar,
+   * read by whatever sits outside that pager (the drawer footer).
+   */
+  drawerTabPosition: makeMutable(0),
 };
 
 export function getScrollContainerPb(bottomInset: number) {

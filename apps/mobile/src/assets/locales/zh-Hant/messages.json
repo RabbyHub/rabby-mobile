@@ -869,7 +869,18 @@
         "convertDust": "兌換零散資產"
       },
       "swipeUp": {
-        "desc": "向上滑動以探索和搜尋網站"
+        "more": "上滑探索更多功能",
+        "editMore": "上滑編輯更多功能"
+      },
+      "moreFeatures": {
+        "title": "更多功能",
+        "empty": "暫無更多功能，左滑看看網站吧",
+        "swipeDown": "下滑探索首頁",
+        "swipeDownEdit": "下滑編輯首頁"
+      },
+      "featureEdit": {
+        "removeHint": "點擊 {{arrow}} 將功能從首頁移出",
+        "addHint": "點擊 {{arrow}} 將功能移動至首頁"
       },
       "DappDrawer": {
         "emptyAndroid": "尚未將 DApp 加入收藏",

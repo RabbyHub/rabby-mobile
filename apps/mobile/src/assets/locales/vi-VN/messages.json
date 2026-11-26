@@ -1200,7 +1200,18 @@
         "convertDust": "Chuyển đổi Dust"
       },
       "swipeUp": {
-        "desc": "Kéo lên để khám phá và tìm kiếm trang web"
+        "more": "Kéo lên để khám phá thêm tính năng",
+        "editMore": "Kéo lên để chỉnh sửa thêm tính năng"
+      },
+      "moreFeatures": {
+        "title": "Thêm tính năng",
+        "empty": "Chưa có tính năng nào khác. Vuốt sang trái để khám phá trang web",
+        "swipeDown": "Kéo xuống để khám phá Trang chủ",
+        "swipeDownEdit": "Kéo xuống để chỉnh sửa Trang chủ"
+      },
+      "featureEdit": {
+        "removeHint": "Nhấn {{arrow}} để gỡ tính năng khỏi Trang chủ",
+        "addHint": "Nhấn {{arrow}} để thêm tính năng vào Trang chủ"
       },
       "DappDrawer": {
         "search": "Tìm kiếm",

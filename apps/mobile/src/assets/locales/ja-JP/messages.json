@@ -854,7 +854,18 @@
         "convertDust": "ダスト変換"
       },
       "swipeUp": {
-        "desc": "ウェブサイトを探索・検索するには上にスワイプしてください"
+        "more": "上にスワイプしてその他の機能を表示",
+        "editMore": "上にスワイプしてその他の機能を編集"
+      },
+      "moreFeatures": {
+        "title": "その他の機能",
+        "empty": "その他の機能はまだありません。左にスワイプしてウェブサイトを探索してください",
+        "swipeDown": "下にスワイプしてホームを表示",
+        "swipeDownEdit": "下にスワイプしてホームを編集"
+      },
+      "featureEdit": {
+        "removeHint": "{{arrow}} をタップして機能をホームから外す",
+        "addHint": "{{arrow}} をタップして機能をホームに追加"
       },
       "DappDrawer": {
         "favorite": "お気に入り",

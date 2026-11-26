@@ -48,7 +48,8 @@ export function HomeDappDrawerAndroidTabs<T extends string>({
   tabs: readonly HomeDappDrawerAndroidTab<T>[];
   initialTabName?: T;
   drawerScrollableGesture: NativeGesture;
-  renderTabBar?: (props: TabBarProps<T>) => React.ReactElement | null;
+  /** Tab bars are name-agnostic, as the iOS container hands them out. */
+  renderTabBar?: (props: TabBarProps<string>) => React.ReactElement | null;
   onTabChange?: (tab: T) => void;
   renderTabContent: (tab: T) => React.ReactNode;
 }) {
@@ -276,29 +277,31 @@ export function HomeDappDrawerAndroidTabs<T extends string>({
   }));
 
   return (
-    <>
-      {renderTabBar?.(tabBarProps)}
-      <View style={styles.androidContent}>
-        <GestureDetector gesture={androidSwipeGesture}>
-          <Animated.View
-            style={[
-              styles.androidPagerTrack,
-              { width: pageWidth * tabs.length },
-              pagerTrackStyle,
-            ]}>
-            {tabs.map(tab => (
-              <View
-                key={tab.id}
-                collapsable={false}
-                pointerEvents={isSwipingPager ? 'none' : 'box-none'}
-                style={[styles.androidPagerPage, { width: pageWidth }]}>
-                {renderTabContent(tab.id)}
-              </View>
-            ))}
-          </Animated.View>
-        </GestureDetector>
+    <View style={styles.androidContent}>
+      <GestureDetector gesture={androidSwipeGesture}>
+        <Animated.View
+          style={[
+            styles.androidPagerTrack,
+            { width: pageWidth * tabs.length },
+            pagerTrackStyle,
+          ]}>
+          {tabs.map(tab => (
+            <View
+              key={tab.id}
+              collapsable={false}
+              pointerEvents={isSwipingPager ? 'none' : 'box-none'}
+              style={[styles.androidPagerPage, { width: pageWidth }]}>
+              {renderTabContent(tab.id)}
+            </View>
+          ))}
+        </Animated.View>
+      </GestureDetector>
+      {/* The tab bar floats over the pager, as the iOS container lays it out,
+          so each page decides how far below it its own content starts. */}
+      <View pointerEvents="box-none" style={styles.androidTabBar}>
+        {renderTabBar?.(tabBarProps as unknown as TabBarProps<string>)}
       </View>
-    </>
+    </View>
   );
 }
 
@@ -306,6 +309,12 @@ const getStyle = createGetStyles2024(() => ({
   androidContent: {
     flex: 1,
     overflow: 'hidden',
+  },
+  androidTabBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
   },
   androidPagerTrack: {
     flexDirection: 'row',

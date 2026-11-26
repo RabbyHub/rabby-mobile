@@ -1,4 +1,3 @@
-import { Text } from '@/components/Typography';
 import React, {
   useCallback,
   useEffect,
@@ -6,20 +5,20 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { View } from 'react-native';
 
 import { appMMKVInstance, atomByMMKV } from '@/core/storage/mmkv';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
-import { MaterialTabBar, Tabs } from 'react-native-collapsible-tab-view';
+import { Tabs } from 'react-native-collapsible-tab-view';
+import type { TabBarProps } from 'react-native-collapsible-tab-view';
 
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import type { DappInfo } from '@/core/services/dappService';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import CustomLabel from '@/screens/TokenDetail/components/CustomLabel';
 import type { NativeGesture } from 'react-native-gesture-handler';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
   useAnimatedReaction,
@@ -38,6 +37,7 @@ import {
 } from '@/core/serviceApi/dapp';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
+import { triggerImpact } from '@/utils/common';
 import { DappFavoriteList } from './DappFavoriteList';
 import { IS_ANDROID } from '@/core/native/utils';
 import {
@@ -45,11 +45,26 @@ import {
   type HomeDappDrawerAndroidTab,
 } from './HomeDappDrawerAndroidTabs';
 import { DappList } from './DappList';
+import {
+  homeFeatureLayoutApi,
+  useHasMoreHomeFeatures,
+  useIsHomeFeatureEditing,
+} from '../../hooks/homeFeatureLayout';
+import {
+  DRAWER_CATEGORY_BAR_HEIGHT,
+  DRAWER_WEBSITES_CONTENT_TOP,
+} from './constants';
+import {
+  HomeDrawerTabBar,
+  type HomeDrawerTabBarAction,
+} from './HomeDrawerTabBar';
+import { HomeMoreFeatures } from './HomeMoreFeatures';
 
 const TAB_GAP = 8;
 const FIRST_TAB_GAP = 12;
-export const TAB_BAR_HEIGHT = 28;
+const TAB_BAR_HEIGHT = DRAWER_CATEGORY_BAR_HEIGHT;
 
+/** A website category page. */
 type TabKey =
   | 'favorite'
   | 'all'
@@ -59,6 +74,12 @@ type TabKey =
   | 'Predict'
   | 'DEX'
   | 'NFT';
+
+/** First page of the drawer's pager, ahead of every website category. */
+const MORE_TAB = 'more';
+type DrawerTabKey = typeof MORE_TAB | TabKey;
+/** Longer than either platform's animated page change. */
+const JUMP_SETTLE_TIMEOUT_MS = 800;
 
 const FavoriteTabLabel = ({
   index,
@@ -193,10 +214,26 @@ export const HomeDappDrawerContent: React.FC<{
   const { isExpanded } = homeDrawerAnimateMutable;
   const { t } = useTranslation();
   const { bookmarkList, bookmarkStore, removeBookmark } = useBrowserBookmark();
+  // `activeTab` is the website category to come back to; the page actually on
+  // screen is `currentTab`, which can also be "More Features".
   const { activeTab, setActiveTab, tabs } = useDappTab({
     hasBookmarks: bookmarkList.length > 0,
     bookmarksHydrated: bookmarkStore.hydrated,
   });
+  const [currentTab, setCurrentTab] = useState<DrawerTabKey>(MORE_TAB);
+  const currentTabRef = useRef<DrawerTabKey>(MORE_TAB);
+  const isFeatureEditing = useIsHomeFeatureEditing();
+  const hasMoreFeatures = useHasMoreHomeFeatures();
+  /** The pager's own "go to this page" command, handed over by its tab bar. */
+  const pagerJumpRef = useRef<((tab: string) => void) | null>(null);
+  /** The last page the pager reported, whether or not it was acted on. */
+  const lastReportedTabRef = useRef<DrawerTabKey>(MORE_TAB);
+  // A commanded jump animates across every page in between and the pager
+  // reports each one. Only the destination is the user's choice.
+  const pendingJumpRef = useRef<{
+    target: DrawerTabKey;
+    timer: ReturnType<typeof setTimeout>;
+  } | null>(null);
   const { openTab } = useBrowser();
   const handleDappPress = useMemoizedFn(async (item: DappInfo) => {
     try {
@@ -221,27 +258,74 @@ export const HomeDappDrawerContent: React.FC<{
     }
   });
 
-  const renderTabBar = useCallback(
-    (props: any) => {
-      return (
-        <MaterialTabBar
-          {...props}
-          scrollEnabled={true}
-          keepActiveTabCentered
-          style={styles.materialTabsBar}
-          contentContainerStyle={styles.materialTabsBarContent}
-          indicatorStyle={styles.indicator}
-          tabStyle={styles.tabBar}
-        />
-      );
+  const applyTab = useCallback(
+    (tab: DrawerTabKey) => {
+      currentTabRef.current = tab;
+      setCurrentTab(tab);
+
+      if (tab === MORE_TAB) {
+        return;
+      }
+      setActiveTab(tab);
+      // The cards are edited on the Home and on "More Features" only, so
+      // moving on to the websites ends the session.
+      homeFeatureLayoutApi.stopEditing();
     },
-    [
-      styles.indicator,
-      styles.materialTabsBar,
-      styles.materialTabsBarContent,
-      styles.tabBar,
-    ],
+    [setActiveTab],
   );
+
+  const clearPendingJump = useCallback(() => {
+    if (pendingJumpRef.current) {
+      clearTimeout(pendingJumpRef.current.timer);
+      pendingJumpRef.current = null;
+    }
+  }, []);
+  useEffect(() => clearPendingJump, [clearPendingJump]);
+
+  const handleTabChange = useCallback(
+    (tab: DrawerTabKey) => {
+      lastReportedTabRef.current = tab;
+
+      const pendingJump = pendingJumpRef.current;
+      if (pendingJump) {
+        if (tab !== pendingJump.target) {
+          return;
+        }
+        clearPendingJump();
+      }
+      applyTab(tab);
+    },
+    [applyTab, clearPendingJump],
+  );
+
+  const jumpToTab = useCallback(
+    (tab: DrawerTabKey) => {
+      clearPendingJump();
+      if (tab !== currentTabRef.current) {
+        pendingJumpRef.current = {
+          target: tab,
+          // If the jump is cut short (the user grabs the pager mid-flight),
+          // fall back to wherever the pager actually came to rest.
+          timer: setTimeout(() => {
+            pendingJumpRef.current = null;
+            if (lastReportedTabRef.current !== currentTabRef.current) {
+              applyTab(lastReportedTabRef.current);
+            }
+          }, JUMP_SETTLE_TIMEOUT_MS),
+        };
+      }
+      pagerJumpRef.current?.(tab);
+    },
+    [applyTab, clearPendingJump],
+  );
+
+  // Editing can start on the Home while this pager was left on a website
+  // category: bring it back, so swiping up lands on the cards being edited.
+  useEffect(() => {
+    if (isFeatureEditing && currentTabRef.current !== MORE_TAB) {
+      jumpToTab(MORE_TAB);
+    }
+  }, [isFeatureEditing, jumpToTab]);
 
   const renderFavoriteLabel = useCallback(
     ({ index, indexDecimal }: any) => (
@@ -269,9 +353,12 @@ export const HomeDappDrawerContent: React.FC<{
     ),
   );
 
-  const androidTabs = useMemo<readonly HomeDappDrawerAndroidTab<TabKey>[]>(
-    () =>
-      tabs.map(tabItem => {
+  const androidTabs = useMemo<
+    readonly HomeDappDrawerAndroidTab<DrawerTabKey>[]
+  >(
+    () => [
+      { id: MORE_TAB },
+      ...tabs.map(tabItem => {
         if (tabItem.id === 'favorite') {
           return {
             ...tabItem,
@@ -285,6 +372,7 @@ export const HomeDappDrawerContent: React.FC<{
             renderCategoryLabel({ ...props, label: tabItem.label }),
         };
       }),
+    ],
     [renderCategoryLabel, renderFavoriteLabel, tabs],
   );
 
@@ -348,123 +436,200 @@ export const HomeDappDrawerContent: React.FC<{
     }
   }, [completeEditing, isEditing, startEditing]);
 
-  const headerGesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .enabled(IS_ANDROID)
-        .activeOffsetX([-6, 6])
-        .failOffsetY([-8, 8]),
-    [],
+  const handleToggleFeatureEditing = useCallback(() => {
+    triggerImpact();
+    if (homeFeatureLayoutApi.isEditing()) {
+      homeFeatureLayoutApi.stopEditing();
+    } else {
+      homeFeatureLayoutApi.startEditing();
+    }
+  }, []);
+
+  // The right-hand text button belongs to the page on screen: the feature
+  // cards on "More Features", the bookmarks on the favorites category.
+  const tabBarAction = useMemo<HomeDrawerTabBarAction | null>(() => {
+    if (currentTab === MORE_TAB) {
+      // Nothing to edit from here once every card lives on the Home.
+      return hasMoreFeatures || isFeatureEditing
+        ? {
+            label: isFeatureEditing ? t('global.Done') : t('global.Edit'),
+            onPress: handleToggleFeatureEditing,
+          }
+        : null;
+    }
+    if (currentTab === 'favorite') {
+      return {
+        label: isEditing ? t('global.Done') : t('global.Edit'),
+        disabled: !hasData,
+        onPress: handle,
+      };
+    }
+    return null;
+  }, [
+    currentTab,
+    handle,
+    handleToggleFeatureEditing,
+    hasData,
+    hasMoreFeatures,
+    isEditing,
+    isFeatureEditing,
+    t,
+  ]);
+
+  const handlePressMoreTab = useCallback(() => {
+    jumpToTab(MORE_TAB);
+  }, [jumpToTab]);
+  const handlePressWebsitesTab = useCallback(() => {
+    if (currentTabRef.current === MORE_TAB) {
+      jumpToTab(activeTab);
+    }
+  }, [activeTab, jumpToTab]);
+  const handlePressCategoryTab = useCallback(
+    (tab: string) => {
+      jumpToTab(tab as DrawerTabKey);
+    },
+    [jumpToTab],
   );
 
-  const renderTabContent = useMemoizedFn(
-    (tabKey: TabKey, isAndroidTab = false) => {
-      const contentStyle = isAndroidTab
-        ? [styles.content, styles.androidTabContent]
-        : styles.content;
-
-      if (tabKey === 'favorite') {
-        return (
-          <View style={contentStyle}>
-            <DappFavoriteList
-              drawerScrollableGesture={drawerScrollableGesture}
-              drawerScrollOffsetY={drawerScrollOffsetY}
-              scrollableStatus={scrollableStatus}
-              isEditing={isEditing}
-              isActive={activeTab === tabKey}
-              bookmarkList={list}
-              onRemoveLocal={handleRemoveLocal}
-              onDappPress={handleDappPress}
-            />
-          </View>
-        );
-      }
+  const renderTabBar = useCallback(
+    (props: TabBarProps<string>) => {
+      pagerJumpRef.current = props.onTabPress;
 
       return (
-        <View style={contentStyle}>
-          <DappList
+        <HomeDrawerTabBar
+          {...props}
+          onTabPress={handlePressCategoryTab}
+          moreTitle={t('page.home.moreFeatures.title')}
+          websitesTitle={t('page.home.DappDrawer.websites')}
+          action={tabBarAction}
+          onPressMore={handlePressMoreTab}
+          onPressWebsites={handlePressWebsitesTab}
+          categoryBarStyle={styles.materialTabsBar}
+          categoryBarContentStyle={styles.materialTabsBarContent}
+          categoryIndicatorStyle={styles.indicator}
+          categoryTabStyle={styles.tabBar}
+        />
+      );
+    },
+    [
+      handlePressCategoryTab,
+      handlePressMoreTab,
+      handlePressWebsitesTab,
+      styles.indicator,
+      styles.materialTabsBar,
+      styles.materialTabsBarContent,
+      styles.tabBar,
+      t,
+      tabBarAction,
+    ],
+  );
+
+  const renderTabContent = useMemoizedFn((tabKey: DrawerTabKey) => {
+    if (tabKey === MORE_TAB) {
+      return (
+        <HomeMoreFeatures
+          drawerScrollableGesture={drawerScrollableGesture}
+          drawerScrollOffsetY={drawerScrollOffsetY}
+          scrollableStatus={scrollableStatus}
+          isActive={currentTab === tabKey}
+        />
+      );
+    }
+
+    if (tabKey === 'favorite') {
+      return (
+        <View style={styles.content}>
+          <DappFavoriteList
             drawerScrollableGesture={drawerScrollableGesture}
             drawerScrollOffsetY={drawerScrollOffsetY}
             scrollableStatus={scrollableStatus}
-            category={tabKey}
-            isActive={activeTab === tabKey}
+            isEditing={isEditing}
+            isActive={currentTab === tabKey}
+            bookmarkList={list}
+            onRemoveLocal={handleRemoveLocal}
             onDappPress={handleDappPress}
           />
         </View>
       );
-    },
-  );
+    }
+
+    return (
+      <View style={styles.content}>
+        <DappList
+          drawerScrollableGesture={drawerScrollableGesture}
+          drawerScrollOffsetY={drawerScrollOffsetY}
+          scrollableStatus={scrollableStatus}
+          category={tabKey}
+          isActive={currentTab === tabKey}
+          onDappPress={handleDappPress}
+        />
+      </View>
+    );
+  });
 
   return (
     <View style={styles.container}>
-      <GestureDetector gesture={headerGesture}>
-        <View style={styles.header}>
-          <Text style={styles.title}>{t('page.home.DappDrawer.websites')}</Text>
-          {activeTab === 'favorite' ? (
-            <TouchableOpacity
-              disabled={!hasData}
-              onPress={handle}
-              style={!hasData ? styles.editDisabled : undefined}>
-              <Text style={styles.edit}>
-                {isEditing ? t('global.Done') : t('global.Edit')}
-              </Text>
-            </TouchableOpacity>
-          ) : null}
-        </View>
-      </GestureDetector>
       {IS_ANDROID ? (
         <HomeDappDrawerAndroidTabs
           tabs={androidTabs}
-          initialTabName={activeTab}
+          initialTabName={MORE_TAB}
           drawerScrollableGesture={drawerScrollableGesture}
           renderTabBar={renderTabBar}
-          onTabChange={setActiveTab}
-          renderTabContent={tabKey => renderTabContent(tabKey, true)}
+          onTabChange={handleTabChange}
+          renderTabContent={renderTabContent}
         />
       ) : (
         <Tabs.Container
           renderTabBar={renderTabBar}
-          tabBarHeight={TAB_BAR_HEIGHT}
+          tabBarHeight={DRAWER_WEBSITES_CONTENT_TOP}
           lazy
           containerStyle={styles.tabContainer}
           headerContainerStyle={styles.tabBarWrap}
-          initialTabName={activeTab}
+          initialTabName={MORE_TAB}
           onTabChange={({ tabName }) => {
-            setActiveTab(tabName as TabKey);
+            handleTabChange(tabName as DrawerTabKey);
           }}>
           {
-            tabs.map(tabItem => {
-              if (tabItem.id === 'favorite') {
+            [
+              <Tabs.Tab key={MORE_TAB} name={MORE_TAB} label={renderNoLabel}>
+                {renderTabContent(MORE_TAB)}
+              </Tabs.Tab>,
+              ...tabs.map(tabItem => {
+                if (tabItem.id === 'favorite') {
+                  return (
+                    <Tabs.Tab
+                      key={tabItem.id}
+                      label={renderFavoriteLabel}
+                      name="favorite">
+                      {renderTabContent(tabItem.id)}
+                    </Tabs.Tab>
+                  );
+                }
+
                 return (
                   <Tabs.Tab
                     key={tabItem.id}
-                    label={renderFavoriteLabel}
-                    name="favorite">
+                    label={label =>
+                      renderCategoryLabel({
+                        ...label,
+                        label: tabItem.label,
+                      })
+                    }
+                    name={tabItem.id}>
                     {renderTabContent(tabItem.id)}
                   </Tabs.Tab>
                 );
-              }
-
-              return (
-                <Tabs.Tab
-                  key={tabItem.id}
-                  label={label =>
-                    renderCategoryLabel({
-                      ...label,
-                      label: tabItem.label,
-                    })
-                  }
-                  name={tabItem.id}>
-                  {renderTabContent(tabItem.id)}
-                </Tabs.Tab>
-              );
-            }) as unknown as React.ReactElement<any>
+              }),
+            ] as unknown as React.ReactElement<any>
           }
         </Tabs.Container>
       )}
     </View>
   );
 };
+
+/** "More Features" has no entry in the category strip. */
+const renderNoLabel = () => null;
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {
   const bgColor = 'transparent';
@@ -482,39 +647,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       paddingVertical: 4,
     },
 
-    header: {
-      paddingHorizontal: 20,
-      paddingVertical: 12,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    title: {
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 18,
-      lineHeight: 20,
-      fontWeight: '900',
-    },
-    edit: {
-      color: colors2024['neutral-body'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      fontStyle: 'normal',
-      fontWeight: '700',
-      lineHeight: 18,
-    },
-    editDisabled: {
-      opacity: 0.5,
-    },
-
+    // The pager's top container now also holds the title row and the
+    // indicator, so the category strip draws its own bottom line instead of
+    // this box drawing one across the "More Features" page as well.
     tabBarWrap: {
       shadowColor: 'transparent',
       shadowOpacity: 0,
       elevation: 0,
-      borderBottomWidth: 1,
       backgroundColor: bgColor,
-      borderBottomColor: colors2024['neutral-bg-5'],
     },
     tabBar: {
       height: TAB_BAR_HEIGHT,
@@ -574,13 +714,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       marginTop: 0,
     },
     //
+    // The tab bar floats over the pager on both platforms, so every website
+    // page starts below it.
     content: {
       flex: 1,
       paddingHorizontal: 16,
-      paddingTop: TAB_BAR_HEIGHT,
-    },
-    androidTabContent: {
-      paddingTop: 0,
+      paddingTop: DRAWER_WEBSITES_CONTENT_TOP,
     },
     list: {},
     listContentContainer: {

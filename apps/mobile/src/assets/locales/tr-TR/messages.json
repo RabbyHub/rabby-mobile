@@ -960,7 +960,18 @@
         "convertDust": "Küçük Bakiyeleri Dönüştür"
       },
       "swipeUp": {
-        "desc": "Web sitelerini keşfetmek ve aramak için yukarı kaydırın"
+        "more": "Daha fazla özelliği keşfetmek için yukarı kaydırın",
+        "editMore": "Daha fazla özelliği düzenlemek için yukarı kaydırın"
+      },
+      "moreFeatures": {
+        "title": "Daha Fazla Özellik",
+        "empty": "Henüz başka özellik yok. Web sitelerini keşfetmek için sola kaydırın",
+        "swipeDown": "Ana sayfayı keşfetmek için aşağı kaydırın",
+        "swipeDownEdit": "Ana sayfayı düzenlemek için aşağı kaydırın"
+      },
+      "featureEdit": {
+        "removeHint": "Bir özelliği ana sayfadan kaldırmak için {{arrow}} simgesine dokunun",
+        "addHint": "Bir özelliği ana sayfaya eklemek için {{arrow}} simgesine dokunun"
       },
       "DappDrawer": {
         "search": "Arama",

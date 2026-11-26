@@ -832,7 +832,18 @@
         "convertDust": "Convertir les petits soldes"
       },
       "swipeUp": {
-        "desc": "Faites glisser vers le haut pour explorer et rechercher des sites web"
+        "more": "Faites glisser vers le haut pour explorer plus de fonctionnalités",
+        "editMore": "Faites glisser vers le haut pour modifier plus de fonctionnalités"
+      },
+      "moreFeatures": {
+        "title": "Plus de fonctionnalités",
+        "empty": "Aucune autre fonctionnalité pour le moment. Faites glisser vers la gauche pour explorer les sites web",
+        "swipeDown": "Faites glisser vers le bas pour explorer l'accueil",
+        "swipeDownEdit": "Faites glisser vers le bas pour modifier l'accueil"
+      },
+      "featureEdit": {
+        "removeHint": "Touchez {{arrow}} pour retirer une fonctionnalité de l'accueil",
+        "addHint": "Touchez {{arrow}} pour ajouter une fonctionnalité à l'accueil"
       },
       "DappDrawer": {
         "favorite": "Favori",

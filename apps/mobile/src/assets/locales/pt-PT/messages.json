@@ -952,7 +952,18 @@
         "convertDust": "Converter saldos residuais"
       },
       "swipeUp": {
-        "desc": "Deslize para cima para explorar e pesquisar websites"
+        "more": "Deslize para cima para explorar mais funcionalidades",
+        "editMore": "Deslize para cima para editar mais funcionalidades"
+      },
+      "moreFeatures": {
+        "title": "Mais funcionalidades",
+        "empty": "Ainda não há mais funcionalidades. Deslize para a esquerda para explorar websites",
+        "swipeDown": "Deslize para baixo para explorar o Início",
+        "swipeDownEdit": "Deslize para baixo para editar o Início"
+      },
+      "featureEdit": {
+        "removeHint": "Toque em {{arrow}} para remover uma funcionalidade do Início",
+        "addHint": "Toque em {{arrow}} para adicionar uma funcionalidade ao Início"
       },
       "DappDrawer": {
         "favorite": "Favorito",

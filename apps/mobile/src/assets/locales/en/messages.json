@@ -982,7 +982,18 @@
         "convertDust": "Convert Dust"
       },
       "swipeUp": {
-        "desc": "Swipe up to explore & search websites"
+        "more": "Swipe up to explore More",
+        "editMore": "Swipe up to edit More"
+      },
+      "moreFeatures": {
+        "title": "More Features",
+        "empty": "No more features yet. Swipe left to explore websites",
+        "swipeDown": "Swipe down to explore Home",
+        "swipeDownEdit": "Swipe down to edit Home"
+      },
+      "featureEdit": {
+        "removeHint": "Tap {{arrow}} to remove a feature from Home",
+        "addHint": "Tap {{arrow}} to add a feature to Home"
       },
       "DappDrawer": {
         "emptyAndroid": "No DApp added to favorites",

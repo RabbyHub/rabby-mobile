@@ -1,0 +1,165 @@
+import { MultiHomeFeatTitle } from '@/constant/newStyle';
+import {
+  HOME_MOVABLE_FEATURES,
+  HOME_PINNED_FEATURES,
+  getDefaultHomeFeatureLayout,
+  isHomeFeatureMovable,
+  isSameHomeFeatureLayout,
+  moveHomeFeature,
+  normalizeHomeFeatureLayout,
+} from './homeFeatureLayout';
+
+const {
+  GasAccount,
+  History,
+  Market,
+  Approvals,
+  Points,
+  ConvertDust,
+  Lending,
+  Swap,
+} = MultiHomeFeatTitle;
+
+describe('homeFeatureLayout', () => {
+  it('starts with Gas deposit and Approvals on the second floor', () => {
+    expect(getDefaultHomeFeatureLayout()).toEqual({
+      home: [History, Market, Points, ConvertDust, Lending],
+      more: [GasAccount, Approvals],
+    });
+  });
+
+  it('keeps pinned and movable cards apart', () => {
+    for (const key of HOME_PINNED_FEATURES) {
+      expect(isHomeFeatureMovable(key)).toBe(false);
+    }
+    for (const key of HOME_MOVABLE_FEATURES) {
+      expect(isHomeFeatureMovable(key)).toBe(true);
+    }
+  });
+
+  describe('moveHomeFeature', () => {
+    it('drops a card first on the floor it moves to', () => {
+      const layout = getDefaultHomeFeatureLayout();
+
+      const moved = moveHomeFeature(layout, History, 'more');
+      expect(moved).toEqual({
+        home: [Market, Points, ConvertDust, Lending],
+        more: [History, GasAccount, Approvals],
+      });
+
+      expect(moveHomeFeature(moved, History, 'home')).toEqual({
+        home: [History, Market, Points, ConvertDust, Lending],
+        more: [GasAccount, Approvals],
+      });
+    });
+
+    it('can empty a floor', () => {
+      let layout = getDefaultHomeFeatureLayout();
+      layout = moveHomeFeature(layout, GasAccount, 'home');
+      layout = moveHomeFeature(layout, Approvals, 'home');
+
+      expect(layout.more).toEqual([]);
+      expect(layout.home).toEqual([
+        Approvals,
+        GasAccount,
+        History,
+        Market,
+        Points,
+        ConvertDust,
+        Lending,
+      ]);
+    });
+
+    it('returns the same layout when there is nothing to move', () => {
+      const layout = getDefaultHomeFeatureLayout();
+
+      // A pinned card never moves.
+      expect(moveHomeFeature(layout, Swap, 'more')).toBe(layout);
+      // Already on the target floor.
+      expect(moveHomeFeature(layout, History, 'home')).toBe(layout);
+      expect(moveHomeFeature(layout, GasAccount, 'more')).toBe(layout);
+    });
+
+    it('does not mutate its input', () => {
+      const layout = getDefaultHomeFeatureLayout();
+      const snapshot = JSON.parse(JSON.stringify(layout));
+
+      moveHomeFeature(layout, Market, 'more');
+
+      expect(layout).toEqual(snapshot);
+    });
+  });
+
+  describe('normalizeHomeFeatureLayout', () => {
+    it('keeps a valid stored layout as it is', () => {
+      const stored = {
+        home: [Lending, History],
+        more: [Market, GasAccount, Approvals, Points, ConvertDust],
+      };
+
+      expect(normalizeHomeFeatureLayout(stored)).toEqual(stored);
+    });
+
+    it('falls back to the default layout for unusable input', () => {
+      const defaults = getDefaultHomeFeatureLayout();
+
+      expect(normalizeHomeFeatureLayout(undefined)).toEqual(defaults);
+      expect(normalizeHomeFeatureLayout(null)).toEqual(defaults);
+      expect(normalizeHomeFeatureLayout('broken')).toEqual(defaults);
+      expect(normalizeHomeFeatureLayout({ home: 'x', more: 1 })).toEqual(
+        defaults,
+      );
+    });
+
+    it('drops unknown, pinned and duplicated keys', () => {
+      const normalized = normalizeHomeFeatureLayout({
+        home: [History, 'Removed Feature', Swap, History, Market],
+        more: [Market, GasAccount, Approvals, Points, ConvertDust, Lending],
+      });
+
+      expect(normalized).toEqual({
+        home: [History, Market],
+        more: [GasAccount, Approvals, Points, ConvertDust, Lending],
+      });
+    });
+
+    it('puts a card the stored layout does not know on its default floor', () => {
+      // As if Points, Convert Dust, Lending and Approvals shipped after this
+      // layout was saved.
+      const normalized = normalizeHomeFeatureLayout({
+        home: [Market],
+        more: [History, GasAccount],
+      });
+
+      expect(normalized).toEqual({
+        home: [Market, Points, ConvertDust, Lending],
+        more: [History, GasAccount, Approvals],
+      });
+    });
+
+    it('always accounts for every movable card exactly once', () => {
+      const normalized = normalizeHomeFeatureLayout({ home: [Lending] });
+      const all = [...normalized.home, ...normalized.more];
+
+      expect(all).toHaveLength(HOME_MOVABLE_FEATURES.length);
+      expect(new Set(all)).toEqual(new Set(HOME_MOVABLE_FEATURES));
+    });
+  });
+
+  it('compares layouts by order', () => {
+    const layout = getDefaultHomeFeatureLayout();
+
+    expect(isSameHomeFeatureLayout(layout, getDefaultHomeFeatureLayout())).toBe(
+      true,
+    );
+    expect(
+      isSameHomeFeatureLayout(layout, moveHomeFeature(layout, History, 'more')),
+    ).toBe(false);
+    expect(
+      isSameHomeFeatureLayout(layout, {
+        ...layout,
+        home: [...layout.home].reverse(),
+      }),
+    ).toBe(false);
+  });
+});

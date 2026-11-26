@@ -67,8 +67,14 @@ const DRAWER_GESTURE_ACTIVE_OFFSET_Y = 8;
 const DRAWER_GESTURE_FAIL_OFFSET_X = 12;
 const DRAWER_CONTENT_IDLE_MOUNT_DELAY_MS = 3000;
 
-const { pullPercent, isExpanded, translateY, swipeUpHintHeight, panelReveal } =
-  homeDrawerAnimateMutable;
+const {
+  pullPercent,
+  isExpanded,
+  translateY,
+  swipeUpHintHeight,
+  panelReveal,
+  drawerTabPosition,
+} = homeDrawerAnimateMutable;
 
 export const HomeDappDrawer: React.FC<{
   onScrollBack?: WorkletFunction;
@@ -400,6 +406,16 @@ export const HomeDappDrawer: React.FC<{
     };
   });
 
+  // Home and search belong to the websites: on "More Features" the bar keeps
+  // its place in the layout but is neither visible nor touchable.
+  const footerStyle = useAnimatedStyle(() => {
+    const opacity = Math.min(Math.max(drawerTabPosition.value, 0), 1);
+    return {
+      opacity,
+      pointerEvents: opacity > 0.5 ? 'auto' : 'none',
+    };
+  });
+
   return (
     <GestureDetector gesture={drawerGesture}>
       <Animated.View
@@ -503,7 +519,7 @@ export const HomeDappDrawer: React.FC<{
             </View>
 
             <GestureDetector gesture={footerGesture}>
-              <View style={[styles.footer]}>
+              <Animated.View style={[styles.footer, footerStyle]}>
                 <TouchableOpacity onPress={onPressHome}>
                   <ReactIconHome
                     width={44}
@@ -537,7 +553,7 @@ export const HomeDappDrawer: React.FC<{
                     <View style={{ width: 20 }} />
                   </View>
                 </TouchableOpacity>
-              </View>
+              </Animated.View>
             </GestureDetector>
           </View>
         </Animated.View>

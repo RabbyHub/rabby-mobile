@@ -1,34 +1,13 @@
-import { apisPerps } from '@/core/apis';
 import RcIconDoubleArrowCC from '@/assets2024/icons/common/double-arrow-cc.svg';
-import RcIconApprovalsCC from '@/assets2024/icons/home/IconApprovalsCC.svg';
-import RcIconBridgeCC from '@/assets2024/icons/home/IconBridgeCC.svg';
-import RcIconGasAccountCC from '@/assets2024/icons/home/IconGasAccountCC.svg';
-import IconGift from '@/assets2024/icons/home/IconGift.svg';
-import RcIconHistoryCC from '@/assets2024/icons/home/IconHistoryCC.svg';
-import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
-import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
-import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
-import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
-import RcIconMarketCC from '@/assets2024/icons/home/IconMarketCC.svg';
-import RcIconConvertDustCC from '@/assets2024/icons/home/IconDustCC.svg';
-import RcIconMemeCoinCC from '@/assets2024/icons/home/IconMemeCoinCC.svg';
 
-import { RootNames } from '@/constant/layout';
 import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
 import { useTheme2024 } from '@/hooks/theme';
-import { useAppLanguage } from '@/hooks/lang';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
 import { fetchTop5TokensForAllAccountsOnce } from '@/components/AccountSwitcher/hooks';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { clearLendingActionPopupState } from '@/screens/Lending/utils/actionPopup';
 import { createGetStyles2024 } from '@/utils/styles';
-import { StackActions, useFocusEffect } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useEffect, useRef } from 'react';
 import type { ScrollView, ViewProps } from 'react-native';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { View } from 'react-native';
 import { svsLayout } from '@/hooks/useAppLayout';
 
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -46,7 +25,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { MultiHomeFeatTitle } from '@/constant/newStyle';
 import { currencyServiceApi } from '@/core/serviceApi/currency';
 import { storeApiAccounts, useMyAccounts } from '@/hooks/account';
 import { storeApiAccountsSwitcher } from '@/hooks/accountsSwitcher';
@@ -54,29 +32,21 @@ import {
   refreshMemeHoldings,
   refreshMemeHoldingsIfStale,
 } from '@/screens/MemeCoin/data/memeHoldingsStore';
-import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
-import { navigateToPerpsHome } from '@/hooks/perps/navigation/navigateToPreferredPerps';
+import { apisHomeTabIndex } from '@/hooks/navigation';
 import addressBalanceStore, {
   balanceAccountsStore,
   getSelectedBalanceAddressesSnapshot,
 } from '@/store/balance';
-import { navigateDeprecated } from '@/utils/navigation';
 import { useTranslation } from 'react-i18next';
 import { useSortAddressList } from '../../Address/useSortAddressList';
-import { BadgeText } from '../components/BadgeText';
 import {
   forceUpdateApprovalAlertCounts,
   triggerApprovalAlertCounts,
-  useApprovalAlertTotal,
 } from '../hooks/approvals';
 
-import RcIconLending from '@/assets2024/icons/home/IconLending.svg';
-import RcIconPerps from '@/assets2024/icons/home/IconPerps.svg';
-import { FastTouchable } from '@/components/Perf/FastTouchable';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import {
   HOME_REFRESH_INTERVAL,
-  ITEM_GRID_GAP,
   ITEM_LAYOUT_PADDING_HORIZONTAL,
 } from '@/constant/home';
 import {
@@ -87,10 +57,6 @@ import {
 import { perfEvents } from '@/core/utils/perf';
 import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
 import {
-  beginFeatureActivation,
-  markFeatureActivation,
-} from '@/core/utils/featureActivationDiagnostics';
-import {
   useHomePostStartupReady,
   useHomeStartupReady,
 } from '@/core/utils/homeStartupReady';
@@ -99,32 +65,25 @@ import { scheduleStartupTask } from '@/core/utils/startupScheduler';
 import { syncTop10History } from '@/databases/hooks/history';
 import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
 import { useFetchCexInfo } from '@/hooks/useAddrDesc';
-import {
-  checkGasAccountAddressesEligibility,
-  useGasAccountGiftEligibility,
-} from '@/hooks/useGasAccountEligibility';
+import { checkGasAccountAddressesEligibility } from '@/hooks/useGasAccountEligibility';
 import { refreshDayCurve } from '@/store/curve24h';
 import { scene24hBalanceStore } from '@/store/balance24h';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import useTokenList from '@/store/tokens';
 import useProtocol from '@/store/protocols';
-import { isTabsSwiping } from '../../Address/components/MultiAssets/hooks';
 import { BrowserOrPerpsPosition } from './BrowserOrPerpsPosition';
-import { GasAccountBadge } from '../../GasAccount/components/GasAccountBadge';
 import { apisLending } from '../../Lending/hooks';
 import { HomeCenterArea } from '../components/HomeCenterArea';
 import { HomeDappDrawer } from '../components/HomeDappDrawer';
-import { HomePendingBadge } from '../components/HomePending';
-import { LendingHF } from '../components/LendingHF';
-import { MemeCoinBalance } from './MemeCoinBalance';
+import { HOME_FEATURE_EDIT_FOOTER_HEIGHT } from './HomeFeatures/constants';
+import { HomeFeatureEditFooter } from './HomeFeatures/HomeFeatureEditFooter';
+import { HomeFeatureGrid } from './HomeFeatures/HomeFeatureGrid';
+import { useIsHomeFeatureEditing } from '../hooks/homeFeatureLayout';
 import { MultiAddressHomeHeader } from '../components/MultiAddressHomeHeader';
-import { PerpsPnl } from '../components/PerpsPnl';
 import {
   refreshSuccessAndFailList,
   resetFetchHistoryTxCount,
-  useHomeHistoryCount,
-  useHomePendingTxCount,
 } from '../hooks/history';
 import type { TabsScrollViewProps } from '@/components/customized/react-native-collapsible-tab-view/ScrollView';
 import { TabsScrollView } from '@/components/customized/react-native-collapsible-tab-view/ScrollView';
@@ -145,15 +104,11 @@ import {
   HOME_TOP_HEADER_SIZES,
   SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
 } from '@/constant/home';
-import { NewTag } from './NewTag';
-import { useHomeFeatureNewTag } from '../hooks/useHomeFeatureNewTag';
-import { useDismissConvertDustBanner } from '../hooks/useConvertDustBanner';
 import { useMemoizedFn } from 'ahooks';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { sleep } from '@/utils/async';
 import { isEqual } from 'lodash';
 import { preloadTransactionHotNavigator } from '@/perfs/preloads';
-import type { Account } from '@/types/account';
 import type { OnRefreshOnJs } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import {
   isOverPulldownRefreshThreshold,
@@ -562,136 +517,71 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
   };
 };
 
-const getStyle = createGetStyles2024(
-  ({ colors2024, isLight, safeAreaInsets }) => ({
-    main: {
-      height: '100%',
-      overflow: 'hidden',
+const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
+  main: {
+    height: '100%',
+    overflow: 'hidden',
 
-      // flex: 1,
-      // ...makeDevOnlyStyle({
-      //   backgroundColor: colors2024['red-light-2'],
-      // }),
-    },
-    scroll: {
-      flex: 1,
-      paddingTop: 0,
-    },
-    scrollContainer: {
-      flexGrow: 1,
-      minHeight: '100%',
-      paddingBottom: getScrollContainerPb(safeAreaInsets.bottom),
-      // ...makeDebugBorder('orange'),
-    },
-    iosAbsIndicatorOffset: {
-      paddingTop: 0,
-    },
-    scrollViewInner: {
-      marginTop: !SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING
-        ? HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset
-        : 0,
-      // ...makeDebugBorder('orange'),
-      // ...makeDevOnlyStyle({
-      //   backgroundColor: colors2024['orange-light-2'],
-      // }),
-    },
-    grid: {
-      marginTop: 0,
-      width: '100%',
-      paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
-    },
-    gridItemsWrap: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      borderRadius: 8,
-      rowGap: ITEM_GRID_GAP,
-      columnGap: ITEM_GRID_GAP,
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      width: '100%',
-    },
-
-    gridItem: {
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
-      width: '48%', // default
-      minWidth: 0,
-      borderRadius: 16,
-      flexShrink: 0,
-      padding: 20,
-      paddingBottom: 16,
-      display: 'flex',
-      alignItems: 'flex-start',
-      justifyContent: 'center',
-      // height: 86,
-      gap: 12,
-      position: 'relative',
-      // ...makeDebugBorder(),
-    },
-    gridText: {
-      color: colors2024['neutral-title-1'],
-      fontWeight: '700',
-      fontSize: 16,
-      lineHeight: 20,
-      textAlign: 'left',
-      fontFamily: 'SF Pro Rounded',
-    },
-    gridTextZh: {
-      fontSize: 15,
-    },
-    titleWithNewTagRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    newTagWrapper: {
-      marginLeft: 4,
-    },
-    badgeWrapper: {
-      display: 'flex',
-      flexDirection: 'row',
-      width: '100%',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      // ...makeDebugBorder('purple'),
-    },
-    iconWrapper: {
-      height: 28,
-      width: 28,
-      // backgroundColor: colors2024['brand-light-1'],
-      // borderRadius: 12,
-      // justifyContent: 'center',
-      // alignItems: 'center',
-    },
-    rightBadgeWrapper: {
-      position: 'relative',
-      right: -4,
-      alignSelf: 'flex-start',
-    },
-    badgeStyle: {},
-    pullUpWrapper: {
-      flex: 1,
-      position: 'relative',
-      // ...makeDebugBorder(),
-    },
-    swipeUpHint: {
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginTop: 36,
-      // ...makeDebugBorder('purple'),
-    },
-    swipeUpHintText: {
-      marginTop: 4,
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '500',
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-    },
-  }),
-);
+    // flex: 1,
+    // ...makeDevOnlyStyle({
+    //   backgroundColor: colors2024['red-light-2'],
+    // }),
+  },
+  scroll: {
+    flex: 1,
+    paddingTop: 0,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    minHeight: '100%',
+    paddingBottom: getScrollContainerPb(safeAreaInsets.bottom),
+    // ...makeDebugBorder('orange'),
+  },
+  iosAbsIndicatorOffset: {
+    paddingTop: 0,
+  },
+  scrollViewInner: {
+    marginTop: !SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING
+      ? HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset
+      : 0,
+    // ...makeDebugBorder('orange'),
+    // ...makeDevOnlyStyle({
+    //   backgroundColor: colors2024['orange-light-2'],
+    // }),
+  },
+  grid: {
+    marginTop: 0,
+    width: '100%',
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
+  },
+  pullUpWrapper: {
+    flex: 1,
+    position: 'relative',
+    // ...makeDebugBorder(),
+  },
+  swipeUpHint: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 36,
+    // ...makeDebugBorder('purple'),
+  },
+  // Room for the edit footer, so the last cards and this hint can scroll
+  // clear of it. It is part of the hint's own box on purpose: the drawer's
+  // pull overlay is anchored to this view's measured height.
+  swipeUpHintEditing: {
+    paddingBottom: HOME_FEATURE_EDIT_FOOTER_HEIGHT + 62,
+  },
+  swipeUpHintText: {
+    marginTop: 4,
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
+}));
 
 type HomeOverviewTriggerUpdate = ReturnType<
   typeof addressBalanceStore.useAccountsBalanceTrigger
@@ -879,209 +769,35 @@ function DeferredHomeDappDrawer({
   return <HomeDappDrawer onScrollBack={onScrollBack} />;
 }
 
-function DeferredHomeMenuBadge({
-  el,
-  badgeStyle,
-}: {
-  el: {
-    key: MultiHomeFeatTitle;
-    title: string;
-    icon: React.FC<import('react-native-svg').SvgProps>;
-    badge?: number;
-    isSuccess?: boolean;
-    showGiftIcon?: boolean;
-  };
-  badgeStyle: React.ComponentProps<typeof BadgeText>['style'];
-}) {
-  const startupReady = useHomePostStartupReady();
+/**
+ * The hint under the cards. It reads the edit state itself, so entering or
+ * leaving edit mode repaints this line and not the whole overview.
+ */
+function HomeSwipeUpHint() {
+  const { styles, colors2024 } = useTheme2024({
+    getStyle,
+  });
+  const { t } = useTranslation();
+  const isEditing = useIsHomeFeatureEditing();
 
-  if (!startupReady) {
-    return null;
-  }
-
-  if (el.key === MultiHomeFeatTitle.Perps) {
-    return <PerpsPnl />;
-  }
-
-  if (el.key === MultiHomeFeatTitle.History) {
-    return <HistoryMenuBadge badgeStyle={badgeStyle} />;
-  }
-
-  if (el.key === MultiHomeFeatTitle.Approvals) {
-    return <ApprovalMenuBadge badgeStyle={badgeStyle} />;
-  }
-
-  if (el.key === MultiHomeFeatTitle.Lending) {
-    return <LendingHF />;
-  }
-
-  if (el.key === MultiHomeFeatTitle.MemeCoin) {
-    return <MemeCoinBalance />;
-  }
-
-  if (el.key === MultiHomeFeatTitle.GasAccount) {
-    return <GasAccountMenuBadge />;
-  }
-
-  return null;
-}
-
-function HistoryMenuBadge({
-  badgeStyle,
-}: {
-  badgeStyle: React.ComponentProps<typeof BadgeText>['style'];
-}) {
-  const pendingTxCount = useHomePendingTxCount();
-  const historyCount = useHomeHistoryCount();
-
-  if (pendingTxCount > 0) {
-    return <HomePendingBadge number={pendingTxCount} />;
-  }
-
-  const badge = historyCount?.fail || historyCount?.success;
-  return badge && badge > 0 ? (
-    <BadgeText
-      count={badge}
-      isSuccess={!historyCount?.fail}
-      style={[badgeStyle]}
-    />
-  ) : null;
-}
-
-function ApprovalMenuBadge({
-  badgeStyle,
-}: {
-  badgeStyle: React.ComponentProps<typeof BadgeText>['style'];
-}) {
-  const approvalTotal = useApprovalAlertTotal();
-
-  return approvalTotal > 0 ? (
-    <BadgeText count={approvalTotal} style={[badgeStyle]} />
-  ) : null;
-}
-
-function GasAccountMenuBadge() {
-  const isGiftEligible = useGasAccountGiftEligibility();
-
-  return isGiftEligible ? (
-    <IconGift width={24} height={24} />
-  ) : (
-    <GasAccountBadge />
+  return (
+    <View
+      style={[styles.swipeUpHint, isEditing && styles.swipeUpHintEditing]}
+      onLayout={swipeUpViewHandlers.onLayout}>
+      <RcIconDoubleArrowCC color={colors2024['neutral-secondary']} />
+      <Text style={styles.swipeUpHintText}>
+        {isEditing
+          ? t('page.home.swipeUp.editMore')
+          : t('page.home.swipeUp.more')}
+      </Text>
+    </View>
   );
 }
 
 export const HomeOverview = React.memo(() => {
-  const navigation = useRabbyAppNavigation();
-  const { t } = useTranslation();
-  const { styles, colors2024, isLight } = useTheme2024({
+  const { styles } = useTheme2024({
     getStyle,
   });
-  const dismissConvertDustBanner = useDismissConvertDustBanner();
-  const receiveSelectingRef = useRef(false);
-  const receiveSelectingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
-
-  useEffect(() => {
-    return () => {
-      if (receiveSelectingTimerRef.current) {
-        clearTimeout(receiveSelectingTimerRef.current);
-        receiveSelectingTimerRef.current = null;
-      }
-    };
-  }, []);
-
-  const { width } = useWindowDimensions();
-  const itemWidth =
-    (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
-
-  const MENU_ARR = useMemo(
-    () =>
-      [
-        {
-          key: MultiHomeFeatTitle.Swap,
-          title: t('page.home.services.swap'),
-          icon: RcIconSwapCC,
-        },
-        {
-          key: MultiHomeFeatTitle.Bridge,
-          title: t('page.home.services.bridge'),
-          icon: RcIconBridgeCC,
-        },
-        {
-          key: MultiHomeFeatTitle.Send,
-          title: t('page.home.services.send'),
-          icon: RcIconSendCC,
-        },
-        {
-          key: MultiHomeFeatTitle.Receive,
-          title: t('page.home.services.receive'),
-          icon: RcIconReceiveCC,
-        },
-        {
-          key: MultiHomeFeatTitle.Perps,
-          title: t('page.home.services.perps'),
-          icon: RcIconPerps,
-        },
-        {
-          key: MultiHomeFeatTitle.MemeCoin,
-          title: t('page.home.services.meme'),
-          icon: RcIconMemeCoinCC,
-        },
-        {
-          key: MultiHomeFeatTitle.GasAccount,
-          title: t('page.home.services.gasDeposit'),
-          icon: RcIconGasAccountCC,
-        },
-        {
-          key: MultiHomeFeatTitle.History,
-          title: t('page.home.services.history'),
-          icon: RcIconHistoryCC,
-        },
-        {
-          key: MultiHomeFeatTitle.Market,
-          title: t('page.home.services.market'),
-          icon: RcIconMarketCC,
-        },
-        {
-          key: MultiHomeFeatTitle.Approvals,
-          title: t('page.home.services.approvals'),
-          icon: RcIconApprovalsCC,
-        },
-        // __DEV__ && {
-        //   title: MultiHomeFeatTitle.TEST_DAPP,
-        //   icon: RcIconDapps,
-        // },
-        // {
-        //   title: MultiHomeFeatTitle.Ecosystem,
-        //   icon: RcIconEcosystem,
-        // },
-        {
-          key: MultiHomeFeatTitle.Points,
-          title: t('page.rabbyPoints.title'),
-          icon: RcIconPointsCC,
-        },
-        {
-          key: MultiHomeFeatTitle.ConvertDust,
-          title: t('page.home.services.convertDust'),
-          icon: RcIconConvertDustCC,
-        },
-        {
-          key: MultiHomeFeatTitle.Lending,
-          title: t('page.home.services.lending'),
-          icon: RcIconLending,
-        },
-      ].filter(Boolean) as {
-        key: MultiHomeFeatTitle;
-        title: string;
-        icon: React.FC<import('react-native-svg').SvgProps>;
-        color?: string;
-        badge?: number;
-        isSuccess?: boolean;
-        showGiftIcon?: boolean;
-      }[],
-    [t],
-  );
 
   const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
 
@@ -1194,235 +910,6 @@ export const HomeOverview = React.memo(() => {
     handleManualPulldownRefresh,
   );
 
-  // const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
-  const handlePressMarket = useCallback(() => {
-    navigation.navigateDeprecated(RootNames.StackHomeNonTab, {
-      screen: RootNames.Market,
-      params: {},
-    });
-  }, [navigation]);
-
-  const navigateToReceive = useCallback(
-    async (account: Account) => {
-      if (receiveSelectingRef.current) {
-        return;
-      }
-
-      receiveSelectingRef.current = true;
-
-      try {
-        await preloadTransactionHotNavigator();
-      } catch (error) {
-        console.error('preloadTransactionHotNavigator::receive::error', error);
-      }
-
-      navigation.dispatch(
-        StackActions.push(RootNames.StackTransaction, {
-          screen: RootNames.Receive,
-          params: {
-            account,
-          },
-        }),
-      );
-
-      receiveSelectingTimerRef.current = setTimeout(() => {
-        receiveSelectingRef.current = false;
-        receiveSelectingTimerRef.current = null;
-      }, 1000);
-    },
-    [navigation],
-  );
-
-  const handlePressReceive = useCallback(() => {
-    const accounts = storeApiAccounts.getAccounts();
-
-    if (accounts.length === 1) {
-      navigateToReceive(accounts[0]);
-      return;
-    }
-
-    const modalId = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.RECEIVE_ADDRESS_LIST,
-      bottomSheetModalProps: {
-        enableContentPanningGesture: true,
-        enablePanDownToClose: true,
-        rootViewType: 'View',
-        linearGradientType: isLight ? 'bg0' : 'bg1',
-      },
-      onSelectAccount: account => {
-        if (!account) {
-          return;
-        }
-        removeGlobalBottomSheetModal2024(modalId);
-        navigateToReceive(account);
-      },
-    });
-  }, [isLight, navigateToReceive]);
-
-  const handleClickMenu = useCallback(
-    (key: MultiHomeFeatTitle) => {
-      if (!apisHomeTabIndex.isHomeAtFirstTab()) {
-        return;
-      }
-      if (isTabsSwiping.value) {
-        return;
-      }
-      switch (key) {
-        case MultiHomeFeatTitle.Send:
-          {
-            const cycleId = beginFeatureActivation(
-              'send',
-              'multi_home_send_press',
-            );
-            markFeatureActivation('send', 'context-ready', {
-              cycleId,
-              reason: 'multi_home_context_not_required',
-            });
-            markFeatureActivation('send', 'navigation-dispatched', {
-              cycleId,
-              reason: 'multi_home_navigation_push',
-            });
-          }
-          navigation.dispatch(
-            StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.Send,
-              params: {},
-            }),
-          );
-          break;
-        case MultiHomeFeatTitle.Receive:
-          handlePressReceive();
-          break;
-        case MultiHomeFeatTitle.Swap:
-          {
-            const cycleId = beginFeatureActivation(
-              'swap',
-              'multi_home_swap_press',
-            );
-            markFeatureActivation('swap', 'navigation-dispatched', {
-              cycleId,
-              reason: 'multi_home_navigation_push',
-            });
-          }
-          navigation.dispatch(
-            StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiSwapBridge,
-              params: {
-                activeTab: 'swap',
-              },
-            }),
-          );
-
-          break;
-        case MultiHomeFeatTitle.Bridge:
-          {
-            const cycleId = beginFeatureActivation(
-              'bridge',
-              'multi_home_bridge_press',
-            );
-            markFeatureActivation('bridge', 'navigation-dispatched', {
-              cycleId,
-              reason: 'multi_home_navigation_push',
-            });
-          }
-          navigation.dispatch(
-            StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiSwapBridge,
-              params: {
-                activeTab: 'bridge',
-              },
-            }),
-          );
-          break;
-        case MultiHomeFeatTitle.History:
-          storeApiAccountsSwitcher.toggleUseAllAccountsOnScene(
-            'MultiHistory',
-            true,
-          );
-          navigation.dispatch(
-            StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiAddressHistory,
-              params: {},
-            }),
-          );
-          break;
-        case MultiHomeFeatTitle.Approvals:
-          navigateDeprecated(RootNames.StackAddress, {
-            screen: RootNames.ApprovalAddressList,
-          });
-          break;
-        case MultiHomeFeatTitle.GasAccount:
-          navigation.dispatch(
-            StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.GasAccount,
-              params: {},
-            }),
-          );
-          break;
-        case MultiHomeFeatTitle.Market: {
-          handlePressMarket();
-          break;
-        }
-        case MultiHomeFeatTitle.Ecosystem:
-          break;
-        case MultiHomeFeatTitle.Perps:
-          apisPerps.setHasShownPerpsGuidePopup(true);
-          void navigateToPerpsHome({
-            navigation,
-            source: 'home-main',
-          });
-          break;
-        case MultiHomeFeatTitle.Lending:
-          clearLendingActionPopupState();
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.Lending,
-            params: {},
-          });
-          break;
-        case MultiHomeFeatTitle.Points:
-          navigation.push(RootNames.StackAddress, {
-            screen: RootNames.Points,
-            params: {},
-          });
-          break;
-        case MultiHomeFeatTitle.ConvertDust:
-          dismissConvertDustBanner();
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.ConvertDust,
-            params: {},
-          });
-          break;
-        case MultiHomeFeatTitle.MemeCoin:
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.MemeCoin,
-          });
-          break;
-        default:
-          break;
-      }
-    },
-    [
-      dismissConvertDustBanner,
-      handlePressMarket,
-      handlePressReceive,
-      navigation,
-    ],
-  );
-
-  const generateCustomBadgeIcon = useCallback(
-    (el: {
-      key: MultiHomeFeatTitle;
-      title: string;
-      icon: React.FC<import('react-native-svg').SvgProps>;
-      badge?: number;
-      isSuccess?: boolean;
-      showGiftIcon?: boolean;
-    }) => {
-      return <DeferredHomeMenuBadge el={el} badgeStyle={styles.badgeStyle} />;
-    },
-    [styles.badgeStyle],
-  );
-
   const {
     onScrollHandlers,
     uiOnScrollBack,
@@ -1503,104 +990,16 @@ export const HomeOverview = React.memo(() => {
 
               <HomeCenterArea />
               <View style={styles.grid}>
-                <View style={styles.gridItemsWrap}>
-                  {MENU_ARR.map((el, index) => {
-                    return (
-                      <HomeMenuItem
-                        key={index}
-                        el={el}
-                        itemWidth={itemWidth}
-                        onPress={handleClickMenu}
-                        renderBadge={generateCustomBadgeIcon}
-                      />
-                    );
-                  })}
-                </View>
+                <HomeFeatureGrid place="home" />
                 <BrowserOrPerpsPosition />
-                <View
-                  style={styles.swipeUpHint}
-                  onLayout={swipeUpViewHandlers.onLayout}>
-                  <RcIconDoubleArrowCC
-                    color={colors2024['neutral-secondary']}
-                  />
-                  <Text style={styles.swipeUpHintText}>
-                    {t('page.home.swipeUp.desc')}
-                  </Text>
-                </View>
+                <HomeSwipeUpHint />
               </View>
             </Animated.View>
           </TabsScrollView>
         </GestureDetector>
       </Animated.View>
       <DeferredHomeDappDrawer onScrollBack={uiOnScrollBack} />
+      <HomeFeatureEditFooter />
     </View>
   );
 });
-
-type HomeMenuItemProps = {
-  el: {
-    key: MultiHomeFeatTitle;
-    title: string;
-    icon: React.FC<import('react-native-svg').SvgProps>;
-    color?: string;
-    badge?: number;
-    isSuccess?: boolean;
-    showGiftIcon?: boolean;
-  };
-  itemWidth: number;
-  onPress: (key: MultiHomeFeatTitle) => void;
-  renderBadge: (el: HomeMenuItemProps['el']) => React.ReactNode;
-};
-
-const HomeMenuItem: React.FC<HomeMenuItemProps> = ({
-  el,
-  itemWidth,
-  onPress,
-  renderBadge,
-}) => {
-  const { styles, colors2024, isLight } = useTheme2024({
-    getStyle,
-  });
-  const { currentLanguage } = useAppLanguage();
-  const isZhLang = currentLanguage === 'zh-CN' || currentLanguage === 'zh-Hant';
-  const { shouldShowNewTag, markVisited } = useHomeFeatureNewTag(el.key);
-
-  const handlePress = useCallback(() => {
-    console.debug('[perf] touched menu', el.key);
-    onPress(el.key);
-    markVisited();
-  }, [el.key, markVisited, onPress]);
-
-  return (
-    <FastTouchable
-      style={StyleSheet.flatten([styles.gridItem, { width: itemWidth }])}
-      onPress={handlePress}>
-      <View style={styles.badgeWrapper}>
-        <View style={styles.iconWrapper}>
-          <el.icon
-            width={28}
-            height={28}
-            color={
-              el.color ||
-              (isLight ? colors2024['brand-default-icon'] : '#7084FF')
-            }
-          />
-        </View>
-        <View style={styles.rightBadgeWrapper}>{renderBadge(el)}</View>
-      </View>
-      <View style={styles.titleWithNewTagRow}>
-        <Text
-          style={[styles.gridText, isZhLang && styles.gridTextZh]}
-          numberOfLines={1}
-          ellipsizeMode="tail">
-          {el.title}
-        </Text>
-        {shouldShowNewTag ? (
-          <View style={styles.newTagWrapper}>
-            <NewTag />
-          </View>
-        ) : null}
-      </View>
-    </FastTouchable>
-  );
-};
