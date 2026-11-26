@@ -1272,22 +1272,25 @@ export const DirectSignGasInfo = ({
           name={<>{resolvedGasFeeLabel}</>}
           style={gasFeeListItemStyle}
           innerStyle={gasFeeListItemInnerStyle}>
-          <View style={styles.previewValueSlot}>
-            <QuoteFlux enabled={!!valueFluxEnabled}>
-              {fallbackSourceSelector ?? sourceSelector}
-              {!loading && noQuote ? (
-                <Text style={styles.noQuotePlaceholder}>-</Text>
-              ) : (
-                <CustomSkeleton
-                  style={
-                    hideGasLevelInSummary
-                      ? styles.infoCardGasSkeleton
-                      : styles.gasSkeleton
-                  }
-                />
-              )}
-            </QuoteFlux>
-          </View>
+          {/* The flux wrapper must carry the row layout itself: a bare
+              Animated.View defaults to a column, which stacked the source and
+              gas placeholders vertically inside the 20pt row. */}
+          <QuoteFlux
+            enabled={!!valueFluxEnabled}
+            style={styles.previewValueSlot}>
+            {fallbackSourceSelector ?? sourceSelector}
+            {!loading && noQuote ? (
+              <Text style={styles.noQuotePlaceholder}>-</Text>
+            ) : (
+              <CustomSkeleton
+                style={
+                  hideGasLevelInSummary
+                    ? styles.infoCardGasSkeleton
+                    : styles.gasSkeleton
+                }
+              />
+            )}
+          </QuoteFlux>
         </ListItem>
       )}
       {showGasFeeTooHighTips ? (
