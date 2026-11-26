@@ -2694,7 +2694,8 @@
         "minimumDepositSize": "Minimum para yatırma miktarı 5$'dır.",
         "invalidNumber": "Lütfen geçerli bir sayı girin",
         "fetchQuoteFailed": "Yatırım teklifi alınamadı. Lütfen token'ı değiştirin.",
-        "estReceiveTooltip": "Zincirler arası yatırma LiFi üzerinden işlenir ve bir miktar kayma oluşabilir. Tahmini varış süresi {{number}} sn."
+        "estReceiveTooltip": "Zincirler arası yatırma LiFi üzerinden işlenir ve bir miktar kayma oluşabilir. Tahmini varış süresi {{number}} sn.",
+        "estReceiveTooltipV2": "Zincirler arası yatırma {{name}} üzerinden işlenir ve bir miktar kayma oluşabilir. Tahmini varış süresi {{number}} sn."
       },
       "PerpsWithdrawPopup": {
         "title": "Çekim",

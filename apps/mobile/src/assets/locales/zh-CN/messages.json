@@ -2844,6 +2844,7 @@
         "estReceive": "预计收到：{{balance}}",
         "minimumDepositSize": "最低充值金额为 $5",
         "estReceiveTooltip": "跨链充值通过 LiFi 处理，可能产生滑点。预计 {{number}} 秒到账。",
+        "estReceiveTooltipV2": "跨链充值通过 {{name}} 处理，可能产生滑点。预计 {{number}} 秒到账。",
         "insufficientBalance": "余额不足"
       },
       "PerpsWithdrawPopup": {

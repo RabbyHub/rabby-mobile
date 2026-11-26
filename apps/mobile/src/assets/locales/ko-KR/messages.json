@@ -2694,6 +2694,7 @@
         "invalidNumber": "유효한 숫자를 입력해 주세요",
         "fetchQuoteFailed": "입금 견적을 가져오는 데 실패했습니다. 토큰을 전환해 주세요.",
         "estReceiveTooltip": "크로스체인 입금은 LiFi를 통해 처리되며 일부 슬리피지가 발생할 수 있습니다. 예상 도착 시간은 {{number}}초입니다.",
+        "estReceiveTooltipV2": "크로스체인 입금은 {{name}}를 통해 처리되며 일부 슬리피지가 발생할 수 있습니다. 예상 도착 시간은 {{number}}초입니다.",
         "estReceive": "예상 수령액: {{balance}}"
       },
       "PerpsWithdrawPopup": {

@@ -2980,6 +2980,7 @@
         "minimumDepositSize": "Der Mindestbetrag für die Einzahlung beträgt 5 $.",
         "title": "Einzahlen",
         "estReceiveTooltip": "Die Cross-Chain-Einzahlung wird über LiFi abgewickelt und kann Slippage verursachen. Geschätzte Ankunft in {{number}} s.",
+        "estReceiveTooltipV2": "Die Cross-Chain-Einzahlung wird über {{name}} abgewickelt und kann Slippage verursachen. Geschätzte Ankunft in {{number}} s.",
         "fetchQuoteFailed": "Fehler beim Abrufen des Einzahlungspreises. Bitte wechseln Sie das Token."
       },
       "PerpsWithdrawPopup": {
