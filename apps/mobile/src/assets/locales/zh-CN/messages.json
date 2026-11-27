@@ -792,7 +792,19 @@
         "convertDust": "兑换零散资产"
       },
       "swipeUp": {
-        "desc": "向上滑动以探索和搜索网站"
+        "more": "上滑探索更多功能",
+        "editMore": "上滑编辑更多功能"
+      },
+      "moreFeatures": {
+        "title": "更多功能",
+        "empty": "暂无更多功能",
+        "goWebsites": "前往网站 →",
+        "swipeDown": "下滑返回首页",
+        "swipeDownEdit": "下滑编辑首页"
+      },
+      "featureEdit": {
+        "removeHint": "点击 {{arrow}} 将功能从首页移出",
+        "addHint": "点击 {{arrow}} 将功能移动至首页"
       },
       "DappDrawer": {
         "favorite": "收藏",

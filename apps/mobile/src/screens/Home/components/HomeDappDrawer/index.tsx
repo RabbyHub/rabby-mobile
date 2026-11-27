@@ -16,7 +16,6 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Extrapolate,
   interpolate,
-  runOnJS,
   runOnUI,
   scrollTo,
   useAnimatedProps,
@@ -38,11 +37,13 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
+  getHomeFloorTravel,
   getPullThreshold,
   SCROLLABLE_DECELERATION_RATE_MAPPER,
   SCROLLABLE_STATUS,
   homeDrawerAnimateMutable,
   getScrollContainerPb,
+  impactOnFloorSwitch,
 } from '../../hooks/useHomeDrawerAnimate';
 import { triggerImpact } from '@/utils/common';
 import RcIconEmpty from '@/assets/icons/dapp/dapp-favorite-empty.svg';
@@ -67,9 +68,42 @@ const AnimatedFlatList =
 const DRAWER_GESTURE_ACTIVE_OFFSET_Y = 8;
 const DRAWER_GESTURE_FAIL_OFFSET_X = 12;
 const DRAWER_CONTENT_IDLE_MOUNT_DELAY_MS = 3000;
+/**
+ * While the feature cards are edited the panel starts its trip on screen,
+ * right under the Home's hint, so it fades in over this first stretch of the
+ * pull instead of popping in.
+ */
+const EDITING_PANEL_FADE_PERCENT = 6;
 
-const { pullPercent, isExpanded, translateY, swipeUpHintHeight, panelReveal } =
-  homeDrawerAnimateMutable;
+const {
+  pullPercent,
+  isExpanded,
+  translateY,
+  swipeUpHintHeight,
+  panelReveal,
+  drawerTabPosition,
+  editingFloorTravel,
+} = homeDrawerAnimateMutable;
+
+/**
+ * A drag distance on screen, expressed on the full-screen span `translateY`
+ * uses. The two are the same unless the floors travel less than a screen.
+ */
+function toDrawerTravel(dragDistance: number, screenHeight: number) {
+  'worklet';
+  const travel = getHomeFloorTravel(screenHeight, editingFloorTravel.value);
+  return travel > 0 ? (dragDistance * screenHeight) / travel : dragDistance;
+}
+
+/** Whether the drawer was dragged far enough down to go back to the Home. */
+function hasPulledDrawerBack(screenHeight: number) {
+  'worklet';
+  const pulledOnScreen =
+    ((screenHeight + translateY.value) *
+      getHomeFloorTravel(screenHeight, editingFloorTravel.value)) /
+    screenHeight;
+  return pulledOnScreen > getPullThreshold(screenHeight);
+}
 
 export const HomeDappDrawer: React.FC<{
   onScrollBack?: WorkletFunction;
@@ -251,19 +285,20 @@ export const HomeDappDrawer: React.FC<{
               }
               const gestureTranslationY =
                 event.translationY - drawerGestureActivationY.value;
-              translateY.value = (height - gestureTranslationY) * -1;
+              translateY.value =
+                (height - toDrawerTravel(gestureTranslationY, height)) * -1;
             })
             .onEnd(() => {
               'worklet';
 
-              if (translateY.value > (height - getPullThreshold(height)) * -1) {
+              if (hasPulledDrawerBack(height)) {
                 translateY.value = withTiming(0, undefined, () => {
                   scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
                   // runOnJS(resetEditing)();
                 });
                 handleScrollBack();
 
-                runOnJS(triggerImpact)();
+                impactOnFloorSwitch();
               } else {
                 translateY.value = withTiming(-height, undefined, () => {
                   scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
@@ -283,19 +318,20 @@ export const HomeDappDrawer: React.FC<{
               } else {
                 scrollableStatus.value = SCROLLABLE_STATUS.LOCKED;
               }
-              translateY.value = (height - event.translationY) * -1;
+              translateY.value =
+                (height - toDrawerTravel(event.translationY, height)) * -1;
             })
             .onEnd(() => {
               'worklet';
 
-              if (translateY.value > (height - getPullThreshold(height)) * -1) {
+              if (hasPulledDrawerBack(height)) {
                 translateY.value = withTiming(0, undefined, () => {
                   scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
                   // runOnJS(resetEditing)();
                 });
                 handleScrollBack();
 
-                runOnJS(triggerImpact)();
+                impactOnFloorSwitch();
               } else {
                 translateY.value = withTiming(-height, undefined, () => {
                   scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
@@ -322,18 +358,35 @@ export const HomeDappDrawer: React.FC<{
   );
 
   const drawerTranslateYStyle = useAnimatedStyle(() => {
+    const percent = pullPercent.value;
+    const editingTravel = editingFloorTravel.value;
     const result = {
       height: height,
       transform: [
         {
-          translateY: interpolate(
-            pullPercent.value,
-            [-100, 0],
-            [0, height],
-            Extrapolate.CLAMP,
-          ),
+          // At rest the panel is always a full screen away. In edit mode its
+          // trip starts on screen, where it would otherwise sit over the
+          // bottom of the Home and take its touches.
+          translateY:
+            percent >= 0
+              ? height
+              : interpolate(
+                  percent,
+                  [-100, 0],
+                  [0, getHomeFloorTravel(height, editingTravel)],
+                  Extrapolate.CLAMP,
+                ),
         },
       ],
+      opacity:
+        editingTravel > 0
+          ? interpolate(
+              percent,
+              [-EDITING_PANEL_FADE_PERCENT, 0],
+              [1, 0],
+              Extrapolate.CLAMP,
+            )
+          : 1,
       paddingTop: interpolate(
         pullPercent.value,
         [-100, 0],
@@ -371,14 +424,17 @@ export const HomeDappDrawer: React.FC<{
   // the same foldable compensation used by the JS headers (QA 1431).
   const { safeHeaderTop } = useSafeSizes();
   const panelScaleStyle = useAnimatedStyle(() => {
+    // Editing the feature cards treats both floors as one page: the panel
+    // keeps its final size and inset all the way and only translates.
+    const reveal = editingFloorTravel.value > 0 ? 1 : panelReveal.value;
     return {
       transformOrigin: 'top',
       transform: [
         {
-          scale: 0.75 + 0.25 * panelReveal.value,
+          scale: 0.75 + 0.25 * reveal,
         },
       ],
-      paddingTop: safeHeaderTop * panelReveal.value,
+      paddingTop: safeHeaderTop * reveal,
     };
   });
 
@@ -390,14 +446,27 @@ export const HomeDappDrawer: React.FC<{
 
     return {
       top: IS_ANDROID ? topValue : topValue,
-      opacity: isExpanded.value
-        ? 0
-        : interpolate(
-            pullPercent.value,
-            [-100, -100 * 0.3, 0],
-            [0, 0.75, 0],
-            Extrapolate.CLAMP,
-          ),
+      // No backdrop while the feature cards are edited: the second floor is
+      // the continuation of the Home there, not a layer rising over it.
+      opacity:
+        isExpanded.value || editingFloorTravel.value > 0
+          ? 0
+          : interpolate(
+              pullPercent.value,
+              [-100, -100 * 0.3, 0],
+              [0, 0.75, 0],
+              Extrapolate.CLAMP,
+            ),
+    };
+  });
+
+  // Home and search belong to the websites: on "More Features" the bar keeps
+  // its place in the layout but is neither visible nor touchable.
+  const footerStyle = useAnimatedStyle(() => {
+    const opacity = Math.min(Math.max(drawerTabPosition.value, 0), 1);
+    return {
+      opacity,
+      pointerEvents: opacity > 0.5 ? 'auto' : 'none',
     };
   });
 
@@ -504,7 +573,7 @@ export const HomeDappDrawer: React.FC<{
             </View>
 
             <GestureDetector gesture={footerGesture}>
-              <View style={[styles.footer]}>
+              <Animated.View style={[styles.footer, footerStyle]}>
                 <TouchableOpacity onPress={onPressHome}>
                   <ReactIconHome
                     width={44}
@@ -539,7 +608,7 @@ export const HomeDappDrawer: React.FC<{
 
                   <DappDrawerTabsButton />
                 </View>
-              </View>
+              </Animated.View>
             </GestureDetector>
           </View>
         </Animated.View>

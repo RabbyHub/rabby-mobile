@@ -731,7 +731,19 @@
         "convertDust": "소액 전환"
       },
       "swipeUp": {
-        "desc": "위로 스와이프하여 웹사이트 탐색 및 검색하기"
+        "more": "위로 스와이프하여 더 많은 기능 탐색하기",
+        "editMore": "위로 스와이프하여 더 많은 기능 편집하기"
+      },
+      "moreFeatures": {
+        "title": "더 많은 기능",
+        "empty": "추가 기능이 없습니다",
+        "goWebsites": "웹사이트로 이동 →",
+        "swipeDown": "아래로 스와이프하여 홈으로 돌아가기",
+        "swipeDownEdit": "아래로 스와이프하여 홈 편집하기"
+      },
+      "featureEdit": {
+        "removeHint": "{{arrow}} 탭하여 홈에서 기능 제거",
+        "addHint": "{{arrow}} 탭하여 홈에 기능 추가"
       },
       "DappDrawer": {
         "search": "검색",

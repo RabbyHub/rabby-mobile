@@ -960,7 +960,19 @@
         "convertDust": "Konversi Dust"
       },
       "swipeUp": {
-        "desc": "Geser ke atas untuk menjelajahi dan mencari situs web"
+        "more": "Geser ke atas untuk menjelajahi fitur lainnya",
+        "editMore": "Geser ke atas untuk mengedit fitur lainnya"
+      },
+      "moreFeatures": {
+        "title": "Fitur Lainnya",
+        "empty": "Tidak ada fitur lainnya",
+        "goWebsites": "Buka situs web →",
+        "swipeDown": "Geser ke bawah untuk kembali ke Beranda",
+        "swipeDownEdit": "Geser ke bawah untuk mengedit Beranda"
+      },
+      "featureEdit": {
+        "removeHint": "Ketuk {{arrow}} untuk menghapus fitur dari Beranda",
+        "addHint": "Ketuk {{arrow}} untuk menambahkan fitur ke Beranda"
       },
       "DappDrawer": {
         "empty": "Tidak ada situs web yang ditambahkan ke favorit",

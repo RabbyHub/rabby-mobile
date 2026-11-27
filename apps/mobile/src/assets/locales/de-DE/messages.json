@@ -1025,7 +1025,19 @@
         "convertDust": "Kleinstbeträge umwandeln"
       },
       "swipeUp": {
-        "desc": "Wischen Sie nach oben, um Websites zu erkunden und zu durchsuchen"
+        "more": "Wischen Sie nach oben, um weitere Funktionen zu entdecken",
+        "editMore": "Wischen Sie nach oben, um weitere Funktionen zu bearbeiten"
+      },
+      "moreFeatures": {
+        "title": "Weitere Funktionen",
+        "empty": "Keine weiteren Funktionen",
+        "goWebsites": "Zu den Webseiten →",
+        "swipeDown": "Wischen Sie nach unten, um zur Startseite zurückzukehren",
+        "swipeDownEdit": "Wischen Sie nach unten, um die Startseite zu bearbeiten"
+      },
+      "featureEdit": {
+        "removeHint": "Tippen Sie auf {{arrow}}, um eine Funktion von der Startseite zu entfernen",
+        "addHint": "Tippen Sie auf {{arrow}}, um eine Funktion zur Startseite hinzuzufügen"
       },
       "DappDrawer": {
         "favorite": "Favorit",

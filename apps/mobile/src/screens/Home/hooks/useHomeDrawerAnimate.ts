@@ -2,7 +2,12 @@ import { IS_ANDROID } from '@/core/native/utils';
 
 import { Platform } from 'react-native';
 import { svsLayout } from '@/hooks/useAppLayout';
-import { makeMutable, useAnimatedStyle } from 'react-native-reanimated';
+import { triggerImpact } from '@/utils/common';
+import {
+  makeMutable,
+  runOnJS,
+  useAnimatedStyle,
+} from 'react-native-reanimated';
 
 export const SCROLLABLE_STATUS = {
   LOCKED: 'LOCKED',
@@ -52,7 +57,131 @@ export const homeDrawerAnimateMutable = {
   scrollViewContentHeight: makeMutable(0),
   scrollViewLayoutHeight: makeMutable(0),
   swipeUpHintHeight: makeMutable(0),
+  /**
+   * Where the first floor's own content ends inside its scroll view: the
+   * bottom edge of the swipe-up hint's box. Whatever the scroll content has
+   * below it is padding.
+   */
+  firstFloorContentEnd: makeMutable(0),
+
+  /**
+   * 0 outside the feature-card edit mode. While the cards are edited the two
+   * floors read as one page, and this is how far they travel between the
+   * Home and the second floor: less than a screen, so that the second floor
+   * starts right under the Home's swipe-up hint instead of a screen below
+   * the first floor's top. Pass its value to `getHomeFloorTravel`.
+   */
+  editingFloorTravel: makeMutable(0),
+
+  /**
+   * Asks the first floor's list to scroll a point of its content up to the
+   * top of its viewport: that point's Y in the window right now, or -1 when
+   * nothing is asked. Whoever owns the list consumes the request and resets
+   * it.
+   */
+  firstFloorRevealY: makeMutable(-1),
+
+  /**
+   * Page position of the second floor's own pager: 0 is "More Features",
+   * 1 and up are the website categories. Written by the drawer's tab bar,
+   * read by whatever sits outside that pager (the drawer footer).
+   */
+  drawerTabPosition: makeMutable(0),
 };
+
+const { editingFloorTravel } = homeDrawerAnimateMutable;
+
+/**
+ * The tap felt when a swipe switches floors: far enough up from the Home to
+ * open the second floor, or far enough down from it to go back. Not while
+ * the feature cards are edited: the two floors are then one page, and moving
+ * along it does not switch anything.
+ */
+export function impactOnFloorSwitch() {
+  'worklet';
+  if (editingFloorTravel.value > 0) {
+    return;
+  }
+  runOnJS(triggerImpact)();
+}
+
+/** The two floors never travel less than this share of the screen. */
+const MIN_FLOOR_TRAVEL_RATIO = 0.35;
+
+/**
+ * How far the two floors move on screen between the Home and the second
+ * floor. `translateY` and `pullPercent` always span a full screen; this is
+ * the distance that span is drawn over, and the distance a finger has to
+ * cover for it.
+ *
+ * `editingTravel` is `editingFloorTravel.value`. It is a parameter so that
+ * an animated style or reaction reads the shared value itself: one read
+ * inside this helper would not be tracked, and the style would keep the old
+ * distance when the edit mode changes.
+ */
+export function getHomeFloorTravel(
+  screenHeight: number,
+  editingTravel: number,
+) {
+  'worklet';
+  if (editingTravel <= 0 || screenHeight <= 0) {
+    return screenHeight;
+  }
+
+  return Math.min(
+    screenHeight,
+    Math.max(editingTravel, screenHeight * MIN_FLOOR_TRAVEL_RATIO),
+  );
+}
+
+/**
+ * Whether the first floor's list has to be held at its very end. Whatever
+ * shows right above the second floor is that end, and the list's distance to
+ * it keeps changing: its content resizes (a card moved up from the second
+ * floor adds a row, entering or leaving edit mode resizes the hint) and its
+ * viewport resizes with the Home header all along the drawer's travel.
+ *
+ * - Drawer resting fully open: yes.
+ * - Feature-card edit mode: yes, for as long as any of the drawer is on
+ *   screen. The two floors read as one page there, and the first floor stays
+ *   less than a screen away behind a drawer panel with no background of its
+ *   own, so anything short of its end shows through the second floor.
+ * - Otherwise no: on the drawer's way down the list is scrolled back to its
+ *   top.
+ *
+ * The arguments are the shared values' current values, as for
+ * `getHomeFloorTravel`.
+ */
+export function shouldHoldFirstFloorAtEnd(
+  drawerTranslateY: number,
+  screenHeight: number,
+  editingTravel: number,
+) {
+  'worklet';
+  if (screenHeight <= 0) {
+    return false;
+  }
+  if (drawerTranslateY <= -screenHeight) {
+    return true;
+  }
+
+  return editingTravel > 0 && drawerTranslateY < 0;
+}
+
+/**
+ * The scroll offset that brings a point of the first floor's list to the top
+ * of its viewport. `pointY` and `viewportTop` are window coordinates, both
+ * taken at the current `scrollY`. The list may not be able to scroll that
+ * far; the native scroll view then stops at its end.
+ */
+export function getFirstFloorRevealOffset(
+  scrollY: number,
+  pointY: number,
+  viewportTop: number,
+) {
+  'worklet';
+  return Math.max(0, scrollY + pointY - viewportTop);
+}
 
 export function getScrollContainerPb(bottomInset: number) {
   'worklet';

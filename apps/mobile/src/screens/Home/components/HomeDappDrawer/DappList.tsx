@@ -1,14 +1,12 @@
-import { Text } from '@/components/Typography';
 import dappList from '@/constant/hot-dapp.json';
 import type { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { useDapps } from '@/hooks/useDapps';
-import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { FlatListProps, GestureResponderEvent } from 'react-native';
-import { FlatList as RNFlatList, TouchableOpacity, View } from 'react-native';
+import type { FlatListProps } from 'react-native';
+import { FlatList as RNFlatList, View } from 'react-native';
 import type { NativeGesture } from 'react-native-gesture-handler';
 import { GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -23,6 +21,8 @@ import {
   SCROLLABLE_DECELERATION_RATE_MAPPER,
   SCROLLABLE_STATUS,
 } from '../../hooks/useHomeDrawerAnimate';
+import { DRAWER_DAPP_CARD_GAP } from './constants';
+import { HomeDrawerDappCard } from './HomeDrawerDappCard';
 
 type HotDappListItem = (typeof dappList)[number];
 
@@ -79,7 +79,6 @@ export const DappList: React.FC<{
   onDappPress,
 }) => {
   const { styles } = useTheme2024({ getStyle });
-  const pressStartRef = useRef({ x: 0, y: 0 });
   const lang = useTranslation().i18n.language;
   const { dapps } = useDapps();
   const hotDappInfoList = useMemo(
@@ -135,19 +134,6 @@ export const DappList: React.FC<{
     },
   });
 
-  const handlePressIn = useCallback((event: GestureResponderEvent) => {
-    pressStartRef.current = {
-      x: event.nativeEvent.pageX,
-      y: event.nativeEvent.pageY,
-    };
-  }, []);
-
-  const shouldIgnorePress = useCallback((event: GestureResponderEvent) => {
-    const diffX = event.nativeEvent.pageX - pressStartRef.current.x;
-    const diffY = event.nativeEvent.pageY - pressStartRef.current.y;
-    return Math.hypot(diffX, diffY) > 10;
-  }, []);
-
   return (
     <GestureDetector gesture={drawerScrollableGesture}>
       <AnimatedFlatList
@@ -166,42 +152,17 @@ export const DappList: React.FC<{
         renderItem={({ item }) => {
           return (
             <View style={styles.listItem}>
-              <View style={styles.listItemContent}>
-                <TouchableOpacity
-                  onPressIn={handlePressIn}
-                  onPress={event => {
-                    if (shouldIgnorePress(event)) {
-                      return;
-                    }
-
-                    onDappPress?.(item);
-                  }}>
-                  <View style={styles.dappCard}>
-                    <DappIcon
-                      source={
-                        item?.icon
-                          ? {
-                              uri: item.icon,
-                            }
-                          : undefined
-                      }
-                      origin={item.origin}
-                      style={styles.dappIcon}
-                    />
-                    <View style={styles.dappContent}>
-                      <Text style={styles.dappTitle} numberOfLines={1}>
-                        {item?.info?.name ||
-                          item.name ||
-                          item.origin.split('://')[1] ||
-                          item.origin}
-                      </Text>
-                      <Text style={styles.dappDesc} numberOfLines={1}>
-                        {item.info?.description || ''}
-                      </Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              </View>
+              <HomeDrawerDappCard
+                dapp={item}
+                title={
+                  item?.info?.name ||
+                  item.name ||
+                  item.origin.split('://')[1] ||
+                  item.origin
+                }
+                description={item.info?.description || ''}
+                onPress={onDappPress}
+              />
             </View>
           );
         }}
@@ -210,62 +171,17 @@ export const DappList: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(() => ({
   list: {},
   listContentContainer: {
     flexGrow: 1,
-    paddingTop: 8,
+    paddingTop: DRAWER_DAPP_CARD_GAP,
     paddingBottom: 8,
   },
   emptyListContentContainer: {
     justifyContent: 'center',
   },
   listItem: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    width: '100%',
-  },
-  listItemContent: {
-    width: '100%',
-    flex: 1,
-  },
-  dappCard: {
-    paddingVertical: 12,
-    paddingLeft: 4,
-    paddingRight: 8,
-    minHeight: 70,
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-    gap: 8,
-  },
-  dappIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 12,
-    borderCurve: 'continuous',
-  },
-  dappTitle: {
-    fontFamily: 'SF Pro Rounded',
-    fontWeight: '700',
-    fontSize: 16,
-    lineHeight: 20,
-    color: colors2024['neutral-title-1'],
-  },
-  dappContent: {
-    minWidth: 0,
-    flex: 1,
-  },
-  dappDesc: {
-    marginTop: 4,
-    fontFamily: 'SF Pro Rounded',
-    fontWeight: '500',
-    fontSize: 14,
-    lineHeight: 18,
-    color: colors2024['neutral-secondary'],
+    marginBottom: DRAWER_DAPP_CARD_GAP,
   },
 }));
