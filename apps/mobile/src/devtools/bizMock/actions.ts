@@ -210,6 +210,34 @@ async function removeTestAccount(address: string): Promise<BizMockResult> {
   };
 }
 
+async function watchAccount(address: string): Promise<BizMockResult> {
+  const input = address.toLowerCase().trim();
+  const [{ addWatchAddress }, { default: accountStore }] = await Promise.all([
+    import('@/core/apis/address'),
+    import('@/store/account'),
+  ]);
+  try {
+    await addWatchAddress(input);
+  } catch (error) {
+    const message = (error as Error)?.message || String(error);
+    if (!/duplicate|exist/i.test(message)) {
+      return {
+        ok: false,
+        action: 'account.watch',
+        code: 'watch-failed',
+        message,
+      };
+    }
+  }
+  await accountStore.fetchAccounts({ force: true }).catch(() => undefined);
+  return {
+    ok: true,
+    action: 'account.watch',
+    code: 'ok',
+    data: { address: input },
+  };
+}
+
 async function createTestWallet(): Promise<BizMockResult> {
   const [
     { prepareWalletCreation, completeWalletCreation },
@@ -337,6 +365,13 @@ async function dumpState(name?: string): Promise<BizMockResult> {
 
   const route = navigationRef.getCurrentRoute();
   const account = getFallbackAccountSnapshot();
+  let accountsCount = 0;
+  try {
+    const { getAllAccountsToDisplay } = await import('@/core/apis/account');
+    accountsCount = (await getAllAccountsToDisplay()).length;
+  } catch {
+    // Account list may not be ready during early startup.
+  }
   let approval: unknown = null;
   try {
     approval = await notificationServiceApi.getApproval();
@@ -371,6 +406,7 @@ async function dumpState(name?: string): Promise<BizMockResult> {
           brandName: account.brandName,
         }
       : null,
+    accountsCount,
     approval: summarizeApproval(approval),
     storePins: listInjectedStorePins(),
     bizMockActions: listBizMockActions(),
@@ -415,6 +451,10 @@ export async function runBizMockAction(
 
     if (action.action === 'account.remove') {
       return await removeTestAccount(action.address);
+    }
+
+    if (action.action === 'account.watch') {
+      return await watchAccount(action.address);
     }
 
     if (action.action === 'account.create') {

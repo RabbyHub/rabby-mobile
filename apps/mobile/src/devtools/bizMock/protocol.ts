@@ -26,6 +26,7 @@ export type BizMockAction =
   | { action: 'account.importFromFile'; file?: string }
   | { action: 'account.select'; address: string }
   | { action: 'account.remove'; address: string }
+  | { action: 'account.watch'; address: string }
   | { action: 'account.create' }
   | {
       action: 'approval.injectFromFile';
@@ -301,6 +302,25 @@ export function parseBizMockAction(
       matched: true,
       meta,
       action: { action: 'account.remove', address },
+    };
+  }
+
+  if (command === 'account.watch') {
+    const address = readString(urlInfo.searchParams.get('address'), 128);
+    if (!address) {
+      return {
+        matched: true,
+        meta,
+        error: {
+          code: 'missing-param',
+          message: 'address is required for account.watch',
+        },
+      };
+    }
+    return {
+      matched: true,
+      meta,
+      action: { action: 'account.watch', address },
     };
   }
 

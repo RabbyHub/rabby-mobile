@@ -238,6 +238,24 @@ describe('parseBizMockAction', () => {
     });
   });
 
+  it('parses account.watch', () => {
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=account.watch&address=0xabc',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      action: { action: 'account.watch', address: '0xabc' },
+    });
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=account.watch',
+        config,
+      ),
+    ).toMatchObject({ matched: true, error: { code: 'missing-param' } });
+  });
+
   it('parses dapp actions', () => {
     expect(
       parseBizMockAction(
