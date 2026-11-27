@@ -208,7 +208,19 @@ if [ "$RABBY_MOBILE_REPRODUCE_BUILD" == "true" ]; then
   for ambient in $(env | sed -n 's/^\(RABBY_MOBILE_[A-Z0-9_]*\)=.*/\1/p' | grep -v '^RABBY_MOBILE_CODE$' || true); do
     unset "$ambient"
   done
-  unset APP_ENV WITH_ROZENITE I18N_LIVE_PREVIEW 2>/dev/null || true
+  unset APP_ENV WITH_ROZENITE I18N_LIVE_PREVIEW LOCAL_PACK 2>/dev/null || true
+
+  # Debug/test-only knobs must not leak into a shipped package: pin them to
+  # their production-safe values instead of inheriting the builder's shell.
+  export RABBY_MOBILE_E2E_SILENT_LOGS=""
+  export RABBY_MOBILE_BUILD_DEVTOOLS_PANEL=0
+  export RABBY_MOBILE_MODULE_LOADING_MODE=lazy
+  export RABBY_MOBILE_METRO_USE_CACHE=false
+  # Acceleration/cache lanes are not allowed to shape a shipped artifact.
+  export RABBY_MOBILE_TURBO_BUILD=false
+  export RABBY_MOBILE_POD_USE_CACHE=false
+  export RABBY_MOBILE_NM_USE_CACHE=false
+  export RABBY_MOBILE_ANDROID_FAST_BUILD=false
 
   reproduce_channel="${RABBY_MOBILE_REPRODUCE_CHANNEL:-production}"
   if [ "$reproduce_channel" == "production" ]; then
@@ -236,8 +248,13 @@ if [ "$RABBY_MOBILE_REPRODUCE_BUILD" == "true" ]; then
   export ZERO_AR_DATE="${ZERO_AR_DATE:-$(git -C "$project_dir" show -s --format=%cI HEAD)}"
   load_env_var_from_candidate_files RABBY_MOBILE_CODE || true
   validate_rabbit_code || exit 1
+  # The Sentry "collect modules" task writes into a *source* directory; a stale
+  # file from an earlier run would be packaged and break reproducibility.
+  rm -f "$project_dir/android/app/src/main/assets/modules.json"
   prepare_android_build_artifacts || exit $?
+  export RABBY_REPRODUCE_REPO_ROOT="$(cd "$project_dir/../.." && pwd)"
   ./android/gradlew -p ./android "$reproduce_gradle_task" --no-daemon \
+    -I "$project_dir/scripts/reproduce/reproduce.init.gradle" \
     -Porg.gradle.parallel=false -Porg.gradle.caching=false || exit $?
   reproduce_aab="$(find "$project_dir/android/app/build/outputs/bundle/$reproduce_output_subdir" -type f -name '*.aab' | head -n 1)"
   if [ -z "$reproduce_aab" ] || [ ! -f "$reproduce_aab" ]; then
