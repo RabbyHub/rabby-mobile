@@ -199,13 +199,16 @@ function ReceiveScreen(): JSX.Element {
     selectedChain,
   ]);
 
-  const navState = route.params;
+  // Only the entry chain should seed the selector. `showName` (the header eye
+  // toggle) lives in the same params object, so depending on the whole object
+  // would restore the original chain every time the address is hidden/shown.
+  const entryChainEnum = route.params?.chainEnum;
 
   useEffect(() => {
-    if (navState?.chainEnum) {
-      setSelectedChain(navState.chainEnum);
+    if (entryChainEnum) {
+      setSelectedChain(entryChainEnum);
     }
-  }, [navState]);
+  }, [entryChainEnum]);
 
   useEffect(() => {
     if (

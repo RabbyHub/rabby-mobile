@@ -359,3 +359,38 @@ describe('History routes initial header', () => {
     expect(screen.queryByTestId('history-filter')).toBeNull();
   });
 });
+
+describe('Gnosis queue route header', () => {
+  beforeEach(() => {
+    mockScreens.clear();
+  });
+
+  it('declares a rendered title component instead of a bare string', () => {
+    render(<TransactionNavigator />);
+    const descriptor = mockScreens.get(RootNames.GnosisTransactionQueue);
+    expect(descriptor).toBeDefined();
+    const navigation = {
+      setParams: jest.fn(),
+      canGoBack: () => true,
+      isFocused: () => true,
+      addListener: () => () => {},
+    } as unknown as NativeStackHeaderProps['navigation'];
+    const route = {
+      key: 'gnosis-queue-cold-entry',
+      name: RootNames.GnosisTransactionQueue,
+      params: { headerTotal: 3 },
+    } as unknown as NativeStackHeaderProps['route'];
+    const options =
+      typeof descriptor!.options === 'function'
+        ? descriptor!.options({ route, navigation })
+        : descriptor!.options;
+
+    // The previous implementation returned a bare string renderer, which
+    // native-stack inserts into the center view without a Text wrapper.
+    expect(typeof options.header).toBe('function');
+    const screen = render(
+      <>{options.header!({ route, navigation, options })}</>,
+    );
+    expect(screen.getByText('page.safeQueue.title')).toBeTruthy();
+  });
+});

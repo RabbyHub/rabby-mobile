@@ -130,6 +130,7 @@ export const AutoFitCenterHeader = ({
           {titleNode ?? (
             <AutoFitHeaderTitle
               text={title}
+              align={titleAlign}
               textStyle={[
                 styles.title,
                 titleAlign === 'left' && styles.titleLeft,
