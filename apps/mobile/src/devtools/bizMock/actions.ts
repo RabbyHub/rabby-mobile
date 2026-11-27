@@ -753,6 +753,65 @@ export async function runBizMockAction(
       };
     }
 
+    if (action.action === 'token.openDetail') {
+      const account = getFallbackAccountSnapshot();
+      if (!account?.address) {
+        return {
+          ok: false,
+          action: action.action,
+          code: 'account-not-ready',
+          message: 'no current account',
+        };
+      }
+      const [{ openapi }, { findChainByEnum }, { naviPush }, { RootNames }] =
+        await Promise.all([
+          import('@/core/request'),
+          import('@/utils/chain'),
+          import('@/utils/navigation'),
+          import('@/constant/layout'),
+        ]);
+      const chain = findChainByEnum((action.chain || 'eth') as any);
+      if (!chain) {
+        return {
+          ok: false,
+          action: action.action,
+          code: 'unsupported-chain',
+          message: `unsupported chain: ${action.chain}`,
+        };
+      }
+      const tokenId =
+        action.tokenId || '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
+      const token = await openapi.getToken(
+        account.address,
+        chain.serverId,
+        tokenId,
+      );
+      if (!token) {
+        return {
+          ok: false,
+          action: action.action,
+          code: 'token-not-found',
+          message: `no token ${tokenId} on ${chain.serverId}`,
+        };
+      }
+      naviPush(RootNames.TokenDetail, {
+        token,
+        account,
+        isSingleAddress: true,
+        needUseCacheToken: true,
+      } as any);
+      return {
+        ok: true,
+        action: action.action,
+        code: 'ok',
+        data: {
+          tokenId,
+          chain: chain.serverId,
+          symbol: (token as any).symbol || null,
+        },
+      };
+    }
+
     if (action.action === 'env.setScreenE2E') {
       const { storeApiExpSettingData } = await import('@/hooks/appSettings');
       storeApiExpSettingData.setScreenE2EEnabled(action.enabled);

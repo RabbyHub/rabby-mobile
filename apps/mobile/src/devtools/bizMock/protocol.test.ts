@@ -307,6 +307,18 @@ describe('parseBizMockAction', () => {
     });
   });
 
+  it('parses token.openDetail', () => {
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=token.openDetail&tokenId=0xusdc&chain=eth',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      action: { action: 'token.openDetail', tokenId: '0xusdc', chain: 'eth' },
+    });
+  });
+
   it('does not match a different protocol or path', () => {
     expect(
       parseBizMockAction(

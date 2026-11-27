@@ -50,6 +50,7 @@ export type BizMockAction =
   | { action: 'dapp.disconnect'; origin: string }
   | { action: 'history.openLocalDetail'; address?: string }
   | { action: 'history.seedLocalTx'; address?: string; amount?: string }
+  | { action: 'token.openDetail'; tokenId?: string; chain?: string }
   | { action: 'env.setScreenE2E'; enabled: boolean };
 
 export type BizMockMeta = {
@@ -485,6 +486,18 @@ export function parseBizMockAction(
         action: 'history.seedLocalTx',
         address: readString(urlInfo.searchParams.get('address'), 128),
         amount: readString(urlInfo.searchParams.get('amount'), 32),
+      },
+    };
+  }
+
+  if (command === 'token.openDetail') {
+    return {
+      matched: true,
+      meta,
+      action: {
+        action: 'token.openDetail',
+        tokenId: readString(urlInfo.searchParams.get('tokenId'), 128),
+        chain: readString(urlInfo.searchParams.get('chain'), 32),
       },
     };
   }
