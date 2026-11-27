@@ -710,6 +710,18 @@ export async function runBizMockAction(
         if (requestedKind === 'swap') {
           return Boolean(data?.swap);
         }
+        if (requestedKind === 'nft-send') {
+          return Boolean(
+            data?.send?.token?.id === '96adee5bc1242c3c9adf5514c2950aa4',
+          );
+        }
+        if (
+          requestedKind === 'nft-receive' ||
+          requestedKind === 'gas-deposit' ||
+          requestedKind === 'gas-withdraw'
+        ) {
+          return !data;
+        }
         return true;
       };
       const pool = [...list.completeds, ...list.pendings].filter(matchesKind);
@@ -732,14 +744,15 @@ export async function runBizMockAction(
         : actionData?.revokeToken
         ? 'revoke'
         : undefined;
-      const title =
-        type === 'send'
-          ? '发送'
-          : type === 'swap'
-          ? '兑换'
-          : type === 'approve'
-          ? '授权'
-          : undefined;
+      const title = action.title
+        ? action.title
+        : type === 'send'
+        ? '发送'
+        : type === 'swap'
+        ? '兑换'
+        : type === 'approve'
+        ? '授权'
+        : undefined;
       const [{ naviPush }, { RootNames }] = await Promise.all([
         import('@/utils/navigation'),
         import('@/constant/layout'),
@@ -806,6 +819,22 @@ export async function runBizMockAction(
         logo_url: '',
       };
       const spender = '0x111111125421ca6dc452d289314280a0f8842a65';
+      const nftToken = {
+        id: '96adee5bc1242c3c9adf5514c2950aa4',
+        symbol: 'Sunflower Land',
+        decimals: 0,
+        raw_amount: '1',
+        price: 0,
+        logo_url: '',
+      };
+      const nftBalanceChangeItem = {
+        ...nftToken,
+        chain: 'matic',
+        contract_id: '0x2b4a66557a79263275826ad31a4cddc2789334bd',
+        inner_id: '191720',
+        collection_id: 'matic:0x2b4a66557a79263275826ad31a4cddc2789334bd',
+        amount: 1,
+      };
       const actionData =
         kind === 'approve'
           ? { approveToken: { token: usdcToken, spender } }
@@ -813,6 +842,8 @@ export async function runBizMockAction(
           ? { revokeToken: { token: usdcToken, spender } }
           : kind === 'swap'
           ? { swap: { payToken: ethToken, receiveToken: usdcToken } }
+          : kind === 'nft-send'
+          ? { send: { to, token: nftToken } }
           : kind === 'interaction'
           ? undefined
           : { send: { to, token: ethToken } };
@@ -852,8 +883,9 @@ export async function runBizMockAction(
           balance_change: {
             receive_token_list: [],
             send_token_list: [],
-            receive_nft_list: [],
-            send_nft_list: [],
+            receive_nft_list:
+              kind === 'nft-receive' ? [nftBalanceChangeItem] : [],
+            send_nft_list: kind === 'nft-send' ? [nftBalanceChangeItem] : [],
           },
           pre_exec_version: 'v0',
         },
@@ -932,6 +964,32 @@ export async function runBizMockAction(
           chain: chain.serverId,
           symbol: (token as any).symbol || null,
         },
+      };
+    }
+
+    if (action.action === 'approvals.open') {
+      const account = getFallbackAccountSnapshot();
+      if (!account) {
+        return {
+          ok: false,
+          action: action.action,
+          code: 'account-not-ready',
+          message: 'no current account',
+        };
+      }
+      const [{ naviPush }, { RootNames }] = await Promise.all([
+        import('@/utils/navigation'),
+        import('@/constant/layout'),
+      ]);
+      naviPush(RootNames.StackTransaction, {
+        screen: RootNames.Approvals,
+        params: { account },
+      } as any);
+      return {
+        ok: true,
+        action: action.action,
+        code: 'ok',
+        data: { address: account.address },
       };
     }
 

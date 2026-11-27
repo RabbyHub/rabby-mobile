@@ -349,6 +349,18 @@ describe('parseBizMockAction', () => {
     });
   });
 
+  it('parses approvals.open', () => {
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=approvals.open',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      action: { action: 'approvals.open' },
+    });
+  });
+
   it('does not match a different protocol or path', () => {
     expect(
       parseBizMockAction(

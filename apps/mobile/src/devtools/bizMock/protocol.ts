@@ -50,7 +50,12 @@ export type BizMockAction =
   | { action: 'dapp.tabs'; op?: string; match?: string; name?: string }
   | { action: 'dapp.eval'; code?: string; file?: string }
   | { action: 'dapp.disconnect'; origin: string }
-  | { action: 'history.openLocalDetail'; address?: string; kind?: string }
+  | {
+      action: 'history.openLocalDetail';
+      address?: string;
+      kind?: string;
+      title?: string;
+    }
   | {
       action: 'history.seedLocalTx';
       address?: string;
@@ -58,6 +63,7 @@ export type BizMockAction =
       kind?: string;
     }
   | { action: 'token.openDetail'; tokenId?: string; chain?: string }
+  | { action: 'approvals.open' }
   | { action: 'env.setScreenE2E'; enabled: boolean };
 
 export type BizMockMeta = {
@@ -505,6 +511,7 @@ export function parseBizMockAction(
         action: 'history.openLocalDetail',
         address: readString(urlInfo.searchParams.get('address'), 128),
         kind: readString(urlInfo.searchParams.get('kind'), 32),
+        title: readString(urlInfo.searchParams.get('title'), 64),
       },
     };
   }
@@ -532,6 +539,10 @@ export function parseBizMockAction(
         chain: readString(urlInfo.searchParams.get('chain'), 32),
       },
     };
+  }
+
+  if (command === 'approvals.open') {
+    return { matched: true, meta, action: { action: 'approvals.open' } };
   }
 
   if (command === 'env.setScreenE2E') {
