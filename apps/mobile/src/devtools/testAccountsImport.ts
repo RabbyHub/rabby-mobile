@@ -186,14 +186,23 @@ export async function runTestAccountsImport(options: {
     } catch (error) {
       const reason = (error as Error)?.message || String(error);
       // A duplicate is not a failure for seeding: the account is already there.
-      if (/duplicate/i.test(reason)) {
+      // The keyring reports duplicates as `DuplicateAccountError` with the
+      // existing address as the message.
+      if (
+        /duplicate/i.test(reason) ||
+        (error as { name?: string })?.name === 'DuplicateAccountError'
+      ) {
         // A duplicate import throws without returning accounts; derive the
         // address so callers can still select the imported account.
         try {
-          const { privateKeyToAccount } = await import('viem/accounts');
-          addresses.push(
-            privateKeyToAccount(`0x${entry.value}` as `0x${string}`).address,
-          );
+          if (/^0x[0-9a-fA-F]{40}$/.test(reason)) {
+            addresses.push(reason);
+          } else {
+            const { privateKeyToAccount } = await import('viem/accounts');
+            addresses.push(
+              privateKeyToAccount(`0x${entry.value}` as `0x${string}`).address,
+            );
+          }
         } catch {
           // Address derivation is a convenience for duplicate imports.
         }
