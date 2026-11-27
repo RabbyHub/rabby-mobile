@@ -48,6 +48,44 @@ import {
 } from './utils/record';
 import { useBridgeSourceMetadata } from './hooks/useBridgeSourceMetadata';
 
+/**
+ * Route-level header content for the bridge detail page.
+ *
+ * Data is published by the screen through `navigation.setParams`, so the header
+ * is declared once on the route and never swaps header type after mount.
+ */
+export function BridgeDetailHeaderNode({
+  title,
+  address,
+  accountType,
+}: {
+  title?: string;
+  address?: string;
+  accountType?: string;
+}) {
+  const { t } = useTranslation();
+  const { styles } = useTheme2024({ getStyle });
+  const displayTitle = title ?? t('page.bridge.title');
+
+  return (
+    <View style={styles.header}>
+      <Text style={styles.headerTitle}>{displayTitle}</Text>
+      <View style={styles.headerAccount}>
+        {address && accountType ? (
+          <WalletIcon
+            type={accountType as any}
+            address={address}
+            style={styles.headerWallet}
+          />
+        ) : null}
+        {address ? (
+          <Text style={styles.headerAddress}>{ellipsisAddress(address)}</Text>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
 export function BridgeDetailScreen() {
   const { safeOffHeader } = useSafeSizes();
   const route =
@@ -62,7 +100,7 @@ export function BridgeDetailScreen() {
   const status = useBridgeStatus(record, active);
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
+  const { navigation } = useSafeSetNavigationOptions();
   const { accounts } = useAccounts({ disableAutoFetch: true });
   const account = useMemo(
     () => accounts.find(item => isSameAddress(item.address, record.address)),
@@ -71,30 +109,13 @@ export function BridgeDetailScreen() {
   const title = t(
     status.completed ? 'page.bridge.status.bridged' : 'page.bridge.title',
   );
-  const headerTitle = useCallback(
-    () => (
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>{title}</Text>
-        <View style={styles.headerAccount}>
-          {account && (
-            <WalletIcon
-              type={account.type}
-              address={record.address}
-              style={styles.headerWallet}
-            />
-          )}
-          <Text style={styles.headerAddress}>
-            {ellipsisAddress(record.address)}
-          </Text>
-        </View>
-      </View>
-    ),
-    [styles, title, account, record.address],
-  );
-  // 交易状态或账户变化时同步导航栏信息。
+  // 交易状态或账户变化时把标题与账户类型发布到路由参数，由路由级 header 渲染。
   useEffect(() => {
-    setNavigationOptions({ headerTitle });
-  }, [setNavigationOptions, headerTitle]);
+    navigation.setParams({
+      headerTitle: title,
+      headerAccountType: account?.type,
+    });
+  }, [navigation, title, account?.type]);
   const sourceChain = findChain({ serverId: status.fromToken?.chain });
   const toChain = findChain({ serverId: status.toToken?.chain });
   const detailUrl = getAllowedBridgeDetailUrl(record.history?.detail_url);
