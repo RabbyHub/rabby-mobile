@@ -30,7 +30,6 @@ import { toast, toastWithIcon } from '@/components2024/Toast';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { useBiometrics } from '@/hooks/biometrics';
-import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 import YesIcon from '@/assets2024/icons/common/check.svg';
 import {
   useCreateAddressProc,
@@ -186,23 +185,6 @@ function useSetupPasswordForm(
   const shouldDisabled = !!getFormikErrorsCount(formik.validateFormValues());
 
   return { formik, shouldDisabled: shouldDisabled || DISABLE_SET_PASSWORD };
-}
-
-/**
- * Route-level header title for the set-password step.
- *
- * Declared on the route so the first frame already renders the final title;
- * the old effect swapped the header title after mount.
- */
-export function SetPasswordHeaderTitle({ title }: { title?: string }) {
-  const { t } = useTranslation();
-  const { styles } = useTheme2024({ getStyle });
-
-  return (
-    <HeaderTitleText2024 style={styles.headerTitleStyle}>
-      {title || t('screens.addressStackTitle.SetPassword2024')}
-    </HeaderTitleText2024>
-  );
 }
 
 function MainListBlocks() {
@@ -515,13 +497,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   input: {
     backgroundColor: colors2024['neutral-bg-1'],
     fontSize: 14,
-  },
-  headerTitleStyle: {
-    color: colors2024['neutral-title-1'],
-    fontWeight: '800',
-    fontSize: 20,
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 24,
   },
 }));
 
