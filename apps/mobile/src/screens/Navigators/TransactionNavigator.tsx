@@ -534,7 +534,10 @@ export default function TransactionNavigator() {
           mergeScreenOptions({
             title: '',
             header: () => (
-              <PerpsMarketDetailHeader market={route.params.market} />
+              <PerpsMarketDetailHeader
+                market={route.params.market}
+                routeKey={route.key}
+              />
             ),
             // ...headerPresets.withBgCard1_2024,
             headerTintColor: colors['neutral-title-1'],
