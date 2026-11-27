@@ -63,6 +63,13 @@ hashes agree; host-only differences are reported as notes.
   two-builder comparison, signs with `jarsigner` using the usual
   `RABBY_MOBILE_ANDROID_*` credentials and writes `<signed>.signed.json`
   binding the unsigned hash to the signed hash.
+  Keystore resolution matches the Gradle release config and the fast-build
+  rewrite: `RABBY_MOBILE_ANDROID_STORE_FILE` (path; a relative name is looked
+  up in `android/app`, then the project root) is preferred, and the CI secret
+  form `RABBY_MOBILE_ANDROID_KEY_STORE` (base64, decoded to a private temp
+  file) is the fallback. Passwords and alias stay
+  `RABBY_MOBILE_ANDROID_STORE_PASSWORD` / `_KEY_PASSWORD` / `_KEY_ALIAS`, and
+  the store is opened with `keytool` before the artifact is touched.
 - **Signing (iOS)**: reuse the existing export flow (`deploy-ios-adhoc.sh` /
   fastlane `appstore`) from the unsigned archive; credentials stay in the
   environment.
