@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { makeTxPageBackgroundColors } from '@/constant/layout';
 import {
@@ -39,19 +33,12 @@ import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/h
 import type { TransactionGroup } from '@/core/services/transactionHistory';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { HeaderBackButton } from '@/hooks/navigation';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { renderFoldableStackHeader } from '@/components/FoldableStackHeader';
-import { isFoldableSideColumnPosture } from '@/core/utils/foldableDevice';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { toast } from '@/components2024/Toast';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { AssetAvatar } from '@/components';
-import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import { syncTop10History, syncSingleAddress } from '@/databases/hooks/history';
-import { HistoryFilterMenu } from './components/HistoryFilterMenu';
 import { useHistoryLoading } from '@/hooks/historyTokenDict';
 import {
   useTransactionHistoryServiceReady,
@@ -67,7 +54,6 @@ import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { useTranslation } from 'react-i18next';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
-import { Text } from '@/components/Typography';
 import type { HistoryDisplayItem } from '@/types/history';
 import { isSupportDBAccount } from '@/utils/account';
 import { useSyncSafeHistoryOnFocus } from './hooks/useSyncSafeHistoryOnFocus';
@@ -99,14 +85,17 @@ function HistoryContent({
       >
     >();
   const { tokenItem, isInTokenDetail, currentAddress } = route.params || {};
+  // Owned by the route-level header: the switch publishes the new value and the
+  // data side effects below react to the change.
+  const isShowAll = route.params?.isShowAll ?? false;
+  const prevIsShowAllRef = useRef(isShowAll);
   const { t } = useTranslation();
   const isReady = useRef(false);
   const lastMap = useRef<Record<string, number>>({});
   const dbLastCursorRef = useRef<HistoryPageCursor | null>(null);
   const dbFetchLoadingRef = useRef<boolean>(false);
   const hasMoreMap = useRef<Record<string, boolean>>({});
-  const [isShowAll, setIsShowAll] = useState(false);
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { colors2024, isLight } = useTheme2024({ getStyle });
   const [dbData, setDbData] = useState<HistoryDisplayItem[]>([]);
   const {
     isSceneUsingAllAccounts,
@@ -600,131 +589,26 @@ function HistoryContent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const getHeaderRight = useCallback(() => {
-    if (!isSupportAccount) {
-      return null;
+  const { navigation } = useSafeSetNavigationOptions();
+
+  useEffect(() => {
+    navigation.setParams({ headerIsSupportAccount: isSupportAccount });
+  }, [navigation, isSupportAccount]);
+
+  useEffect(() => {
+    const prevIsShowAll = prevIsShowAllRef.current;
+    if (prevIsShowAll === isShowAll) {
+      return;
     }
+    prevIsShowAllRef.current = isShowAll;
 
-    return (
-      <HistoryFilterMenu
-        isShowAll={isShowAll}
-        setIsShowAll={setIsShowAll}
-        handleSwitchShowAll={value => {
-          historyListRef.current?.scrollToTop();
-          if (!isNeedFetchFromApi) {
-            dbLastCursorRef.current = null;
-            // this refetch bypasses useInfiniteScroll, keep its noMore in sync
-            batchFetchDataFromDb(value).then(mutate);
-          }
-        }}
-      />
-    );
-  }, [
-    isSupportAccount,
-    isShowAll,
-    setIsShowAll,
-    isNeedFetchFromApi,
-    batchFetchDataFromDb,
-    mutate,
-  ]);
-
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
-  const insets = useSafeAreaInsets();
-  const foldableOuter = isFoldableSideColumnPosture({
-    top: insets.top,
-    right: insets.right,
-  });
-
-  const getHeaderTitle = useCallback(() => {
-    return (
-      <ScreenHeaderAccountSwitcher
-        forScene={isForMultipleAddress ? 'MultiHistory' : 'History'}
-        titleText={
-          <View style={styles.headerTitle}>
-            <AssetAvatar
-              logo={tokenItem?.logo_url}
-              size={24}
-              chain={tokenItem?.chain}
-              chainSize={10}
-            />
-            <Text style={styles.titleText}>{tokenItem?.symbol}</Text>
-            <Text style={styles.titleText}>Transactions</Text>
-          </View>
-        }
-        disableSwitch={!isForMultipleAddress}
-      />
-    );
-  }, [tokenItem, isForMultipleAddress, styles.titleText, styles.headerTitle]);
-
-  // Render the whole header row ourselves so the title is centred by layout.
-  // The native-stack title container starts after the native back item, which
-  // shifted the title right by an amount that depended on the screen width and
-  // the trailing control (QA 1384).
-  const getHeaderRow = useCallback(() => {
-    return (
-      <View
-        style={[
-          styles.headerRow,
-          { paddingTop: insets.top, height: HEADER_ROW_HEIGHT + insets.top },
-        ]}>
-        <View style={styles.headerSideSlot}>
-          <HeaderBackButton style={styles.headerBackTouch} />
-        </View>
-        <View style={styles.headerCenter}>
-          {isInTokenDetail && tokenItem ? (
-            getHeaderTitle()
-          ) : (
-            <ScreenHeaderAccountSwitcher
-              forScene={isForMultipleAddress ? 'MultiHistory' : 'History'}
-              titleText="Transactions"
-              // Only the single-address history has no switcher modal; the
-              // multi-address list must keep its caret and tap-to-switch
-              // behaviour (QA 1390).
-              disableSwitch={!isForMultipleAddress}
-            />
-          )}
-        </View>
-        <View style={styles.headerSideSlot}>{getHeaderRight()}</View>
-      </View>
-    );
-  }, [
-    insets.top,
-    styles,
-    getHeaderTitle,
-    getHeaderRight,
-    isInTokenDetail,
-    tokenItem,
-    isForMultipleAddress,
-  ]);
-
-  React.useEffect(() => {
-    if (isInTokenDetail && tokenItem) {
-      setNavigationOptions({
-        headerTitle: getHeaderTitle,
-        headerRight: getHeaderRight,
-      });
-    } else if (foldableOuter) {
-      // The Duo outer screen must use the shared JS replica header. A custom
-      // header row (used by some packaging branches for the native back-item
-      // offset, QA 1384) would put the filter switch back under the system
-      // column (QA 1430).
-      setNavigationOptions({
-        header: renderFoldableStackHeader,
-        headerRight: getHeaderRight,
-      });
-    } else {
-      setNavigationOptions({
-        header: getHeaderRow,
-      });
+    historyListRef.current?.scrollToTop();
+    if (!isNeedFetchFromApi) {
+      dbLastCursorRef.current = null;
+      // this refetch bypasses useInfiniteScroll, keep its noMore in sync
+      batchFetchDataFromDb(prevIsShowAll).then(mutate);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    setNavigationOptions,
-    getHeaderTitle,
-    getHeaderRight,
-    getHeaderRow,
-    foldableOuter,
-  ]);
+  }, [isShowAll, isNeedFetchFromApi, batchFetchDataFromDb, mutate]);
 
   const ensureCurrentIsLoading = useMemo(() => {
     if (isNeedFetchFromApi) {
@@ -875,34 +759,9 @@ const HistoryScreen = ({ isForMultipleAddress = true }) => {
   );
 };
 
-const HEADER_ROW_HEIGHT = 44;
-
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     backgroundColor: makeTxPageBackgroundColors({ isLight, colors2024 }),
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    backgroundColor: makeTxPageBackgroundColors({ isLight, colors2024 }),
-  },
-  headerSideSlot: {
-    width: 44,
-    height: HEADER_ROW_HEIGHT,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerBackTouch: {
-    width: 44,
-    height: HEADER_ROW_HEIGHT,
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-  },
-  headerCenter: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   menuContainer: {
     elevation: 5,
@@ -968,20 +827,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     lineHeight: 20,
     color: colors2024['brand-default'],
-  },
-  headerTitle: {
-    flexWrap: 'nowrap',
-    // justifyContent: 'center',
-    // alignItems: 'center',
-    flexDirection: 'row',
-  },
-  titleText: {
-    marginLeft: 4,
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    fontWeight: '800',
-    lineHeight: 24,
-    color: colors2024['neutral-title-1'],
   },
   netTabs: {
     marginBottom: 12,
