@@ -117,6 +117,7 @@ const Indicator = ({
   // left, so the black fill is only ever visible inside a slot - the 12pt gap
   // between them never shows the indicator travelling across it.
   const slotWidth = itemsLayout[0]?.width ?? 0;
+  const mirrorStyle = React.useMemo(() => ({ width: slotWidth }), [slotWidth]);
   const snapPixels = (value: number) => {
     'worklet';
     return Math.round(value * STRIP_PIXEL) / STRIP_PIXEL;
@@ -162,13 +163,23 @@ const Indicator = ({
         style={[rStyles.rightBackground /* , styles.rightBackground */]}
       />
       <Pressable
-        ref={secondaryIndicatorViewRef}
         style={styles.rightPressable}
         onPress={onRightPress}
         hitSlop={rightHitSlop}
+      />
+      {/*
+        Invisible mirror of the drawn bar, used only for measurement: it has the
+        bar's exact box (not the 22pt touch area), so consumers can align a
+        highlight to it without guessing offsets.
+      */}
+      <View
+        ref={secondaryIndicatorViewRef}
+        collapsable={false}
+        pointerEvents="none"
         onLayout={() => {
           handleMeasureSecondaryIndicator?.();
         }}
+        style={[styles.indicatorBarMirror, mirrorStyle]}
       />
     </Animated.View>
   );
@@ -291,6 +302,15 @@ const indicatorStyles = createGetStyles2024(
       },
       indicatorBgBox: {
         backgroundColor: colors2024['neutral-bg-1'],
+      },
+      // Same box as the drawn bar: the container insets it 20pt from the right
+      // edge, and the bar itself is not offset by the pressable's hit padding.
+      indicatorBarMirror: {
+        position: 'absolute',
+        right: 20,
+        top: indicatorMarginTop + indicatorHitPaddingY,
+        height: indicatorHeight,
+        opacity: 0,
       },
       leftPressable: {
         position: 'absolute',
