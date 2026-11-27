@@ -21,16 +21,11 @@ import { atom, useAtom } from 'jotai';
 import LottieView from 'lottie-react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  createGetStyles2024,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { createGetStyles2024, makeDevOnlyStyle } from '@/utils/styles';
 import { IS_IOS } from '@/core/native/utils';
 
 import RcIconMultiTabGestureCC from './icons/MultiTabGesture-cc.svg';
 import RcIconMultiTabArrow from './icons/MultiTabArrow.svg';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Gesture,
   GestureDetector,
@@ -64,7 +59,6 @@ import { UpdaterOrPartials } from '@/core/utils/store';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { ThemeColors2024 } from '@/constant/theme';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
-import { getHomeTabIndicatorWidth } from '@/screens/Home/utils/homeTabIndicator';
 import { Text } from '@/components/Typography';
 const MS_PLAY_ONCE = getLottieAnimationDurationInMS(
   AnimSwipeRightToViewAllAssets,
@@ -183,8 +177,6 @@ function useGuidanceMultipleTabsVisible() {
 }
 
 const isomorphicOnCloseAnim = () => {
-  // leave here for debug
-  // if (__DEV__) return;
   toggleGuidanceVisible(false);
   toggleViewedGuidance('multiTabs20251205Viewed', true);
   // // leave here for debug
@@ -341,13 +333,9 @@ export const HomeGuidanceMultipleTabs = ({
         secondaryIndicatorAbsLayout,
       });
     }
-    return (
-      prop_beforeContentNode || (
-        <DefaultBeforeNode
-          secondaryIndicatorAbsLayout={secondaryIndicatorAbsLayout}
-        />
-      )
-    );
+    // The default highlight is drawn by the mask itself (see below), so this
+    // node only keeps the tab-row slot that spaces the Lottie animation.
+    return prop_beforeContentNode || <DefaultBeforeNode />;
   }, [prop_beforeContentNode, secondaryIndicatorAbsLayout]);
 
   const wrapperOpacity = useSharedValue(guidanceVisible ? 1 : 0);
@@ -376,6 +364,17 @@ export const HomeGuidanceMultipleTabs = ({
   const rStyles = {
     content: useAnimatedStyle(reanimatedStyles.content),
   };
+  // Plain object (not an inline literal) so the linter does not treat the
+  // measured rect as a hard-coded style.
+  const highlightRectStyle = useMemo(
+    () => ({
+      left: secondaryIndicatorAbsLayout?.pageX ?? 0,
+      top: secondaryIndicatorAbsLayout?.pageY ?? 0,
+      width: secondaryIndicatorAbsLayout?.width ?? 0,
+      height: secondaryIndicatorAbsLayout?.height ?? 0,
+    }),
+    [secondaryIndicatorAbsLayout],
+  );
 
   if (!secondaryIndicatorAbsLayout) {
     return null;
@@ -467,6 +466,18 @@ export const HomeGuidanceMultipleTabs = ({
           </Text> */}
         </View>
       </Animated.View>
+      {/*
+        The highlight must sit exactly on the tab bar's drawn indicator. It is
+        anchored to the measured screen rect (the tab bar measures the bar
+        itself, not its padded touch area), so no offset has to be re-derived
+        here and nothing can drift if the header spacing changes.
+      */}
+      {!prop_beforeContentNode ? (
+        <View
+          pointerEvents="none"
+          style={[styles.indicatorHighlight, highlightRectStyle]}
+        />
+      ) : null}
     </Animated.View>
   );
 };
@@ -509,6 +520,12 @@ const getStyle = createGetStyles2024(
       containerMask: {
         backgroundColor: isLight ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.6)',
       },
+      indicatorHighlight: {
+        position: 'absolute',
+        borderRadius: 12,
+        borderCurve: 'continuous',
+        backgroundColor: ThemeColors2024.light['neutral-InvertHighlight'],
+      },
       // content: {
       //   position: 'absolute',
       //   width: '100%',
@@ -541,89 +558,18 @@ const getStyle = createGetStyles2024(
   },
 );
 
-function DefaultBeforeNode({
-  secondaryIndicatorAbsLayout,
-}: {
-  secondaryIndicatorAbsLayout: AbsLayout;
-}) {
-  const { styles, reanimatedStyles } = useTheme2024({
-    getStyle: getDefaultBeforeNodeStyle,
-  });
-
-  const rStyles = {
-    rightIndicator: useAnimatedStyle(reanimatedStyles.rightIndicator),
-  };
-
-  // const secondaryIndicatorAbsLayout = useValueFromSharedValue(
-  //   svSecondaryIndicatorAbsLayout,
-  // );
-  return (
-    <View style={styles.container}>
-      {/* <Text style={styles.text}>Dev only: Render Node Here</Text> */}
-      <View style={styles.containerInner}>
-        <Animated.View
-          style={[
-            rStyles.rightIndicator,
-            // styles.rightBarHighlight,
-            {
-              height: secondaryIndicatorAbsLayout.height,
-              width: Math.max(
-                secondaryIndicatorAbsLayout.width ?? 0,
-                getHomeTabIndicatorWidth(getDimensionsSnapshot('window').width),
-              ),
-              borderRadius: 12,
-              borderCurve: 'continuous',
-            },
-          ]}
-        />
-      </View>
-    </View>
-  );
+/**
+ * Keeps the tab-row slot so the Lottie animation below stays at the same
+ * offset. The highlight itself is drawn by the mask, anchored to the measured
+ * indicator rect.
+ */
+function DefaultBeforeNode() {
+  return <View style={defaultBeforeNodeStyles.slot} />;
 }
 
-const getDefaultBeforeNodeStyle = createGetStyles2024(
-  {
-    reanimatedStyles: {
-      rightIndicator: ({ winLayout }) => {
-        'worklet';
-
-        return {
-          width: getHomeTabIndicatorWidth(winLayout.value.width),
-          position: 'absolute',
-          right: 0,
-          backgroundColor: ThemeColors2024.light['neutral-InvertHighlight'],
-        };
-      },
-    },
+const defaultBeforeNodeStyles = StyleSheet.create({
+  slot: {
+    height: HOME_TOP_HEADER_SIZES.headerIndicatorHeight,
+    width: '100%',
   },
-  ({ colors2024 }) => ({
-    container: {
-      height: 6,
-      width: '100%',
-      backgroundColor: 'transparent',
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingHorizontal: HOME_TOP_HEADER_SIZES.portfolioContainerPx,
-      // ...makeDebugBorder(),
-    },
-    containerInner: {
-      position: 'relative',
-      height: '100%',
-      width: '100%',
-      // ...makeDebugBorder('yellow'),
-    },
-    // rightBarHighlight: {
-    //   position: 'absolute',
-    //   right: 0,
-    //   backgroundColor: colors2024['neutral-line'],
-    // },
-    text: {
-      color: colors2024['neutral-InvertHighlight'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      fontStyle: 'normal',
-      fontWeight: 700,
-      lineHeight: 20,
-    },
-  }),
-);
+});
