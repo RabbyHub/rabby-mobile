@@ -120,6 +120,21 @@ function toolchain() {
           .filter(name => fs.statSync(path.join(dir, name)).isDirectory())
           .sort()
       : [];
+  const gradleBuildFile = (() => {
+    for (const candidate of [
+      'android/build.gradle',
+      'android/app/build.gradle',
+    ]) {
+      if (fs.existsSync(candidate)) return fs.readFileSync(candidate, 'utf8');
+    }
+    return '';
+  })();
+  const pinned = name => {
+    const match = gradleBuildFile.match(
+      new RegExp(`${name}['\"]?\\s*[=:]\\s*['\"]([^'\"]+)['\"]`),
+    );
+    return match ? match[1] : null;
+  };
   const gradleWrapper = (() => {
     const props = 'android/gradle/wrapper/gradle-wrapper.properties';
     if (!fs.existsSync(props)) return null;
@@ -147,9 +162,12 @@ function toolchain() {
     ruby: run('ruby', ['-v'], { allowFailure: true }).split(' ')[1] || null,
     cocoapods: run('pod', ['--version'], { allowFailure: true }) || null,
     gradle_wrapper: gradleWrapper,
-    android_sdk: sdkRoot,
-    android_ndk: listDirs(path.join(sdkRoot, 'ndk')),
-    android_build_tools: listDirs(path.join(sdkRoot, 'build-tools')),
+    // Only the versions the project actually pins matter; the list of installed
+    // SDK components is host inventory, not part of the build contract.
+    ndk_version: pinned('ndkVersion'),
+    build_tools_version: pinned('buildToolsVersion'),
+    installed_android_ndk: listDirs(path.join(sdkRoot, 'ndk')),
+    installed_android_build_tools: listDirs(path.join(sdkRoot, 'build-tools')),
   };
 }
 

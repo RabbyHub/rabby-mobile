@@ -36,12 +36,32 @@ compare('contract', a.contract, b.contract);
 
 // Paths are expected to differ (Xcode/SDK installation paths); everything else
 // in the toolchain fingerprint must match.
-const toolchainKeys = new Set([
-  ...Object.keys(a.toolchain || {}),
-  ...Object.keys(b.toolchain || {}),
-]);
-for (const key of toolchainKeys) {
+// Fields that provably change the artifact. Everything else in `toolchain`
+// (host patch versions, installed SDK inventory, install paths) is recorded for
+// diagnosis only: two builders with identical outputs may differ there.
+const COMPARED_TOOLCHAIN_KEYS = [
+  'build_root',
+  'xcode',
+  'xcode_build',
+  'node',
+  'ruby',
+  'cocoapods',
+  'gradle_wrapper',
+  'ndk_version',
+  'build_tools_version',
+];
+for (const key of COMPARED_TOOLCHAIN_KEYS) {
   compare(`toolchain.${key}`, a.toolchain?.[key], b.toolchain?.[key]);
+}
+for (const key of Object.keys(a.toolchain || {})) {
+  if (COMPARED_TOOLCHAIN_KEYS.includes(key)) continue;
+  if (JSON.stringify(a.toolchain[key]) !== JSON.stringify(b.toolchain?.[key])) {
+    notes.push(
+      `host-only difference toolchain.${key}: ${JSON.stringify(
+        a.toolchain[key],
+      )} vs ${JSON.stringify(b.toolchain?.[key])}`,
+    );
+  }
 }
 
 if (a.artifact || b.artifact) {
