@@ -18,7 +18,11 @@ const historyHitSlop = {
 interface Props {
   setIsShowAll: (value: React.SetStateAction<boolean>) => void;
   isShowAll: boolean;
-  handleSwitchShowAll: (value: boolean) => void;
+  /**
+   * Optional side effect for the owner of the data: the route-level header only
+   * publishes `isShowAll`, so it does not need to run anything itself.
+   */
+  handleSwitchShowAll?: (value: boolean) => void;
 }
 
 export const HistoryFilterMenu = ({
@@ -37,7 +41,7 @@ export const HistoryFilterMenu = ({
       }
       return !prev;
     });
-    handleSwitchShowAll(e);
+    handleSwitchShowAll?.(e);
   };
   return (
     <View style={styles.container}>

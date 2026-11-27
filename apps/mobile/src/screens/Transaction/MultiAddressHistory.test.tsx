@@ -178,7 +178,10 @@ jest.mock('@/utils/events', () => ({
   eventBus: { addListener: jest.fn(), removeListener: jest.fn() },
 }));
 jest.mock('@/components/AppStatusBar', () => ({
-  useSafeSetNavigationOptions: () => ({ setNavigationOptions: jest.fn() }),
+  useSafeSetNavigationOptions: () => ({
+    navigation: { setParams: jest.fn() },
+    setNavigationOptions: jest.fn(),
+  }),
 }));
 jest.mock('@/components2024/Toast', () => ({
   toast: { error: jest.fn() },

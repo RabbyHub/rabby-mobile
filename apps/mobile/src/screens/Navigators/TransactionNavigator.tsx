@@ -2,7 +2,7 @@ import { withScreenPropsInjection } from '@/devtools/screenRegistry/screenInject
 import { RoundedFontStyles } from '@/core/utils/fonts';
 import 'react-native-gesture-handler';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { IS_IOS } from '@/core/native/utils';
 
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
@@ -10,8 +10,6 @@ import { createCustomNativeStackNavigator as createNativeStackNavigator } from '
 import { HeaderBackPressable, useStackScreenConfig } from '@/hooks/navigation';
 import { useCustomHeaderTop } from '@/hooks/useAppLayout';
 import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { isFoldableSideColumnPosture } from '@/core/utils/foldableDevice';
 import {
   RootNames,
   makeHeadersPresets,
@@ -42,9 +40,10 @@ import { MemeCoinHeader } from '../MemeCoin/components/MemeCoinHeader';
 import { MemeCoinExecuteScreen } from '../MemeCoin/execute/MemeCoinExecuteScreen';
 import { MemeCoinHomeScreen } from '../MemeCoin/home/MemeCoinHomeScreen';
 import { GasAccountScreen } from '../GasAccount';
-import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import { HeaderAccountSwitcher } from '@/components/AccountSwitcher/HeaderAccountSwitcher';
 import MultiAddressHistory from '../Transaction/MultiAddressHistory';
+import { HistoryListHeaderTitle } from '../Transaction/components/HistoryListHeaderTitle';
+import { HistoryFilterMenu } from '../Transaction/components/HistoryFilterMenu';
 import { GnosisQueueScreen } from '../GnosisQueue';
 import { BatchRevokeScreen } from '../BatchRevoke/BatchRevoke';
 import { useTranslation } from 'react-i18next';
@@ -126,25 +125,6 @@ function ConvertDustHeader({
   );
 }
 
-function SingleAddressHistoryTitle({ children }: React.PropsWithChildren) {
-  const insets = useSafeAreaInsets();
-  const foldableOuter = isFoldableSideColumnPosture({
-    top: insets.top,
-    right: insets.right,
-  });
-
-  return (
-    <View
-      style={foldableOuter ? undefined : { transform: [{ translateX: -12 }] }}>
-      <ScreenHeaderAccountSwitcher
-        forScene="History"
-        titleText={children}
-        disableSwitch
-      />
-    </View>
-  );
-}
-
 export default function TransactionNavigator() {
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
   // console.log('============== TransactionNavigator Render =========');
@@ -152,6 +132,49 @@ export default function TransactionNavigator() {
   const { t } = useTranslation();
   const { colors, colors2024, isLight } = useTheme2024();
   const headerPresets = makeHeadersPresets({ colors, colors2024 });
+
+  // The history screens (multi-address list and the single-address variant
+  // share one component) declare their header on the route. Everything the
+  // header reads comes from route params the screen publishes: the token
+  // context, whether the filter switch applies, and the switch value. Nothing
+  // swaps the header type after mount any more (QA 1384 / 1430).
+  const renderHistoryRouteHeader = (
+    route: { params?: TransactionNavigatorParamList['MultiAddressHistory'] },
+    isForMultipleAddress: boolean,
+    setShowAll: (value: boolean) => void,
+  ) =>
+    mergeScreenOptions({
+      header: renderAppStackHeader(() => {
+        const isShowAll = route.params?.isShowAll ?? false;
+        return {
+          title: 'Transactions',
+          // The filter switch is wider than a back chevron; keep both slots at
+          // the pre-migration 44pt so the title stays optically centred.
+          sideSlotWidth: 44,
+          titleNode: (
+            <HistoryListHeaderTitle
+              isForMultipleAddress={isForMultipleAddress}
+              isInTokenDetail={route.params?.isInTokenDetail}
+              tokenItem={route.params?.tokenItem}
+            />
+          ),
+          right: route.params?.headerIsSupportAccount ? (
+            <HistoryFilterMenu
+              isShowAll={isShowAll}
+              setIsShowAll={next =>
+                setShowAll(typeof next === 'function' ? next(isShowAll) : next)
+              }
+            />
+          ) : undefined,
+        };
+      }),
+      headerBackVisible: false,
+      headerLeft: () => null,
+      unstable_headerLeftItems: () => [],
+      headerStyle: {
+        backgroundColor: makeTxPageBackgroundColors({ isLight, colors2024 }),
+      },
+    });
 
   return (
     <TransactionStack.Navigator
@@ -236,23 +259,11 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.MultiAddressHistory}
         component={withScreenPropsInjection(MultiAddressHistory)}
-        options={{
-          title: 'Transactions',
-          headerTitle: ctx => {
-            return (
-              <ScreenHeaderAccountSwitcher
-                forScene="MultiHistory"
-                titleText={ctx.children}
-              />
-            );
-          },
-          headerStyle: {
-            backgroundColor: makeTxPageBackgroundColors({
-              isLight,
-              colors2024,
-            }),
-          },
-        }}
+        options={({ route, navigation }) =>
+          renderHistoryRouteHeader(route, true, isShowAll =>
+            navigation?.setParams({ isShowAll }),
+          )
+        }
       />
       <TransactionStack.Screen
         name={RootNames.LendingHistory}
@@ -278,25 +289,11 @@ export default function TransactionNavigator() {
         component={withScreenPropsInjection(
           MultiAddressHistory.ForSingleAddress,
         )}
-        options={{
-          title: 'Transactions',
-          // The native back item is wider than the old JS header button, so
-          // UIKit lays this title container out ~12pt right of the screen
-          // centre (QA 1360). Pull the content back only on the native header;
-          // the Duo outer screen uses the shared JS replica header, where that
-          // correction would push the title left.
-          headerTitle: ctx => (
-            <SingleAddressHistoryTitle>
-              {ctx.children}
-            </SingleAddressHistoryTitle>
-          ),
-          headerStyle: {
-            backgroundColor: makeTxPageBackgroundColors({
-              isLight,
-              colors2024,
-            }),
-          },
-        }}
+        options={({ route, navigation }) =>
+          renderHistoryRouteHeader(route, false, isShowAll =>
+            navigation?.setParams({ isShowAll }),
+          )
+        }
       />
       <TransactionStack.Screen
         name={RootNames.HistoryDetail}

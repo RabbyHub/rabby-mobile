@@ -330,12 +330,24 @@ export type TransactionNavigatorParamList = {
     headerTitle?: string;
     headerAccountType?: string;
   };
-  [RootNames.History]?: {};
+  [RootNames.History]?: {
+    isForMultipleAddress?: boolean;
+    isInTokenDetail?: boolean;
+    tokenItem?: AbstractPortfolioToken;
+    /** Filter switch value, owned by the route-level header. */
+    isShowAll?: boolean;
+    /** Whether the account supports the scam/small-tx filter switch. */
+    headerIsSupportAccount?: boolean;
+  };
   [RootNames.MultiAddressHistory]?: {
     isInTokenDetail?: boolean;
     isMultiAddress?: boolean;
     tokenItem?: AbstractPortfolioToken;
     currentAddress?: string;
+    /** Filter switch value, owned by the route-level header. */
+    isShowAll?: boolean;
+    /** Whether the account supports the scam/small-tx filter switch. */
+    headerIsSupportAccount?: boolean;
   };
   [RootNames.LendingHistory]?: {};
   [RootNames.HistoryDetail]: {

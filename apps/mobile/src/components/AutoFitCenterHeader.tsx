@@ -59,6 +59,12 @@ export type AutoFitCenterHeaderProps = {
   rightSlot?: React.ReactNode;
   /** Left alignment is reserved for detail pages on the white list. */
   titleAlign?: 'center' | 'left';
+  /**
+   * Width of each side slot. Defaults to the shared header value; a route whose
+   * trailing action is wider than a back chevron (e.g. the history filter
+   * switch) can widen both slots so the title stays centred.
+   */
+  sideSlotWidth?: number;
 };
 
 export const AutoFitCenterHeader = ({
@@ -69,6 +75,7 @@ export const AutoFitCenterHeader = ({
   back = true,
   rightSlot,
   titleAlign = 'center',
+  sideSlotWidth = HEADER_SIDE_SLOT_WIDTH,
 }: AutoFitCenterHeaderProps) => {
   const { styles, colors2024, windowWidth, language } = useTheme2024({
     getStyle,
@@ -82,7 +89,7 @@ export const AutoFitCenterHeader = ({
     columnInset.left -
     columnInset.right -
     2 * HEADER_HORIZONTAL_INSET -
-    2 * HEADER_SIDE_SLOT_WIDTH -
+    2 * sideSlotWidth -
     2 * TITLE_AREA_HORIZONTAL_MARGIN;
   const languageStyle = resolveHeaderTitleLanguageStyle({
     titleKey,
@@ -100,7 +107,7 @@ export const AutoFitCenterHeader = ({
             paddingRight: HEADER_HORIZONTAL_INSET + columnInset.right,
           },
         ]}>
-        <View style={styles.backSlot}>
+        <View style={[styles.backSlot, { width: sideSlotWidth }]}>
           {back ? (
             <HeaderBackButton
               style={styles.backButtonTouch}
@@ -126,7 +133,9 @@ export const AutoFitCenterHeader = ({
           )}
         </View>
         {/* Equal trailing slot keeps the title centred on the screen. */}
-        <View style={styles.rightSlot}>{rightSlot}</View>
+        <View style={[styles.rightSlot, { width: sideSlotWidth }]}>
+          {rightSlot}
+        </View>
       </View>
     </View>
   );
