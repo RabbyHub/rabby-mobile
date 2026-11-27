@@ -29,7 +29,7 @@ module.exports = {
       {
         // Migration allowlist (P1): shrink as each screen moves to a
         // route-level header. Never add new entries.
-        allowFiles: ['src/screens/PerpsMarketDetail/index.tsx'],
+        allowFiles: [],
       },
     ],
     'import/no-cycle': [
