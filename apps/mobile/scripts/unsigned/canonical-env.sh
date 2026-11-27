@@ -15,7 +15,9 @@ unsigned_apply_canonical_env() {
     [ -n "$ambient" ] || continue
     unset "$ambient" || true
   done <<EOF
-$(env | sed -n 's/^\(RABBY_MOBILE_[A-Z0-9_]*\)=.*/\1/p' | grep -vE '^RABBY_MOBILE_(CODE|UNSIGNED_.*|IOS_UNSIGNED_.*|IOS_BUILD_UNSIGNED)$' || true)
+# Business inputs the bundle script requires (the iOS lane aborts without the
+# Korean password, for instance) stay; everything else is builder state.
+$(env | sed -n 's/^\(RABBY_MOBILE_[A-Z0-9_]*\)=.*/\1/p' | grep -vE '^RABBY_MOBILE_(CODE|KR_PWD|SAFE_API_KEY|WALLETCONNECT_PROJECT_ID|FE_SERVICE_URL|UNSIGNED_.*|IOS_UNSIGNED_.*|IOS_BUILD_UNSIGNED)$' || true)
 EOF
 
   unset APP_ENV WITH_ROZENITE I18N_LIVE_PREVIEW LOCAL_PACK 2>/dev/null || true
