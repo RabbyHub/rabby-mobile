@@ -39,12 +39,12 @@ compare('contract', a.contract, b.contract);
 // Fields that provably change the artifact. Everything else in `toolchain`
 // (host patch versions, installed SDK inventory, install paths) is recorded for
 // diagnosis only: two builders with identical outputs may differ there.
+// The checkout path is mapped out of the binaries (-ffile-prefix-map) and the
+// ambient Ruby only drives the pinned CocoaPods, so neither is a contract field.
 const COMPARED_TOOLCHAIN_KEYS = [
-  'build_root',
   'xcode',
   'xcode_build',
   'node',
-  'ruby',
   'cocoapods',
   'gradle_wrapper',
   'ndk_version',

@@ -50,6 +50,7 @@ localAppConfigPath="$project_dir/ios/RabbyMobile/AppConfig.${configuration_name}
 echo "[RabbyMobileBuild] process project_dir: $project_dir"
 
 echo "[RabbyMobileBuild] write AppConfig override: $localAppConfigPath"
+repo_root=$(cd "$project_dir/../.." && pwd)
 cat > "$localAppConfigPath" <<EOF
 //
 //  AppConfig.${configuration_name}.local.xcconfig
@@ -58,4 +59,9 @@ cat > "$localAppConfigPath" <<EOF
 //
 
 RABBY_MOBILE_CODE = ${RABBY_MOBILE_CODE}
+
+// Reproducible builds: the checkout path must not leak into the app binary.
+OTHER_CFLAGS = \$(inherited) -ffile-prefix-map=${repo_root}=/rabby
+OTHER_CPLUSPLUSFLAGS = \$(inherited) -ffile-prefix-map=${repo_root}=/rabby
+OTHER_SWIFT_FLAGS = \$(inherited) -Xcc "-ffile-prefix-map=${repo_root}=/rabby" -file-prefix-map ${repo_root}=/rabby -debug-prefix-map ${repo_root}=/rabby
 EOF

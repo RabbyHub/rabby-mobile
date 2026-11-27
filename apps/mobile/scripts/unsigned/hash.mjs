@@ -68,18 +68,59 @@ function walk(dir, base = dir, out = []) {
   return out;
 }
 
+// Two Apple tools stamp build-machine state into otherwise deterministic output:
+// every Info.plist carries the host OS build, and actool writes a wall-clock
+// timestamp (plus an unstable serialisation) into Assets.car. Hash those files
+// by their semantic content instead of their bytes, and say so in `normalization`.
+function plistSemanticSha256(file) {
+  const xml = execFileSync('plutil', ['-convert', 'xml1', '-o', '-', file], {
+    maxBuffer: 64 * 1024 * 1024,
+  }).toString('utf8');
+  const normalized = xml.replace(
+    /(<key>BuildMachineOSBuild<\/key>\s*<string>)[^<]*(<\/string>)/g,
+    '$1/rabby-build-host$2',
+  );
+  return crypto.createHash('sha256').update(normalized).digest('hex');
+}
+
+function assetCatalogSemanticSha256(file) {
+  const info = execFileSync('xcrun', ['assetutil', '--info', file], {
+    maxBuffer: 128 * 1024 * 1024,
+  }).toString('utf8');
+  const stripped = JSON.parse(info).map(entry => {
+    const { Timestamp, ...rest } = entry;
+    return rest;
+  });
+  return crypto
+    .createHash('sha256')
+    .update(JSON.stringify(stripped))
+    .digest('hex');
+}
+
 function hashTree(dir) {
   const files = walk(dir);
+  const applied = new Set();
   const lines = files
-    .map(
-      ({ abs, rel }) => `${sha256File(abs)}  ${rel.split(path.sep).join('/')}`,
-    )
+    .map(({ abs, rel }) => {
+      const normalizedRel = rel.split(path.sep).join('/');
+      const base = path.basename(abs);
+      let digest = sha256File(abs);
+      if (base === 'Assets.car') {
+        digest = assetCatalogSemanticSha256(abs);
+        applied.add('assets.car:semantic');
+      } else if (base.endsWith('.plist')) {
+        digest = plistSemanticSha256(abs);
+        applied.add('plist:semantic');
+      }
+      return `${digest}  ${normalizedRel}`;
+    })
     .sort();
   const manifest = lines.join('\n') + (lines.length ? '\n' : '');
   return {
     tree_sha256: crypto.createHash('sha256').update(manifest).digest('hex'),
     file_count: files.length,
     total_bytes: files.reduce((sum, { abs }) => sum + fs.statSync(abs).size, 0),
+    applied: [...applied].sort(),
   };
 }
 
@@ -160,7 +201,18 @@ function toolchain() {
     node: process.env.RABBY_UNSIGNED_BUILD_NODE || process.version,
     java: javaVersion || null,
     ruby: run('ruby', ['-v'], { allowFailure: true }).split(' ')[1] || null,
-    cocoapods: run('pod', ['--version'], { allowFailure: true }) || null,
+    // The version the project actually pins is the contract; the ambient `pod`
+    // binary is host state and is recorded separately.
+    cocoapods: (() => {
+      if (fs.existsSync('Gemfile.lock')) {
+        const match = fs
+          .readFileSync('Gemfile.lock', 'utf8')
+          .match(/^ {4}cocoapods \(([\d.]+)\)/m);
+        if (match) return match[1];
+      }
+      return run('pod', ['--version'], { allowFailure: true }) || null;
+    })(),
+    cocoapods_binary: run('pod', ['--version'], { allowFailure: true }) || null,
     gradle_wrapper: gradleWrapper,
     // Only the versions the project actually pins matter; the list of installed
     // SDK components is host inventory, not part of the build contract.
@@ -224,9 +276,15 @@ if (args.artifact) {
   };
 }
 if (args.tree) {
+  const tree = hashTree(path.resolve(args.tree));
+  for (const step of tree.applied) {
+    if (!attest.normalization.includes(step)) attest.normalization.push(step);
+  }
   attest.tree = {
     name: path.basename(path.resolve(args.tree)),
-    ...hashTree(path.resolve(args.tree)),
+    tree_sha256: tree.tree_sha256,
+    file_count: tree.file_count,
+    total_bytes: tree.total_bytes,
   };
 }
 
