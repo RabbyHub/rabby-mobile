@@ -638,6 +638,14 @@ export async function runBizMockAction(
         : actionData?.revokeToken
         ? 'revoke'
         : undefined;
+      const title =
+        type === 'send'
+          ? '发送'
+          : type === 'swap'
+          ? '兑换'
+          : type === 'approve'
+          ? '授权'
+          : undefined;
       const [{ naviPush }, { RootNames }] = await Promise.all([
         import('@/utils/navigation'),
         import('@/constant/layout'),
@@ -647,6 +655,7 @@ export async function runBizMockAction(
         params: {
           data: group,
           type,
+          title,
           isForMultipleAddress: false,
           account,
         },
