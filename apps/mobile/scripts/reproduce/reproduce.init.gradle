@@ -10,9 +10,16 @@
 // flags go through the dedicated cFlags/cppFlags API instead.
 allprojects { project ->
     def repoRoot = System.getenv('RABBY_REPRODUCE_REPO_ROOT')
-    def mapFlags = repoRoot
-        ? "-ffile-prefix-map=${repoRoot}=. -fdebug-prefix-map=${repoRoot}=. -fmacro-prefix-map=${repoRoot}=.".toString()
-        : ''
+    // macOS reaches /private/tmp through the /tmp symlink; the compiler records
+    // whichever spelling it was invoked with, so map both.
+    def roots = []
+    if (repoRoot) {
+        roots << repoRoot
+        roots << (repoRoot.startsWith('/private/') ? repoRoot.substring('/private'.length()) : "/private${repoRoot}".toString())
+    }
+    def mapFlags = roots.collect { root ->
+        "-ffile-prefix-map=${root}=. -fdebug-prefix-map=${root}=. -fmacro-prefix-map=${root}=.".toString()
+    }.join(' ')
     def applyFlags = {
         try {
             project.android.defaultConfig.externalNativeBuild.cmake {
