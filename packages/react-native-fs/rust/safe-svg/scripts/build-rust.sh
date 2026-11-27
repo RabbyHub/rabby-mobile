@@ -36,6 +36,17 @@ BUILD_ROOT="$(dirname "${OUTPUT}")/cargo-target"
 CARGO_HOME_DIR="${CARGO_HOME:-${HOME}/.cargo}"
 RUSTFLAGS_SEP=$'\x1f'
 REMAP_RUSTFLAGS="--remap-path-prefix=${CARGO_HOME_DIR}=/cargo"
+# Each machine can point crates.io at a different registry (mirror vs upstream),
+# and the directory name carries that registry's hash. Collapse them all so the
+# embedded crate paths do not depend on which mirror populated the cache.
+for registry_src in "${CARGO_HOME_DIR}"/registry/src/*; do
+  [[ -d "${registry_src}" ]] || continue
+  REMAP_RUSTFLAGS+="${RUSTFLAGS_SEP}--remap-path-prefix=${registry_src}=/cargo/registry/src/registry"
+done
+# std's own sources are embedded too, and their path depends on whether the
+# rust-src component is installed and where RUSTUP_HOME lives.
+RUSTUP_HOME_DIR="${RUSTUP_HOME:-${HOME}/.rustup}"
+REMAP_RUSTFLAGS+="${RUSTFLAGS_SEP}--remap-path-prefix=${RUSTUP_HOME_DIR}/toolchains=/rust-toolchain"
 if [[ -n "${CARGO_ENCODED_RUSTFLAGS:-}" ]]; then
   ENCODED_RUSTFLAGS="${CARGO_ENCODED_RUSTFLAGS}${RUSTFLAGS_SEP}${REMAP_RUSTFLAGS}"
 else
