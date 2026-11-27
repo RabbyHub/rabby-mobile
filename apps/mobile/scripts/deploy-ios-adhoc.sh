@@ -272,6 +272,19 @@ if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
     export RABBY_MOBILE_BUILD_ENV="regression"
   fi
   cd "$project_dir"
+  # Same canonical environment as the Android unsigned build: ambient
+  # RABBY_MOBILE_* variables and cache lanes must not shape a shipped artifact.
+  . "$project_dir/scripts/unsigned/canonical-env.sh"
+  unsigned_apply_canonical_env
+  # Re-assert the channel knobs dropped by the canonicalisation above.
+  if [ "$unsigned_channel" == "production" ]; then
+    export RABBY_MOBILE_BUILD_ENV="production"
+  else
+    export RABBY_MOBILE_SIGN_ONLY=true
+    export RABBY_MOBILE_BUILD_ENV="regression"
+  fi
+  export SENTRY_DISABLE_AUTO_UPLOAD="${SENTRY_DISABLE_AUTO_UPLOAD:-true}"
+  export ZERO_AR_DATE="${ZERO_AR_DATE:-$(git -C "$project_dir" show -s --format=%cI HEAD)}"
   prepare_ios_build_artifacts || exit $?
   prepare_ios_native_deps || exit $?
   sh ./ios/patches/override-xcconfig-release.sh

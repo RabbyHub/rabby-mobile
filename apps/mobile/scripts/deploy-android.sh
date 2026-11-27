@@ -205,22 +205,9 @@ if [ "$RABBY_MOBILE_UNSIGNED_BUILD" == "true" ]; then
   # Ambient RABBY_MOBILE_* variables (shell profiles, CI env) leak into the JS
   # bundle through babel's dotenv/env inlining. A reproducible build must start
   # from a canonical environment: keep only the code, drop everything else.
-  for ambient in $(env | sed -n 's/^\(RABBY_MOBILE_[A-Z0-9_]*\)=.*/\1/p' | grep -vE '^RABBY_MOBILE_(CODE|UNSIGNED_.*)$' || true); do
-    unset "$ambient"
-  done
-  unset APP_ENV WITH_ROZENITE I18N_LIVE_PREVIEW LOCAL_PACK 2>/dev/null || true
-
-  # Debug/test-only knobs must not leak into a shipped package: pin them to
-  # their production-safe values instead of inheriting the builder's shell.
-  export RABBY_MOBILE_E2E_SILENT_LOGS=""
-  export RABBY_MOBILE_BUILD_DEVTOOLS_PANEL=0
-  export RABBY_MOBILE_MODULE_LOADING_MODE=lazy
-  export RABBY_MOBILE_METRO_USE_CACHE=false
-  # Acceleration/cache lanes are not allowed to shape a shipped artifact.
-  export RABBY_MOBILE_TURBO_BUILD=false
-  export RABBY_MOBILE_POD_USE_CACHE=false
-  export RABBY_MOBILE_NM_USE_CACHE=false
-  export RABBY_MOBILE_ANDROID_FAST_BUILD=false
+  # The same contract is used by the iOS unsigned build.
+  . "$project_dir/scripts/unsigned/canonical-env.sh"
+  unsigned_apply_canonical_env
 
   unsigned_channel="${RABBY_MOBILE_UNSIGNED_CHANNEL:-production}"
   if [ "$unsigned_channel" == "production" ]; then
