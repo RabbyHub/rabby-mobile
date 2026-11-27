@@ -342,8 +342,12 @@ cp $ouput_dir/manifest.plist $deployment_local_dir/manifest.plist
 /usr/libexec/PlistBuddy -c "Set:items:0:assets:1:url $deployment_cdn_baseurl/icon_57x57@57w.png" $deployment_local_dir/manifest.plist # displayImageURL
 /usr/libexec/PlistBuddy -c "Set:items:0:assets:2:url $deployment_cdn_baseurl/icon_512x512@512w.png" $deployment_local_dir/manifest.plist # fullSizeImageURL
 
-echo "[deploy-ios-adhoc] will upload to $deployment_s3_dir"
-echo "[deploy-ios-adhoc] will be served at $deployment_cdn_baseurl"
+if [ "$REALLY_UPLOAD" == "true" ]; then
+  echo "[deploy-ios-adhoc] will upload to $deployment_s3_dir"
+  echo "[deploy-ios-adhoc] will be served at $deployment_cdn_baseurl"
+else
+  echo "[deploy-ios-adhoc] REALLY_UPLOAD != true: skipped upload; package stays at $deployment_local_dir"
+fi
 
 echo ""
 
