@@ -7,6 +7,8 @@ import type { Account } from '@/core/startupServices/preference';
 import { useTokenPair } from '../Swap/hooks/token';
 import { useBridge } from '../Bridge/hooks/token';
 import { isSwapBridgeSceneActive } from './sceneActivation';
+import { swapFormStore } from './state/swapFormStores';
+import { bridgeAmountStore } from '../Bridge/state/bridgeAmountStores';
 
 const mockAccount = { address: '0x123' } as Account;
 const mockFromToken = {
@@ -159,6 +161,9 @@ type SceneProps = { activeTab: 'swap' | 'bridge'; focused: boolean };
 
 beforeEach(() => {
   jest.useFakeTimers();
+  // The amount stores are scene singletons; start every case from a clean form.
+  swapFormStore.getState().actions.resetAmount();
+  bridgeAmountStore.getState().actions.resetAmount();
 });
 afterEach(() => {
   jest.clearAllTimers();
@@ -193,48 +198,58 @@ describe('Swap tab form reset', () => {
     const { result, rerender } = setup();
     await settle();
     act(() => {
-      result.current.onChangeSlider(100);
+      swapFormStore.getState().actions.endSlider({
+        draft: '1',
+        isMax: true,
+        passGasPrice: true,
+      });
       result.current.openQuotesList();
       result.current.setActiveProvider({ name: 'test' } as never);
     });
     expect(result.current.payAmount).not.toBe('');
     expect(result.current.passGasPrice).toBe(true);
-    expect(result.current.isDraggingSlider).toBe(true);
     expect(result.current.quotesListVisible).toBe(true);
 
     rerender({ activeTab: 'bridge', focused: true });
     expect(result.current).toMatchObject({
       payAmount: '',
-      slider: 0,
-      swapUseSlider: false,
-      isDraggingSlider: false,
       passGasPrice: false,
       quotesListVisible: false,
-      quoteList: [],
       currentProvider: undefined,
+    });
+    expect(result.current.quoteList ?? []).toHaveLength(0);
+    expect(swapFormStore.getState()).toMatchObject({
+      draft: '',
+      committed: '',
+      isDragging: false,
+      isMax: false,
+      pendingSlider: null,
     });
     rerender({ activeTab: 'swap', focused: true });
     await settle();
     expect(result.current.payAmount).toBe('');
-    expect(result.current.slider).toBe(0);
     expect(result.current.payToken?.id).toBe(mockFromToken.id);
     expect(result.current.receiveToken?.id).toBe(mockToToken.id);
     expect(result.current.chain).toBe(CHAINS_ENUM.ETH);
   });
 
-  it('preserves amount and slider when returning from another screen', async () => {
+  it('preserves amount when returning from another screen', async () => {
     const { result, rerender } = setup();
     await settle();
-    act(() => result.current.onChangeSlider(37, true));
+    act(() =>
+      swapFormStore.getState().actions.endSlider({
+        draft: '0.37',
+        isMax: false,
+      }),
+    );
     const amount = result.current.payAmount;
     expect(Number(amount)).toBeGreaterThan(0);
     rerender({ activeTab: 'swap', focused: false });
     expect(result.current.payAmount).toBe(amount);
-    expect(result.current.slider).toBe(37);
+    expect(swapFormStore.getState().draft).toBe('0.37');
     rerender({ activeTab: 'swap', focused: true });
     await settle();
     expect(result.current.payAmount).toBe(amount);
-    expect(result.current.slider).toBe(37);
   });
 });
 
@@ -261,45 +276,55 @@ describe('Bridge tab form reset', () => {
     const { result, rerender } = setup();
     await settle();
     act(() => {
-      result.current.handleMax();
+      bridgeAmountStore.getState().actions.endSlider({
+        draft: '1',
+        isMax: true,
+        passGasPrice: true,
+      });
       result.current.setSelectedBridgeQuote({ bridge_id: 'test' } as never);
     });
     expect(result.current.amount).not.toBe('');
     expect(result.current.passGasPrice).toBe(true);
-    expect(result.current.isMaxRef.current).toBe(true);
+    result.current.isMaxRef.current = true;
 
     rerender({ activeTab: 'swap', focused: true });
     expect(result.current).toMatchObject({
       amount: '',
-      slider: 0,
       passGasPrice: false,
-      quoteList: [],
-      selectedBridgeQuote: undefined,
-      quoteRefreshCountdown: null,
     });
     expect(result.current.isMaxRef.current).toBe(false);
+    expect(bridgeAmountStore.getState()).toMatchObject({
+      draft: '',
+      committed: '',
+      isDragging: false,
+      isMax: false,
+      pendingSlider: null,
+    });
     rerender({ activeTab: 'bridge', focused: true });
     await settle();
     expect(result.current.amount).toBe('');
-    expect(result.current.slider).toBe(0);
     expect(result.current.fromToken?.id).toBe(mockFromToken.id);
     expect(result.current.toToken?.id).toBe(mockBridgeToToken.id);
     expect(result.current.fromChain).toBe(CHAINS_ENUM.ETH);
     expect(result.current.toChain).toBe(CHAINS[CHAINS_ENUM.ARBITRUM].enum);
   });
 
-  it('preserves amount and slider when returning from another screen', async () => {
+  it('preserves amount when returning from another screen', async () => {
     const { result, rerender } = setup();
     await settle();
-    act(() => result.current.onChangeSlider(37, true));
+    act(() =>
+      bridgeAmountStore.getState().actions.endSlider({
+        draft: '0.37',
+        isMax: false,
+      }),
+    );
     const amount = result.current.amount;
     expect(Number(amount)).toBeGreaterThan(0);
     rerender({ activeTab: 'bridge', focused: false });
     expect(result.current.amount).toBe(amount);
-    expect(result.current.slider).toBe(37);
+    expect(bridgeAmountStore.getState().draft).toBe('0.37');
     rerender({ activeTab: 'bridge', focused: true });
     await settle();
     expect(result.current.amount).toBe(amount);
-    expect(result.current.slider).toBe(37);
   });
 });

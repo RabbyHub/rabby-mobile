@@ -38,6 +38,7 @@ import { useRegressionScenarioComponentAction } from '@/devtools/regressionScena
 interface BridgeToTokenSelectProps {
   // allowClearAccountFilter?: boolean;
   // account?: Account | null;
+  sceneActive?: boolean;
   token?: TokenItem;
   onChange?(amount: string): void;
   onTokenChange(token: TokenItem): void;
@@ -60,6 +61,7 @@ const BridgeToTokenSelect = ({
   excludeTokens = defaultExcludeTokens,
   placeholder,
   address,
+  sceneActive = true,
 }: BridgeToTokenSelectProps) => {
   const [_queryConds, setQueryConds] = useState({
     keyword: '',
@@ -113,12 +115,20 @@ const BridgeToTokenSelect = ({
 
   useFocusEffect(
     useCallback(() => {
+      if (!sceneActive || !tokenSelectorVisible) {
+        return;
+      }
       (async () => {
         if (currentAccount?.address) {
           fetchUserTokenSettings();
         }
       })();
-    }, [currentAccount?.address, fetchUserTokenSettings]),
+    }, [
+      currentAccount?.address,
+      fetchUserTokenSettings,
+      sceneActive,
+      tokenSelectorVisible,
+    ]),
   );
 
   const tokenListRequestKey = useMemo(
@@ -151,7 +161,9 @@ const BridgeToTokenSelect = ({
     isLoading: tokenListLoading,
     isSettled: isTokenListSettled,
   } = useTokenListAsyncResource({
-    enabled: Boolean(fromChainId && chainId),
+    enabled: Boolean(
+      fromChainId && chainId && tokenSelectorVisible && sceneActive,
+    ),
     requestKey: tokenListRequestKey,
     load: loadTokenList,
   });

@@ -8,6 +8,7 @@ import {
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { Text } from '@/components/Typography';
+import { QuoteFlux } from './QuoteTransition';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 
@@ -46,6 +47,8 @@ type DirectSignGasInfoUIProps = {
   listItemStyle?: RNViewProps['style'];
   listItemInnerStyle?: RNViewProps['style'];
   rightPrefix?: React.ReactNode;
+  /** Breathe the value only (the label never fades) when the source changes. */
+  valueFluxEnabled?: boolean;
   onOpenChange?: (open: boolean) => void;
   renderModal?: (args: {
     visible: boolean;
@@ -72,6 +75,7 @@ export const DirectSignGasInfoUI = ({
   listItemStyle,
   listItemInnerStyle,
   rightPrefix,
+  valueFluxEnabled,
   onOpenChange,
   renderModal,
 }: DirectSignGasInfoUIProps) => {
@@ -180,7 +184,13 @@ export const DirectSignGasInfoUI = ({
         style={listItemStyle}
         innerStyle={listItemInnerStyle}
         LeftIcon={leftIcon}>
-        <View style={styles.rightContent}>
+        {/*
+          Breathing is for loaded values that are being refreshed; a loading
+          placeholder must never be animated with it.
+        */}
+        <QuoteFlux
+          enabled={!!valueFluxEnabled && !loading && !empty}
+          style={styles.rightContent}>
           {!loading && !empty ? (
             <TouchableOpacity
               ref={triggerRef}
@@ -255,7 +265,7 @@ export const DirectSignGasInfoUI = ({
               />
             </View>
           )}
-        </View>
+        </QuoteFlux>
       </ListItem>
       {renderModal?.({
         visible,

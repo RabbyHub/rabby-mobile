@@ -13,6 +13,7 @@ import {
 import { useHomeAssetSelectionSettings } from '@/hooks/appSettings';
 import { DEFAULT_HOME_ASSET_TOP_N } from '@/constant/homeAssetSelection';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
 import {
   pickHomeAccountSelectionFromAddresses,
@@ -54,13 +55,23 @@ export function useAccountInfo(options?: UseAccountInfoOptions) {
   const isHomeAssetSelectionExperimentEnabled =
     useHomeAssetSelectionPolicy &&
     configuredHomeAssetSelectionExperimentEnabled;
-  const selectedAddresses = balanceAccountsStore(state =>
-    isHomeAssetSelectionExperimentEnabled
-      ? state.selectedAddresses
-      : EMPTY_SELECTED_ADDRESSES,
+  const selectedAddresses = useActivityStore(
+    balanceAccountsStore,
+    state =>
+      isHomeAssetSelectionExperimentEnabled
+        ? state.selectedAddresses
+        : EMPTY_SELECTED_ADDRESSES,
+    Object.is,
+    { storeLabel: 'home-account-selection' },
   );
-  const hasResolvedSelection = balanceAccountsStore(state =>
-    isHomeAssetSelectionExperimentEnabled ? state.hasResolvedSelection : false,
+  const hasResolvedSelection = useActivityStore(
+    balanceAccountsStore,
+    state =>
+      isHomeAssetSelectionExperimentEnabled
+        ? state.hasResolvedSelection
+        : false,
+    Object.is,
+    { storeLabel: 'home-account-selection-resolved' },
   );
 
   const myAccounts = useCreationWithShallowCompare(

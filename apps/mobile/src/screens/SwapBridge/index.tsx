@@ -15,6 +15,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
+import { StoreActivityBoundary } from '@/hooks/storeActivity/StoreActivityBoundary';
 import {
   type GetNestedScreenRouteProp,
   type TransactionNavigatorParamList,
@@ -22,6 +23,7 @@ import {
 } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
 import { isNonProductionDiagnosticsEnabled } from '@/core/utils/diagnosticEnv';
+import { logger } from '@/utils/logger';
 import { useFeatureActivationDiagnostics } from '@/hooks/useFeatureActivationDiagnostics';
 import {
   ensureFeatureActivation,
@@ -90,14 +92,28 @@ const SwapBridgeRootPage = memo(function SwapBridgeRootPage({
       : isForMultipleAddress
       ? Bridge.ForMultipleAddress
       : Bridge;
+
+  useEffect(() => {
+    if (!isNonProductionDiagnosticsEnabled) {
+      return;
+    }
+    logger.info('[swap-bridge-scene] visibility', { tab, sceneActive });
+  }, [sceneActive, tab]);
+
   return (
-    <Component
-      disableHeaderRight
-      disableAccountSwitcherModal
-      tabSelected={tabSelected}
-      sceneActive={sceneActive}
-      diagnosticActive={isNonProductionDiagnosticsEnabled && sceneActive}
-    />
+    // The inactive sibling stays mounted; its Store subscribers must stop
+    // receiving React publication until the scene becomes visible again.
+    <StoreActivityBoundary
+      active={sceneActive}
+      label={`swap-bridge-scene:${tab}`}>
+      <Component
+        disableHeaderRight
+        disableAccountSwitcherModal
+        tabSelected={tabSelected}
+        sceneActive={sceneActive}
+        diagnosticActive={isNonProductionDiagnosticsEnabled && sceneActive}
+      />
+    </StoreActivityBoundary>
   );
 });
 

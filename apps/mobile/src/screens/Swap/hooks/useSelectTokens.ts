@@ -3,6 +3,7 @@ import { InteractionManager } from 'react-native';
 import useAsync from 'react-use/lib/useAsync';
 import { useShallow } from 'zustand/shallow';
 
+import { useScopedActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import {
   makeTokenSettingSets,
   tagTokenItemFavorite,
@@ -29,6 +30,17 @@ import { createTokenLoadCoordinator } from './tokenLoadCoordinator';
 
 const EMPTY_TOKEN_LIST: ITokenItem[] = [];
 const EMPTY_TOKEN_ROWS: TokenSelectIndexRow[] = [];
+
+// `tokenEntityResourceStore` extends the repo's BaseStore, which exposes
+// getState/subscribe but not the zustand `getInitialState`. Wrap it once at
+// module scope so the activity-bound store keeps a stable identity.
+const tokenEntityResourceActivityStore = {
+  getState: () => tokenEntityResourceStore.getState(),
+  getInitialState: () => tokenEntityResourceStore.getState(),
+  subscribe: (
+    listener: Parameters<typeof tokenEntityResourceStore.subscribe>[0],
+  ) => tokenEntityResourceStore.subscribe(listener),
+};
 
 const buildTokenRows = (tokens: ITokenItem[]): TokenSelectIndexRow[] => {
   if (!tokens.length) {
@@ -62,6 +74,7 @@ export const useSelectTokens = ({
   returnTokenObjects = false,
   skipEmptyChainInit = false,
   deferInitialRemoteLoad = false,
+  active = true,
 }: {
   currentAccount?: Account | null;
   chain_server_id?: string;
@@ -70,6 +83,7 @@ export const useSelectTokens = ({
   returnTokenObjects?: boolean;
   skipEmptyChainInit?: boolean;
   deferInitialRemoteLoad?: boolean;
+  active?: boolean;
 }) => {
   const currentAccount = useDebouncedValue(_currentAccount, 100);
   const currentAddress = currentAccount?.address || _currentAccount?.address;
@@ -103,18 +117,36 @@ export const useSelectTokens = ({
   }, [currentAddress, myTop10Addresses, keyword]);
 
   const loadingAddress = currentAccount?.address.toLowerCase();
-  const isLoadingToken = useTokenList(state => {
-    if (!loadingAddress) {
-      return state.isLoading;
-    }
-    const loadingState = state.isLoadingByAddress[loadingAddress];
-    return isLpTokenEnabled ? loadingState?.allLoading : loadingState?.loading;
-  });
-  const batchGetTokenList = useTokenList(s => s.batchGetTokenList);
-  const getTokenList = useTokenList(s => s.getTokenList);
+  // Inactive scenes / closed sheets must not receive React publication from
+  // the token stores. The scoped activity store drops the source subscription
+  // while inactive but keeps its last snapshot, so the list keeps rendering
+  // the previous data instead of being rewritten to an empty state.
+  const isLoadingToken = useScopedActivityStore(
+    active,
+    useTokenList,
+    useShallow(state => {
+      if (!loadingAddress) {
+        return state.isLoading;
+      }
+      const loadingState = state.isLoadingByAddress[loadingAddress];
+      return isLpTokenEnabled
+        ? loadingState?.allLoading
+        : loadingState?.loading;
+    }),
+  );
+  const batchGetTokenList = useScopedActivityStore(
+    active,
+    useTokenList,
+    s => s.batchGetTokenList,
+  );
+  const getTokenList = useScopedActivityStore(
+    active,
+    useTokenList,
+    s => s.getTokenList,
+  );
 
   const { fetchAccountsAndTokenSettings, userTokenSettings } =
-    useSelectTokensThreadSafe();
+    useSelectTokensThreadSafe(active);
 
   const [tokenLoadCoordinator] = useState(createTokenLoadCoordinator);
 
@@ -211,7 +243,9 @@ export const useSelectTokens = ({
       );
   }, [tokenSelectAddresses]);
 
-  const tokenSelectIndexResult = useTokenIndexStore(
+  const tokenSelectIndexResult = useScopedActivityStore(
+    active,
+    useTokenIndexStore,
     useShallow(state =>
       selectTokenSelectIndexResult(
         state,
@@ -226,7 +260,9 @@ export const useSelectTokens = ({
   const tokenRows = tokenSelectIndexResult.rows;
 
   const shouldSubscribeTokenObjects = !!keyword || returnTokenObjects;
-  const tokenObjects = tokenEntityResourceStore.useStore(
+  const tokenObjects = useScopedActivityStore(
+    active,
+    tokenEntityResourceActivityStore,
     useShallow(state => {
       if (!shouldSubscribeTokenObjects) {
         return EMPTY_TOKEN_LIST;

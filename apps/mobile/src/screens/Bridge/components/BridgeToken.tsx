@@ -24,6 +24,8 @@ import TokenSelect from '@/screens/Swap/components/TokenSelect';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { GestureSlider as Slider } from '@/components/GestureSlider';
+import type { GestureSliderRef } from '@/components/GestureSlider';
+import type { SharedValue } from 'react-native-reanimated';
 import LinearGradient from 'react-native-linear-gradient';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import type { Account } from '@/core/startupServices/preference';
@@ -35,6 +37,7 @@ import {
   type SliderBubbleHandle,
 } from '@/screens/Swap/components/Slider';
 import { Text } from '@/components/Typography';
+import { QuoteFlux } from './QuoteTransition';
 import {
   AutoShrinkAmountText,
   AutoShrinkAmountTextInput,
@@ -64,7 +67,12 @@ const BridgeTokenInner = ({
   clearOnDisabled,
   slider,
   onChangeSlider,
+  controlValue,
+  sliderRef,
+  onGestureStart,
+  onGestureComplete,
   onSliderScrollEnabledChange,
+  valueFluxEnabled,
 }: {
   clickMaxBtnCount?: number;
   handleMax?: () => void;
@@ -87,7 +95,13 @@ const BridgeTokenInner = ({
   clearOnDisabled?: boolean;
   slider?: number;
   onChangeSlider?: (value: number, syncAmount?: boolean) => void;
+  controlValue?: SharedValue<number>;
+  sliderRef?: React.Ref<GestureSliderRef>;
+  onGestureStart?: () => void;
+  onGestureComplete?: (value: number) => void;
   onSliderScrollEnabledChange?: (enabled: boolean) => void;
+  /** Breathe the amount text only (not the whole card) when the source changes. */
+  valueFluxEnabled?: boolean;
 } & (
   | {
       type?: 'from';
@@ -171,25 +185,36 @@ const BridgeTokenInner = ({
       // Move the bubble before the amount update. That update re-renders the
       // page, which is what left the bubble behind the finger.
       bubbleRef.current?.setProgress(_value);
-      onChangeSlider?.(_value);
+      if (!controlValue) {
+        onChangeSlider?.(_value);
+      }
     },
-    [onChangeSlider],
+    [controlValue, onChangeSlider],
   );
 
   const onSlidingStart = useCallback(() => {
     if (!disabled) {
       setIsSliderBubbleVisible(true);
       onSliderScrollEnabledChange?.(false);
+      onGestureStart?.();
     }
-  }, [disabled, onSliderScrollEnabledChange]);
+  }, [disabled, onGestureStart, onSliderScrollEnabledChange]);
 
   const onAfterChangeSlider = useCallback(
     (v: number) => {
-      onChangeSlider?.(v, true);
+      onGestureComplete?.(v);
+      if (!controlValue) {
+        onChangeSlider?.(v, true);
+      }
       setIsSliderBubbleVisible(false);
       onSliderScrollEnabledChange?.(true);
     },
-    [onChangeSlider, onSliderScrollEnabledChange],
+    [
+      controlValue,
+      onChangeSlider,
+      onGestureComplete,
+      onSliderScrollEnabledChange,
+    ],
   );
 
   useEffect(() => {
@@ -223,7 +248,9 @@ const BridgeTokenInner = ({
               collapsable={false}
               style={styles.slider}>
               <Slider
+                ref={sliderRef}
                 key={`${token?.id}-${token?.chain}`}
+                controlValue={controlValue}
                 allowTouchTrack={!disabled}
                 disabled={disabled}
                 interactive={sceneActive}
@@ -269,16 +296,22 @@ const BridgeTokenInner = ({
               style={styles.skeleton}
             />
           ) : isToToken ? (
-            <AutoShrinkAmountText
-              numberOfLines={1}
-              style={StyleSheet.flatten([
-                styles.input,
-                styles.inputLeft,
-                (showNoQuote || !value) && styles.showNoQuoteText,
-                valueLoading && styles.loadingOpacity,
-              ])}>
-              {showNoQuote ? t('page.bridge.no-quote') : value?.toString() || 0}
-            </AutoShrinkAmountText>
+            <QuoteFlux
+              enabled={!!valueFluxEnabled}
+              style={styles.amountFluxWrapper}>
+              <AutoShrinkAmountText
+                numberOfLines={1}
+                style={StyleSheet.flatten([
+                  styles.input,
+                  styles.inputLeft,
+                  (showNoQuote || !value) && styles.showNoQuoteText,
+                  valueLoading && styles.loadingOpacity,
+                ])}>
+                {showNoQuote
+                  ? t('page.bridge.no-quote')
+                  : value?.toString() || 0}
+              </AutoShrinkAmountText>
+            </QuoteFlux>
           ) : (
             <View style={[styles.inputBox]}>
               <AutoShrinkAmountTextInput
@@ -315,6 +348,7 @@ const BridgeTokenInner = ({
             )} */}
             {isToToken ? (
               <BridgeToTokenSelect
+                sceneActive={sceneActive}
                 fromChainId={fromChainId!}
                 fromTokenId={fromTokenId!}
                 token={token}
@@ -326,6 +360,7 @@ const BridgeTokenInner = ({
             ) : (
               <TokenSelect
                 deferModalMount
+                sceneActive={sceneActive}
                 // fromChainId={fromChainId!}
                 // fromTokenId={fromTokenId!}
                 accountInScreen={account}
@@ -459,6 +494,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     height: 56,
     alignItems: 'center',
+    minWidth: 0,
+  },
+  amountFluxWrapper: {
+    flex: 1,
     minWidth: 0,
   },
   showNoQuoteText: {

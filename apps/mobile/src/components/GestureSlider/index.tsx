@@ -1,5 +1,7 @@
 import React, {
+  forwardRef,
   useCallback,
+  useImperativeHandle,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -34,6 +36,12 @@ type Props = {
    * re-render.
    */
   progressValue?: SharedValue<number>;
+  /**
+   * Two-way control channel for hosts that own the amount in a store. The
+   * gesture writes it, and host writes move the thumb while no gesture is
+   * active. When provided, the legacy controlled `value` echo is disabled.
+   */
+  controlValue?: SharedValue<number>;
   /**
    * Keep the native touch surface mounted. Set this to `false` while the host
    * screen is not the active scene: the track/thumb stay visible (so the slider
@@ -71,376 +79,437 @@ export const gestureSliderValueAt = (
   );
 };
 
+export type GestureSliderRef = {
+  setValue: (value: number) => void;
+};
+
 /** Perps sheet input: native ownership, with the existing horizontal slider geometry. */
-export const GestureSlider = ({
-  allowTouchTrack = false,
-  disabled = false,
-  interactive = true,
-  maximumValue = 100,
-  minimumValue = 0,
-  maximumTrackTintColor,
-  minimumTrackTintColor,
-  onSlidingStart,
-  onSlidingComplete,
-  onValueChange,
-  progressValue,
-  step = 0,
-  style,
-  thumbStyle,
-  thumbProps,
-  trackStyle,
-  value,
-}: Props) => {
-  const [size, setSize] = useState({ width: 0, height: 0 });
-  const thumbWidth = Number(StyleSheet.flatten(thumbStyle)?.width ?? 40);
-  const travel = size.width - thumbWidth;
-  const validRange =
-    Number.isFinite(minimumValue) &&
-    Number.isFinite(maximumValue) &&
-    maximumValue > minimumValue;
-  const enabled =
-    !disabled && validRange && travel > 0 && Number.isFinite(value);
-  const boundedValue =
-    validRange && Number.isFinite(value)
-      ? clamp(value, minimumValue, maximumValue)
-      : minimumValue;
-  const horizontalOverflow = Math.max(0, 40 - thumbWidth) / 2;
-  const verticalOverflow = Math.max(0, 40 - size.height) / 2;
-  const position = useSharedValue(boundedValue);
-  const active = useSharedValue(false);
-  const pointer = useSharedValue(-1);
-  const session = useSharedValue(0);
-  const startX = useSharedValue(0);
-  const startLeft = useSharedValue(0);
-  const configuration = useMemo(
-    () => ({
-      enabled,
-      // Flipping `interactive` detaches/attaches the native surface; the
-      // release effect below must run then too, so an in-flight drag still
-      // completes when the scene deactivates mid-gesture.
-      interactive,
-      minimumValue,
-      maximumValue,
-      step,
-      travel,
-      thumbWidth,
-      allowTouchTrack,
-    }),
-    [
-      enabled,
-      interactive,
-      minimumValue,
-      maximumValue,
-      step,
-      travel,
-      thumbWidth,
-      allowTouchTrack,
-    ],
-  );
-  const current = useRef<
-    Pick<Props, 'onSlidingStart' | 'onSlidingComplete' | 'onValueChange'> & {
-      configuration: object | null;
-    }
-  >({
-    configuration,
-    onSlidingStart,
-    onSlidingComplete,
-    onValueChange,
-  });
-  const jsSession = useRef<{ id: number; value: number } | null>(null);
-
-  useAnimatedReaction(
-    () => position.value,
-    next => {
-      if (progressValue) {
-        progressValue.value = next;
-      }
+export const GestureSlider = forwardRef<GestureSliderRef, Props>(
+  function GestureSlider(
+    {
+      allowTouchTrack = false,
+      disabled = false,
+      interactive = true,
+      maximumValue = 100,
+      minimumValue = 0,
+      maximumTrackTintColor,
+      minimumTrackTintColor,
+      onSlidingStart,
+      onSlidingComplete,
+      onValueChange,
+      progressValue,
+      controlValue,
+      step = 0,
+      style,
+      thumbStyle,
+      thumbProps,
+      trackStyle,
+      value,
     },
-    [position, progressValue],
-  );
-
-  useLayoutEffect(() => {
-    current.current = {
+    ref,
+  ) {
+    const [size, setSize] = useState({ width: 0, height: 0 });
+    const thumbWidth = Number(StyleSheet.flatten(thumbStyle)?.width ?? 40);
+    const travel = size.width - thumbWidth;
+    const validRange =
+      Number.isFinite(minimumValue) &&
+      Number.isFinite(maximumValue) &&
+      maximumValue > minimumValue;
+    const enabled =
+      !disabled && validRange && travel > 0 && Number.isFinite(value);
+    const boundedValue =
+      validRange && Number.isFinite(value)
+        ? clamp(value, minimumValue, maximumValue)
+        : minimumValue;
+    const horizontalOverflow = Math.max(0, 40 - thumbWidth) / 2;
+    const verticalOverflow = Math.max(0, 40 - size.height) / 2;
+    const position = useSharedValue(boundedValue);
+    const active = useSharedValue(false);
+    const pointer = useSharedValue(-1);
+    const session = useSharedValue(0);
+    const startX = useSharedValue(0);
+    const startLeft = useSharedValue(0);
+    const configuration = useMemo(
+      () => ({
+        enabled,
+        // Flipping `interactive` detaches/attaches the native surface; the
+        // release effect below must run then too, so an in-flight drag still
+        // completes when the scene deactivates mid-gesture.
+        interactive,
+        minimumValue,
+        maximumValue,
+        step,
+        travel,
+        thumbWidth,
+        allowTouchTrack,
+      }),
+      [
+        enabled,
+        interactive,
+        minimumValue,
+        maximumValue,
+        step,
+        travel,
+        thumbWidth,
+        allowTouchTrack,
+      ],
+    );
+    const current = useRef<
+      Pick<Props, 'onSlidingStart' | 'onSlidingComplete' | 'onValueChange'> & {
+        configuration: object | null;
+      }
+    >({
       configuration,
       onSlidingStart,
       onSlidingComplete,
       onValueChange,
-    };
-  });
-  useLayoutEffect(() => {
-    // Range/layout changes and unmount must release the sheet owner's drag latch,
-    // including when native cancellation/finalize is delivered after removal.
-    const owner = configuration;
-    active.value = false;
-    pointer.value = -1;
-    return () => {
-      const previous = jsSession.current;
-      jsSession.current = null;
-      if (previous) {
-        current.current.onSlidingComplete?.(previous.value);
-      }
-      // Invalidate already queued runOnJS deliveries from this configuration.
-      if (current.current.configuration === owner) {
-        current.current = { ...current.current, configuration: null };
-      }
-    };
-  }, [configuration, active, pointer]);
-  useLayoutEffect(() => {
-    // A controlled echo must not rewind a gesture that has advanced on the UI thread.
-    runOnUI((next: number) => {
-      'worklet';
-      if (!active.value) {
-        position.value = next;
-      }
-    })(boundedValue);
-  }, [boundedValue, configuration, active, position]);
+    });
+    const jsSession = useRef<{ id: number; value: number } | null>(null);
 
-  const begin = useCallback(
-    (id: number, initial: number, next: number) => {
-      if (current.current.configuration !== configuration) {
-        return;
-      }
-      jsSession.current = { id, value: next };
-      current.current.onSlidingStart?.(initial);
-      current.current.onValueChange?.(next);
-    },
-    [configuration],
-  );
-  const change = useCallback(
-    (id: number, next: number) => {
-      if (
-        current.current.configuration !== configuration ||
-        jsSession.current?.id !== id
-      ) {
-        return;
-      }
-      jsSession.current.value = next;
-      current.current.onValueChange?.(next);
-    },
-    [configuration],
-  );
-  const finish = useCallback(
-    (id: number) => {
-      if (
-        current.current.configuration !== configuration ||
-        jsSession.current?.id !== id
-      ) {
-        return;
-      }
-      const last = jsSession.current.value;
-      jsSession.current = null;
-      current.current.onSlidingComplete?.(last);
-    },
-    [configuration],
-  );
+    useAnimatedReaction(
+      () => position.value,
+      next => {
+        if (progressValue) {
+          progressValue.value = next;
+        }
+      },
+      [position, progressValue],
+    );
 
-  const gesture = useMemo(
-    () =>
-      Gesture.Manual()
-        .enabled(enabled && interactive)
-        .shouldCancelWhenOutside(false)
-        // Claim DOWN on the UI thread, before either the sheet Pan or its native
-        // ScrollView can activate. No simultaneous relationship: the slider owns
-        // this touch through UP/cancellation on both Paper and Fabric.
-        .onTouchesDown((event, manager) => {
-          'worklet';
-          if (pointer.value !== -1) {
-            return;
-          }
-          const touch = event.changedTouches[0];
-          if (!enabled || !touch) {
-            manager.fail();
-            return;
-          }
-          const left =
-            ((position.value - minimumValue) / (maximumValue - minimumValue)) *
-            travel;
-          const x = touch.x - horizontalOverflow;
-          if (!allowTouchTrack && Math.abs(x - left - thumbWidth / 2) > 20) {
-            manager.fail();
-            return;
-          }
-          pointer.value = touch.id;
-          startX.value = touch.absoluteX;
-          startLeft.value = allowTouchTrack ? x - thumbWidth / 2 : left;
-          manager.begin();
-          manager.activate();
-        })
-        .onStart(() => {
-          'worklet';
-          const initial = position.value;
-          active.value = true;
-          session.value += 1;
-          position.value = gestureSliderValueAt(
-            startLeft.value,
-            travel,
-            minimumValue,
-            maximumValue,
-            step,
-          );
-          startLeft.value =
-            ((position.value - minimumValue) / (maximumValue - minimumValue)) *
-            travel;
-          runOnJS(begin)(session.value, initial, position.value);
-        })
-        .onTouchesMove((event, manager) => {
-          'worklet';
-          if (pointer.value === -1) {
-            // A configuration change can invalidate an already active recognizer.
-            manager.end();
-            return;
-          }
-          if (!active.value) {
-            return;
-          }
-          const touch = event.allTouches.find(
-            item => item.id === pointer.value,
-          );
-          if (!touch) {
-            return;
-          }
-          const next = gestureSliderValueAt(
-            startLeft.value + touch.absoluteX - startX.value,
-            travel,
-            minimumValue,
-            maximumValue,
-            step,
-          );
-          if (next === position.value) {
+    // Host-owned control channel: only applied when no gesture is active.
+    useAnimatedReaction(
+      () => (controlValue ? controlValue.value : null),
+      next => {
+        'worklet';
+        if (!controlValue || next === null) {
+          return;
+        }
+        if (active.value) {
+          return;
+        }
+        if (Math.abs(position.value - next) > 1e-6) {
+          position.value = next;
+        }
+      },
+      [controlValue, active, position],
+    );
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        setValue(next: number) {
+          if (active.value) {
             return;
           }
           position.value = next;
-          runOnJS(change)(session.value, next);
-        })
-        .onTouchesUp((event, manager) => {
-          'worklet';
-          if (
-            pointer.value === -1 ||
-            event.changedTouches.some(touch => touch.id === pointer.value)
-          ) {
+          if (controlValue) {
+            controlValue.value = next;
+          }
+        },
+      }),
+      [active, position, controlValue],
+    );
+
+    useLayoutEffect(() => {
+      current.current = {
+        configuration,
+        onSlidingStart,
+        onSlidingComplete,
+        onValueChange,
+      };
+    });
+    useLayoutEffect(() => {
+      // Range/layout changes and unmount must release the sheet owner's drag latch,
+      // including when native cancellation/finalize is delivered after removal.
+      const owner = configuration;
+      active.value = false;
+      pointer.value = -1;
+      return () => {
+        const previous = jsSession.current;
+        jsSession.current = null;
+        if (previous) {
+          current.current.onSlidingComplete?.(previous.value);
+        }
+        // Invalidate already queued runOnJS deliveries from this configuration.
+        if (current.current.configuration === owner) {
+          current.current = { ...current.current, configuration: null };
+        }
+      };
+    }, [configuration, active, pointer]);
+    useLayoutEffect(() => {
+      // In controlValue mode the host owns the thumb channel; the legacy value
+      // echo stays only for consumers that do not pass controlValue.
+      if (controlValue) {
+        return;
+      }
+      runOnUI((next: number) => {
+        'worklet';
+        if (!active.value) {
+          position.value = next;
+        }
+      })(boundedValue);
+    }, [boundedValue, configuration, active, position, controlValue]);
+
+    const begin = useCallback(
+      (id: number, initial: number, next: number) => {
+        if (current.current.configuration !== configuration) {
+          return;
+        }
+        jsSession.current = { id, value: next };
+        current.current.onSlidingStart?.(initial);
+        current.current.onValueChange?.(next);
+      },
+      [configuration],
+    );
+    const change = useCallback(
+      (id: number, next: number) => {
+        if (
+          current.current.configuration !== configuration ||
+          jsSession.current?.id !== id
+        ) {
+          return;
+        }
+        jsSession.current.value = next;
+        current.current.onValueChange?.(next);
+      },
+      [configuration],
+    );
+    const finish = useCallback(
+      (id: number) => {
+        if (
+          current.current.configuration !== configuration ||
+          jsSession.current?.id !== id
+        ) {
+          return;
+        }
+        const last = jsSession.current.value;
+        jsSession.current = null;
+        current.current.onSlidingComplete?.(last);
+      },
+      [configuration],
+    );
+
+    const gesture = useMemo(
+      () =>
+        Gesture.Manual()
+          .enabled(enabled && interactive)
+          .shouldCancelWhenOutside(false)
+          // Claim DOWN on the UI thread, before either the sheet Pan or its native
+          // ScrollView can activate. No simultaneous relationship: the slider owns
+          // this touch through UP/cancellation on both Paper and Fabric.
+          .onTouchesDown((event, manager) => {
+            'worklet';
+            if (pointer.value !== -1) {
+              return;
+            }
+            const touch = event.changedTouches[0];
+            if (!enabled || !touch) {
+              manager.fail();
+              return;
+            }
+            const left =
+              ((position.value - minimumValue) /
+                (maximumValue - minimumValue)) *
+              travel;
+            const x = touch.x - horizontalOverflow;
+            if (!allowTouchTrack && Math.abs(x - left - thumbWidth / 2) > 20) {
+              manager.fail();
+              return;
+            }
+            pointer.value = touch.id;
+            startX.value = touch.absoluteX;
+            startLeft.value = allowTouchTrack ? x - thumbWidth / 2 : left;
+            manager.begin();
+            manager.activate();
+          })
+          .onStart(() => {
+            'worklet';
+            const initial = position.value;
+            active.value = true;
+            session.value += 1;
+            position.value = gestureSliderValueAt(
+              startLeft.value,
+              travel,
+              minimumValue,
+              maximumValue,
+              step,
+            );
+            startLeft.value =
+              ((position.value - minimumValue) /
+                (maximumValue - minimumValue)) *
+              travel;
+            if (controlValue) {
+              controlValue.value = position.value;
+            }
+            runOnJS(begin)(session.value, initial, position.value);
+          })
+          .onTouchesMove((event, manager) => {
+            'worklet';
+            if (pointer.value === -1) {
+              // A configuration change can invalidate an already active recognizer.
+              manager.end();
+              return;
+            }
+            if (!active.value) {
+              return;
+            }
+            const touch = event.allTouches.find(
+              item => item.id === pointer.value,
+            );
+            if (!touch) {
+              return;
+            }
+            const next = gestureSliderValueAt(
+              startLeft.value + touch.absoluteX - startX.value,
+              travel,
+              minimumValue,
+              maximumValue,
+              step,
+            );
+            if (next === position.value) {
+              return;
+            }
+            position.value = next;
+            if (controlValue) {
+              controlValue.value = next;
+            }
+            runOnJS(change)(session.value, next);
+          })
+          .onTouchesUp((event, manager) => {
+            'worklet';
+            if (
+              pointer.value === -1 ||
+              event.changedTouches.some(touch => touch.id === pointer.value)
+            ) {
+              pointer.value = -1;
+              manager.end();
+            }
+          })
+          .onTouchesCancelled((_event, manager) => {
+            'worklet';
+            // RNGH may cancel tracked pointers again inside manager.end(). Also,
+            // UIKit must end an active recognizer rather than transition to FAILED.
+            if (pointer.value === -1) {
+              return;
+            }
             pointer.value = -1;
             manager.end();
-          }
-        })
-        .onTouchesCancelled((_event, manager) => {
-          'worklet';
-          // RNGH may cancel tracked pointers again inside manager.end(). Also,
-          // UIKit must end an active recognizer rather than transition to FAILED.
-          if (pointer.value === -1) {
-            return;
-          }
-          pointer.value = -1;
-          manager.end();
-        })
-        .onFinalize(() => {
-          'worklet';
-          pointer.value = -1;
-          if (!active.value) {
-            return;
-          }
-          active.value = false;
-          runOnJS(finish)(session.value);
-        }),
-    [
-      enabled,
-      interactive,
-      allowTouchTrack,
-      minimumValue,
-      maximumValue,
-      step,
-      travel,
-      thumbWidth,
-      horizontalOverflow,
-      position,
-      active,
-      pointer,
-      session,
-      startX,
-      startLeft,
-      begin,
-      change,
-      finish,
-    ],
-  );
+          })
+          .onFinalize(() => {
+            'worklet';
+            pointer.value = -1;
+            if (!active.value) {
+              return;
+            }
+            active.value = false;
+            if (controlValue) {
+              controlValue.value = position.value;
+            }
+            runOnJS(finish)(session.value);
+          }),
+      [
+        enabled,
+        interactive,
+        allowTouchTrack,
+        minimumValue,
+        maximumValue,
+        step,
+        travel,
+        thumbWidth,
+        horizontalOverflow,
+        position,
+        active,
+        pointer,
+        session,
+        startX,
+        startLeft,
+        controlValue,
+        begin,
+        change,
+        finish,
+      ],
+    );
 
-  const thumbAnimation = useAnimatedStyle(() => ({
-    transform: [
-      {
-        translateX: validRange
-          ? ((position.value - minimumValue) / (maximumValue - minimumValue)) *
-            Math.max(0, travel)
-          : 0,
-      },
-    ],
-  }));
-  const trackAnimation = useAnimatedStyle(() => ({
-    width: validRange
-      ? ((position.value - minimumValue) / (maximumValue - minimumValue)) *
-          Math.max(0, travel) +
-        thumbWidth / 2
-      : 0,
-  }));
+    const thumbAnimation = useAnimatedStyle(() => ({
+      transform: [
+        {
+          translateX: validRange
+            ? ((position.value - minimumValue) /
+                (maximumValue - minimumValue)) *
+              Math.max(0, travel)
+            : 0,
+        },
+      ],
+    }));
+    const trackAnimation = useAnimatedStyle(() => ({
+      width: validRange
+        ? ((position.value - minimumValue) / (maximumValue - minimumValue)) *
+            Math.max(0, travel) +
+          thumbWidth / 2
+        : 0,
+    }));
 
-  return (
-    <View
-      accessibilityRole="adjustable"
-      accessibilityState={{ disabled: !enabled }}
-      accessibilityValue={{
-        min: minimumValue,
-        max: maximumValue,
-        now: boundedValue,
-      }}
-      onLayout={event => {
-        const { width, height } = event.nativeEvent.layout;
-        setSize(previous =>
-          previous.width === width && previous.height === height
-            ? previous
-            : { width, height },
-        );
-      }}
-      style={[styles.container, style]}>
+    return (
       <View
-        pointerEvents="none"
-        style={[
-          styles.track,
-          trackStyle,
-          { backgroundColor: maximumTrackTintColor },
-        ]}
-      />
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          styles.track,
-          styles.absolute,
-          trackStyle,
-          { backgroundColor: minimumTrackTintColor },
-          trackAnimation,
-        ]}
-      />
-      <Animated.View
-        pointerEvents="none"
-        style={[styles.thumb, thumbStyle, thumbAnimation]}>
-        {thumbProps?.children}
-      </Animated.View>
-      {interactive ? (
-        <GestureDetector gesture={gesture}>
-          <Animated.View
-            collapsable={false}
-            style={[
-              StyleSheet.absoluteFillObject,
-              {
-                left: -horizontalOverflow,
-                right: -horizontalOverflow,
-                top: -verticalOverflow,
-                bottom: -verticalOverflow,
-              },
-            ]}
-          />
-        </GestureDetector>
-      ) : null}
-    </View>
-  );
-};
+        accessibilityRole="adjustable"
+        accessibilityState={{ disabled: !enabled }}
+        accessibilityValue={{
+          min: minimumValue,
+          max: maximumValue,
+          now: boundedValue,
+        }}
+        onLayout={event => {
+          const { width, height } = event.nativeEvent.layout;
+          setSize(previous =>
+            previous.width === width && previous.height === height
+              ? previous
+              : { width, height },
+          );
+        }}
+        style={[styles.container, style]}>
+        <View
+          pointerEvents="none"
+          style={[
+            styles.track,
+            trackStyle,
+            { backgroundColor: maximumTrackTintColor },
+          ]}
+        />
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.track,
+            styles.absolute,
+            trackStyle,
+            { backgroundColor: minimumTrackTintColor },
+            trackAnimation,
+          ]}
+        />
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.thumb, thumbStyle, thumbAnimation]}>
+          {thumbProps?.children}
+        </Animated.View>
+        {interactive ? (
+          <GestureDetector gesture={gesture}>
+            <Animated.View
+              collapsable={false}
+              style={[
+                StyleSheet.absoluteFillObject,
+                {
+                  left: -horizontalOverflow,
+                  right: -horizontalOverflow,
+                  top: -verticalOverflow,
+                  bottom: -verticalOverflow,
+                },
+              ]}
+            />
+          </GestureDetector>
+        ) : null}
+      </View>
+    );
+  },
+);
 
 const styles = StyleSheet.create({
   container: { height: 40, justifyContent: 'center' },

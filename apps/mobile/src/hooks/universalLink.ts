@@ -35,6 +35,8 @@ import {
 } from '@/core/walletconnect';
 import { isNonPublicProductionEnv } from '@/constant';
 import { RootNames } from '@/constant/layout';
+import { getStoreActivityDiagnosticsSnapshot } from '@/core/state/storeActivityDiagnostics';
+import { logger } from '@/utils/logger';
 import { navigateDeprecated, navigationRef } from '@/utils/navigation';
 import { findChain, makeTokenFromChain } from '@/utils/chain';
 import { dropAppDataSourceAndQuitApp } from '@/databases/imports';
@@ -116,6 +118,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-db-sync-policy'
     | 'debug-lending'
     | 'debug-open-target'
+    | 'debug-store-activity'
     | 'debug-create-address'
     | 'debug-open-hd-address'
     | 'debug-set-language'
@@ -516,6 +519,18 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
+  // Non-production only: dump the StoreActivity scope snapshots so a debug or
+  // regression build can capture which hidden scenes/subscriptions are still
+  // publishing. `?_cmd=debug-store-activity`.
+  if (
+    rabbyGoCmd === 'debug-store-activity' ||
+    target === 'debug-store-activity'
+  ) {
+    return {
+      type: 'debug-store-activity',
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
   // Non-production only: force the UI language so layout bugs that only show up
   // with a long translation (QA 1352) can be reproduced without changing the
   // device settings. `?_cmd=debug-set-language&lang=pt-BR`.
@@ -890,6 +905,9 @@ function resetExistingHomeFlowToOverview() {
 }
 
 async function openRabbyGoTarget(target: RabbyGoTarget) {
+  if (isNonPublicProductionEnv) {
+    logger.info('[rabbygo] open target', { target });
+  }
   if (!resetExistingHomeFlowToOverview()) {
     return;
   }
@@ -1242,6 +1260,15 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
         }
         void openRabbyGoTarget(target);
       }, `debug-open-${payload.debugOpenTarget}`);
+      break;
+    case 'debug-store-activity':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      logger.info(
+        '[store-activity] snapshot',
+        getStoreActivityDiagnosticsSnapshot(),
+      );
       break;
     case 'debug-cloud-availability':
       if (!isNonPublicProductionEnv) {

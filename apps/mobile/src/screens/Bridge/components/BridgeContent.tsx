@@ -21,6 +21,10 @@ import { useTranslation } from 'react-i18next';
 import { TwpStepApproveModal } from '@/screens/Swap/components/TwoStepApproveModal';
 import BigNumber from 'bignumber.js';
 import { QuoteList } from './BridgeQuotes';
+import {
+  getBridgeQuoteListLength,
+  useBridgeQuoteList,
+} from '../state/bridgeQuoteListStore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { openapi } from '@/core/request';
 import pRetry, { AbortError } from 'p-retry';
@@ -30,6 +34,7 @@ import { useMemoizedFn, useRequest } from 'ahooks';
 import { useRoute } from '@react-navigation/native';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import BridgeToken from './BridgeToken';
+import { BridgeAmountCard } from './BridgeAmountCard';
 import BridgeSwitchBtn from './BridgeSwitchBtn';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import BridgeShowMore from './BridgeShowMore';
@@ -82,6 +87,14 @@ import {
   shouldStopBridgeBuildRetry,
 } from '@/core/bridgeSdkReport';
 import { getBridgeToTokenRawAmount } from '../utils/bridgeQuote';
+import { bumpQuoteTransition } from '../state/quoteTransitionControl';
+import {
+  BRIDGE_APPROVAL_MOCK_AMOUNT,
+  BRIDGE_APPROVAL_MOCK_AUTOOPEN_DELAY_MS,
+  BRIDGE_APPROVAL_MOCK_AUTOFILL_DELAY_MS,
+  BRIDGE_MOCK_SWITCHES,
+  isBridgeApprovalMockEnabled,
+} from '../utils/bridgeApprovalMock';
 import { useMiniSignerEffectPause } from '@/hooks/useMiniSignerEffectPause';
 import {
   hasQuotePollingPauseReason,
@@ -316,6 +329,25 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   },
 }));
 
+type BridgeQuoteListOverlayProps = Omit<
+  React.ComponentProps<typeof QuoteList>,
+  'list'
+> & { active: boolean };
+
+const BridgeQuoteListOverlay = React.memo(function BridgeQuoteListOverlay({
+  active,
+  ...props
+}: BridgeQuoteListOverlayProps) {
+  const list = useBridgeQuoteList(active);
+  // A quote whose approve check failed is not a usable route: hide it, exactly
+  // as if that quote had never arrived.
+  const visibleList = useMemo(
+    () => list.filter(quote => !quote.approvalError),
+    [list],
+  );
+  return <QuoteList {...props} list={visibleList} />;
+});
+
 export const BridgeContent = ({
   isForMultipleAddress = false,
   disableHeaderRight = false,
@@ -399,15 +431,16 @@ export const BridgeContent = ({
 
     openQuotesList,
     quoteLoading: originQuoteLoading,
+    quoteRefreshing,
     allQuotesLoaded,
     quoteRequestId,
-    quoteList,
     setQuotesList,
 
     bestQuoteId,
     selectedBridgeQuote,
 
     setSelectedBridgeQuote,
+    retrySelectedBridgeQuoteApproval,
 
     slippage,
     slippageState,
@@ -434,10 +467,30 @@ export const BridgeContent = ({
     payTokenIsNativeToken,
     inSufficientCanGetQuote,
     quoteBlockedByClosedMarket,
-    slider,
-    onChangeSlider,
-    clearPendingSlider,
+    isMaxAmount,
+    resolveSliderAmount,
   } = useBridge(isForMultipleAddress, { active: sceneActive, tabSelected });
+
+  // Quote batches publish through the store; length is read at render time.
+  const quoteListLength = getBridgeQuoteListLength();
+  const selectedBridgeQuoteRef = useRef(selectedBridgeQuote);
+  selectedBridgeQuoteRef.current = selectedBridgeQuote;
+
+  // Single trigger for the quote transition animations: when the displayed best
+  // quote switches source, bump a shared token once. Every affected value reacts
+  // to it on the UI thread, so they start on the same frame.
+  const sourceKey = selectedBridgeQuote
+    ? `${selectedBridgeQuote.aggregator.id}:${selectedBridgeQuote.bridge_id}`
+    : '';
+  const prevSourceKeyRef = useRef(sourceKey);
+  useEffect(() => {
+    const prev = prevSourceKeyRef.current;
+    prevSourceKeyRef.current = sourceKey;
+    if (!prev || !sourceKey || prev === sourceKey || originQuoteLoading) {
+      return;
+    }
+    bumpQuoteTransition();
+  }, [sourceKey, originQuoteLoading]);
 
   const isRegressionBridgePairMatched = useMemo(() => {
     const params = route.params;
@@ -830,8 +883,16 @@ export const BridgeContent = ({
     bestQuoteId.aggregatorId === selectedBridgeQuote.aggregator.id &&
     bestQuoteId.bridgeId === selectedBridgeQuote.bridge_id;
   const selectedBridgeQuoteIsManualQuote = !!selectedBridgeQuote?.manualClick;
+  // While the approve (allowance) result is unknown or failed, the quote is
+  // displayed but must never be submitted or pre-executed: building now could
+  // produce a bridge tx without the required approve step.
+  const selectedBridgeQuoteNotSubmittable =
+    !!selectedBridgeQuote &&
+    (!!selectedBridgeQuote.approvalLoading ||
+      !!selectedBridgeQuote.approvalError);
   const selectedBridgeQuoteCanAutoPreExec =
-    selectedBridgeQuoteIsBestQuote || selectedBridgeQuoteIsManualQuote;
+    (selectedBridgeQuoteIsBestQuote || selectedBridgeQuoteIsManualQuote) &&
+    !selectedBridgeQuoteNotSubmittable;
   const builtBridgeTxsKeyRef = useRef('');
   const prefetchedBridgeTxsKeyRef = useRef('');
 
@@ -1000,7 +1061,12 @@ export const BridgeContent = ({
     };
     builtBridgeTxsKeyRef.current = '';
     prefetchedBridgeTxsKeyRef.current = '';
-    mutateTxs([]);
+    // Keep the previously built txs on a soft refresh: the gas row then keeps
+    // its last value (breathing with the rest of the quote) instead of dropping
+    // into a skeleton while the quote itself is still displayed.
+    if (!selectedBridgeQuoteRef.current) {
+      mutateTxs([]);
+    }
     runBuildBridgeTxsRef.current = undefined;
     runBuildBridgeTxsKeyRef.current = '';
     if (buildBridgeTxsTimerRef.current) {
@@ -1028,8 +1094,15 @@ export const BridgeContent = ({
     originQuoteLoading ||
     buildingTxsLoading ||
     (!!selectedBridgeQuote &&
+      !selectedBridgeQuoteNotSubmittable &&
       (canUseMiniTx ? !txs?.length : false) &&
       !inSufficient);
+  /**
+   * What the UI reflects: only "there is nothing to show yet". A background
+   * mini-signer rebuild must not flip the displayed quote back into skeletons,
+   * otherwise a soft refresh looks like a loading state again.
+   */
+  const quoteDisplayLoading = originQuoteLoading;
 
   const canShowDirectSubmit = useMemo(
     () =>
@@ -1068,6 +1141,7 @@ export const BridgeContent = ({
   const signatureGuardFlags = useSignatureStoreOf(
     instance,
     selectSignatureGuardFlags,
+    sceneActive,
   );
   const miniSignGasFeeTooHigh = isSignatureGasFeeTooHigh(signatureGuardFlags);
   const canDirectSign = canProcessSignature(signatureGuardFlags);
@@ -1081,9 +1155,9 @@ export const BridgeContent = ({
   const buildFormSnapshot = useCallback(
     (): BridgeFormSnapshot => ({
       amount: amount || '',
-      amountMode: slider === 100 ? 'max' : 'exact',
+      amountMode: isMaxAmount ? 'max' : 'exact',
     }),
-    [amount, slider],
+    [amount, isMaxAmount],
   );
 
   useEffect(() => {
@@ -1310,7 +1384,7 @@ export const BridgeContent = ({
     !!toToken &&
     Number(amount) > 0 &&
     !quoteLoading &&
-    !quoteList?.length;
+    !quoteListLength;
   const showStickyInfo = !!fromToken && !!toToken && !noQuote;
   const hideBridgeProgress = amountAvailable || !!selectedBridgeQuote;
   const showClosedMarketTip =
@@ -1323,7 +1397,10 @@ export const BridgeContent = ({
     !amountAvailable ||
     !selectedBridgeQuote ||
     quoteLoading ||
-    !quoteList?.length;
+    !quoteListLength ||
+    // Same reason as `selectedBridgeQuoteCanAutoPreExec`: never submit before
+    // the approve result is known, nor after it failed.
+    selectedBridgeQuoteNotSubmittable;
 
   useEffect(() => {
     if (
@@ -1337,7 +1414,7 @@ export const BridgeContent = ({
       !amountAvailable ||
       quoteLoading ||
       !selectedBridgeQuote ||
-      !quoteList?.length
+      !quoteListLength
     ) {
       return;
     }
@@ -1357,14 +1434,14 @@ export const BridgeContent = ({
       amount,
       aggregator: selectedBridgeQuote.aggregator.id,
       bridge: selectedBridgeQuote.bridge_id,
-      quoteCount: quoteList.length,
+      quoteCount: quoteListLength,
     });
   }, [
     amount,
     amountAvailable,
     fromToken,
     isRegressionBridgePairMatched,
-    quoteList?.length,
+    quoteListLength,
     quoteLoading,
     regressionScenario,
     sceneActive,
@@ -1388,7 +1465,7 @@ export const BridgeContent = ({
       !canShowDirectSubmit ||
       !amountAvailable ||
       quoteBlockedByClosedMarket ||
-      !quoteList?.length ||
+      !quoteListLength ||
       !selectedBridgeQuoteBuildKey ||
       !selectedBridgeQuoteCanAutoPreExec
     ) {
@@ -1425,7 +1502,9 @@ export const BridgeContent = ({
 
     builtBridgeTxsKeyRef.current = '';
     prefetchedBridgeTxsKeyRef.current = '';
-    mutateTxs([]);
+    if (!selectedBridgeQuoteRef.current) {
+      mutateTxs([]);
+    }
     runBuildBridgeTxsRef.current = undefined;
     runBuildBridgeTxsKeyRef.current = '';
 
@@ -1474,7 +1553,7 @@ export const BridgeContent = ({
     canUseMiniTx,
     mutateTxs,
     quoteBlockedByClosedMarket,
-    quoteList?.length,
+    quoteListLength,
     quoteRequestId,
     runBuildBridgeTxsForKey,
     selectedBridgeQuoteBuildKey,
@@ -1536,7 +1615,6 @@ export const BridgeContent = ({
         if (chainItem?.enum !== fromChain) {
           switchFromChain(chainItem?.enum || CHAINS_ENUM.ETH);
         }
-        clearPendingSlider();
         handleAmountChange('');
         setFromToken(token);
       };
@@ -1559,6 +1637,43 @@ export const BridgeContent = ({
     }
     handleAmountChange(value);
   });
+
+  // Demo switches (off by default, see `utils/bridgeApprovalMock.ts`). These
+  // are navigation/scaffolding only; the approval mock itself is independent.
+  useEffect(() => {
+    if (!__DEV__ || !BRIDGE_MOCK_SWITCHES.demo.autoFillAmount) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      handleBridgeAmountChange(BRIDGE_APPROVAL_MOCK_AMOUNT);
+    }, BRIDGE_APPROVAL_MOCK_AUTOFILL_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [handleBridgeAmountChange]);
+
+  useEffect(() => {
+    if (!__DEV__ || !BRIDGE_MOCK_SWITCHES.demo.autoOpenQuoteList) {
+      return;
+    }
+    const timer = setTimeout(
+      () => setQuoteVisible(true),
+      BRIDGE_APPROVAL_MOCK_AUTOOPEN_DELAY_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [setQuoteVisible]);
+
+  useEffect(() => {
+    if (!__DEV__ || !BRIDGE_MOCK_SWITCHES.demo.autoRetryFailedQuote) {
+      return;
+    }
+    if (!selectedBridgeQuote?.approvalError) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      retrySelectedBridgeQuoteApproval();
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [selectedBridgeQuote?.approvalError, retrySelectedBridgeQuoteApproval]);
+
   const handleToTokenChange = useMemoizedFn((token: TokenItem) => {
     setToToken(token);
   });
@@ -1648,6 +1763,12 @@ export const BridgeContent = ({
 
       return;
     }
+    if (
+      selectedBridgeQuote.approvalLoading ||
+      selectedBridgeQuote.approvalError
+    ) {
+      return;
+    }
     if (selectedBridgeQuote?.shouldTwoStepApprove) {
       setTwoStepApproveModalVisible(true);
       return;
@@ -1668,6 +1789,10 @@ export const BridgeContent = ({
     <BridgeShowMore
       insufficient={inSufficient}
       duration={selectedBridgeQuote?.duration}
+      approvalLoading={!!selectedBridgeQuote?.approvalLoading}
+      approvalError={!!selectedBridgeQuote?.approvalError}
+      onRetryApproval={retrySelectedBridgeQuoteApproval}
+      shouldApproveToken={!!selectedBridgeQuote?.shouldApproveToken}
       supportDirectSign={canShowDirectSubmit}
       openFeePopup={openFeePopup}
       sourceName={selectedBridgeQuote?.aggregator.name || ''}
@@ -1680,7 +1805,8 @@ export const BridgeContent = ({
       amount={amount || 0}
       toAmount={selectedBridgeQuote?.to_token_amount}
       openQuotesList={openQuotesList}
-      quoteLoading={quoteLoading}
+      quoteLoading={quoteDisplayLoading}
+      sourceKey={sourceKey}
       slippageError={isSlippageHigh || isSlippageLow}
       autoSlippage={autoSlippage}
       isCustomSlippage={isCustomSlippage}
@@ -1704,21 +1830,20 @@ export const BridgeContent = ({
   const footerBottomOffset = getBottomButtonBottomOffset(bottom);
   /**
    * The footer grows when extra rows appear above the button (e.g. the risk
-   * confirm checkbox), so a fixed estimate under-reserves and the scroll content
-   * ends up hidden behind it. Measure the real footer height instead; the old
-   * formula stays as the first-frame fallback.
+   * confirm checkbox). Measure it instead of only reserving for the button so
+   * the scrollable content can always scroll clear of it.
    */
-  const [footerHeight, setFooterHeight] = useState(0);
+  const [footerMeasuredHeight, setFooterMeasuredHeight] = useState(0);
   const handleFooterLayout = useCallback((event: LayoutChangeEvent) => {
     const nextHeight = Math.ceil(event.nativeEvent.layout.height);
-    setFooterHeight(prev => (prev === nextHeight ? prev : nextHeight));
+    setFooterMeasuredHeight(prev => (prev === nextHeight ? prev : nextHeight));
   }, []);
   const footerReserveFallback =
     BOTTOM_BUTTON_TOP_OFFSET +
     BOTTOM_BUTTON_SINGLE_HEIGHT +
     footerBottomOffset +
     (showRiskConfirm ? SIGN_RISK_WARNING_RESERVE_HEIGHT : 0);
-  const footerReserveHeight = footerHeight || footerReserveFallback;
+  const footerReserveHeight = footerMeasuredHeight || footerReserveFallback;
 
   return (
     <SignatureInstanceProvider instance={instance}>
@@ -1754,14 +1879,10 @@ export const BridgeContent = ({
           keyboardOpeningTime={0}>
           <View style={styles.card}>
             <View style={styles.cardContainer}>
-              <BridgeToken
-                type="from"
+              <BridgeAmountCard
                 sceneActive={sceneActive}
-                slider={slider}
-                onChangeSlider={onChangeSlider}
                 disabled={!isSupportedChain}
                 account={currentAccount}
-                inSufficient={inSufficient}
                 chain={fromChain}
                 token={fromToken}
                 isMaxRef={isMaxRef}
@@ -1773,6 +1894,7 @@ export const BridgeContent = ({
                 value={amount}
                 onInputChange={handleBridgeAmountChange}
                 excludeChains={fromTokenExcludeChains}
+                resolveSliderAmount={resolveSliderAmount}
               />
               <BridgeToken
                 type="to"
@@ -1785,19 +1907,20 @@ export const BridgeContent = ({
                   fromToken?.chain || findChainByEnum(fromChain)?.serverId
                 }
                 fromTokenId={fromToken?.id}
-                valueLoading={quoteLoading}
+                valueLoading={quoteDisplayLoading}
                 value={
-                  quoteLoading
+                  quoteDisplayLoading
                     ? undefined
                     : selectedBridgeQuote?.to_token_amount
                 }
                 excludeChains={toTokenExcludeChains}
                 noQuote={noQuote}
+                valueFluxEnabled={!quoteDisplayLoading}
               />
               <BridgeSwitchBtn
                 style={styles.switchButtonContainer}
                 onPress={switchToken}
-                loading={quoteLoading}
+                loading={quoteDisplayLoading || quoteRefreshing}
                 refreshCountdown={
                   sceneActive && selectedBridgeQuote
                     ? quoteRefreshCountdown
@@ -1849,7 +1972,7 @@ export const BridgeContent = ({
                           setAutoSlippage={setAutoSlippage}
                           setIsCustomSlippage={setIsCustomSlippage}
                           type="bridge"
-                          loading={quoteLoading}
+                          loading={quoteDisplayLoading}
                           onOptionsOpenChange={
                             setSlippageOptionsQuoteRefreshPaused
                           }
@@ -1870,69 +1993,72 @@ export const BridgeContent = ({
             {
               paddingBottom: footerBottomOffset,
             },
-          ]}
-          onLayout={handleFooterLayout}>
-          <Tip
-            noPressable={!footerTipContent}
-            isVisible={footerTipContent ? undefined : false}
-            content={footerTipContent}>
-            <View>
-              {showRiskConfirm ? (
-                <SignRiskWarning
-                  checked={riskChecked}
-                  style={styles.riskWarning}
-                  onToggle={() => setRiskChecked(checked => !checked)}
-                />
-              ) : null}
-              {canShowDirectSubmit ? (
-                <DirectSignBtn
-                  ref={directSignBtnRef}
-                  key={`${selectedBridgeQuote?.aggregator.id}-${selectedBridgeQuote?.bridge?.id}-${refreshId}`}
-                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-                  authTitle={t('page.whitelist.confirmPassword')}
-                  title={t('global.confirm')}
-                  loadingType="circle"
-                  onFinished={() => handleBridge({ ignoreGasFee: riskChecked })}
-                  disabled={
-                    btnDisabled ||
-                    !canDirectSign ||
-                    miniSignLoading ||
-                    riskConfirmDisabled
-                  }
-                  type={'primary'}
-                  syncUnlockTime
-                  onBeforeAuth={() => {
-                    clearExpiredTimer();
-                    formValuesRef.current.save(buildFormSnapshot());
-                  }}
-                  onCancel={() => {
-                    formValuesRef.current.clear();
-                    refresh(e => e + 1);
-                  }}
-                  onAuthModalDismiss={() => {
-                    formValuesRef.current.clear();
-                  }}
-                  account={currentAccount}
-                  showHardWalletProcess
-                  loading={miniSignLoading}
-                  showTextOnLoading
-                />
-              ) : (
-                <Button
-                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-                  onPress={handleConfirm}
-                  title={btnText}
-                  titleStyle={styles.btnTitle}
-                  loading={fetchingBridgeQuote}
-                  disabled={
-                    !isSupportedChain && externalDapps.length > 0
-                      ? riskConfirmDisabled
-                      : btnDisabled || riskConfirmDisabled
-                  }
-                />
-              )}
-            </View>
-          </Tip>
+          ]}>
+          <View onLayout={handleFooterLayout}>
+            <Tip
+              noPressable={!footerTipContent}
+              isVisible={footerTipContent ? undefined : false}
+              content={footerTipContent}>
+              <View>
+                {showRiskConfirm ? (
+                  <SignRiskWarning
+                    checked={riskChecked}
+                    style={styles.riskWarning}
+                    onToggle={() => setRiskChecked(checked => !checked)}
+                  />
+                ) : null}
+                {canShowDirectSubmit ? (
+                  <DirectSignBtn
+                    ref={directSignBtnRef}
+                    key={`${selectedBridgeQuote?.aggregator.id}-${selectedBridgeQuote?.bridge?.id}-${refreshId}`}
+                    height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                    authTitle={t('page.whitelist.confirmPassword')}
+                    title={t('global.confirm')}
+                    loadingType="circle"
+                    onFinished={() =>
+                      handleBridge({ ignoreGasFee: riskChecked })
+                    }
+                    disabled={
+                      btnDisabled ||
+                      !canDirectSign ||
+                      miniSignLoading ||
+                      riskConfirmDisabled
+                    }
+                    type={'primary'}
+                    syncUnlockTime
+                    onBeforeAuth={() => {
+                      clearExpiredTimer();
+                      formValuesRef.current.save(buildFormSnapshot());
+                    }}
+                    onCancel={() => {
+                      formValuesRef.current.clear();
+                      refresh(e => e + 1);
+                    }}
+                    onAuthModalDismiss={() => {
+                      formValuesRef.current.clear();
+                    }}
+                    account={currentAccount}
+                    showHardWalletProcess
+                    loading={miniSignLoading}
+                    showTextOnLoading
+                  />
+                ) : (
+                  <Button
+                    height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                    onPress={handleConfirm}
+                    title={btnText}
+                    titleStyle={styles.btnTitle}
+                    loading={fetchingBridgeQuote}
+                    disabled={
+                      !isSupportedChain && externalDapps.length > 0
+                        ? riskConfirmDisabled
+                        : btnDisabled || riskConfirmDisabled
+                    }
+                  />
+                )}
+              </View>
+            </Tip>
+          </View>
         </View>
 
         <TwpStepApproveModal
@@ -1944,9 +2070,9 @@ export const BridgeContent = ({
         />
 
         {fromToken && toToken && Number(amount) > 0 ? (
-          <QuoteList
-            list={quoteList}
-            loading={quoteLoading}
+          <BridgeQuoteListOverlay
+            active={sceneActive}
+            loading={quoteDisplayLoading}
             visible={quoteVisible}
             onClose={() => {
               setQuoteVisible(false);

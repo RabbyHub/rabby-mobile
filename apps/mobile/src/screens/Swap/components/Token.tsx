@@ -16,6 +16,8 @@ import {
 } from '@/utils/number';
 import BigNumber from 'bignumber.js';
 import { GestureSlider as Slider } from '@/components/GestureSlider';
+import type { GestureSliderRef } from '@/components/GestureSlider';
+import type { SharedValue } from 'react-native-reanimated';
 
 import type { TokenSelectInst } from './TokenSelect';
 import TokenSelect from './TokenSelect';
@@ -47,6 +49,11 @@ interface SwapTokenItemProps {
   label?: React.ReactNode;
   slider?: number;
   onChangeSlider?: (value: number, syncAmount?: boolean) => void;
+  /** Two-way control channel for store-owned amount state. */
+  controlValue?: SharedValue<number>;
+  sliderRef?: React.Ref<GestureSliderRef>;
+  onGestureStart?: () => void;
+  onGestureComplete?: (value: number) => void;
   excludeTokens?: string[];
   inSufficient?: boolean;
   valueLoading?: boolean;
@@ -66,6 +73,10 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
     chainId,
     slider,
     onChangeSlider,
+    controlValue,
+    sliderRef,
+    onGestureStart,
+    onGestureComplete,
     inSufficient,
     valueLoading,
     currentQuote,
@@ -126,23 +137,29 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
       // Move the bubble before the amount update. That update re-renders the
       // page, which is what left the bubble behind the finger.
       bubbleRef.current?.setProgress(_value);
-      onChangeSlider?.(_value);
+      if (!controlValue) {
+        onChangeSlider?.(_value);
+      }
     },
-    [onChangeSlider],
+    [controlValue, onChangeSlider],
   );
 
   const onSlidingStart = useCallback(() => {
     if (!disabled) {
       setIsSliderBubbleVisible(true);
+      onGestureStart?.();
     }
-  }, [disabled]);
+  }, [disabled, onGestureStart]);
 
   const onAfterChangeSlider = useCallback(
     (v: number) => {
-      onChangeSlider?.(v, true);
+      onGestureComplete?.(v);
+      if (!controlValue) {
+        onChangeSlider?.(v, true);
+      }
       setIsSliderBubbleVisible(false);
     },
-    [onChangeSlider],
+    [controlValue, onChangeSlider, onGestureComplete],
   );
 
   const prevToken = usePrevious(token);
@@ -195,7 +212,9 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
               collapsable={false}
               style={styles.slider}>
               <Slider
+                ref={sliderRef}
                 key={`${token?.id}-${token?.chain}`}
+                controlValue={controlValue}
                 allowTouchTrack={!disabled}
                 disabled={disabled}
                 interactive={sceneActive}
@@ -238,6 +257,7 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
             <TokenSelect
               ref={openTokenModalRef}
               deferModalMount
+              sceneActive={sceneActive}
               token={token}
               onTokenChange={onTokenSelect}
               accountInScreen={account}
@@ -248,6 +268,7 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
           ) : (
             <SwapToTokenSelect
               ref={openTokenModalRef}
+              sceneActive={sceneActive}
               token={token}
               onTokenChange={onTokenSelect}
               accountInScreen={account}

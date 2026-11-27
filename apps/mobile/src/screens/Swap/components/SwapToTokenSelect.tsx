@@ -47,6 +47,7 @@ import { Text } from '@/components/Typography';
 import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
 
 type SwapToTokenSelectProps = {
+  sceneActive?: boolean;
   token?: TokenItem;
   onTokenChange(token: TokenItem): void;
   accountInScreen?: Account | null;
@@ -64,6 +65,7 @@ export type TokenSelectInst = {
   openTokenModal: (conds?: Partial<QueryConditions>) => void;
 };
 const SwapToTokenSelect = ({
+  sceneActive = true,
   token,
   onTokenChange,
   accountInScreen,
@@ -180,7 +182,7 @@ const SwapToTokenSelect = ({
     isLoading: swapTokenListLoading,
     isSettled: isSwapTokenListSettled,
   } = useTokenListAsyncResource({
-    enabled: Boolean(currentAddress && tokenSelectorVisible),
+    enabled: Boolean(currentAddress && tokenSelectorVisible && sceneActive),
     requestKey: tokenListRequestKey,
     load: loadSwapTokenList,
   });
@@ -296,12 +298,20 @@ const SwapToTokenSelect = ({
 
   useFocusEffect(
     useCallback(() => {
+      if (!sceneActive || !tokenSelectorVisible) {
+        return;
+      }
       (async () => {
         if (currentAccount?.address) {
           fetchUserTokenSettings();
         }
       })();
-    }, [currentAccount?.address, fetchUserTokenSettings]),
+    }, [
+      currentAccount?.address,
+      fetchUserTokenSettings,
+      sceneActive,
+      tokenSelectorVisible,
+    ]),
   );
 
   const list = useMemo(() => {

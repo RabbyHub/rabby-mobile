@@ -48,6 +48,13 @@ import {
 } from '../Swap/hooks';
 import { refreshIdAtom, useRabbyFeeVisible } from '../Swap/hooks/atom';
 import { buildDexSwap, dexSwap } from '../Swap/hooks/swap';
+import {
+  getSwapQuoteListLength,
+  subscribeSwapQuoteLifecycle,
+  useSwapQuoteList,
+  useSwapQuoteLoading,
+  useSwapQuoteRefreshing,
+} from '../Swap/hooks/swapQuoteSession';
 import { Button } from '@/components2024/Button';
 import { SignRiskWarning } from '@/components/SignRiskWarning';
 import type { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
@@ -61,6 +68,8 @@ import {
   type SwapPendingTransactionsControllerRef,
 } from '../Swap/components/SwapPendingTransactionsController';
 import { SwapTokenItem } from '../Swap/components/Token';
+import { SwapAmountCard } from '../Swap/components/SwapAmountCard';
+import { swapFormStore } from './state/swapFormStores';
 import BridgeSwitchBtn from '../Bridge/components/BridgeSwitchBtn';
 import BridgeShowMore from '../Bridge/components/BridgeShowMore';
 import { useSwapRecentToTokens } from '../Swap/hooks/recent';
@@ -173,6 +182,53 @@ function SwapActivationDataProbe({
   return null;
 }
 
+type SwapQuotesSheetProps = Omit<
+  React.ComponentProps<typeof Quotes>,
+  'list' | 'loading'
+> & { active: boolean };
+
+/**
+ * Quote list consumers live below the swap screen so a quote batch only
+ * re-renders the panel that displays it, never the whole page.
+ */
+const SwapQuotesSheet = React.memo(function SwapQuotesSheet({
+  active,
+  ...props
+}: SwapQuotesSheetProps) {
+  const list = useSwapQuoteList(active);
+  const loading = useSwapQuoteLoading(active);
+  return <Quotes {...props} list={list} loading={loading} />;
+});
+
+type SwapQuoteListOverlayProps = Omit<
+  React.ComponentProps<typeof QuoteList>,
+  'list' | 'loading'
+> & { active: boolean };
+
+const SwapQuoteListOverlay = React.memo(function SwapQuoteListOverlay({
+  active,
+  ...props
+}: SwapQuoteListOverlayProps) {
+  const list = useSwapQuoteList(active);
+  const loading = useSwapQuoteLoading(active);
+  return <QuoteList {...props} list={list} loading={loading} />;
+});
+
+/**
+ * Submit button leaf: an in-place quote refresh must disable the button, but
+ * only this leaf should re-render when that flag flips.
+ */
+const SwapSubmitActionGate = React.memo(function SwapSubmitActionGate({
+  active,
+  render,
+}: {
+  active: boolean;
+  render: (quoteRefreshing: boolean) => React.ReactNode;
+}) {
+  const quoteRefreshing = useSwapQuoteRefreshing(active);
+  return <>{render(quoteRefreshing)}</>;
+});
+
 const Swap = ({
   isForMultipleAddress = false,
   disableHeaderRight = false,
@@ -203,6 +259,7 @@ const Swap = ({
   const { t } = useTranslation();
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { safeOffBottom } = useSafeSizes();
+
   const keyboardAwareRef = useRef<KeyboardAwareScrollView>(null);
   const pendingTransactionsRef =
     useRef<SwapPendingTransactionsControllerRef>(null);
@@ -251,9 +308,6 @@ const Swap = ({
     closeQuotesList,
     quotesListVisible,
     quoteLoading,
-    allQuotesLoaded,
-    quoteRequestId,
-    quoteList,
 
     currentProvider: activeProvider,
     setActiveProvider,
@@ -261,16 +315,14 @@ const Swap = ({
 
     gasList,
     passGasPrice,
-    slider,
-    onChangeSlider,
-    clearPendingSlider,
+    isMaxAmount,
+    resolveSliderAmount,
 
     lowCreditToken: _lowCreditToken,
     lowCreditVisible,
     setLowCreditToken,
     setLowCreditVisible,
 
-    swapUseSlider,
     clearExpiredTimer,
     setAutoQuoteRefreshPaused,
     setReloadTxRefreshPaused,
@@ -284,6 +336,7 @@ const Swap = ({
     active: sceneActive,
     tabSelected,
   });
+
   const quotePollingPauseReasonsRef = useRef<QuotePollingPauseReasonState>({});
   const setQuotePollingPauseReason = useCallback(
     (reason: string, paused: boolean) => {
@@ -507,7 +560,7 @@ const Swap = ({
   });
   const handlePayTokenChange = useMemoizedFn((token: TokenItem) => {
     // An explicit token selection invalidates a deferred slider gesture.
-    clearPendingSlider();
+    swapFormStore.getState().actions.clearPendingSlider();
     const chainItem = findChainByServerID(token.chain);
     const normalSetChainToken = () => {
       if (chainItem?.enum !== chain) {
@@ -552,9 +605,9 @@ const Swap = ({
   const buildFormSnapshot = useCallback(
     (): SwapFormSnapshot => ({
       amount: payAmount || '',
-      amountMode: slider === 100 ? 'max' : 'exact',
+      amountMode: isMaxAmount ? 'max' : 'exact',
     }),
-    [payAmount, slider],
+    [isMaxAmount, payAmount],
   );
 
   // ===== 签名与提交 =====
@@ -571,16 +624,17 @@ const Swap = ({
   const signatureGuardFlags = useSignatureStoreOf(
     instance,
     selectSignatureGuardFlags,
+    sceneActive,
   );
   const miniSignGasFeeTooHigh = isSignatureGasFeeTooHigh(signatureGuardFlags);
   const canDirectSign = canProcessSignature(signatureGuardFlags);
-  const miniSignGa = useMemo(
-    () => ({
-      category: 'Swap',
-      source: 'swap',
-      swapUseSlider,
-    }),
-    [swapUseSlider],
+  const getSwapUseSlider = useCallback(
+    () => swapFormStore.getState().source === 'slider',
+    [],
+  );
+  const miniSignGaBase = useMemo(
+    () => ({ category: 'Swap' as const, source: 'swap' as const }),
+    [],
   );
   const checkGasFeeTooHighRef = useRef(true);
   const onChangeCheckGasFeeTooHigh = useCallback((b: boolean) => {
@@ -647,7 +701,7 @@ const Swap = ({
               category: 'Swap',
               source: 'swap',
               trigger: 'home',
-              swapUseSlider,
+              swapUseSlider: getSwapUseSlider(),
             },
           },
           addSwapTxHistoryObj,
@@ -775,7 +829,7 @@ const Swap = ({
               category: 'Swap',
               source: 'swap',
               trigger: 'home',
-              swapUseSlider,
+              swapUseSlider: getSwapUseSlider(),
             },
           },
         );
@@ -813,35 +867,35 @@ const Swap = ({
     finalBuildKey: '',
     manualBuildKey: '',
   });
-  const quoteRequestIdRef = useRef(quoteRequestId);
-  const allQuotesLoadedRef = useRef(allQuotesLoaded);
+  const quoteRequestIdRef = useRef(0);
+  const allQuotesLoadedRef = useRef(false);
 
+  // Quote lifecycle is a module-level event stream instead of React state, so
+  // starting/completing a quote cycle does not re-render the swap screen.
   useEffect(() => {
-    quoteRequestIdRef.current = quoteRequestId;
-  }, [quoteRequestId]);
-
-  useEffect(() => {
-    allQuotesLoadedRef.current = allQuotesLoaded;
-  }, [allQuotesLoaded]);
-
-  useEffect(() => {
-    quoteRequestIdRef.current = quoteRequestId;
-    swapAutoPreExecRef.current = {
-      requestId: quoteRequestId,
-      earlyBuildKey: '',
-      finalBuildKey: '',
-      manualBuildKey: '',
-    };
-    builtSwapTxsKeyRef.current = '';
-    prefetchedSwapTxsKeyRef.current = '';
-    mutateTxs([]);
-    runBuildSwapTxsRef.current = undefined;
-    runBuildSwapTxsKeyRef.current = '';
-    if (buildSwapTxsTimerRef.current) {
-      clearTimeout(buildSwapTxsTimerRef.current);
-      buildSwapTxsTimerRef.current = null;
-    }
-  }, [mutateTxs, quoteRequestId]);
+    return subscribeSwapQuoteLifecycle(event => {
+      if (event.type === 'cycle-start') {
+        quoteRequestIdRef.current = event.requestId;
+        allQuotesLoadedRef.current = false;
+        swapAutoPreExecRef.current = {
+          requestId: event.requestId,
+          earlyBuildKey: '',
+          finalBuildKey: '',
+          manualBuildKey: '',
+        };
+        builtSwapTxsKeyRef.current = '';
+        prefetchedSwapTxsKeyRef.current = '';
+        runBuildSwapTxsRef.current = undefined;
+        runBuildSwapTxsKeyRef.current = '';
+        if (buildSwapTxsTimerRef.current) {
+          clearTimeout(buildSwapTxsTimerRef.current);
+          buildSwapTxsTimerRef.current = null;
+        }
+      } else if (event.type === 'cycle-finished') {
+        allQuotesLoadedRef.current = true;
+      }
+    });
+  }, [mutateTxs]);
 
   const runBuildSwapTxsForKey = useMemoizedFn((buildKey: string) => {
     const buildPromise = runBuildSwapTxs(buildKey);
@@ -1137,7 +1191,7 @@ const Swap = ({
 
         const res = await openDirect({
           txs: txsForSigning,
-          ga: miniSignGa,
+          ga: { ...miniSignGaBase, swapUseSlider: getSwapUseSlider() },
           checkGasFeeTooHigh: checkGasFeeTooHighRef.current,
           ignoreGasFeeTooHigh: p?.ignoreGasFee || false,
         });
@@ -1223,7 +1277,7 @@ const Swap = ({
     inSufficient,
     slippageChanged,
     activeProvider,
-    quoteListLength: quoteList.length,
+    getQuoteListLength: getSwapQuoteListLength,
     swapBtnDisabled,
     canShowDirectSubmit,
     shouldTwoStepSwap,
@@ -1286,10 +1340,9 @@ const Swap = ({
       onGasSettingsOpenChange={setGasSettingsQuoteRefreshPaused}
       renderSwapQuotes={onSelect =>
         userAddress && payToken && receiveToken && chain ? (
-          <Quotes
-            list={quoteList}
+          <SwapQuotesSheet
+            active={sceneActive}
             activeName={activeProvider?.name}
-            loading={quoteLoading}
             visible
             onClose={() => undefined}
             userAddress={userAddress}
@@ -1352,7 +1405,7 @@ const Swap = ({
     onChangeCheckGasFeeTooHigh(true);
     prefetchMiniSigner({
       txs: currentTxs,
-      ga: miniSignGa,
+      ga: { ...miniSignGaBase, swapUseSlider: getSwapUseSlider() },
       checkGasFeeTooHigh: true,
       synGasHeaderInfo: true,
     }).catch(error => {
@@ -1369,9 +1422,10 @@ const Swap = ({
     canShowDirectSubmit,
     currentAccount?.address,
     currentTxs,
+    getSwapUseSlider,
     prefetchMiniSigner,
     closeMiniSigner,
-    miniSignGa,
+    miniSignGaBase,
     shouldPauseMiniSignerEffects,
   ]);
 
@@ -1413,13 +1467,15 @@ const Swap = ({
     }
 
     const tracker = swapAutoPreExecRef.current;
-    if (tracker.requestId !== quoteRequestId) {
-      tracker.requestId = quoteRequestId;
+    const currentQuoteRequestId = quoteRequestIdRef.current;
+    if (tracker.requestId !== currentQuoteRequestId) {
+      tracker.requestId = currentQuoteRequestId;
       tracker.earlyBuildKey = '';
       tracker.finalBuildKey = '';
       tracker.manualBuildKey = '';
     }
 
+    const allQuotesLoaded = allQuotesLoadedRef.current;
     const phase = allQuotesLoaded ? 'final' : 'early';
     if (activeProviderIsManualQuote) {
       if (tracker.manualBuildKey === activeProviderBuildKey) {
@@ -1447,7 +1503,7 @@ const Swap = ({
     runBuildSwapTxsKeyRef.current = '';
 
     const scheduledBuildKey = activeProviderBuildKey;
-    const scheduledQuoteRequestId = quoteRequestId;
+    const scheduledQuoteRequestId = currentQuoteRequestId;
     const scheduledIsManualQuote = activeProviderIsManualQuote;
     buildSwapTxsTimerRef.current = setTimeout(() => {
       buildSwapTxsTimerRef.current = null;
@@ -1488,10 +1544,8 @@ const Swap = ({
     activeProviderBuildKey,
     activeProviderCanAutoPreExec,
     activeProviderIsManualQuote,
-    allQuotesLoaded,
     canShowDirectSubmit,
     mutateTxs,
-    quoteRequestId,
     runBuildSwapTxsForKey,
     sceneActive,
     shouldPauseMiniSignerEffects,
@@ -1647,19 +1701,15 @@ const Swap = ({
             </View>
             <View style={styles.swapTokenContainer}>
               <View style={styles.swapTokenCard}>
-                <SwapTokenItem
+                <SwapAmountCard
                   disabled={!isSupportedChain}
                   sceneActive={sceneActive}
-                  inSufficient={inSufficient}
-                  slider={slider}
-                  onChangeSlider={onChangeSlider}
-                  value={payAmount}
                   onValueChange={handlePayAmountChange}
+                  resolveSliderAmount={resolveSliderAmount}
                   token={payToken}
                   onTokenChange={handlePayTokenChange}
                   account={currentAccount}
                   chainId={chainServerId}
-                  type={'from'}
                   excludeTokens={payTokenExcludes}
                 />
               </View>
@@ -1768,74 +1818,84 @@ const Swap = ({
                   onToggle={() => setRiskChecked(checked => !checked)}
                 />
               ) : null}
-              {canShowDirectSubmit ? (
-                <DirectSignBtn
-                  ref={directSignBtnRef}
-                  // refresh  risk check
-                  key={`${refreshId}-${chain}-${payToken?.id}-${receiveToken?.id}-${payAmount}-${activeProvider?.quote?.tx?.data}-${isApprove}`}
-                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-                  loading={miniSignLoading}
-                  loadingType="circle"
-                  showTextOnLoading
-                  authTitle={t('page.whitelist.confirmPassword')}
-                  title={btnText}
-                  onFinished={() => handleSwap({ ignoreGasFee: riskChecked })}
-                  disabled={
-                    swapBtnDisabled ||
-                    !canDirectSign ||
-                    miniSignLoading ||
-                    approveTxPending ||
-                    riskConfirmDisabled
-                  }
-                  type={'primary'}
-                  syncUnlockTime
-                  onBeforeAuth={() => {
-                    clearExpiredTimer();
-                    formValuesRef.current.save(buildFormSnapshot());
-                  }}
-                  onCancel={() => {
-                    formValuesRef.current.clear();
-                    refresh(e => e + 1);
-                  }}
-                  onAuthModalDismiss={() => {
-                    formValuesRef.current.clear();
-                  }}
-                  account={currentAccount}
-                  showHardWalletProcess
-                />
-              ) : (
-                <Button
-                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-                  onPress={() => {
-                    if (!isSupportedChain && !externalDapps.length) {
-                      return;
-                    }
-                    if (!isSupportedChain && externalDapps.length > 0) {
-                      setSwapDappOpen(true);
-                      return;
-                    }
-                    if (!activeProvider || slippageChanged) {
-                      refresh(e => e + 1);
+              <SwapSubmitActionGate
+                active={sceneActive}
+                render={quoteRefreshing =>
+                  canShowDirectSubmit ? (
+                    <DirectSignBtn
+                      ref={directSignBtnRef}
+                      // refresh  risk check
+                      key={`${refreshId}-${chain}-${payToken?.id}-${receiveToken?.id}-${payAmount}-${activeProvider?.quote?.tx?.data}-${isApprove}`}
+                      height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                      loading={miniSignLoading}
+                      loadingType="circle"
+                      showTextOnLoading
+                      authTitle={t('page.whitelist.confirmPassword')}
+                      title={btnText}
+                      onFinished={() =>
+                        handleSwap({ ignoreGasFee: riskChecked })
+                      }
+                      disabled={
+                        swapBtnDisabled ||
+                        quoteRefreshing ||
+                        !canDirectSign ||
+                        miniSignLoading ||
+                        approveTxPending ||
+                        riskConfirmDisabled
+                      }
+                      type={'primary'}
+                      syncUnlockTime
+                      onBeforeAuth={() => {
+                        clearExpiredTimer();
+                        formValuesRef.current.save(buildFormSnapshot());
+                      }}
+                      onCancel={() => {
+                        formValuesRef.current.clear();
+                        refresh(e => e + 1);
+                      }}
+                      onAuthModalDismiss={() => {
+                        formValuesRef.current.clear();
+                      }}
+                      account={currentAccount}
+                      showHardWalletProcess
+                    />
+                  ) : (
+                    <Button
+                      height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                      onPress={() => {
+                        if (!isSupportedChain && !externalDapps.length) {
+                          return;
+                        }
+                        if (!isSupportedChain && externalDapps.length > 0) {
+                          setSwapDappOpen(true);
+                          return;
+                        }
+                        if (!activeProvider || slippageChanged) {
+                          refresh(e => e + 1);
 
-                      return;
-                    }
-                    if (activeProvider?.shouldTwoStepApprove) {
-                      setTwoStepApproveModalVisible(true);
-                      return;
-                    }
-                    // gotoSwap();
-                    handleSwap({ ignoreGasFee: riskChecked });
-                  }}
-                  title={btnText}
-                  disabled={
-                    isSupportedChain
-                      ? swapBtnDisabled || riskConfirmDisabled
-                      : externalDapps.length > 0
-                      ? riskConfirmDisabled
-                      : true
-                  }
-                />
-              )}
+                          return;
+                        }
+                        if (activeProvider?.shouldTwoStepApprove) {
+                          setTwoStepApproveModalVisible(true);
+                          return;
+                        }
+                        // gotoSwap();
+                        handleSwap({ ignoreGasFee: riskChecked });
+                      }}
+                      title={btnText}
+                      disabled={
+                        isSupportedChain
+                          ? swapBtnDisabled ||
+                            riskConfirmDisabled ||
+                            quoteRefreshing
+                          : externalDapps.length > 0
+                          ? riskConfirmDisabled || quoteRefreshing
+                          : true
+                      }
+                    />
+                  )
+                }
+              />
             </View>
           </Tip>
         </View>
@@ -1848,9 +1908,8 @@ const Swap = ({
         />
 
         {userAddress && payToken && receiveToken && chain ? (
-          <QuoteList
-            list={quoteList}
-            loading={quoteLoading}
+          <SwapQuoteListOverlay
+            active={sceneActive}
             visible={quotesListVisible}
             onClose={closeQuotesList}
             userAddress={userAddress}

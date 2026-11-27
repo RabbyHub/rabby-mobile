@@ -1,15 +1,16 @@
-import { useInfiniteScroll, useMemoizedFn, useRequest } from 'ahooks';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useInfiniteScroll } from 'ahooks';
+import React, { useCallback, useEffect, useState } from 'react';
 import { uniqBy } from 'lodash';
 import { openapi } from '@/core/request';
 import useAsync from 'react-use/lib/useAsync';
-import { atom, useAtom, useSetAtom } from 'jotai';
+import { atom, getDefaultStore, useSetAtom } from 'jotai';
+import { useScopedActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { zCreate } from '@/core/utils/reexports';
 import type { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
 import { bridgeServiceApi } from '@/core/serviceApi/bridge';
 import { getTransactionHistoryRecentPendingSnapshot } from '@/core/serviceApi/transactionHistory';
 import type { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
-import { useTransactionHistoryServiceReady } from '@/core/serviceApi/transactionHistoryHooks';
 
 const pendingCountAtom = atom(0);
 const bridgeTxDataPendingAtom = atom<BridgeHistory | null>(null);
@@ -43,148 +44,153 @@ export const fetchLocalBridgePendingTx = (address: string) => {
   ) as BridgeTxHistoryItem;
 };
 
+type BridgePendingPollerSession = {
+  address: string;
+  remoteTimer?: ReturnType<typeof setTimeout>;
+};
+
+const bridgePendingPollerStore = zCreate<{
+  localPending: BridgeTxHistoryItem | null;
+}>(() => ({ localPending: null }));
+
+const bridgeJotaiStore = getDefaultStore();
+
+const sameBridgePending = (
+  left: BridgeTxHistoryItem | null,
+  right: BridgeTxHistoryItem | null,
+) => {
+  if (left === right) return true;
+  if (!left || !right) return false;
+  return (
+    left.hash === right.hash &&
+    left.status === right.status &&
+    (left as { updated_at?: number }).updated_at ===
+      (right as { updated_at?: number }).updated_at &&
+    (left as { modified_at?: number }).modified_at ===
+      (right as { modified_at?: number }).modified_at
+  );
+};
+
+function setBridgePendingLocal(next: BridgeTxHistoryItem | null) {
+  const current = bridgePendingPollerStore.getState().localPending;
+  if (sameBridgePending(current, next)) return;
+  bridgePendingPollerStore.setState({ localPending: next });
+}
+
+let bridgePendingPoller: BridgePendingPollerSession | null = null;
+
+async function pollBridgePendingRemote(session: BridgePendingPollerSession) {
+  const data = await openapi.getBridgeHistoryList({
+    user_addr: session.address,
+    start: 0,
+    limit: 10,
+    is_all: true,
+  });
+  if (bridgePendingPoller !== session) return;
+
+  const openModalTs = await bridgeServiceApi.getOpenBridgeHistoryTs(
+    session.address,
+  );
+  if (bridgePendingPoller !== session) return;
+  const ts = data?.history_list
+    ?.filter(item => item?.status !== 'pending')
+    .sort((a, b) => b.create_at - a.create_at);
+  const latestCreateAt = ts?.[0]?.create_at;
+  if (openModalTs) {
+    bridgeJotaiStore.set(
+      bridgeHistoryRedDotAtom,
+      latestCreateAt != null && latestCreateAt > openModalTs / 1000,
+    );
+  } else {
+    await bridgeServiceApi.setOpenBridgeHistoryTs(session.address);
+  }
+  bridgeJotaiStore.set(
+    pendingCountAtom,
+    data?.history_list?.filter(item => item?.status === 'pending')?.length || 0,
+  );
+}
+
+/** Module-level poller: periodic requests must not live in a React component. */
+export function startBridgePendingPolling(address: string, timer: number) {
+  if (bridgePendingPoller?.address === address) return;
+  stopBridgePendingPolling();
+  const session: BridgePendingPollerSession = { address };
+  bridgePendingPoller = session;
+  bridgeJotaiStore.set(bridgeTxDataPendingAtom, null);
+  setBridgePendingLocal(fetchLocalBridgePendingTx(address));
+
+  const runRemote = async () => {
+    if (bridgePendingPoller !== session) return;
+    try {
+      await pollBridgePendingRemote(session);
+    } catch {
+      // keep the previous snapshot; the next tick retries
+    }
+    if (bridgePendingPoller === session) {
+      session.remoteTimer = setTimeout(runRemote, timer);
+    }
+  };
+  void runRemote();
+}
+
+export function stopBridgePendingPolling() {
+  if (!bridgePendingPoller) return;
+  clearTimeout(bridgePendingPoller.remoteTimer);
+  bridgePendingPoller = null;
+}
+
+export function refreshBridgePendingRemote() {
+  if (!bridgePendingPoller) return;
+  void pollBridgePendingRemote(bridgePendingPoller).catch(() => undefined);
+}
+
+export function refreshBridgePendingLocal() {
+  if (!bridgePendingPoller) return;
+  setBridgePendingLocal(fetchLocalBridgePendingTx(bridgePendingPoller.address));
+}
+
+export function clearBridgePendingLocal() {
+  setBridgePendingLocal(null);
+}
+
 export const usePollBridgePendingNumber = (timer = 10000, enabled = true) => {
-  const transactionHistoryReady = useTransactionHistoryServiceReady();
-  const [, setCount] = useAtom(pendingCountAtom);
-  const [, setPendingTxData] = useAtom(bridgeTxDataPendingAtom);
-  const [localPendingTxData, setLocalPendingTxData] =
-    useState<BridgeTxHistoryItem | null>(null);
-
-  const [, setBridgeHistoryRedDot] = useAtom(bridgeHistoryRedDotAtom);
-
   const { finalSceneCurrentAccount: account } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
-
-  const timerRef = useRef<NodeJS.Timeout>(undefined);
-  const clearTimer = useMemoizedFn(() => {
-    timerRef.current && clearTimeout(timerRef.current);
-  });
+  const address = account?.address;
 
   useEffect(() => {
-    if (account?.address) {
-      setPendingTxData(null);
-      clearTimer();
+    if (!enabled || !address) {
+      stopBridgePendingPolling();
+      return;
     }
-  }, [account?.address, clearTimer, setPendingTxData]);
+    startBridgePendingPolling(address, timer);
+    return () => {
+      stopBridgePendingPolling();
+    };
+  }, [address, enabled, timer]);
 
-  const runFetchLocalPendingTx = useCallback(() => {
-    if (enabled && transactionHistoryReady && account?.address) {
-      const resTx = fetchLocalBridgePendingTx(account.address);
-      setLocalPendingTxData(resTx);
-    }
-  }, [
-    account?.address,
+  const localPendingTxData = useScopedActivityStore(
     enabled,
-    setLocalPendingTxData,
-    transactionHistoryReady,
-  ]);
-
-  useEffect(() => {
-    runFetchLocalPendingTx();
-  }, [runFetchLocalPendingTx]);
-
-  const res = useRequest(
-    async () => {
-      if (!enabled) {
-        return 0;
-      }
-      if (!account?.address) {
-        return 0;
-      }
-
-      const data = await openapi.getBridgeHistoryList({
-        user_addr: account!.address,
-        start: 0,
-        limit: 10,
-        is_all: true,
-      });
-
-      const openModalTs = await bridgeServiceApi.getOpenBridgeHistoryTs(
-        account.address,
-      );
-      const ts = data?.history_list
-        ?.filter(item => item?.status !== 'pending')
-        .sort((a, b) => b.create_at - a.create_at);
-      const latestCreateAt = ts?.[0]?.create_at;
-      if (openModalTs) {
-        setBridgeHistoryRedDot(
-          latestCreateAt != null && latestCreateAt > openModalTs / 1000,
-        );
-      } else {
-        await bridgeServiceApi.setOpenBridgeHistoryTs(account.address);
-      }
-
-      // const pendingTx = data?.history_list
-      //   ?.filter(item => item?.status === 'pending')
-      //   .sort((a, b) => b.create_at - a.create_at);
-
-      return (
-        data?.history_list?.filter(item => item?.status === 'pending')
-          ?.length || 0
-      );
-    },
-    {
-      refreshDeps: [account?.address, enabled],
-      onSuccess(v) {
-        setCount(v);
-      },
-    },
+    bridgePendingPollerStore,
+    state => state.localPending,
+    Object.is,
+    { storeLabel: 'bridge-pending' },
   );
-
-  const { loading, error, data: value, runAsync } = res;
-
-  useEffect(() => {
-    if (enabled && ((!loading && value !== undefined) || error)) {
-      clearTimer();
-      timerRef.current = setTimeout(() => {
-        runAsync();
-      }, timer);
-    } else if (!enabled) {
-      clearTimer();
-    }
-
-    return clearTimer;
-  }, [enabled, loading, value, error, timer, runAsync, clearTimer]);
-
-  useEffect(() => {
-    return clearTimer;
-  }, [clearTimer]);
-
-  const clearLocalPendingTxData = () => {
-    setLocalPendingTxData(null);
-    // setPendingTxData(null);
-  };
-
+  const setBridgeHistoryRedDot = useSetAtom(bridgeHistoryRedDotAtom);
   const clearBridgeHistoryRedDot = useCallback(async () => {
     setBridgeHistoryRedDot(false);
-    const currentTs = await bridgeServiceApi.getOpenBridgeHistoryTs(
-      account?.address!,
-    );
-    await bridgeServiceApi.setOpenBridgeHistoryTs(account?.address!);
+    if (!address) return 0;
+    const currentTs = await bridgeServiceApi.getOpenBridgeHistoryTs(address);
+    await bridgeServiceApi.setOpenBridgeHistoryTs(address);
     return currentTs;
-  }, [setBridgeHistoryRedDot, account?.address]);
-
-  // useInterval(() => {
-  //   if (localPendingTxData) {
-  //     const refreshTx = fetchRefreshLocalData(localPendingTxData);
-  //     if (refreshTx) {
-  //       if (refreshTx.maxGasTx.action?.actionData?.cancelTx) {
-  //         setLocalPendingTxData(null);
-  //       } else {
-  //         setLocalPendingTxData(refreshTx);
-  //         setBridgeHistoryRedDot(true);
-  //       }
-  //     }
-  //   }
-  // }, 1000);
+  }, [address, setBridgeHistoryRedDot]);
 
   return {
-    runAsync,
+    runAsync: refreshBridgePendingRemote,
     localPendingTxData,
-    // pendingTxData,
-    clearLocalPendingTxData,
-    runFetchLocalPendingTx,
+    clearLocalPendingTxData: clearBridgePendingLocal,
+    runFetchLocalPendingTx: refreshBridgePendingLocal,
     setBridgeHistoryRedDot,
     clearBridgeHistoryRedDot,
   };

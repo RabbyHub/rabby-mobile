@@ -145,6 +145,37 @@ For Home, audit the overview and all asset tabs. Position cards, balances,
 24-hour changes, badges, selectors, and hidden tab content can each retain a
 broad subscription even after the main list is optimized.
 
+#### Hook-Level Visibility Scope
+
+An activity scope normally comes from an ancestor boundary. When the owner
+itself has another visibility signal — for example a mounted sheet that is
+closed while its scene stays active — the effective condition is
+`sceneVisible && ownVisible`, which no single ancestor boundary expresses.
+
+For that case use `useScopedActivityStore(active, store, selector)` from
+`@/hooks/storeActivity/useActivityStore`. It creates a hook-local activity
+scope around that one subscription:
+
+- inactive: unsubscribe from the source store and keep the last snapshot, so
+  long lists keep rendering the previous rows instead of being rewritten to an
+  empty state;
+- active again: compare with the source once and publish the newest snapshot
+  once (catch-up), never replaying intermediate hidden updates;
+- it composes with the scene boundary: `active = sceneActive && ownVisible`.
+
+Do not emulate this by returning an empty value from the selector while
+inactive (`active ? data : EMPTY`). That re-renders long lists twice and loses
+the data the list was already showing. Empty business results and visibility
+gating are different concerns.
+
+`useScopedActivityStore` requires a `ReadonlyStoreApi` with `getState`,
+`getInitialState` and `subscribe`. The repository `BaseStore` subclasses (for
+example `tokenEntityResourceStore`) only expose `getState`/`subscribe`; wrap
+them once at module scope and pass that stable adapter, never a per-render
+object.
+
+Keep this section in sync when the activity mechanism changes.
+
 #### Bottom Sheet And Render-Gate Boundaries
 
 For a mounted Bottom Sheet or Portal subtree, default to pausing global Store

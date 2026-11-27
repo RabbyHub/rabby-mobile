@@ -68,6 +68,8 @@ type SignMainnetGasSelectorHeaderProps = GasSelectorHeaderProps & {
   swapGasQuoteVisible?: boolean;
   onSwapGasQuoteVisibleChange?: (visible: boolean) => void;
   hideGasLevelInSummary?: boolean;
+  /** Breathe only the gas value (label untouched) when the source changes. */
+  valueFluxEnabled?: boolean;
   rightPrefix?: React.ReactNode;
 };
 
@@ -122,6 +124,7 @@ export const SignMainnetHeaderContent = ({
   swapGasQuoteVisible,
   onSwapGasQuoteVisibleChange,
   hideGasLevelInSummary,
+  valueFluxEnabled,
   rightPrefix,
   gasFeeLabel,
 }: {
@@ -175,6 +178,8 @@ export const SignMainnetHeaderContent = ({
   swapGasQuoteVisible?: boolean;
   onSwapGasQuoteVisibleChange?: (visible: boolean) => void;
   hideGasLevelInSummary?: boolean;
+  /** Breathe only the gas value (label untouched) when the source changes. */
+  valueFluxEnabled?: boolean;
   rightPrefix?: React.ReactNode;
   gasFeeLabel?: React.ReactNode;
 }) => {
@@ -668,6 +673,7 @@ export const SignMainnetHeaderContent = ({
         labelPrefix={gasMethodShortcut}
         levelText={t(getGasLevelI18nKey(selectedGas?.level || 'normal'))}
         hideGasLevelInSummary={hideGasLevelInSummary}
+        valueFluxEnabled={valueFluxEnabled}
         rightPrefix={rightPrefix}
         valueText={summary.primaryText}
         textColor={textColor}

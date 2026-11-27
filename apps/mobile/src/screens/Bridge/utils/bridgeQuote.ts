@@ -66,6 +66,7 @@ export const isSameBridgeQuote = (
 export const getBestBridgeQuote = (
   quotes: SelectedBridgeQuote[],
   receiveToken: TokenItem,
+  options?: { includeApprovalError?: boolean },
 ) => {
   return quotes.reduce<
     | {
@@ -75,6 +76,11 @@ export const getBestBridgeQuote = (
     | undefined
   >((best, quote) => {
     if (quote.loading) {
+      return best;
+    }
+    // A quote whose approve check failed is unusable by default; the mock
+    // switch `keepFailedQuote` opts in to keep it selectable for the demo.
+    if (quote.approvalError && !options?.includeApprovalError) {
       return best;
     }
 
