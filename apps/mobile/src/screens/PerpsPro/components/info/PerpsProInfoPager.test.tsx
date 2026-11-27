@@ -483,6 +483,10 @@ describe('PerpsProInfoPager', () => {
       includeHiddenElements: true,
     });
     expect(openOrders.props.StickyHeaderComponent).toBeUndefined();
+    // Android forces clipping off once a sticky row exists; a stable value
+    // keeps cells inserted by that same commit from staying detached.
+    expect(positions.props.removeClippedSubviews).toBe(false);
+    expect(openOrders.props.removeClippedSubviews).toBe(false);
   });
 
   it('keeps current and adjacent virtual lists mounted for swipe preview', () => {

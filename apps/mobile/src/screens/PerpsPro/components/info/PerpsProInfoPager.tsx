@@ -1342,6 +1342,12 @@ const PerpsProInfoPagerInner = <Row,>(
                       : undefined
                   }
                   onScrollEndDrag={event => recordScrollEnd(tab, event)}
+                  // Android ScrollView turns clipping off whenever a sticky row
+                  // exists. When rows gain the controls row, Fabric inserts the
+                  // new cells while clipping is still on (unlaid, so clipped)
+                  // and only then turns it off, which never re-attaches them.
+                  // Keep clipping off so the sticky toggle cannot flip it.
+                  removeClippedSubviews={false}
                   ref={list => {
                     listRefs.current[tab] =
                       list as unknown as PerpsProInfoListHandle;
