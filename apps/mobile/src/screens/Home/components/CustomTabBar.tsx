@@ -112,29 +112,42 @@ const Indicator = ({
     right: 0,
   };
 
-  // Shuttle, not a bar crossing the gap: each slot clips its own plate. The
-  // left plate slides out to the right while the right plate slides in from the
-  // left, so the black fill is only ever visible inside a slot - the 12pt gap
-  // between them never shows the indicator travelling across it.
+  // One bar that travels from slot to slot, like the build before the plate
+  // rework: on Token <-> DeFi it visibly crosses the 12pt gap between the two
+  // rails instead of leaving one slot and growing out of the other one.
+  // The offset is quantised to whole device pixels, otherwise a translated bar
+  // re-rasterises at every fractional step and shimmers on Android.
   const slotWidth = itemsLayout[0]?.width ?? 0;
+  const mirrorStyle = React.useMemo(() => ({ width: slotWidth }), [slotWidth]);
   const snapPixels = (value: number) => {
     'worklet';
     return Math.round(value * STRIP_PIXEL) / STRIP_PIXEL;
   };
-  const leftPlateStyle = useAnimatedStyle(() => {
-    const p = Math.min(Math.max(indexDecimal.value, 0), 1);
+  const movingBarStyle = useAnimatedStyle(() => {
+    const indices = itemsLayout.map((_, i) => i);
+    const translateX =
+      itemsLayout.length > 1
+        ? interpolate(
+            indexDecimal.value,
+            indices,
+            itemsLayout.map(v => v.x),
+          )
+        : itemsLayout[0]?.x ?? 0;
+    const width =
+      itemsLayout.length > 1
+        ? interpolate(
+            indexDecimal.value,
+            indices,
+            itemsLayout.map(v => v.width),
+          )
+        : itemsLayout[0]?.width ?? 0;
+
     return {
-      transform: [{ translateX: snapPixels(p * slotWidth) }],
+      transform: [{ translateX: snapPixels(translateX) }],
+      width,
       opacity: withTiming(opacity.value),
     };
-  }, [indexDecimal, slotWidth]);
-  const rightPlateStyle = useAnimatedStyle(() => {
-    const p = Math.min(Math.max(indexDecimal.value, 0), 1);
-    return {
-      transform: [{ translateX: snapPixels((p - 1) * slotWidth) }],
-      opacity: withTiming(opacity.value),
-    };
-  }, [indexDecimal, slotWidth]);
+  }, [indexDecimal, itemsLayout]);
 
   React.useEffect(() => {
     if (fadeIn) {
@@ -144,12 +157,7 @@ const Indicator = ({
 
   return (
     <Animated.View style={[styles.indicatorContainer, animatedStyle]}>
-      <View style={[styles.slotClip, styles.slotClipLeft]}>
-        <Animated.View style={[styles.slotPlate, leftPlateStyle]} />
-      </View>
-      <View style={[styles.slotClip, styles.slotClipRight]}>
-        <Animated.View style={[styles.slotPlate, rightPlateStyle]} />
-      </View>
+      <Animated.View style={[movingBarStyle, styles.indicator]} />
       <Animated.View
         style={[rStyles.leftBackground /* , styles.leftBackground */]}
       />
@@ -162,13 +170,23 @@ const Indicator = ({
         style={[rStyles.rightBackground /* , styles.rightBackground */]}
       />
       <Pressable
-        ref={secondaryIndicatorViewRef}
         style={styles.rightPressable}
         onPress={onRightPress}
         hitSlop={rightHitSlop}
+      />
+      {/*
+        Invisible mirror of the drawn bar, used only for measurement: it has the
+        bar's exact box (not the 22pt touch area), so consumers can align a
+        highlight to it without guessing offsets.
+      */}
+      <View
+        ref={secondaryIndicatorViewRef}
+        collapsable={false}
+        pointerEvents="none"
         onLayout={() => {
           handleMeasureSecondaryIndicator?.();
         }}
+        style={[styles.indicatorBarMirror, mirrorStyle]}
       />
     </Animated.View>
   );
@@ -256,32 +274,6 @@ const indicatorStyles = createGetStyles2024(
         top: indicatorMarginTop + indicatorHitPaddingY,
         zIndex: 99,
       },
-      slotClip: {
-        position: 'absolute',
-        top: indicatorMarginTop + indicatorHitPaddingY,
-        width: indicatorWidth,
-        height: indicatorHeight,
-        borderRadius: 12,
-        overflow: 'hidden',
-        zIndex: 99,
-      },
-      slotClipLeft: {
-        left: 20,
-      },
-      slotClipRight: {
-        right: 20,
-      },
-      slotPlate: {
-        position: 'absolute',
-        left: 0,
-        top: 0,
-        width: '100%',
-        height: '100%',
-        borderRadius: 12,
-        backgroundColor: isLight
-          ? 'rgba(0, 0, 0, 1)'
-          : colors2024['brand-default'],
-      },
       indicatorContainer: {
         position: 'relative',
         paddingTop: indicatorMarginTop,
@@ -291,6 +283,15 @@ const indicatorStyles = createGetStyles2024(
       },
       indicatorBgBox: {
         backgroundColor: colors2024['neutral-bg-1'],
+      },
+      // Same box as the drawn bar: the container insets it 20pt from the right
+      // edge, and the bar itself is not offset by the pressable's hit padding.
+      indicatorBarMirror: {
+        position: 'absolute',
+        right: 20,
+        top: indicatorMarginTop + indicatorHitPaddingY,
+        height: indicatorHeight,
+        opacity: 0,
       },
       leftPressable: {
         position: 'absolute',
