@@ -121,6 +121,29 @@ async function importAccountsFromFile(file?: string): Promise<BizMockResult> {
     };
   }
 
+  // A duplicate import does not change the current account, and a previous
+  // suite may have selected a watch account. Select the imported address so
+  // follow-up steps run against the account that was just seeded.
+  const importedAddress = String(result.addresses?.[0] || '').toLowerCase();
+  if (importedAddress) {
+    try {
+      const [{ getAllAccountsToDisplay }, { setCurrentAccount }] =
+        await Promise.all([
+          import('@/core/apis/account'),
+          import('@/core/serviceApi/preference'),
+        ]);
+      const target = (await getAllAccountsToDisplay()).find(
+        account =>
+          String(account.address || '').toLowerCase() === importedAddress,
+      );
+      if (target) {
+        await setCurrentAccount(target as any);
+      }
+    } catch {
+      // The account is imported; selection is a best-effort follow-up.
+    }
+  }
+
   return {
     ok: true,
     action: 'account.importFromFile',
