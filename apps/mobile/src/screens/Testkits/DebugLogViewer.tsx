@@ -41,6 +41,7 @@ import {
   useAppLogFileSwitch,
 } from '@/utils/logging/settings';
 import { APP_LOG_ROOT_PATH, logger } from '@/utils/logger';
+import { prepareLatestAppLogArchiveForSharing } from '@/utils/logging/archiveShare';
 import { createGetStyles2024 } from '@/utils/styles';
 
 type LoggerSnapshot = ReturnType<typeof logger.getState>;
@@ -248,28 +249,6 @@ async function ensureShareTempDir() {
   });
 
   return shareTempDir;
-}
-
-async function exportCurrentLogSnapshotForSharing(): Promise<PreparedArchiveShare | null> {
-  await logger.flush();
-
-  const shareTempDir = await ensureShareTempDir();
-  const snapshotPath = `${shareTempDir}/rabby-mobile-logs-share-${Date.now()}.zip`;
-  const exportedSnapshotPath = await logger.exportArchiveSnapshot(snapshotPath);
-
-  if (!exportedSnapshotPath) {
-    return null;
-  }
-
-  await waitForFileReady(exportedSnapshotPath);
-
-  return {
-    archive: makeArchiveFileRef(exportedSnapshotPath, 'zip'),
-    cleanupPaths: [exportedSnapshotPath],
-    preferredLatestLogEntryPath: getArchiveEntryPathFromLogPath(
-      logger.getState().activeEntryPath,
-    ),
-  } satisfies PreparedArchiveShare;
 }
 
 function joinUint8Chunks(chunks: Uint8Array[], totalBytes: number) {
@@ -807,6 +786,7 @@ export default function DebugLogViewerScreen(): JSX.Element {
     consoleCaptureEnabled,
     effectiveEnabled,
     isOnlineControlled,
+    isDiagnosticExportEnabled,
     localDefaultEnabled,
     localFileLoggingEnabled,
     policyEnv,
@@ -824,7 +804,9 @@ export default function DebugLogViewerScreen(): JSX.Element {
     useState<ZipValidationResult | null>(null);
   const archiveSharePickerRef = useRef<AppBottomSheetModal>(null);
   const canShareArchive =
-    isNonPublicProductionEnv || APP_RUNTIME_ENV !== 'production';
+    isNonPublicProductionEnv ||
+    APP_RUNTIME_ENV !== 'production' ||
+    isDiagnosticExportEnabled;
   const [snapshot, setSnapshot] = useState<PageSnapshot>(() => ({
     loggerState: logger.getState(),
     rootExists: false,
@@ -1116,25 +1098,18 @@ export default function DebugLogViewerScreen(): JSX.Element {
         );
       }
 
-      const currentLogSnapshot = await exportCurrentLogSnapshotForSharing();
-
-      if (currentLogSnapshot) {
-        return currentLogSnapshot;
-      }
-
-      const nextSnapshot = await refreshSnapshot();
-      const latestArchive =
-        nextSnapshot.files.find(item => item.kind === 'zip') || null;
+      const latestArchive = await prepareLatestAppLogArchiveForSharing();
 
       if (!latestArchive) {
         return null;
       }
 
       return {
-        archive: latestArchive,
-        cleanupPaths: [],
+        archive: makeArchiveFileRef(latestArchive.path),
+        cleanupPaths: latestArchive.cleanupPaths,
+        preferredLatestLogEntryPath: latestArchive.preferredLatestLogEntryPath,
       } satisfies PreparedArchiveShare;
-    }, [prepareArchiveForSharing, refreshSnapshot]);
+    }, [prepareArchiveForSharing]);
 
   const handleShareLatestZip = useCallback(async () => {
     if (busyKey) {
@@ -1347,7 +1322,7 @@ export default function DebugLogViewerScreen(): JSX.Element {
 
         <Section
           title="Logging Policy"
-          description="Keep this enabled before running the write/flush/finalize flow. Development defaults on, regression defaults off until enabled, and production follows online config only.">
+          description="Diagnostic-export builds force file logging and console capture on. Otherwise development defaults on, regression uses its local switch, and production follows online config.">
           <View style={styles.policyRow}>
             <View style={styles.policyTextBlock}>
               <Text style={styles.policyLabel}>Effective file logging</Text>
@@ -1395,7 +1370,9 @@ export default function DebugLogViewerScreen(): JSX.Element {
           </View>
 
           <Text style={styles.sectionHint}>
-            {isOnlineControlled
+            {isDiagnosticExportEnabled
+              ? 'This diagnostic-export build forces file logging and console capture on.'
+              : isOnlineControlled
               ? `Production is controlled by onlineConfig: ${APP_FILE_LOGGING_ONLINE_SWITCH}`
               : `${localPolicyHint} Console capture follows the same policy.`}
           </Text>
