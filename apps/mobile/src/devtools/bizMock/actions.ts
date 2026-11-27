@@ -770,7 +770,9 @@ export async function runBizMockAction(
           import('@/utils/navigation'),
           import('@/constant/layout'),
         ]);
-      const chain = findChainByEnum((action.chain || 'eth') as any);
+      const chain = findChainByEnum(
+        String(action.chain || 'ETH').toUpperCase() as any,
+      );
       if (!chain) {
         return {
           ok: false,
