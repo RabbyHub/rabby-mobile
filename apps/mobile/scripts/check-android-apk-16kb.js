@@ -377,6 +377,7 @@ function main() {
   } catch (error) {
     report = makeReport({
       apkPath,
+      format,
       zipalign: { ok: false, outputTail: '' },
       elfRows: [],
       tools,
