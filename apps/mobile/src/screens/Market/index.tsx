@@ -1,9 +1,6 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { Platform, View } from 'react-native';
-import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
-import { RcNextSearchCC } from '@/assets/icons/common';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RootNames } from '@/constant/layout';
 import { atomByMMKV } from '@/core/storage/mmkv';
@@ -68,7 +65,6 @@ export default function MarketScreen() {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { safeOffHeader } = useSafeSizes();
 
-  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const [storedActiveTab, setStoredActiveTab] = useAtom(marketTabAtom);
   const activeTab = useMemo(
@@ -77,34 +73,6 @@ export default function MarketScreen() {
     [storedActiveTab],
   );
   const handleVisibleUuidsChange = useMarketVisibleTokenPriceRefresh(activeTab);
-
-  const renderHeaderRight = useCallback(
-    () => (
-      <CustomTouchableOpacity
-        as="RNGHTouchableOpacity"
-        hitSlop={10}
-        style={styles.headerRight}
-        onPress={() => {
-          navigation.navigateDeprecated(RootNames.StackHomeNonTab, {
-            screen: RootNames.Search,
-            params: {},
-          });
-        }}>
-        <RcNextSearchCC
-          width={20}
-          height={20}
-          color={colors2024['neutral-title-1']}
-        />
-      </CustomTouchableOpacity>
-    ),
-    [colors2024, navigation, styles.headerRight],
-  );
-
-  useEffect(() => {
-    setNavigationOptions({
-      headerRight: renderHeaderRight,
-    });
-  }, [renderHeaderRight, setNavigationOptions]);
 
   const marketTabLabelMap = useMemo(
     () => ({
