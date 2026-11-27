@@ -434,7 +434,10 @@ export type TransactionNavigatorParamList = {
     /** tokenKey -> logo url, display only */
     tokenLogos: Record<string, string>;
   };
-  [RootNames.GasAccount]?: {};
+  [RootNames.GasAccount]?: {
+    /** Timestamp bumped by the route-level header's withdraw action. */
+    openWithdrawAt?: number;
+  };
   [RootNames.BatchRevoke]: {
     revokeList: ApprovalSpenderItemToBeRevoked[];
     dataSource: AssetApprovalSpender[];

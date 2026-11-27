@@ -1,4 +1,5 @@
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { useRoute } from '@react-navigation/native';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { Text } from '@/components/Typography';
 import { toast } from '@/components2024/Toast';
 import IconGift from '@/assets2024/icons/gas-account/gift-01.svg';
@@ -50,6 +51,18 @@ const GasAccountScreenContent = () => {
     isOpen: false,
   });
   const [showWithdraw, setShowWithdraw] = useState(false);
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'GasAccount'>
+    >();
+
+  // The route-level header bumps this timestamp when its withdraw action is
+  // tapped; the modal itself stays screen-owned.
+  useEffect(() => {
+    if (route.params?.openWithdrawAt) {
+      setShowWithdraw(true);
+    }
+  }, [route.params?.openWithdrawAt]);
   const [loginVisible, setLoginVisible] = useGasAccountLoginVisible();
   const [emptyStateLoading, setEmptyStateLoading] = useState(false);
 
@@ -89,17 +102,6 @@ const GasAccountScreenContent = () => {
   const withdrawable_balance = gasAccount?.account?.withdrawable_balance || 0;
   const nonWithdrawable_balance =
     gasAccount?.account?.non_withdrawable_balance || 0;
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
-
-  const headerRight = useCallback(
-    () => <GasAccountHeader showWithdraw={() => setShowWithdraw(true)} />,
-    [setShowWithdraw],
-  );
-
-  useEffect(() => {
-    setNavigationOptions({ headerRight: headerRight });
-  }, [setNavigationOptions, headerRight]);
-
   const showEmptyState =
     (!isLogin && !pendingHardwareAccount) ||
     (isLogin &&
