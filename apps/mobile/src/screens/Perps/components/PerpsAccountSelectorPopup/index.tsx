@@ -196,7 +196,19 @@ export const PerpsAccountSelectorPopup: React.FC<{
       return;
     }
     setTmpSelectAccount(value);
-    runSelect(value);
+    runSelect(value)
+      .catch(error => {
+        console.error(
+          '[PerpsAccountSelectorPopup] select account failed',
+          error,
+        );
+      })
+      .finally(() => {
+        // Close once the attempt settles, whether or not the login succeeded.
+        // The callers only closed on success, which left the sheet on screen
+        // and made the picker look stuck after the account had already switched.
+        onClose?.();
+      });
   });
 
   useEffect(() => {

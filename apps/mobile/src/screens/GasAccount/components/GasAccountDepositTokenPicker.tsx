@@ -109,6 +109,15 @@ export const GasAccountDepositTokenPicker: React.FC<{
 
   const handleSelect = useCallback(
     (token: GasAccountAvailableToken) => {
+      // Dismiss the presented modal explicitly before the parent unmounts this
+      // component. The parent flips `tokenPickerVisible` and unmounts the picker
+      // in the same commit, so the `visible === false` effect below never runs;
+      // unmounting a presented BottomSheetModal alone is not guaranteed to pop
+      // it from the provider stack, which left a stuck sheet behind.
+      // NOTE: gorhom's `dismiss(arg)` forwards the argument to
+      // `forceClose(animationConfigs)`, so it must be an animation config object
+      // (or omitted) — passing a boolean throws `'duration' in config`.
+      modalRef.current?.dismiss({ duration: 250 });
       onSelect?.(token);
       onClose?.();
     },
