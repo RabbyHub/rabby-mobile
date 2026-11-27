@@ -15,6 +15,7 @@ import Animated, {
   clamp,
   Extrapolate,
   interpolate,
+  measure,
   runOnJS,
   runOnUI,
   scrollTo,
@@ -89,6 +90,7 @@ import { TabsScrollView } from '@/components/customized/react-native-collapsible
 import type { RNGHScrollView } from '@/components/customized/reexports';
 import { RNGHRefreshControl } from '@/components/customized/reexports';
 import {
+  getFirstFloorRevealOffset,
   getHomeFloorTravel,
   getPullThreshold,
   getScrollContainerPb,
@@ -184,6 +186,7 @@ const {
   scrollViewLayoutHeight,
   swipeUpHintHeight,
   firstFloorContentEnd,
+  firstFloorRevealY,
   editingFloorTravel,
 } = homeDrawerAnimateMutable;
 
@@ -348,6 +351,41 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
         Extrapolate.CLAMP,
       );
     },
+  );
+
+  // The feature grid asks for a point of the list to be brought up under the
+  // header: its first movable card, when editing starts from a pinned one.
+  //
+  // Where to scroll is worked out here, on the UI thread, where the scroll
+  // position and the frames are at hand. The scroll itself is sent from JS.
+  // Edit mode adds room under the cards for its footer, and a list still
+  // mounted with the old layout stops at its old end. A command from JS is
+  // carried out after the layouts committed before it are mounted; one issued
+  // from this thread would run ahead of them.
+  const revealListOffset = useCallback(
+    (offset: number) => {
+      scrollableRef.current?.scrollTo({ y: offset, animated: true });
+    },
+    [scrollableRef],
+  );
+  useAnimatedReaction(
+    () => firstFloorRevealY.value,
+    pointY => {
+      if (pointY < 0) {
+        return;
+      }
+      firstFloorRevealY.value = -1;
+      const viewport = measure(scrollableRef);
+      if (!viewport) {
+        return;
+      }
+
+      // Past the end of the list the native scroll view stops at the end.
+      runOnJS(revealListOffset)(
+        getFirstFloorRevealOffset(scrollY.value, pointY, viewport.pageY),
+      );
+    },
+    [scrollableRef, scrollY, revealListOffset],
   );
 
   // The list is pinned to its end when the drawer starts to move and when it

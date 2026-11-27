@@ -74,6 +74,14 @@ export const homeDrawerAnimateMutable = {
   editingFloorTravel: makeMutable(0),
 
   /**
+   * Asks the first floor's list to scroll a point of its content up to the
+   * top of its viewport: that point's Y in the window right now, or -1 when
+   * nothing is asked. Whoever owns the list consumes the request and resets
+   * it.
+   */
+  firstFloorRevealY: makeMutable(-1),
+
+  /**
    * Page position of the second floor's own pager: 0 is "More Features",
    * 1 and up are the website categories. Written by the drawer's tab bar,
    * read by whatever sits outside that pager (the drawer footer).
@@ -158,6 +166,21 @@ export function shouldHoldFirstFloorAtEnd(
   }
 
   return editingTravel > 0 && drawerTranslateY < 0;
+}
+
+/**
+ * The scroll offset that brings a point of the first floor's list to the top
+ * of its viewport. `pointY` and `viewportTop` are window coordinates, both
+ * taken at the current `scrollY`. The list may not be able to scroll that
+ * far; the native scroll view then stops at its end.
+ */
+export function getFirstFloorRevealOffset(
+  scrollY: number,
+  pointY: number,
+  viewportTop: number,
+) {
+  'worklet';
+  return Math.max(0, scrollY + pointY - viewportTop);
 }
 
 export function getScrollContainerPb(bottomInset: number) {

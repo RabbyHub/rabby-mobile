@@ -22,6 +22,7 @@ import { ITEM_GRID_GAP, ITEM_LAYOUT_PADDING_HORIZONTAL } from '@/constant/home';
 import type { MultiHomeFeatTitle } from '@/constant/newStyle';
 import { useWindowDimensions } from '@/core/dimensions';
 import { triggerImpact } from '@/utils/common';
+import { homeDrawerAnimateMutable } from '../../hooks/useHomeDrawerAnimate';
 import {
   homeFeatureLayoutApi,
   useHomeMovableFeatures,
@@ -40,6 +41,8 @@ import {
   useHomeFeaturePress,
   type HomeFeatureItem,
 } from './useHomeFeatureMenu';
+
+const { firstFloorRevealY } = homeDrawerAnimateMutable;
 
 const COLUMNS = 2;
 /**
@@ -63,6 +66,13 @@ function snapToPixel(value: number) {
   return Math.round(value * PIXEL_RATIO) / PIXEL_RATIO;
 }
 
+/** Top edge of a slot inside the grid. */
+function getSlotY(index: number) {
+  return (
+    Math.floor(index / COLUMNS) * (HOME_FEATURE_CARD_HEIGHT + ITEM_GRID_GAP)
+  );
+}
+
 function getGridHeight(count: number) {
   const rows = Math.ceil(count / COLUMNS);
   return rows > 0
@@ -82,7 +92,7 @@ type SlotProps = {
   place: HomeFeaturePlace;
   editing: boolean;
   onPress: (key: MultiHomeFeatTitle) => void;
-  onLongPress: () => void;
+  onLongPress: (key: MultiHomeFeatTitle) => void;
   onMove: (key: MultiHomeFeatTitle) => void;
 };
 
@@ -106,8 +116,7 @@ const HomeFeatureGridSlot = React.memo(function HomeFeatureGridSlot({
   onMove,
 }: SlotProps) {
   const targetX = (index % COLUMNS) * columnStep;
-  const targetY =
-    Math.floor(index / COLUMNS) * (HOME_FEATURE_CARD_HEIGHT + ITEM_GRID_GAP);
+  const targetY = getSlotY(index);
   const x = useSharedValue(targetX);
   const y = useSharedValue(targetY);
   const leaveOffset = useSharedValue(0);
@@ -129,6 +138,10 @@ const HomeFeatureGridSlot = React.memo(function HomeFeatureGridSlot({
   const commitMove = useCallback(() => {
     onMove(item.key);
   }, [item.key, onMove]);
+
+  const handleLongPress = useCallback(() => {
+    onLongPress(item.key);
+  }, [item.key, onLongPress]);
 
   const handleMove = useCallback(() => {
     if (isLeavingRef.current) {
@@ -184,7 +197,7 @@ const HomeFeatureGridSlot = React.memo(function HomeFeatureGridSlot({
         movable={isHomeFeatureMovable(item.key)}
         moveDirection={place === 'home' ? 'down' : 'up'}
         onPress={onPress}
-        onLongPress={onLongPress}
+        onLongPress={handleLongPress}
         onMove={handleMove}
       />
     </Animated.View>
@@ -248,13 +261,33 @@ export const HomeFeatureGrid = React.memo(function HomeFeatureGrid({
     height: animatedHeight.value,
   }));
 
-  const handleLongPress = useCallback(() => {
-    if (homeFeatureLayoutApi.isEditing()) {
-      return;
-    }
-    triggerImpact();
-    homeFeatureLayoutApi.startEditing();
-  }, []);
+  const hasMovableCards = movableKeys.length > 0;
+  const handleLongPress = useCallback(
+    (key: MultiHomeFeatTitle) => {
+      if (homeFeatureLayoutApi.isEditing()) {
+        return;
+      }
+      triggerImpact();
+      homeFeatureLayoutApi.startEditing();
+
+      // A pinned card cannot be edited itself, and the cards that can may be
+      // further down the Home. Bring the first of them up under the header,
+      // one grid gap below it.
+      if (isHomeFeatureMovable(key) || !hasMovableCards) {
+        return;
+      }
+      const firstMovableTop =
+        getSlotY(HOME_PINNED_FEATURES.length) - ITEM_GRID_GAP;
+      runOnUI(() => {
+        'worklet';
+        const gridFrame = measure(gridRef);
+        if (gridFrame) {
+          firstFloorRevealY.value = gridFrame.pageY + firstMovableTop;
+        }
+      })();
+    },
+    [gridRef, hasMovableCards],
+  );
 
   const handleMove = useCallback(
     (key: MultiHomeFeatTitle) => {

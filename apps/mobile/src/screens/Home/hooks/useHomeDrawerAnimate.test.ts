@@ -1,4 +1,5 @@
 import {
+  getFirstFloorRevealOffset,
   getHomeFloorTravel,
   shouldHoldFirstFloorAtEnd,
 } from './useHomeDrawerAnimate';
@@ -70,5 +71,27 @@ describe('shouldHoldFirstFloorAtEnd', () => {
 
   it('does not hold before the screen is measured', () => {
     expect(shouldHoldFirstFloorAtEnd(0, 0, editingTravel)).toBe(false);
+  });
+});
+
+describe('getFirstFloorRevealOffset', () => {
+  // The list's viewport starts under the Home header.
+  const viewportTop = 119;
+
+  it('scrolls by the distance from the point to the top of the viewport', () => {
+    // Home at its top, the point 480pt down the window.
+    expect(getFirstFloorRevealOffset(0, 480, viewportTop)).toBe(361);
+  });
+
+  it('adds to what is already scrolled', () => {
+    expect(getFirstFloorRevealOffset(100, 380, viewportTop)).toBe(361);
+  });
+
+  it('scrolls back when the point is above the viewport', () => {
+    expect(getFirstFloorRevealOffset(300, 19, viewportTop)).toBe(200);
+  });
+
+  it('never asks for a negative offset', () => {
+    expect(getFirstFloorRevealOffset(20, 19, viewportTop)).toBe(0);
   });
 });
