@@ -258,10 +258,20 @@ prepare_ios_native_deps() {
 # Sign-only local build: reuse the feature-test artifact preparation, then
 # archive without signing so the cloud machine can sign it.
 if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
-  echo "[deploy-ios-adhoc] sign-only build: producing an unsigned archive"
+  unsigned_channel="${RABBY_MOBILE_IOS_UNSIGNED_CHANNEL:-regression}"
+  if [ "$unsigned_channel" == "production" ]; then
+    unsigned_scheme="RabbyMobile"
+    unsigned_configuration="Release"
+    echo "[deploy-ios-adhoc] reproducible build: producing an unsigned production archive"
+    export RABBY_MOBILE_BUILD_ENV="production"
+  else
+    unsigned_scheme="RabbyMobileRegression"
+    unsigned_configuration="Regression"
+    echo "[deploy-ios-adhoc] sign-only build: producing an unsigned archive"
+    export RABBY_MOBILE_SIGN_ONLY=true
+    export RABBY_MOBILE_BUILD_ENV="regression"
+  fi
   cd "$project_dir"
-  export RABBY_MOBILE_SIGN_ONLY=true
-  export RABBY_MOBILE_BUILD_ENV="regression"
   prepare_ios_build_artifacts || exit $?
   prepare_ios_native_deps || exit $?
   sh ./ios/patches/override-xcconfig-release.sh
@@ -275,8 +285,8 @@ if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
   find "$project_dir/ios/Pods" -maxdepth 1 -name ".last_build_configuration" -delete 2>/dev/null
   xcodebuild \
     -workspace "$project_dir/ios/RabbyMobile.xcworkspace" \
-    -scheme RabbyMobileRegression \
-    -configuration Regression \
+    -scheme "$unsigned_scheme" \
+    -configuration "$unsigned_configuration" \
     -destination 'generic/platform=iOS' \
     -archivePath "$unsigned_archive" \
     CODE_SIGNING_ALLOWED=NO \
@@ -290,7 +300,9 @@ if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
   # app with the Release entitlements so the export keeps them.
   unsigned_app="$unsigned_archive/Products/Applications/RabbyMobile.app"
   unsigned_entitlements="$project_dir/ios/RabbyMobile/RabbyMobileRelease.entitlements"
-  if [ -d "$unsigned_app" ] && [ -f "$unsigned_entitlements" ]; then
+  # A production archive must stay byte-identical to what the hash covers, so it
+  # is never ad-hoc signed here; the signing machine signs the verified bytes.
+  if [ "$unsigned_channel" != "production" ] && [ -d "$unsigned_app" ] && [ -f "$unsigned_entitlements" ]; then
     echo "[deploy-ios-adhoc] ad-hoc signing the unsigned archive with entitlements"
     codesign --force --sign - --timestamp=none --entitlements "$unsigned_entitlements" "$unsigned_app" || exit $?
   fi

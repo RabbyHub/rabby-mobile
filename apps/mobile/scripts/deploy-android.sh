@@ -20,7 +20,7 @@ export RABBY_MOBILE_BUILD_ENV="regression";
 # re-signs a prebuilt APK and uploads it to the CDN. Neither path publishes to
 # Google Play, so the Play credentials (RABBY_MOBILE_CODE / KR_PWD) are not
 # required. The S3/CDN params still are.
-if [ "$RABBY_MOBILE_SIGN_ONLY_BUILD" != "true" ]; then
+if [ "$RABBY_MOBILE_SIGN_ONLY_BUILD" != "true" ] && [ "$RABBY_MOBILE_REPRODUCE_BUILD" != "true" ]; then
   if [ -z "$RABBY_MOBILE_SIGN_ONLY_APK" ]; then
     check_build_params;
   fi
@@ -198,6 +198,36 @@ for changelog in "${possible_changelogs[@]}"; do
   fi
 done
 # ============ prepare changelogs :end ============== #
+
+# Reproducible production build: reuse the appstore preparation, then stop with
+# an unsigned AAB instead of signing and uploading it.
+if [ "$RABBY_MOBILE_REPRODUCE_BUILD" == "true" ]; then
+  echo "[deploy-android] reproduce build: producing an unsigned production AAB"
+  export RABBY_MOBILE_BUILD_ENV="production"
+  # The hash only covers the artifact; sourcemap upload is a publishing step.
+  export SENTRY_DISABLE_AUTO_UPLOAD="${SENTRY_DISABLE_AUTO_UPLOAD:-true}"
+  # Reproducibility: `scripts/resolve-build-info.js` stamps BUILD_TIME into an
+  # asset, and the production identity is the appstore channel. Both builders
+  # must use the same commit-derived timestamp instead of "now".
+  export buildchannel="${buildchannel:-appstore}"
+  export ZERO_AR_DATE="${ZERO_AR_DATE:-$(git -C "$project_dir" show -s --format=%cI HEAD)}"
+  load_env_var_from_candidate_files RABBY_MOBILE_CODE || true
+  validate_rabbit_code || exit 1
+  prepare_android_build_artifacts || exit $?
+  ./android/gradlew -p ./android bundleReleaseUnsigned --no-daemon \
+    -Porg.gradle.parallel=false -Porg.gradle.caching=false || exit $?
+  reproduce_aab="$(find "$project_dir/android/app/build/outputs/bundle/releaseUnsigned" -type f -name '*.aab' | head -n 1)"
+  if [ -z "$reproduce_aab" ] || [ ! -f "$reproduce_aab" ]; then
+    echo "[deploy-android] unsigned AAB not found under android/app/build/outputs/bundle/releaseUnsigned" >&2
+    exit 1
+  fi
+  reproduce_output="${RABBY_MOBILE_REPRODUCE_OUT:-$project_dir/.reproduce/production/app-release-unsigned.aab}"
+  mkdir -p "$(dirname "$reproduce_output")"
+  cp "$reproduce_aab" "$reproduce_output"
+  echo "[deploy-android] unsigned production AAB: $reproduce_output"
+  shasum -a 256 "$reproduce_output"
+  exit 0
+fi
 
 # Sign-only local build: reuse the exact feature-test build preparation, then
 # stop with an unsigned APK instead of signing and uploading.

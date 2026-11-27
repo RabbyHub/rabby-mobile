@@ -121,3 +121,5 @@ tsconfig.worker.tsbuildinfo
 
 # Local unsigned artifacts produced by scripts/sign-only/build-unsigned-*.sh
 .sign-only/
+# Reproducible production builds produced by scripts/reproduce/*.sh
+.reproduce/

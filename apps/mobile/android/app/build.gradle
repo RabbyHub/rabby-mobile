@@ -315,6 +315,13 @@ android {
           proguardFile "proguard-hashcheck.pro"
           matchingFallbacks = ['release']
         }
+        // Unsigned production variant used by scripts/reproduce: the artifact is
+        // hashed, cross-checked on a second machine, and only signed afterwards.
+        releaseUnsigned {
+          initWith release
+          signingConfig null
+          matchingFallbacks = ['release']
+        }
         regression {
             initWith release
             applicationIdSuffix ".regression"
