@@ -1,5 +1,6 @@
 import { withScreenPropsInjection } from '@/devtools/screenRegistry/screenInjection';
 import 'react-native-gesture-handler';
+import { StyleSheet, View } from 'react-native';
 import { RootNames } from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
@@ -7,7 +8,11 @@ import { DappsNavigatorParamsList } from '@/navigation-type';
 import { DappsScreen } from '../Dapps/DappsScreen';
 import { IS_IOS } from '@/core/native/utils';
 import { useStackScreenConfig } from '@/hooks/navigation';
-import { FavoriteDappsScreen } from '../Dapps/FavoriteDappsScreen';
+import {
+  FavoriteDappsHeaderTitle,
+  FavoriteDappsScreen,
+} from '../Dapps/FavoriteDappsScreen';
+import { renderAppStackHeader } from '@/components/AppStackHeader';
 
 const DappsStack = createNativeStackNavigator<DappsNavigatorParamsList>();
 
@@ -48,13 +53,31 @@ export function DappsNavigator() {
         name={RootNames.FavoriteDapps}
         component={withScreenPropsInjection(FavoriteDappsScreen)}
         options={mergeScreenOptions({
-          headerTintColor: colors['neutral-title-1'],
-          headerTitleStyle: {
-            fontWeight: '900',
-            color: colors['neutral-title-1'],
-          },
+          // Centred JS header: the native slot (and the Duo replica) centred
+          // the title inside the post-back area, so it drifted right; the
+          // shared header keeps equal slots on every posture.
+          header: renderAppStackHeader(() => ({
+            title: 'Favorites',
+            // titleNode replaces the auto-fit Text, so it must centre itself
+            // inside the stretched title slot.
+            titleNode: (
+              <View style={styles.headerTitleCenter}>
+                <FavoriteDappsHeaderTitle />
+              </View>
+            ),
+          })),
+          headerBackVisible: false,
+          headerLeft: () => null,
+          unstable_headerLeftItems: () => [],
+          title: 'Favorites',
         })}
       />
     </DappsStack.Navigator>
   );
 }
+
+const styles = StyleSheet.create({
+  headerTitleCenter: {
+    alignItems: 'center',
+  },
+});

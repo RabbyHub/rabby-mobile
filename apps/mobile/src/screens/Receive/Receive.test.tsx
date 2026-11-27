@@ -75,7 +75,10 @@ jest.mock('@/components2024/FooterButtonGroup', () => ({
   FooterButtonGroup: () => null,
 }));
 jest.mock('@/components/AppStatusBar', () => ({
-  useSafeSetNavigationOptions: () => ({ setNavigationOptions: jest.fn() }),
+  useSafeSetNavigationOptions: () => ({
+    navigation: { setParams: jest.fn() },
+    setNavigationOptions: jest.fn(),
+  }),
 }));
 jest.mock('@/components2024/GlobalBottomSheetModal', () => ({
   createGlobalBottomSheetModal2024: jest.fn(() => 'receive-chain-sheet'),

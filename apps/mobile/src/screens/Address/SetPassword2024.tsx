@@ -30,8 +30,6 @@ import { toast, toastWithIcon } from '@/components2024/Toast';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { useBiometrics } from '@/hooks/biometrics';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 import YesIcon from '@/assets2024/icons/common/check.svg';
 import {
   useCreateAddressProc,
@@ -200,8 +198,6 @@ function MainListBlocks() {
   if (!state) {
     throw new Error('[SetPassword2024] state is undefined');
   }
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
-
   const {
     computed: { defaultTypeLabel, couldSetupBiometrics },
     fetchBiometrics,
@@ -222,33 +218,6 @@ function MainListBlocks() {
       fetchBiometrics();
     }, [fetchBiometrics]),
   );
-
-  const getHeaderTitle = React.useCallback(() => {
-    return (
-      <HeaderTitleText2024 style={styles.headerTitleStyle}>
-        {state.title || t('screens.addressStackTitle.SetPassword2024')}
-      </HeaderTitleText2024>
-    );
-  }, [state.title, styles.headerTitleStyle, t]);
-
-  React.useEffect(() => {
-    setNavigationOptions(
-      Object.assign(
-        {
-          headerTitle: getHeaderTitle,
-        },
-        state.hideBackIcon
-          ? {
-              headerLeft: () => null,
-              // The shared iOS options install a native bar button item, which
-              // takes precedence over `headerLeft`; clear it too so the first
-              // import password flow cannot navigate back before completing.
-              unstable_headerLeftItems: () => [],
-            }
-          : {},
-      ),
-    );
-  }, [setNavigationOptions, getHeaderTitle, state.title, state.hideBackIcon]);
 
   const passwordInputRef = React.useRef<TextInput>(null);
   const confirmPasswordInputRef = React.useRef<TextInput>(null);
@@ -528,13 +497,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   input: {
     backgroundColor: colors2024['neutral-bg-1'],
     fontSize: 14,
-  },
-  headerTitleStyle: {
-    color: colors2024['neutral-title-1'],
-    fontWeight: '800',
-    fontSize: 20,
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 24,
   },
 }));
 

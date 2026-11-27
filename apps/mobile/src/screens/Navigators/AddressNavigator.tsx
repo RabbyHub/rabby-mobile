@@ -53,6 +53,7 @@ import { APP_TEST_PASSWORD } from '@/constant';
 import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { ImportMethodsHeader } from '../Address/ImportMethodsHeader';
 import { AutoFitCenterHeader } from '@/components/AutoFitCenterHeader';
+import { renderAppStackHeader } from '@/components/AppStackHeader';
 import { SafeWindowHeaderInset } from '@/components/SafeWindowFrame/headerInset';
 
 const AddressStack = createNativeStackNavigator<AddressNavigatorParamList>();
@@ -294,28 +295,57 @@ export function AddressNavigator() {
       <AddressStack.Screen
         name={RootNames.CreateNewAddress}
         component={withScreenPropsInjection(CreateNewAddress)}
-        options={mergeScreenOptions({
-          headerTitle: t('screens.addressStackTitle.CreateNewAddress'),
-          title: t('screens.addressStackTitle.CreateNewAddress'),
-          headerTintColor: colors2024['neutral-title-1'],
-          headerStyle: {
-            backgroundColor: colors2024['neutral-bg-1'],
-          },
-          headerTitleStyle: styles.headerTitleText,
-        })}
+        options={({ route }) => {
+          const useCreateTitle =
+            !!route.params?.title || !!route.params?.isFirstCreate;
+          const titleKey = useCreateTitle
+            ? 'screens.addressStackTitle.CreateNewAddress'
+            : 'screens.addressStackTitle.ConfrimAddress';
+          const title = t(titleKey);
+
+          return mergeScreenOptions({
+            // Centred JS header: equal leading/trailing slots keep the title on
+            // the screen centre, and the shared typography ladder shrinks or
+            // two-lines long translations instead of letting them drift right
+            // and clip (the native slot centred inside the post-back area).
+            header: renderAppStackHeader(() => ({
+              title,
+              titleKey,
+              backgroundColor: colors2024['neutral-bg-1'],
+            })),
+            headerBackVisible: false,
+            headerLeft: () => null,
+            unstable_headerLeftItems: () => [],
+            title,
+          });
+        }}
       />
       <AddressStack.Screen
         name={RootNames.SetPassword2024}
         component={withScreenPropsInjection(SetPassword2024)}
-        options={mergeScreenOptions({
-          headerTitle: t('screens.addressStackTitle.SetPassword'),
-          title: t('screens.addressStackTitle.SetPassword'),
-          headerTintColor: colors2024['neutral-title-1'],
-          headerStyle: {
-            backgroundColor: colors2024['neutral-bg-1'],
-          },
-          headerTitleStyle: styles.headerTitleText,
-        })}
+        options={({ route }) => {
+          const hideBack = !!route.params?.hideBackIcon;
+          const customTitle = route.params?.title;
+          const titleKey = customTitle
+            ? undefined
+            : 'screens.addressStackTitle.SetPassword2024';
+          const title =
+            customTitle || t('screens.addressStackTitle.SetPassword2024');
+
+          return mergeScreenOptions({
+            header: renderAppStackHeader(() => ({
+              title,
+              titleKey,
+              // First-run import password: no way back before completing.
+              back: !hideBack,
+              backgroundColor: colors2024['neutral-bg-1'],
+            })),
+            headerBackVisible: false,
+            headerLeft: () => null,
+            unstable_headerLeftItems: () => [],
+            title,
+          });
+        }}
       />
       <AddressStack.Screen
         name={RootNames.CreateChooseBackup}

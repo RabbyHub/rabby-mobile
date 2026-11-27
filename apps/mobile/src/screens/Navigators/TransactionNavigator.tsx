@@ -2,7 +2,7 @@ import { withScreenPropsInjection } from '@/devtools/screenRegistry/screenInject
 import { RoundedFontStyles } from '@/core/utils/fonts';
 import 'react-native-gesture-handler';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { IS_IOS } from '@/core/native/utils';
 
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
@@ -10,26 +10,28 @@ import { createCustomNativeStackNavigator as createNativeStackNavigator } from '
 import { HeaderBackPressable, useStackScreenConfig } from '@/hooks/navigation';
 import { useCustomHeaderTop } from '@/hooks/useAppLayout';
 import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { isFoldableSideColumnPosture } from '@/core/utils/foldableDevice';
 import {
   RootNames,
   makeHeadersPresets,
   makeTxPageBackgroundColors,
 } from '@/constant/layout';
+import { renderAppStackHeader } from '@/components/AppStackHeader';
 import { useTheme2024 } from '@/hooks/theme';
 
 import SendScreen from '../Send/Send';
 import SendNFTScreen from '../SendNFT/SendNFT';
 
 import { HistoryDetailScreen } from '../Transaction/HistoryDetailScreen';
-import { BridgeDetailScreen } from '../Bridge/BridgeDetailScreen';
+import {
+  BridgeDetailHeaderNode,
+  BridgeDetailScreen,
+} from '../Bridge/BridgeDetailScreen';
 import { HistoryLocalDetailScreen } from '../Transaction/HistoryLocalDetailScreen';
 import { HistoryDetailHeader } from '../Transaction/components/HistoryDetailHeader';
 import { TransactionNavigatorParamList } from '@/navigation-type';
 import ApprovalsScreen from '../Approvals';
 import { ApprovalsHeader } from '../Approvals/components/Headers/ApprovalsHeader';
-import ReceiveScreen from '../Receive/Receive';
+import ReceiveScreen, { ReceiveHeaderTitle } from '../Receive/Receive';
 import SwapBridgeScreen from '../SwapBridge';
 import { renderSwapBridgeHeader } from '../SwapBridge/SwapBridgeHeader';
 import { ConvertDustScreen } from '../ConvertDust';
@@ -38,9 +40,10 @@ import { MemeCoinHeader } from '../MemeCoin/components/MemeCoinHeader';
 import { MemeCoinExecuteScreen } from '../MemeCoin/execute/MemeCoinExecuteScreen';
 import { MemeCoinHomeScreen } from '../MemeCoin/home/MemeCoinHomeScreen';
 import { GasAccountScreen } from '../GasAccount';
-import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import { HeaderAccountSwitcher } from '@/components/AccountSwitcher/HeaderAccountSwitcher';
 import MultiAddressHistory from '../Transaction/MultiAddressHistory';
+import { HistoryListHeaderTitle } from '../Transaction/components/HistoryListHeaderTitle';
+import { HistoryFilterMenu } from '../Transaction/components/HistoryFilterMenu';
 import { GnosisQueueScreen } from '../GnosisQueue';
 import { BatchRevokeScreen } from '../BatchRevoke/BatchRevoke';
 import { useTranslation } from 'react-i18next';
@@ -122,25 +125,6 @@ function ConvertDustHeader({
   );
 }
 
-function SingleAddressHistoryTitle({ children }: React.PropsWithChildren) {
-  const insets = useSafeAreaInsets();
-  const foldableOuter = isFoldableSideColumnPosture({
-    top: insets.top,
-    right: insets.right,
-  });
-
-  return (
-    <View
-      style={foldableOuter ? undefined : { transform: [{ translateX: -12 }] }}>
-      <ScreenHeaderAccountSwitcher
-        forScene="History"
-        titleText={children}
-        disableSwitch
-      />
-    </View>
-  );
-}
-
 export default function TransactionNavigator() {
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
   // console.log('============== TransactionNavigator Render =========');
@@ -148,6 +132,49 @@ export default function TransactionNavigator() {
   const { t } = useTranslation();
   const { colors, colors2024, isLight } = useTheme2024();
   const headerPresets = makeHeadersPresets({ colors, colors2024 });
+
+  // The history screens (multi-address list and the single-address variant
+  // share one component) declare their header on the route. Everything the
+  // header reads comes from route params the screen publishes: the token
+  // context, whether the filter switch applies, and the switch value. Nothing
+  // swaps the header type after mount any more (QA 1384 / 1430).
+  const renderHistoryRouteHeader = (
+    route: { params?: TransactionNavigatorParamList['MultiAddressHistory'] },
+    isForMultipleAddress: boolean,
+    setShowAll: (value: boolean) => void,
+  ) =>
+    mergeScreenOptions({
+      header: renderAppStackHeader(() => {
+        const isShowAll = route.params?.isShowAll ?? false;
+        return {
+          title: 'Transactions',
+          // The filter switch is wider than a back chevron; keep both slots at
+          // the pre-migration 44pt so the title stays optically centred.
+          sideSlotWidth: 44,
+          titleNode: (
+            <HistoryListHeaderTitle
+              isForMultipleAddress={isForMultipleAddress}
+              isInTokenDetail={route.params?.isInTokenDetail}
+              tokenItem={route.params?.tokenItem}
+            />
+          ),
+          right: route.params?.headerIsSupportAccount ? (
+            <HistoryFilterMenu
+              isShowAll={isShowAll}
+              setIsShowAll={next =>
+                setShowAll(typeof next === 'function' ? next(isShowAll) : next)
+              }
+            />
+          ) : undefined,
+        };
+      }),
+      headerBackVisible: false,
+      headerLeft: () => null,
+      unstable_headerLeftItems: () => [],
+      headerStyle: {
+        backgroundColor: makeTxPageBackgroundColors({ isLight, colors2024 }),
+      },
+    });
 
   return (
     <TransactionStack.Navigator
@@ -200,35 +227,43 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.Receive}
         component={withScreenPropsInjection(RegressionReceiveScreen)}
-        options={mergeScreenOptions({
-          title: 'Receive',
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            ...RoundedFontStyles.heavy,
-            fontSize: 20,
-          },
-        })}
+        options={({ route, navigation }) =>
+          mergeScreenOptions({
+            // Route-level JS header: the account row + eye toggle come from
+            // params the screen publishes, so the header type never changes.
+            header: renderAppStackHeader(() => ({
+              title: '',
+              titleNode: (
+                <ReceiveHeaderTitle
+                  account={route.params?.account}
+                  showName={route.params?.showName ?? true}
+                  onToggleShowName={() =>
+                    navigation.setParams({
+                      showName: !(route.params?.showName ?? true),
+                    })
+                  }
+                />
+              ),
+            })),
+            headerBackVisible: false,
+            headerLeft: () => null,
+            unstable_headerLeftItems: () => [],
+            headerTitleStyle: {
+              color: colors2024['neutral-title-1'],
+              ...RoundedFontStyles.heavy,
+              fontSize: 20,
+            },
+          })
+        }
       />
       <TransactionStack.Screen
         name={RootNames.MultiAddressHistory}
         component={withScreenPropsInjection(MultiAddressHistory)}
-        options={{
-          title: 'Transactions',
-          headerTitle: ctx => {
-            return (
-              <ScreenHeaderAccountSwitcher
-                forScene="MultiHistory"
-                titleText={ctx.children}
-              />
-            );
-          },
-          headerStyle: {
-            backgroundColor: makeTxPageBackgroundColors({
-              isLight,
-              colors2024,
-            }),
-          },
-        }}
+        options={({ route, navigation }) =>
+          renderHistoryRouteHeader(route, true, isShowAll =>
+            navigation?.setParams({ isShowAll }),
+          )
+        }
       />
       <TransactionStack.Screen
         name={RootNames.LendingHistory}
@@ -254,25 +289,11 @@ export default function TransactionNavigator() {
         component={withScreenPropsInjection(
           MultiAddressHistory.ForSingleAddress,
         )}
-        options={{
-          title: 'Transactions',
-          // The native back item is wider than the old JS header button, so
-          // UIKit lays this title container out ~12pt right of the screen
-          // centre (QA 1360). Pull the content back only on the native header;
-          // the Duo outer screen uses the shared JS replica header, where that
-          // correction would push the title left.
-          headerTitle: ctx => (
-            <SingleAddressHistoryTitle>
-              {ctx.children}
-            </SingleAddressHistoryTitle>
-          ),
-          headerStyle: {
-            backgroundColor: makeTxPageBackgroundColors({
-              isLight,
-              colors2024,
-            }),
-          },
-        }}
+        options={({ route, navigation }) =>
+          renderHistoryRouteHeader(route, false, isShowAll =>
+            navigation?.setParams({ isShowAll }),
+          )
+        }
       />
       <TransactionStack.Screen
         name={RootNames.HistoryDetail}
@@ -299,15 +320,31 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.BridgeDetail}
         component={withScreenPropsInjection(BridgeDetailScreen)}
-        options={mergeScreenOptions({
-          title: '',
-          headerTintColor: colors['neutral-title-1'],
-          headerStyle: {
-            backgroundColor: isLight
-              ? colors2024['neutral-bg-0']
-              : colors2024['neutral-bg-1'],
-          },
-        })}
+        options={({ route }) =>
+          mergeScreenOptions({
+            // Route-level JS header: the title and the account row come from
+            // params the screen publishes, so the type never changes on mount.
+            header: renderAppStackHeader(() => ({
+              title: '',
+              titleNode: (
+                <BridgeDetailHeaderNode
+                  title={route.params?.headerTitle}
+                  address={route.params?.address}
+                  accountType={route.params?.headerAccountType}
+                />
+              ),
+            })),
+            headerBackVisible: false,
+            headerLeft: () => null,
+            unstable_headerLeftItems: () => [],
+            headerTintColor: colors['neutral-title-1'],
+            headerStyle: {
+              backgroundColor: isLight
+                ? colors2024['neutral-bg-0']
+                : colors2024['neutral-bg-1'],
+            },
+          })
+        }
       />
       <TransactionStack.Screen
         name={RootNames.HistoryLocalDetail}
@@ -333,10 +370,28 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.GnosisTransactionQueue}
         component={withScreenPropsInjection(GnosisQueueScreen)}
-        options={mergeScreenOptions({
-          title: 'Queue',
-          ...headerPresets.withBgCard2,
-        })}
+        options={({ route }) =>
+          mergeScreenOptions({
+            // Declared on the route; the screen publishes `headerTotal` via
+            // setParams so the title stays current without a header swap. The
+            // shared JS header keeps long translations on the screen centre
+            // and lets the typography ladder shrink them.
+            header: renderAppStackHeader(() => ({
+              title: t('page.safeQueue.title', {
+                // The screen publishes the live count; until it does, render the
+                // same "(0)" the native title showed instead of an empty title
+                // (i18next resolves a missing interpolation to "").
+                total: route.params?.headerTotal ?? 0,
+              }),
+              titleKey: 'page.safeQueue.title',
+              backgroundColor: colors['neutral-card2'],
+            })),
+            headerBackVisible: false,
+            headerLeft: () => null,
+            unstable_headerLeftItems: () => [],
+            title: 'Queue',
+          })
+        }
       />
       {/* ReceiveScreen */}
       {/* SwapBridgeScreen */}
@@ -489,7 +544,10 @@ export default function TransactionNavigator() {
           mergeScreenOptions({
             title: '',
             header: () => (
-              <PerpsMarketDetailHeader market={route.params.market} />
+              <PerpsMarketDetailHeader
+                market={route.params.market}
+                routeKey={route.key}
+              />
             ),
             // ...headerPresets.withBgCard1_2024,
             headerTintColor: colors['neutral-title-1'],
