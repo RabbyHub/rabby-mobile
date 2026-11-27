@@ -7,6 +7,7 @@ import { navigationRef } from '@/utils/navigation';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { ReceiveAddressCard } from '@/components2024/ReceiveAddressCard';
 import { createGetStyles2024 } from '@/utils/styles';
+import { ellipsisAddress } from '@/utils/address';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useIsFocused, useRoute } from '@react-navigation/native';
@@ -72,7 +73,7 @@ export function ReceiveHeaderTitle({
             style={styles.walletIcon}
           />
           <Text numberOfLines={1} ellipsizeMode="tail" style={styles.titleText}>
-            {account?.aliasName}
+            {account?.aliasName || ellipsisAddress(account?.address || '')}
           </Text>
         </>
       ) : (
