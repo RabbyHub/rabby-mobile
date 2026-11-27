@@ -25,12 +25,15 @@ export type BizMockAction =
   | { action: 'state.dump'; name?: string }
   | { action: 'account.importFromFile'; file?: string }
   | { action: 'account.select'; address: string }
+  | { action: 'account.remove'; address: string }
+  | { action: 'account.create' }
   | {
       action: 'approval.injectFromFile';
       file: string;
       component?: string;
       origin?: string;
     }
+  | { action: 'approval.dump'; name?: string }
   | { action: 'approval.rejectAll' }
   | {
       action: 'action.invoke';
@@ -40,6 +43,8 @@ export type BizMockAction =
       timeoutMs?: number;
     }
   | { action: 'home.openSingleAddress' }
+  | { action: 'store.pin'; store: JsonObject }
+  | { action: 'store.clearPins' }
   | { action: 'env.setScreenE2E'; enabled: boolean };
 
 export type BizMockMeta = {
@@ -274,6 +279,29 @@ export function parseBizMockAction(
     };
   }
 
+  if (command === 'account.remove') {
+    const address = readString(urlInfo.searchParams.get('address'), 128);
+    if (!address) {
+      return {
+        matched: true,
+        meta,
+        error: {
+          code: 'missing-param',
+          message: 'address is required for account.remove',
+        },
+      };
+    }
+    return {
+      matched: true,
+      meta,
+      action: { action: 'account.remove', address },
+    };
+  }
+
+  if (command === 'account.create') {
+    return { matched: true, meta, action: { action: 'account.create' } };
+  }
+
   if (command === 'approval.injectFromFile') {
     const file = readString(urlInfo.searchParams.get('file'), 128);
     if (!file) {
@@ -294,6 +322,17 @@ export function parseBizMockAction(
         file,
         component: readString(urlInfo.searchParams.get('component'), 64),
         origin: readString(urlInfo.searchParams.get('origin'), 512),
+      },
+    };
+  }
+
+  if (command === 'approval.dump') {
+    return {
+      matched: true,
+      meta,
+      action: {
+        action: 'approval.dump',
+        name: readString(urlInfo.searchParams.get('name'), 80),
       },
     };
   }
@@ -346,6 +385,32 @@ export function parseBizMockAction(
       meta,
       action: { action: 'home.openSingleAddress' },
     };
+  }
+
+  if (command === 'store.pin') {
+    const store = parseJsonObject(urlInfo.searchParams.get('store'), 'store');
+    if (store.error) {
+      return { matched: true, meta, error: store.error };
+    }
+    if (!store.value || !Object.keys(store.value).length) {
+      return {
+        matched: true,
+        meta,
+        error: {
+          code: 'missing-param',
+          message: 'store is required for store.pin',
+        },
+      };
+    }
+    return {
+      matched: true,
+      meta,
+      action: { action: 'store.pin', store: store.value },
+    };
+  }
+
+  if (command === 'store.clearPins') {
+    return { matched: true, meta, action: { action: 'store.clearPins' } };
   }
 
   if (command === 'env.setScreenE2E') {

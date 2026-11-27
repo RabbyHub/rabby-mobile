@@ -12,7 +12,11 @@ import {
   unlockNotificationSync,
 } from '@/core/serviceApi/notification';
 
-import { listInjectedStorePins } from '../screenRegistry/storeInjection';
+import {
+  clearInjectedStorePins,
+  listInjectedStorePins,
+  pinInjectedStore,
+} from '../screenRegistry/storeInjection';
 import { setAllowAnyApproval } from '../screenRegistry/requestCapture';
 import { runTestAccountsImport } from '../testAccountsImport';
 import { TEST_ACCOUNTS_FILENAME } from '../testAccountsPath';
@@ -171,6 +175,70 @@ async function selectAccount(address: string): Promise<BizMockResult> {
   };
 }
 
+async function removeTestAccount(address: string): Promise<BizMockResult> {
+  const input = address.toLowerCase().trim();
+  const [{ getAllAccountsToDisplay }, { removeAddress }] = await Promise.all([
+    import('@/core/apis/account'),
+    import('@/core/apis/address'),
+  ]);
+  const accounts = await getAllAccountsToDisplay();
+  if (accounts.length <= 1) {
+    return {
+      ok: false,
+      action: 'account.remove',
+      code: 'last-account',
+      message: 'refusing to remove the only remaining account',
+    };
+  }
+  const match = accounts.find(
+    account => String(account.address || '').toLowerCase() === input,
+  );
+  if (!match) {
+    return {
+      ok: false,
+      action: 'account.remove',
+      code: 'account-not-found',
+      message: `account not found: ${address}`,
+    };
+  }
+  await removeAddress(match as any);
+  return {
+    ok: true,
+    action: 'account.remove',
+    code: 'ok',
+    data: { address: match.address, type: match.type },
+  };
+}
+
+async function createTestWallet(): Promise<BizMockResult> {
+  const [
+    { prepareWalletCreation, completeWalletCreation },
+    { default: accountStore },
+    { REGRESSION_DEFAULT_PASSWORD },
+    { apisHomeTabIndex },
+  ] = await Promise.all([
+    import('@/hooks/address/useSetupWallet'),
+    import('@/store/account'),
+    import('@/devtools/regressionScenarios/credentials.nonprod'),
+    import('@/hooks/navigation'),
+  ]);
+  const prepared = await prepareWalletCreation({ mode: 'create' });
+  await completeWalletCreation(prepared, {
+    password: REGRESSION_DEFAULT_PASSWORD,
+    confirmPassword: REGRESSION_DEFAULT_PASSWORD,
+    checked: true,
+    enableBiometrics: false,
+  } as any);
+  await accountStore.fetchAccounts({ force: true });
+  apisHomeTabIndex.setTabIndex(1, true);
+  return {
+    ok: true,
+    action: 'account.create',
+    code: 'ok',
+    data: { address: prepared.address || null },
+  };
+}
+
 async function injectApprovalFromFile(
   file: string,
   component = 'SignTx',
@@ -232,6 +300,35 @@ async function injectApprovalFromFile(
     action: 'approval.injectFromFile',
     code: 'ok',
     data: { component, origin: origin || 'https://opensea.io' },
+  };
+}
+
+async function dumpApproval(name?: string): Promise<BizMockResult> {
+  let approval: unknown = null;
+  try {
+    approval = await notificationServiceApi.getApproval();
+  } catch {
+    // Approval service may not be ready during early startup.
+  }
+  const summary = summarizeApproval(approval);
+  const fileName = safeName(name, 'approval');
+  const dir = `${bizMockBaseDir()}/${BIZ_MOCK_DUMP_DIRNAME}`;
+  const path = `${dir}/${fileName}.json`;
+  await RNFS.mkdir(dir);
+  await RNFS.writeFile(
+    path,
+    JSON.stringify(
+      { schemaVersion: 1, capturedAt: Date.now(), approval: summary },
+      null,
+      2,
+    ),
+    'utf8',
+  );
+  return {
+    ok: true,
+    action: 'approval.dump',
+    code: 'ok',
+    data: { name: fileName, approval: summary },
   };
 }
 
@@ -316,12 +413,24 @@ export async function runBizMockAction(
       return await selectAccount(action.address);
     }
 
+    if (action.action === 'account.remove') {
+      return await removeTestAccount(action.address);
+    }
+
+    if (action.action === 'account.create') {
+      return await createTestWallet();
+    }
+
     if (action.action === 'approval.injectFromFile') {
       return await injectApprovalFromFile(
         action.file,
         action.component,
         action.origin,
       );
+    }
+
+    if (action.action === 'approval.dump') {
+      return await dumpApproval(action.name);
     }
 
     if (action.action === 'approval.rejectAll') {
@@ -387,6 +496,21 @@ export async function runBizMockAction(
         code: 'ok',
         data: { address: account.address },
       };
+    }
+
+    if (action.action === 'store.pin') {
+      await pinInjectedStore(action.store);
+      return {
+        ok: true,
+        action: action.action,
+        code: 'ok',
+        data: { pins: listInjectedStorePins() },
+      };
+    }
+
+    if (action.action === 'store.clearPins') {
+      clearInjectedStorePins();
+      return { ok: true, action: action.action, code: 'ok' };
     }
 
     if (action.action === 'env.setScreenE2E') {

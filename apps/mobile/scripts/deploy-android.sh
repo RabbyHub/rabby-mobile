@@ -335,7 +335,9 @@ print_manual_upload_sentry_sourcemap() {
 }
 
 # only upload apk as template when it is not fast-built from a template
-if [ -z "$RABBY_MOBILE_SIGN_ONLY_APK" ] && [ "$UPLOAD_TEMPLATE_APK" = "true" ] && [ "$FAST_BUILD_ENABLED" != "true" ] && [ $buildchannel = "selfhost-reg" ] && [ ! -z $RABBY_MOBILE_REG_PUB_DEPLOYMENT ]; then
+# Build-only runs (REALLY_UPLOAD != true) must never touch a remote bucket,
+# even when a template upload is otherwise configured.
+if [ "$REALLY_UPLOAD" == "true" ] && [ -z "$RABBY_MOBILE_SIGN_ONLY_APK" ] && [ "$UPLOAD_TEMPLATE_APK" = "true" ] && [ "$FAST_BUILD_ENABLED" != "true" ] && [ $buildchannel = "selfhost-reg" ] && [ ! -z $RABBY_MOBILE_REG_PUB_DEPLOYMENT ]; then
   template_apk_s3_dir=$RABBY_MOBILE_REG_PUB_DEPLOYMENT/.templates/android;
   native_part_hash=$(collect_android_native_entries)
   echo "[deploy-android] will set apk $android_export_target to $template_apk_s3_dir/$native_part_hash.apk"
@@ -398,11 +400,19 @@ fi
 
 if [ -z $CI ]; then
   echo "";
-  echo "[deploy-android] force fresh CDN:"
-  echo "[deploy-android] \`aws cloudfront create-invalidation --distribution-id $RABBY_MOBILE_CDN_FRONTEND_ID --paths '/$s3_upload_prefix/android*'\`"
+  if [ "$REALLY_UPLOAD" == "true" ]; then
+    echo "[deploy-android] force fresh CDN:"
+    echo "[deploy-android] \`aws cloudfront create-invalidation --distribution-id $RABBY_MOBILE_CDN_FRONTEND_ID --paths '/$s3_upload_prefix/android*'\`"
+  else
+    echo "[deploy-android] REALLY_UPLOAD != true: skipped CDN invalidation."
+  fi
   echo ""
 
-  print_manual_upload_sentry_sourcemap;
+  if [ "$REALLY_UPLOAD" == "true" ]; then
+    print_manual_upload_sentry_sourcemap;
+  else
+    echo "[deploy-android] REALLY_UPLOAD != true: skipped Sentry sourcemap upload."
+  fi
 fi
 
 echo "[deploy-android] finish sync."

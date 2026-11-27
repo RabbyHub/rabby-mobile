@@ -78,6 +78,7 @@ import {
 import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
 import { Tip } from '@/components';
 import { useMiniSigner } from '@/hooks/useSigner';
+import { useBizMockAction } from '@/devtools/bizMock/useBizMockAction';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { ApprovePendingTxItem } from '../Swap/components/PendingTxItem';
 import { toast } from '@/components2024/Toast';
@@ -1236,6 +1237,23 @@ const Swap = ({
     saveFormSnapshot: saveSwapFormSnapshot,
   });
   reportBroadcastSuccessRef.current = reportBroadcastSuccess;
+
+  // Biz-mock: expose the real amount/submit handlers, never a test-only
+  // re-implementation. Both are no-ops outside non-production builds.
+  useBizMockAction({
+    id: 'swap.amount.set',
+    testID: 'swap-amount-input',
+    handler: (payload?: Record<string, unknown>) => {
+      const nextAmount =
+        payload && typeof payload.amount === 'string' ? payload.amount : '';
+      handleAmountChange(nextAmount);
+    },
+  });
+  useBizMockAction({
+    id: 'swap.submit',
+    testID: 'swap-submit-button',
+    handler: () => handleSwap({}),
+  });
 
   const swapPreviewInfo = isPreviewVisible ? (
     <BridgeShowMore

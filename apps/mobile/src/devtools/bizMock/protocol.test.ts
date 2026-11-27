@@ -166,6 +166,78 @@ describe('parseBizMockAction', () => {
     });
   });
 
+  it('parses account maintenance, approval dump and store pins', () => {
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=account.remove&address=0xabc',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      action: { action: 'account.remove', address: '0xabc' },
+    });
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=account.create',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      action: { action: 'account.create' },
+    });
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=approval.dump&name=sign-tx',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      action: { action: 'approval.dump', name: 'sign-tx' },
+    });
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=store.pin&store=%7B%22balanceAccounts%22%3A%7B%22totalBalance%22%3A1%7D%7D',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      action: {
+        action: 'store.pin',
+        store: { balanceAccounts: { totalBalance: 1 } },
+      },
+    });
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=store.clearPins',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      action: { action: 'store.clearPins' },
+    });
+  });
+
+  it('requires an address for account.remove and a store for store.pin', () => {
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=account.remove',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      error: { code: 'missing-param' },
+    });
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=store.pin',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      error: { code: 'missing-param' },
+    });
+  });
+
   it('does not match a different protocol or path', () => {
     expect(
       parseBizMockAction(
