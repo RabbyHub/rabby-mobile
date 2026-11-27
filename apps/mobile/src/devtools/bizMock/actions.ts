@@ -144,6 +144,28 @@ async function importAccountsFromFile(file?: string): Promise<BizMockResult> {
     }
   }
 
+  try {
+    const dir = `${bizMockBaseDir()}/${BIZ_MOCK_DUMP_DIRNAME}`;
+    await RNFS.mkdir(dir);
+    await RNFS.writeFile(
+      `${dir}/import-result.json`,
+      JSON.stringify(
+        {
+          schemaVersion: 1,
+          capturedAt: Date.now(),
+          addresses: result.addresses || [],
+          imported: result.imported,
+          failed: result.failed,
+        },
+        null,
+        2,
+      ),
+      'utf8',
+    );
+  } catch {
+    // The dump is a convenience for host runners.
+  }
+
   return {
     ok: true,
     action: 'account.importFromFile',
