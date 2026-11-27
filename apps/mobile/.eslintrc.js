@@ -30,10 +30,7 @@ module.exports = {
         // Migration allowlist (P1): shrink as each screen moves to a
         // route-level header. Never add new entries.
         allowFiles: [
-          'src/screens/Address/SetPassword2024.tsx',
           'src/screens/Bridge/BridgeDetailScreen.tsx',
-          'src/screens/Dapps/FavoriteDappsScreen/index.tsx',
-          'src/screens/GnosisQueue/index.tsx',
           'src/screens/PerpsMarketDetail/index.tsx',
           'src/screens/Receive/Receive.tsx',
           'src/screens/Transaction/MultiAddressHistory.tsx',

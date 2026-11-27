@@ -7,7 +7,10 @@ import { DappsNavigatorParamsList } from '@/navigation-type';
 import { DappsScreen } from '../Dapps/DappsScreen';
 import { IS_IOS } from '@/core/native/utils';
 import { useStackScreenConfig } from '@/hooks/navigation';
-import { FavoriteDappsScreen } from '../Dapps/FavoriteDappsScreen';
+import {
+  FavoriteDappsHeaderTitle,
+  FavoriteDappsScreen,
+} from '../Dapps/FavoriteDappsScreen';
 
 const DappsStack = createNativeStackNavigator<DappsNavigatorParamsList>();
 
@@ -48,6 +51,8 @@ export function DappsNavigator() {
         name={RootNames.FavoriteDapps}
         component={withScreenPropsInjection(FavoriteDappsScreen)}
         options={mergeScreenOptions({
+          // Declared on the route: the title carries the live favourite count.
+          headerTitle: () => <FavoriteDappsHeaderTitle />,
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontWeight: '900',

@@ -385,6 +385,8 @@ export type TransactionNavigatorParamList = {
   [RootNames.MultiSwapBridge]?: SwapBridgeParams & object;
   [RootNames.GnosisTransactionQueue]: {
     account: Account;
+    /** Pending transaction + message count, published by the screen for the header title. */
+    headerTotal?: number;
   };
   [RootNames.Receive]: {
     account: Account;

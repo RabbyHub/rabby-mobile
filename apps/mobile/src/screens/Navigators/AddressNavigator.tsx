@@ -37,7 +37,9 @@ import CreateNewAddress, {
   CreateNewAddressHeaderTitle,
 } from '../Address/CreateNewAddress';
 import CreateSelectMethod from '../Address/CreateSelectMethod';
-import SetPassword2024 from '../Address/SetPassword2024';
+import SetPassword2024, {
+  SetPasswordHeaderTitle,
+} from '../Address/SetPassword2024';
 import CreateChooseBackup from '../Address/CreateChooseBackup';
 import { AddressListScreenButton } from '../Address/AddressListScreenButton';
 import { WatchAddressListScreen } from '../Address/WatchAddressListScreen';
@@ -318,15 +320,30 @@ export function AddressNavigator() {
       <AddressStack.Screen
         name={RootNames.SetPassword2024}
         component={withScreenPropsInjection(SetPassword2024)}
-        options={mergeScreenOptions({
-          headerTitle: t('screens.addressStackTitle.SetPassword'),
-          title: t('screens.addressStackTitle.SetPassword'),
-          headerTintColor: colors2024['neutral-title-1'],
-          headerStyle: {
-            backgroundColor: colors2024['neutral-bg-1'],
-          },
-          headerTitleStyle: styles.headerTitleText,
-        })}
+        options={({ route }) => {
+          const hideBack = !!route.params?.hideBackIcon;
+          return mergeScreenOptions({
+            // Declared on the route so the first frame already has the final
+            // title; the screen used to install it from an effect.
+            headerTitle: () => (
+              <SetPasswordHeaderTitle title={route.params?.title} />
+            ),
+            title: t('screens.addressStackTitle.SetPassword'),
+            headerTintColor: colors2024['neutral-title-1'],
+            headerStyle: {
+              backgroundColor: colors2024['neutral-bg-1'],
+            },
+            headerTitleStyle: styles.headerTitleText,
+            ...(hideBack
+              ? {
+                  // First-run import password: no way back before completing.
+                  headerBackVisible: false,
+                  headerLeft: () => null,
+                  unstable_headerLeftItems: () => [],
+                }
+              : {}),
+          });
+        }}
       />
       <AddressStack.Screen
         name={RootNames.CreateChooseBackup}
