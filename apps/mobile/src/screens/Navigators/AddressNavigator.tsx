@@ -53,6 +53,7 @@ import { APP_TEST_PASSWORD } from '@/constant';
 import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { ImportMethodsHeader } from '../Address/ImportMethodsHeader';
 import { AutoFitCenterHeader } from '@/components/AutoFitCenterHeader';
+import { AddressDetailHeaderRight } from '../Address/AddressDetail';
 import { renderAppStackHeader } from '@/components/AppStackHeader';
 import { SafeWindowHeaderInset } from '@/components/SafeWindowFrame/headerInset';
 
@@ -377,15 +378,18 @@ export function AddressNavigator() {
       <AddressStack.Screen
         name={RootNames.AddressDetail}
         component={withScreenPropsInjection(AddressDetailScreen)}
-        options={{
+        options={({ route }) => ({
           headerTitle: t('screens.addressStackTitle.AddressDetail'),
           title: t('screens.addressStackTitle.AddressDetail'),
+          headerRight: () => (
+            <AddressDetailHeaderRight address={route.params?.address} />
+          ),
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-0'],
           },
           headerTintColor: colors2024['neutral-title-1'],
           headerTitleStyle: styles.headerTitleText,
-        }}
+        })}
       />
       <AddressStack.Screen
         name={RootNames.ImportMoreAddress}
