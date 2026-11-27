@@ -285,6 +285,21 @@ if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
   fi
   export SENTRY_DISABLE_AUTO_UPLOAD="${SENTRY_DISABLE_AUTO_UPLOAD:-true}"
   export ZERO_AR_DATE="${ZERO_AR_DATE:-$(git -C "$project_dir" show -s --format=%cI HEAD)}"
+  # The RNFS pod compiles a Rust crate (rabby-safe-svg) inside the archive, and
+  # rustc embeds the toolchain and cargo-registry paths in the static library.
+  # Pin the compiler the CI workflows use and remap those prefixes so two
+  # builders produce the same bytes.
+  export RUSTUP_TOOLCHAIN="${RABBY_MOBILE_RUST_TOOLCHAIN:-1.95.0}"
+  rabby_rustup_home="${RUSTUP_HOME:-$HOME/.rustup}"
+  rabby_cargo_home="${CARGO_HOME:-$HOME/.cargo}"
+  rabby_rustflags="${RUSTFLAGS:-}"
+  rabby_rustflags="$rabby_rustflags --remap-path-prefix=${rabby_rustup_home}/toolchains=/rust-toolchain"
+  for registry_src in "$rabby_cargo_home"/registry/src/*; do
+    [ -d "$registry_src" ] || continue
+    rabby_rustflags="$rabby_rustflags --remap-path-prefix=${registry_src}=/cargo/registry/src/registry"
+  done
+  rabby_rustflags="$rabby_rustflags --remap-path-prefix=${project_dir}/../..=/rabby"
+  export RUSTFLAGS="$rabby_rustflags"
   prepare_ios_build_artifacts || exit $?
   prepare_ios_native_deps || exit $?
   sh ./ios/patches/override-xcconfig-release.sh
@@ -302,6 +317,7 @@ if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
     -configuration "$unsigned_configuration" \
     -destination 'generic/platform=iOS' \
     -archivePath "$unsigned_archive" \
+    -derivedDataPath "${RABBY_MOBILE_IOS_DERIVED_DATA:-/tmp/rabby-dd}" \
     CODE_SIGNING_ALLOWED=NO \
     CODE_SIGN_IDENTITY="" \
     CODE_SIGNING_REQUIRED=NO \
