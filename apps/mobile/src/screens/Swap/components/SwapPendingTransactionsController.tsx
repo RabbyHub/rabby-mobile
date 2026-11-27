@@ -1,11 +1,4 @@
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import React, {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-} from 'react';
-import { SwapHeader } from './Header';
+import React, { forwardRef, useEffect, useImperativeHandle } from 'react';
 import { PendingTxItem } from './PendingTxItem';
 import { usePollSwapPendingNumber } from '../hooks';
 
@@ -27,22 +20,14 @@ export const SwapPendingTransactionsController = forwardRef<
   SwapPendingTransactionsControllerProps
 >(
   (
-    {
-      disableHeaderRight,
-      enabled,
-      isForMultipleAddress,
-      showPendingTransaction,
-      onProgressChange,
-    },
+    { enabled, isForMultipleAddress, showPendingTransaction, onProgressChange },
     ref,
   ) => {
-    const { setNavigationOptions } = useSafeSetNavigationOptions();
     const {
       runAsync: runFetchPendingCount,
       localPendingTxData,
       clearLocalPendingTxData,
       runFetchLocalPendingTx,
-      clearSwapHistoryRedDot,
     } = usePollSwapPendingNumber(5000, enabled);
 
     useImperativeHandle(
@@ -55,25 +40,6 @@ export const SwapPendingTransactionsController = forwardRef<
       }),
       [runFetchLocalPendingTx, runFetchPendingCount],
     );
-
-    const headerRight = useCallback(
-      () => (
-        <SwapHeader
-          isForMultipleAddress={isForMultipleAddress}
-          clearSwapHistoryRedDot={clearSwapHistoryRedDot}
-        />
-      ),
-      [clearSwapHistoryRedDot, isForMultipleAddress],
-    );
-
-    useEffect(() => {
-      if (disableHeaderRight) {
-        return;
-      }
-      setNavigationOptions({
-        headerRight,
-      });
-    }, [disableHeaderRight, headerRight, setNavigationOptions]);
 
     const hasSwapProgress = !!localPendingTxData;
 

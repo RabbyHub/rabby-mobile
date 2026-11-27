@@ -73,7 +73,6 @@ import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog'
 import { hasBlockedAddress } from '@/core/utils/blockedAddress';
 import FromAddressControl2024 from './components/FromAddressControl';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { getRecommendToken } from '@/utils/addressSupport';
 import { lowcaseSame } from '@/utils/common';
 import { ShowMoreOnSend } from './components/ShowMoreOnSend';
@@ -498,7 +497,6 @@ function SendScreen({
 
   const navigation = useNavigation();
   const { t } = useTranslation();
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
   const [isShowBlockedTransactionDialog, setIsShowBlockedTransactionDialog] =
     useState(false);
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
