@@ -295,6 +295,18 @@ describe('parseBizMockAction', () => {
     });
   });
 
+  it('parses history.seedLocalTx', () => {
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=history.seedLocalTx&amount=0.0001',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      action: { action: 'history.seedLocalTx', amount: '0.0001' },
+    });
+  });
+
   it('does not match a different protocol or path', () => {
     expect(
       parseBizMockAction(

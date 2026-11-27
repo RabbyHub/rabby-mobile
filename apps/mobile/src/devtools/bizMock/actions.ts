@@ -664,6 +664,80 @@ export async function runBizMockAction(
       };
     }
 
+    if (action.action === 'history.seedLocalTx') {
+      const account = getFallbackAccountSnapshot();
+      if (!account?.address) {
+        return {
+          ok: false,
+          action: action.action,
+          code: 'account-not-ready',
+          message: 'no current account',
+        };
+      }
+      const { default: BigNumber } = await import('bignumber.js');
+      const [{ findChain }, { transactionHistoryServiceApi }] =
+        await Promise.all([
+          import('@/utils/chain'),
+          import('@/core/serviceApi/transactionHistory'),
+        ]);
+      const chain = findChain({ id: 1 });
+      const nativeTokenId = chain?.nativeTokenAddress || 'eth';
+      const amount = new BigNumber(action.amount || '0.0001');
+      const rawAmount = amount.times(1e18).toFixed(0);
+      const to = '0x000000000000000000000000000000000000dEaD';
+      const hash = `0x${Array.from({ length: 64 })
+        .map(() => Math.floor(Math.random() * 16).toString(16))
+        .join('')}`;
+      const now = Math.floor(Date.now() / 1000);
+      transactionHistoryServiceApi.addTx({
+        id: `bizmock-${Date.now()}`,
+        hash,
+        from: account.address,
+        to,
+        value: rawAmount,
+        chainId: 1,
+        nonce: 0,
+        status: 'success',
+        time_at: now,
+        rawTx: {
+          from: account.address,
+          to,
+          value: rawAmount,
+          chainId: 1,
+          nonce: 0,
+          gas: '0x5208',
+          gasPrice: '0x1',
+        },
+        action: {
+          actionData: {
+            send: {
+              to,
+              token: {
+                id: nativeTokenId,
+                symbol: 'ETH',
+                decimals: 18,
+                raw_amount: rawAmount,
+                price: 3000,
+                logo_url: '',
+              },
+            },
+          },
+          requiredData: {},
+        },
+        explain: { balance_change: [], pre_exec_version: 'v0' },
+        tokenDict: {},
+        projectDict: {},
+        cateDict: {},
+        isSubmitFailed: false,
+      } as any);
+      return {
+        ok: true,
+        action: action.action,
+        code: 'ok',
+        data: { address: account.address, hash, amount: amount.toFixed() },
+      };
+    }
+
     if (action.action === 'env.setScreenE2E') {
       const { storeApiExpSettingData } = await import('@/hooks/appSettings');
       storeApiExpSettingData.setScreenE2EEnabled(action.enabled);
