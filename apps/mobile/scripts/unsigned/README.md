@@ -57,8 +57,15 @@ hashes agree; host-only differences are reported as notes.
 
 ## Publishing
 
-- **Signing**: existing flows (`scripts/sign-only/sign-android.sh`, the iOS
-  export). Credentials stay in the environment, exactly as today.
+- **Signing (Android)**: `bash scripts/unsigned/sign-android.sh <unsigned.aab>
+--attest <attest.json> [--peer-attest <other.json>] [--out <signed.aab>]`.
+  It re-hashes the artifact against the attestation, optionally runs the
+  two-builder comparison, signs with `jarsigner` using the usual
+  `RABBY_MOBILE_ANDROID_*` credentials and writes `<signed>.signed.json`
+  binding the unsigned hash to the signed hash.
+- **Signing (iOS)**: reuse the existing export flow (`deploy-ios-adhoc.sh` /
+  fastlane `appstore`) from the unsigned archive; credentials stay in the
+  environment.
 - **Sentry**: `node scripts/unsigned/upload-sentry.mjs --platform android
 --bundle … --sourcemap … --release … --dist …` (or `--platform ios
 --archive …`), using the same `SENTRY_AUTH_TOKEN` /

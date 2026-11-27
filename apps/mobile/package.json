@@ -72,7 +72,8 @@
     "sign-only:test": "node --test ./scripts/sign-only/publish.test.mjs ./scripts/sign-only/one-shot.test.mjs",
     "unsigned:android": "bash ./scripts/unsigned/build-android.sh",
     "unsigned:ios": "bash ./scripts/unsigned/build-ios.sh",
-    "unsigned:sentry": "node ./scripts/unsigned/upload-sentry.mjs"
+    "unsigned:sentry": "node ./scripts/unsigned/upload-sentry.mjs",
+    "unsigned:sign-android": "bash ./scripts/unsigned/sign-android.sh"
   },
   "resolutions": {
     "@gorhom/bottom-sheet": "patch:@gorhom/bottom-sheet@npm:5.2.8#../../.yarn/patches/@gorhom-bottom-sheet-npm-5.2.8-1ad4b8f529.patch",
