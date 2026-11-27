@@ -12,6 +12,7 @@ export const STARTUP_LAUNCH_TASK_MODULE_FILES = [
 
 export const STARTUP_DEFERRED_TASK_MODULE_FILES = [
   'src/components2024/GlobalBottomSheetModal/GlobalBottomSheetModal.tsx',
+  'src/core/services/startupCoreLoader.ts',
   'src/hooks/browser/useBrowser.ts',
   'src/hooks/perps/usePerpsStore.ts',
   'src/hooks/useCexSupportList.ts',

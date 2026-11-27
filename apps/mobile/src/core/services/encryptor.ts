@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import Aes from 'react-native-aes-crypto';
 import type { EncryptorAdapter } from '@rabby-wallet/service-keyring';
 
@@ -47,9 +48,6 @@ const KDF_VERSION_RANK: Record<KdfVersion, number> = {
   [KDF_VERSION_ORIGINAL]: 0,
   [KDF_VERSION_PBKDF2_600000]: 20261022,
 };
-
-// Controls the encryption target. Existing payloads select their own KDF.
-const ENABLE_PBKDF2_600000 = false;
 
 type LegacyKeyMetadata = {
   algorithm: 'PBKDF2';
@@ -195,6 +193,35 @@ async function _keyFromPassword(
   salt: string,
   options: KeyDerivationOptions,
 ) {
+  if (
+    Platform.OS === 'android' &&
+    options.version === KDF_VERSION_PBKDF2_600000
+  ) {
+    try {
+      const { default: QuickCrypto } = await import(
+        'react-native-quick-crypto'
+      );
+      // Pass the stored salt verbatim and request a 32-byte key.
+      return await new Promise<string>((resolve, reject) => {
+        QuickCrypto.pbkdf2(
+          password,
+          salt,
+          options.iterations,
+          32,
+          algorithms_pbkdf2,
+          (error, key) => {
+            if (error || !key) {
+              reject(error ?? new Error('PBKDF2 returned no key'));
+              return;
+            }
+            resolve(key.toString('hex'));
+          },
+        );
+      });
+    } catch {
+      // The original native provider can derive the same key if unavailable.
+    }
+  }
   return Aes.pbkdf2(password, salt, options.iterations, 256, algorithms_pbkdf2);
 }
 
@@ -286,9 +313,7 @@ export default class RNEncryptor implements EncryptorAdapter {
   private readonly keyDerivationOptions: KeyDerivationOptions;
 
   constructor({
-    keyDerivationOptions = KDF_REGISTRY[
-      ENABLE_PBKDF2_600000 ? KDF_VERSION_PBKDF2_600000 : KDF_VERSION_ORIGINAL
-    ],
+    keyDerivationOptions = LEGACY_DERIVATION_OPTIONS,
   }: { keyDerivationOptions?: KeyDerivationOptions } = {}) {
     const parsed = parseKdfMetadata(keyDerivationOptions);
     this.keyDerivationOptions = cloneKdfOptions(parsed);

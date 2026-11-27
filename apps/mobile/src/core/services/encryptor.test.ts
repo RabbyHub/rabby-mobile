@@ -1,4 +1,6 @@
+import { Platform } from 'react-native';
 import Aes from 'react-native-aes-crypto';
+import QuickCrypto from 'react-native-quick-crypto';
 import RNEncryptor, {
   DERIVATION_OPTIONS_OWASP2023,
   KDF_VERSION_ORIGINAL,
@@ -416,6 +418,79 @@ describe('RNEncryptor KDF version registry', () => {
       expect(Aes.decrypt).not.toHaveBeenCalled();
     },
   );
+});
+
+describe('RNEncryptor Android QuickCrypto', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.replaceProperty(Platform, 'OS', 'android');
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('reads and writes the original 600k ciphertext with the same exported key', async () => {
+    const deriveKey = jest.spyOn(QuickCrypto, 'pbkdf2');
+    const fixture = fixtures[1];
+    const encryptor = new RNEncryptor({
+      keyDerivationOptions: DERIVATION_OPTIONS_OWASP2023,
+    });
+    const encrypted = JSON.stringify(fixture.encrypted);
+    expect(await encryptor.decrypt(password, encrypted)).toEqual(vault);
+    expect(deriveKey).toHaveBeenCalledWith(
+      password,
+      salt,
+      600000,
+      32,
+      'sha256',
+      expect.any(Function),
+    );
+
+    jest
+      .mocked(Aes.randomKey)
+      .mockResolvedValueOnce(saltHex)
+      .mockResolvedValueOnce(iv);
+    expect(await encryptor.encryptWithDetail(password, vault)).toEqual({
+      vault: encrypted,
+      exportedKeyString: JSON.stringify(exportedFixture(fixture)),
+    });
+    expect(deriveKey).toHaveBeenCalledTimes(2);
+    expect(Aes.pbkdf2).not.toHaveBeenCalled();
+  });
+
+  it('keeps legacy 5k derivation on AES', async () => {
+    const deriveKey = jest.spyOn(QuickCrypto, 'pbkdf2');
+    const encrypted = JSON.stringify(fixtures[0].encrypted);
+    expect(await new RNEncryptor().decrypt(password, encrypted)).toEqual(vault);
+    expect(Aes.pbkdf2).toHaveBeenCalledWith(
+      password,
+      salt,
+      5000,
+      256,
+      'sha256',
+    );
+    expect(deriveKey).not.toHaveBeenCalled();
+  });
+
+  it('falls back to AES with the same parameters when QuickCrypto fails', async () => {
+    jest
+      .spyOn(QuickCrypto, 'pbkdf2')
+      .mockImplementationOnce(
+        (_password, _salt, _iterations, _length, _digest, callback) => {
+          callback(new Error('Native PBKDF2 unavailable'));
+        },
+      );
+    const encrypted = JSON.stringify(fixtures[1].encrypted);
+    expect(await new RNEncryptor().decrypt(password, encrypted)).toEqual(vault);
+    expect(Aes.pbkdf2).toHaveBeenCalledWith(
+      password,
+      salt,
+      600000,
+      256,
+      'sha256',
+    );
+  });
 });
 
 describe('RNEncryptor upgrade policy', () => {

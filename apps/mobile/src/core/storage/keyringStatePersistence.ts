@@ -48,7 +48,11 @@ export function createKeyringStatePersistence({
   let blocked = initialBlocked;
   let prePersistedValue: PersistedKeyringState | null = null;
 
-  function persist(value: PersistedKeyringState, requireSuccess: boolean) {
+  function persist(
+    value: PersistedKeyringState,
+    requireSuccess: boolean,
+    checkpointNewState = false,
+  ) {
     const currentSequence = ++sequence;
     const summary = getKeyringStateSummary(value);
     onDiagnostic('persist.request', {
@@ -76,6 +80,7 @@ export function createKeyringStatePersistence({
         keyringStorage,
         checkpointStorage,
         value,
+        checkpointNewState,
       });
       onDiagnostic('persist.complete', {
         sequence: currentSequence,
@@ -105,11 +110,14 @@ export function createKeyringStatePersistence({
     }
   }
 
-  function persistVaultUpgrade(value: PersistedKeyringState): true {
+  function persistVaultUpgrade(
+    value: PersistedKeyringState,
+    options?: { checkpointNewState: boolean },
+  ): true {
     prePersistedValue = null;
     // Report write/readback failures directly, before ObservableStore publishes
     // memory or defers subscriber errors through SafeEventEmitter.
-    persist(value, true);
+    persist(value, true, options?.checkpointNewState);
     // The caller must immediately publish this exact, unchanged object with
     // putState. Repeating the write would replace the rollback checkpoint.
     prePersistedValue = value;
