@@ -848,7 +848,15 @@ export async function runBizMockAction(
           gasPrice: '0x1',
         },
         action: { actionData, requiredData: {} },
-        explain: { balance_change: [], pre_exec_version: 'v0' },
+        explain: {
+          balance_change: {
+            receive_token_list: [],
+            send_token_list: [],
+            receive_nft_list: [],
+            send_nft_list: [],
+          },
+          pre_exec_version: 'v0',
+        },
         tokenDict: {},
         projectDict: {},
         cateDict: {},
