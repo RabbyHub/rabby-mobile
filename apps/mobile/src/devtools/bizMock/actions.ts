@@ -692,12 +692,19 @@ export async function runBizMockAction(
       transactionHistoryServiceApi.addTx({
         id: `bizmock-${Date.now()}`,
         hash,
+        address: account.address,
         from: account.address,
         to,
         value: rawAmount,
         chainId: 1,
         nonce: 0,
+        gas: '0x5208',
+        gasPrice: '0x1',
         status: 'success',
+        isPending: false,
+        isCompleted: true,
+        isSubmitFailed: false,
+        isSynced: false,
         time_at: now,
         rawTx: {
           from: account.address,
@@ -728,7 +735,6 @@ export async function runBizMockAction(
         tokenDict: {},
         projectDict: {},
         cateDict: {},
-        isSubmitFailed: false,
       } as any);
       return {
         ok: true,
