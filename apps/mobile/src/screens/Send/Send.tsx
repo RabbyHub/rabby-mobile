@@ -58,6 +58,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { toastLoading } from '@/components2024/Toast';
 import { sleep } from '@/utils/async';
+import { useBizMockAction } from '@/devtools/bizMock/useBizMockAction';
 import BigNumber from 'bignumber.js';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
@@ -431,6 +432,40 @@ const SendScreenBody = React.memo(function SendScreenBody({
       }),
     );
   }, [navigation]);
+
+  // Biz-mock: expose the real field/submit callbacks, never a test-only
+  // re-implementation. Both are no-ops outside non-production builds.
+  const sendBizMockCallbacks = useSendTokenInternalShallowSelector(ctx => ({
+    handleFieldChange: ctx.callbacks.handleFieldChange,
+    submitForm: ctx.callbacks.submitForm,
+    saveCurrentFormValuesSnapshot: ctx.callbacks.saveCurrentFormValuesSnapshot,
+  }));
+  useBizMockAction({
+    id: 'send.form.set',
+    testID: 'send-form',
+    handler: (payload?: Record<string, unknown>) => {
+      if (!payload) {
+        return;
+      }
+      if (typeof payload.to === 'string' && payload.to) {
+        sendBizMockCallbacks.handleFieldChange('to', payload.to as any);
+      }
+      if (payload.amount !== undefined) {
+        sendBizMockCallbacks.handleFieldChange(
+          'amount',
+          String(payload.amount) as any,
+        );
+      }
+    },
+  });
+  useBizMockAction({
+    id: 'send.submit',
+    testID: 'send-submit-button',
+    handler: () => {
+      sendBizMockCallbacks.saveCurrentFormValuesSnapshot();
+      sendBizMockCallbacks.submitForm();
+    },
+  });
 
   return (
     <View style={styles.screenRoot} {...makeTestIDProps(E2E_ID.send.screen)}>

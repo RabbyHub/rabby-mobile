@@ -513,6 +513,95 @@ export async function runBizMockAction(
       return { ok: true, action: action.action, code: 'ok' };
     }
 
+    if (action.action === 'dapp.tabs') {
+      const { browserApis, getBrowserTabsSnapshot } = await import(
+        '@/hooks/browser/useBrowser'
+      );
+      if (action.op === 'closeAll' || action.op === 'close-all') {
+        browserApis.closeAllTabs();
+      } else if (action.op === 'activate') {
+        const match = action.match || '';
+        const tab = getBrowserTabsSnapshot().tabs.find(item =>
+          String(item.initialUrl || item.url || '').includes(match),
+        );
+        if (!tab) {
+          return {
+            ok: false,
+            action: action.action,
+            code: 'tab-not-found',
+            message: `no browser tab matching ${match}`,
+          };
+        }
+        browserApis.switchToTab(tab.id);
+      }
+
+      const snapshot = getBrowserTabsSnapshot();
+      const fileName = safeName(action.name, 'dapp-tabs');
+      const dir = `${bizMockBaseDir()}/${BIZ_MOCK_DUMP_DIRNAME}`;
+      const path = `${dir}/${fileName}.json`;
+      const tabs = snapshot.tabs.map(tab => ({
+        id: tab.id,
+        url: tab.initialUrl || tab.url,
+        isDapp: tab.isDapp,
+      }));
+      await RNFS.mkdir(dir);
+      await RNFS.writeFile(
+        path,
+        JSON.stringify(
+          {
+            schemaVersion: 1,
+            capturedAt: Date.now(),
+            activeTabId: snapshot.activeTabId,
+            tabs,
+          },
+          null,
+          2,
+        ),
+        'utf8',
+      );
+      return {
+        ok: true,
+        action: action.action,
+        code: 'ok',
+        data: { name: fileName, activeTabId: snapshot.activeTabId, tabs },
+      };
+    }
+
+    if (action.action === 'dapp.eval') {
+      let code = action.code;
+      if (!code && action.file) {
+        const name = safeName(action.file.replace(/\.js$/i, ''), 'eval');
+        code = await RNFS.readFile(
+          `${bizMockBaseDir()}/biz-mock-fixtures/${name}.js`,
+          'utf8',
+        );
+      }
+      if (!code) {
+        return {
+          ok: false,
+          action: action.action,
+          code: 'missing-param',
+          message: 'code or file is required',
+        };
+      }
+      const { emitBrowserEval } = await import(
+        '@/devtools/screenRegistry/browserEval'
+      );
+      emitBrowserEval(code);
+      return { ok: true, action: action.action, code: 'ok' };
+    }
+
+    if (action.action === 'dapp.disconnect') {
+      const { removeDapp } = await import('@/core/apis/dapp');
+      await removeDapp(action.origin);
+      return {
+        ok: true,
+        action: action.action,
+        code: 'ok',
+        data: { origin: action.origin },
+      };
+    }
+
     if (action.action === 'env.setScreenE2E') {
       const { storeApiExpSettingData } = await import('@/hooks/appSettings');
       storeApiExpSettingData.setScreenE2EEnabled(action.enabled);

@@ -45,6 +45,9 @@ export type BizMockAction =
   | { action: 'home.openSingleAddress' }
   | { action: 'store.pin'; store: JsonObject }
   | { action: 'store.clearPins' }
+  | { action: 'dapp.tabs'; op?: string; match?: string; name?: string }
+  | { action: 'dapp.eval'; code?: string; file?: string }
+  | { action: 'dapp.disconnect'; origin: string }
   | { action: 'env.setScreenE2E'; enabled: boolean };
 
 export type BizMockMeta = {
@@ -411,6 +414,54 @@ export function parseBizMockAction(
 
   if (command === 'store.clearPins') {
     return { matched: true, meta, action: { action: 'store.clearPins' } };
+  }
+
+  if (command === 'dapp.tabs') {
+    return {
+      matched: true,
+      meta,
+      action: {
+        action: 'dapp.tabs',
+        op: readString(urlInfo.searchParams.get('op'), 32),
+        match: readString(urlInfo.searchParams.get('match'), 512),
+        name: readString(urlInfo.searchParams.get('name'), 80),
+      },
+    };
+  }
+
+  if (command === 'dapp.eval') {
+    const code = readString(urlInfo.searchParams.get('code'), 4096);
+    const file = readString(urlInfo.searchParams.get('file'), 128);
+    if (!code && !file) {
+      return {
+        matched: true,
+        meta,
+        error: {
+          code: 'missing-param',
+          message: 'code or file is required for dapp.eval',
+        },
+      };
+    }
+    return { matched: true, meta, action: { action: 'dapp.eval', code, file } };
+  }
+
+  if (command === 'dapp.disconnect') {
+    const origin = readString(urlInfo.searchParams.get('origin'), 512);
+    if (!origin) {
+      return {
+        matched: true,
+        meta,
+        error: {
+          code: 'missing-param',
+          message: 'origin is required for dapp.disconnect',
+        },
+      };
+    }
+    return {
+      matched: true,
+      meta,
+      action: { action: 'dapp.disconnect', origin },
+    };
   }
 
   if (command === 'env.setScreenE2E') {

@@ -79,7 +79,10 @@ import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappP
 import { Tip } from '@/components';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { useBizMockAction } from '@/devtools/bizMock/useBizMockAction';
-import { setBizMockIgnoreInsufficient } from '@/devtools/bizMock/swapOverrides';
+import {
+  clearBizMockTokenBalances,
+  setBizMockTokenBalance,
+} from '@/devtools/bizMock/tokenBalanceOverrides';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { ApprovePendingTxItem } from '../Swap/components/PendingTxItem';
 import { toast } from '@/components2024/Toast';
@@ -1256,10 +1259,16 @@ const Swap = ({
     handler: () => handleSwap({}),
   });
   useBizMockAction({
-    id: 'swap.ignoreInsufficient',
+    id: 'swap.mockPayBalance',
     handler: (payload?: Record<string, unknown>) => {
-      setBizMockIgnoreInsufficient(payload?.enabled !== false);
+      const requested =
+        payload && typeof payload.amount === 'string' ? payload.amount : '1';
+      setBizMockTokenBalance(payToken?.id, requested, payToken?.decimals || 18);
     },
+  });
+  useBizMockAction({
+    id: 'swap.clearMockBalance',
+    handler: () => clearBizMockTokenBalances(),
   });
 
   const swapPreviewInfo = isPreviewVisible ? (

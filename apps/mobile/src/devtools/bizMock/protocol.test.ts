@@ -238,6 +238,51 @@ describe('parseBizMockAction', () => {
     });
   });
 
+  it('parses dapp actions', () => {
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=dapp.tabs&op=list&name=tabs',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      action: { action: 'dapp.tabs', op: 'list', name: 'tabs' },
+    });
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=dapp.eval&code=1%2B1',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      action: { action: 'dapp.eval', code: '1+1' },
+    });
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=dapp.disconnect&origin=https%3A%2F%2Fopensea.io',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      action: { action: 'dapp.disconnect', origin: 'https://opensea.io' },
+    });
+  });
+
+  it('requires params for dapp.eval and dapp.disconnect', () => {
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=dapp.eval',
+        config,
+      ),
+    ).toMatchObject({ matched: true, error: { code: 'missing-param' } });
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=dapp.disconnect',
+        config,
+      ),
+    ).toMatchObject({ matched: true, error: { code: 'missing-param' } });
+  });
+
   it('does not match a different protocol or path', () => {
     expect(
       parseBizMockAction(

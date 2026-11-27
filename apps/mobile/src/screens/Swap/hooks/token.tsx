@@ -56,10 +56,10 @@ import { useSceneActiveAsync } from '@/screens/SwapBridge/hooks/useSceneActiveAs
 import { getRabbyFeeInfo } from './fee';
 import { resolveSwapChainTokens } from './swapChainTokens';
 import {
-  getBizMockIgnoreInsufficient,
-  getBizMockSwapOverrideVersion,
-  subscribeBizMockSwapOverride,
-} from '@/devtools/bizMock/swapOverrides';
+  applyBizMockTokenBalance,
+  getBizMockTokenBalanceVersion,
+  subscribeBizMockTokenBalance,
+} from '@/devtools/bizMock/tokenBalanceOverrides';
 
 export const enableInsufficientQuote = true;
 
@@ -916,28 +916,27 @@ export const useTokenPair = ({
     [isWrapToken, payAmount, payToken, receiveToken],
   );
 
-  const [bizMockOverrideVersion, setBizMockOverrideVersion] = useState(0);
+  const [bizMockBalanceVersion, setBizMockBalanceVersion] = useState(0);
   useEffect(
     () =>
-      subscribeBizMockSwapOverride(() =>
-        setBizMockOverrideVersion(getBizMockSwapOverrideVersion()),
+      subscribeBizMockTokenBalance(() =>
+        setBizMockBalanceVersion(getBizMockTokenBalanceVersion()),
       ),
     [],
   );
 
-  // `bizMockOverrideVersion` only forces a re-render; the value itself is read
+  // `bizMockBalanceVersion` only forces a re-render; the balance itself comes
   // from the non-production override module.
-  const ignoreInsufficientForBizMock =
-    bizMockOverrideVersion >= 0 && getBizMockIgnoreInsufficient();
+  const payTokenForGuard = useMemo(() => {
+    void bizMockBalanceVersion;
+    return applyBizMockTokenBalance(payToken);
+  }, [payToken, bizMockBalanceVersion]);
 
   const inSufficient = useMemo(() => {
-    if (ignoreInsufficientForBizMock) {
-      return false;
-    }
-    return payToken
-      ? tokenAmountBn(payToken).lt(payAmount)
+    return payTokenForGuard
+      ? tokenAmountBn(payTokenForGuard).lt(payAmount)
       : new BigNumber(0).lt(payAmount);
-  }, [payToken, payAmount, ignoreInsufficientForBizMock]);
+  }, [payTokenForGuard, payAmount]);
 
   const inSufficientCanGetQuote = enableInsufficientQuote
     ? true
