@@ -55,6 +55,11 @@ import { mergeSwapQuoteBatch } from './quoteResultBatch';
 import { useSceneActiveAsync } from '@/screens/SwapBridge/hooks/useSceneActiveAsync';
 import { getRabbyFeeInfo } from './fee';
 import { resolveSwapChainTokens } from './swapChainTokens';
+import {
+  getBizMockIgnoreInsufficient,
+  getBizMockSwapOverrideVersion,
+  subscribeBizMockSwapOverride,
+} from '@/devtools/bizMock/swapOverrides';
 
 export const enableInsufficientQuote = true;
 
@@ -911,13 +916,28 @@ export const useTokenPair = ({
     [isWrapToken, payAmount, payToken, receiveToken],
   );
 
-  const inSufficient = useMemo(
+  const [bizMockOverrideVersion, setBizMockOverrideVersion] = useState(0);
+  useEffect(
     () =>
-      payToken
-        ? tokenAmountBn(payToken).lt(payAmount)
-        : new BigNumber(0).lt(payAmount),
-    [payToken, payAmount],
+      subscribeBizMockSwapOverride(() =>
+        setBizMockOverrideVersion(getBizMockSwapOverrideVersion()),
+      ),
+    [],
   );
+
+  // `bizMockOverrideVersion` only forces a re-render; the value itself is read
+  // from the non-production override module.
+  const ignoreInsufficientForBizMock =
+    bizMockOverrideVersion >= 0 && getBizMockIgnoreInsufficient();
+
+  const inSufficient = useMemo(() => {
+    if (ignoreInsufficientForBizMock) {
+      return false;
+    }
+    return payToken
+      ? tokenAmountBn(payToken).lt(payAmount)
+      : new BigNumber(0).lt(payAmount);
+  }, [payToken, payAmount, ignoreInsufficientForBizMock]);
 
   const inSufficientCanGetQuote = enableInsufficientQuote
     ? true

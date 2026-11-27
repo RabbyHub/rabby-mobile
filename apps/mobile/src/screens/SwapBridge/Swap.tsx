@@ -79,6 +79,7 @@ import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappP
 import { Tip } from '@/components';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { useBizMockAction } from '@/devtools/bizMock/useBizMockAction';
+import { setBizMockIgnoreInsufficient } from '@/devtools/bizMock/swapOverrides';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { ApprovePendingTxItem } from '../Swap/components/PendingTxItem';
 import { toast } from '@/components2024/Toast';
@@ -1253,6 +1254,12 @@ const Swap = ({
     id: 'swap.submit',
     testID: 'swap-submit-button',
     handler: () => handleSwap({}),
+  });
+  useBizMockAction({
+    id: 'swap.ignoreInsufficient',
+    handler: (payload?: Record<string, unknown>) => {
+      setBizMockIgnoreInsufficient(payload?.enabled !== false);
+    },
   });
 
   const swapPreviewInfo = isPreviewVisible ? (
