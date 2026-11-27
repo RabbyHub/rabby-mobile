@@ -373,13 +373,23 @@ export default function TransactionNavigator() {
         options={({ route }) =>
           mergeScreenOptions({
             // Declared on the route; the screen publishes `headerTotal` via
-            // setParams so the title stays current without a header swap.
-            headerTitle: () =>
-              t('page.safeQueue.title', {
-                total: route.params?.headerTotal,
+            // setParams so the title stays current without a header swap. The
+            // shared JS header keeps long translations on the screen centre
+            // and lets the typography ladder shrink them.
+            header: renderAppStackHeader(() => ({
+              title: t('page.safeQueue.title', {
+                // The screen publishes the live count; until it does, render the
+                // same "(0)" the native title showed instead of an empty title
+                // (i18next resolves a missing interpolation to "").
+                total: route.params?.headerTotal ?? 0,
               }),
+              titleKey: 'page.safeQueue.title',
+              backgroundColor: colors['neutral-card2'],
+            })),
+            headerBackVisible: false,
+            headerLeft: () => null,
+            unstable_headerLeftItems: () => [],
             title: 'Queue',
-            ...headerPresets.withBgCard2,
           })
         }
       />

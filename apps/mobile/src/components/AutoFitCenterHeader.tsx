@@ -65,6 +65,12 @@ export type AutoFitCenterHeaderProps = {
    * switch) can widen both slots so the title stays centred.
    */
   sideSlotWidth?: number;
+  /**
+   * Opaque strip behind the row. Defaults to transparent so the page background
+   * shows; native-header pages that used to paint `headerStyle` pass the same
+   * colour here to keep the header area unchanged.
+   */
+  backgroundColor?: string;
 };
 
 export const AutoFitCenterHeader = ({
@@ -76,6 +82,7 @@ export const AutoFitCenterHeader = ({
   rightSlot,
   titleAlign = 'center',
   sideSlotWidth = HEADER_SIDE_SLOT_WIDTH,
+  backgroundColor,
 }: AutoFitCenterHeaderProps) => {
   const { styles, colors2024, windowWidth, language } = useTheme2024({
     getStyle,
@@ -98,7 +105,7 @@ export const AutoFitCenterHeader = ({
   });
 
   return (
-    <View style={[styles.outer, { paddingTop: headerTop }]}>
+    <View style={[styles.outer, { paddingTop: headerTop, backgroundColor }]}>
       <View
         style={[
           styles.row,

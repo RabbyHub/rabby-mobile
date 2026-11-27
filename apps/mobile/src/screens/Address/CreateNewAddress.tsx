@@ -25,7 +25,6 @@ import { StackActions, useRoute } from '@react-navigation/native';
 import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import LinearGradient from 'react-native-linear-gradient';
 import { useCreateAddressProc } from '@/hooks/address/useNewUser';
-import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { Text } from '@/components/Typography';
 
@@ -34,33 +33,6 @@ const PROGRESS_BAR_STEP = {
   TWO: 2,
   THREE: 3,
 };
-
-/**
- * Route-level header title for the add-wallet step.
- *
- * Registered on the route (`headerTitle: () => <CreateNewAddressHeaderTitle …/>`)
- * instead of installed from an effect: swapping the header after mount makes
- * iOS animate the previous native header out as a duplicated copy, and the
- * first frame no longer matches the final one.
- */
-export function CreateNewAddressHeaderTitle({
-  title,
-  isFirstCreate,
-}: {
-  title?: string;
-  isFirstCreate?: boolean;
-}) {
-  const { t } = useTranslation();
-  const { styles } = useTheme2024({ getStyle });
-
-  return (
-    <HeaderTitleText2024 style={styles.title}>
-      {title || isFirstCreate
-        ? t('screens.addressStackTitle.CreateNewAddress')
-        : t('screens.addressStackTitle.ConfrimAddress')}
-    </HeaderTitleText2024>
-  );
-}
 
 function MainListBlocks() {
   const { t } = useTranslation();
@@ -247,13 +219,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
-  },
-  title: {
-    color: colors2024['neutral-title-1'],
-    fontWeight: '800',
-    fontSize: 20,
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 24,
   },
 }));
 

@@ -33,13 +33,9 @@ import { ImportPrivateKeyScreen2024 } from '../Address/ImportPrivateKeyScreen202
 import { ImportSeedPhraseScreen2024 } from '../Address/ImportSeedPhraseScreen2024';
 import { ImportSuccessScreen2024 } from '../Address/ImportSuccessScreen2024';
 import { createGetStyles2024 } from '@/utils/styles';
-import CreateNewAddress, {
-  CreateNewAddressHeaderTitle,
-} from '../Address/CreateNewAddress';
+import CreateNewAddress from '../Address/CreateNewAddress';
 import CreateSelectMethod from '../Address/CreateSelectMethod';
-import SetPassword2024, {
-  SetPasswordHeaderTitle,
-} from '../Address/SetPassword2024';
+import SetPassword2024 from '../Address/SetPassword2024';
 import CreateChooseBackup from '../Address/CreateChooseBackup';
 import { AddressListScreenButton } from '../Address/AddressListScreenButton';
 import { WatchAddressListScreen } from '../Address/WatchAddressListScreen';
@@ -57,6 +53,7 @@ import { APP_TEST_PASSWORD } from '@/constant';
 import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { ImportMethodsHeader } from '../Address/ImportMethodsHeader';
 import { AutoFitCenterHeader } from '@/components/AutoFitCenterHeader';
+import { renderAppStackHeader } from '@/components/AppStackHeader';
 import { SafeWindowHeaderInset } from '@/components/SafeWindowFrame/headerInset';
 
 const AddressStack = createNativeStackNavigator<AddressNavigatorParamList>();
@@ -298,50 +295,55 @@ export function AddressNavigator() {
       <AddressStack.Screen
         name={RootNames.CreateNewAddress}
         component={withScreenPropsInjection(CreateNewAddress)}
-        options={({ route }) =>
-          mergeScreenOptions({
-            // Declared on the route so the first frame already renders the
-            // final title; the screen used to install it from an effect.
-            headerTitle: () => (
-              <CreateNewAddressHeaderTitle
-                title={route.params?.title}
-                isFirstCreate={route.params?.isFirstCreate}
-              />
-            ),
-            title: t('screens.addressStackTitle.CreateNewAddress'),
-            headerTintColor: colors2024['neutral-title-1'],
-            headerStyle: {
+        options={({ route }) => {
+          const useCreateTitle =
+            !!route.params?.title || !!route.params?.isFirstCreate;
+          const titleKey = useCreateTitle
+            ? 'screens.addressStackTitle.CreateNewAddress'
+            : 'screens.addressStackTitle.ConfrimAddress';
+          const title = t(titleKey);
+
+          return mergeScreenOptions({
+            // Centred JS header: equal leading/trailing slots keep the title on
+            // the screen centre, and the shared typography ladder shrinks or
+            // two-lines long translations instead of letting them drift right
+            // and clip (the native slot centred inside the post-back area).
+            header: renderAppStackHeader(() => ({
+              title,
+              titleKey,
               backgroundColor: colors2024['neutral-bg-1'],
-            },
-            headerTitleStyle: styles.headerTitleText,
-          })
-        }
+            })),
+            headerBackVisible: false,
+            headerLeft: () => null,
+            unstable_headerLeftItems: () => [],
+            title,
+          });
+        }}
       />
       <AddressStack.Screen
         name={RootNames.SetPassword2024}
         component={withScreenPropsInjection(SetPassword2024)}
         options={({ route }) => {
           const hideBack = !!route.params?.hideBackIcon;
+          const customTitle = route.params?.title;
+          const titleKey = customTitle
+            ? undefined
+            : 'screens.addressStackTitle.SetPassword2024';
+          const title =
+            customTitle || t('screens.addressStackTitle.SetPassword2024');
+
           return mergeScreenOptions({
-            // Declared on the route so the first frame already has the final
-            // title; the screen used to install it from an effect.
-            headerTitle: () => (
-              <SetPasswordHeaderTitle title={route.params?.title} />
-            ),
-            title: t('screens.addressStackTitle.SetPassword'),
-            headerTintColor: colors2024['neutral-title-1'],
-            headerStyle: {
+            header: renderAppStackHeader(() => ({
+              title,
+              titleKey,
+              // First-run import password: no way back before completing.
+              back: !hideBack,
               backgroundColor: colors2024['neutral-bg-1'],
-            },
-            headerTitleStyle: styles.headerTitleText,
-            ...(hideBack
-              ? {
-                  // First-run import password: no way back before completing.
-                  headerBackVisible: false,
-                  headerLeft: () => null,
-                  unstable_headerLeftItems: () => [],
-                }
-              : {}),
+            })),
+            headerBackVisible: false,
+            headerLeft: () => null,
+            unstable_headerLeftItems: () => [],
+            title,
           });
         }}
       />
