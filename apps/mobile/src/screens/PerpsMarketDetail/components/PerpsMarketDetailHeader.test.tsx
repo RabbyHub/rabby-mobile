@@ -18,6 +18,12 @@ jest.mock('./PerpsHeaderTitle', () => ({
     });
   },
 }));
+jest.mock('./PerpsMarketSelectorSheet', () => ({
+  PerpsMarketSelectorSheet: () => null,
+}));
+jest.mock('@/utils/navigation', () => ({
+  naviReplace: jest.fn(),
+}));
 
 type HeaderMetadata = {
   displayName?: string;
@@ -96,9 +102,11 @@ describe('PerpsMarketDetailHeader', () => {
     });
   });
 
-  it('leaves market selection to the screen header', () => {
+  it('owns the market selector so the route header never needs a screen swap', () => {
     render(<PerpsMarketDetailHeader market="HYPE" />);
 
-    expect(mockHeaderRender.mock.lastCall?.[0].onSelectCoin).toBeUndefined();
+    expect(mockHeaderRender.mock.lastCall?.[0].onSelectCoin).toEqual(
+      expect.any(Function),
+    );
   });
 });

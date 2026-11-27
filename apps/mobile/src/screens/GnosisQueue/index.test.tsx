@@ -21,6 +21,7 @@ jest.mock('@/hooks/gnosis/useGnosisNetworks', () => ({
 }));
 jest.mock('@/components/AppStatusBar', () => ({
   useSafeSetNavigationOptions: () => ({
+    navigation: { setParams: jest.fn() },
     setNavigationOptions: mockSetNavigationOptions,
   }),
 }));

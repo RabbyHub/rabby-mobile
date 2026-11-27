@@ -24,6 +24,14 @@ module.exports = {
     'no-floating-deferred-service-api-calls': 'error',
     'no-persist-store-direct-mutation': 'error',
     'no-module-scope-dimensions': 'error',
+    'no-dynamic-header-options': [
+      'error',
+      {
+        // Migration allowlist (P1): shrink as each screen moves to a
+        // route-level header. Never add new entries.
+        allowFiles: [],
+      },
+    ],
     'import/no-cycle': [
       'warn',
       {

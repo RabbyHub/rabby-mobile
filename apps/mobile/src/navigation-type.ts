@@ -326,13 +326,28 @@ export type SingleAddressNavigatorParamList = {
 };
 
 export type TransactionNavigatorParamList = {
-  [RootNames.BridgeDetail]: import('./screens/Bridge/utils/statusTypes').BridgeRecordData;
-  [RootNames.History]?: {};
+  [RootNames.BridgeDetail]: import('./screens/Bridge/utils/statusTypes').BridgeRecordData & {
+    headerTitle?: string;
+    headerAccountType?: string;
+  };
+  [RootNames.History]?: {
+    isForMultipleAddress?: boolean;
+    isInTokenDetail?: boolean;
+    tokenItem?: AbstractPortfolioToken;
+    /** Filter switch value, owned by the route-level header. */
+    isShowAll?: boolean;
+    /** Whether the account supports the scam/small-tx filter switch. */
+    headerIsSupportAccount?: boolean;
+  };
   [RootNames.MultiAddressHistory]?: {
     isInTokenDetail?: boolean;
     isMultiAddress?: boolean;
     tokenItem?: AbstractPortfolioToken;
     currentAddress?: string;
+    /** Filter switch value, owned by the route-level header. */
+    isShowAll?: boolean;
+    /** Whether the account supports the scam/small-tx filter switch. */
+    headerIsSupportAccount?: boolean;
   };
   [RootNames.LendingHistory]?: {};
   [RootNames.HistoryDetail]: {
@@ -385,11 +400,15 @@ export type TransactionNavigatorParamList = {
   [RootNames.MultiSwapBridge]?: SwapBridgeParams & object;
   [RootNames.GnosisTransactionQueue]: {
     account: Account;
+    /** Pending transaction + message count, published by the screen for the header title. */
+    headerTotal?: number;
   };
   [RootNames.Receive]: {
     account: Account;
     tokenSymbol?: string;
     chainEnum?: CHAINS_ENUM;
+    /** Eye toggle state for the route-level header. */
+    showName?: boolean;
   };
   [RootNames.Approvals]: {
     account: Account;
@@ -415,7 +434,10 @@ export type TransactionNavigatorParamList = {
     /** tokenKey -> logo url, display only */
     tokenLogos: Record<string, string>;
   };
-  [RootNames.GasAccount]?: {};
+  [RootNames.GasAccount]?: {
+    /** Timestamp bumped by the route-level header's withdraw action. */
+    openWithdrawAt?: number;
+  };
   [RootNames.BatchRevoke]: {
     revokeList: ApprovalSpenderItemToBeRevoked[];
     dataSource: AssetApprovalSpender[];

@@ -28,7 +28,7 @@ export const GnosisQueueScreen = () => {
   const themeColors = useThemeColors();
   const styles = useMemo(() => getStyles(themeColors), [themeColors]);
   const { t } = useTranslation();
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
+  const { navigation } = useSafeSetNavigationOptions();
 
   const { bottom } = useSafeAreaInsets();
 
@@ -124,13 +124,11 @@ export const GnosisQueueScreen = () => {
     tabs[0]?.key,
   );
 
+  // The header is declared on the route; publish only the derived count so the
+  // native title follows the queue without swapping the header type.
   useEffect(() => {
-    setNavigationOptions({
-      headerTitle: t('page.safeQueue.title', {
-        total: total,
-      }),
-    });
-  }, [setNavigationOptions, t, total]);
+    navigation.setParams({ headerTotal: total });
+  }, [navigation, total]);
 
   return (
     <NormalScreenContainer

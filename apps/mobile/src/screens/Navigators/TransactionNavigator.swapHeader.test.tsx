@@ -75,6 +75,10 @@ jest.mock('@/hooks/navigation', () => ({
     require('react').createElement(require('react-native').View, {
       testID: 'custom-header-back',
     }),
+  HeaderBackButton: () =>
+    require('react').createElement(require('react-native').View, {
+      testID: 'custom-header-back',
+    }),
 }));
 jest.mock('@/components/AccountSwitcher/HeaderAccountSwitcher', () => ({
   HeaderAccountSwitcher: (props: { forScene: string }) =>
@@ -107,6 +111,12 @@ jest.mock('@/devtools/regressionScenarios/react', () => ({
 jest.mock('../Send/Send', () => ({
   __esModule: true,
   default: Object.assign(() => null, { ForMultipleAddress: () => null }),
+}));
+jest.mock('../Send/SubScreens/SelectPolyScreen/HeaderRight', () => ({
+  SendHeaderRight: () => null,
+}));
+jest.mock('../GasAccount/components/HeaderRight', () => ({
+  GasAccountHeader: () => null,
 }));
 jest.mock('../SwapBridge', () => ({
   __esModule: true,
@@ -141,6 +151,20 @@ jest.mock('../GasAccount', () => ({ GasAccountScreen: () => null }));
 jest.mock('../Transaction/MultiAddressHistory', () => ({
   __esModule: true,
   default: Object.assign(() => null, { ForSingleAddress: () => null }),
+}));
+jest.mock('../Transaction/components/HistoryListHeaderTitle', () => ({
+  HistoryListHeaderTitle: (props: Record<string, unknown>) =>
+    require('react').createElement(require('react-native').View, {
+      ...props,
+      testID: 'history-header-title',
+    }),
+}));
+jest.mock('../Transaction/components/HistoryFilterMenu', () => ({
+  HistoryFilterMenu: (props: Record<string, unknown>) =>
+    require('react').createElement(require('react-native').View, {
+      ...props,
+      testID: 'history-filter',
+    }),
 }));
 jest.mock('../GnosisQueue', () => ({ GnosisQueueScreen: () => null }));
 jest.mock('../BatchRevoke/BatchRevoke', () => ({
@@ -260,5 +284,119 @@ describe('Lending initial route header', () => {
       'Lending',
     );
     expect(screen.getByTestId('lending-history')).toBeTruthy();
+  });
+});
+
+describe('History routes initial header', () => {
+  beforeEach(() => {
+    mockScreens.clear();
+  });
+
+  function getRouteHeader(name: string, params?: Record<string, unknown>) {
+    render(<TransactionNavigator />);
+    const descriptor = mockScreens.get(name);
+    expect(descriptor).toBeDefined();
+    const navigation = {
+      setParams: jest.fn(),
+      canGoBack: () => true,
+      isFocused: () => true,
+      addListener: () => () => {},
+    } as unknown as NativeStackHeaderProps['navigation'];
+    const route = {
+      key: `${name}-cold-entry`,
+      name,
+      params,
+    } as unknown as NativeStackHeaderProps['route'];
+    const options =
+      typeof descriptor!.options === 'function'
+        ? descriptor!.options({ route, navigation })
+        : descriptor!.options;
+
+    // The header must exist in the route descriptor, not in a later effect.
+    expect(options.header).toEqual(expect.any(Function));
+    return {
+      element: options.header!({ route, navigation, options }),
+      navigation,
+    };
+  }
+
+  it('declares the multi-address list title and filter on the route', () => {
+    const { element, navigation } = getRouteHeader(
+      RootNames.MultiAddressHistory,
+      {
+        isInTokenDetail: true,
+        tokenItem: { symbol: 'ETH' },
+        headerIsSupportAccount: true,
+        isShowAll: false,
+      },
+    );
+    const screen = render(<>{element}</>);
+
+    expect(screen.getAllByTestId('custom-header-back')).toHaveLength(1);
+    const title = screen.getByTestId('history-header-title');
+    expect(title.props.isForMultipleAddress).toBe(true);
+    expect(title.props.isInTokenDetail).toBe(true);
+    expect(title.props.tokenItem.symbol).toBe('ETH');
+
+    const filter = screen.getByTestId('history-filter');
+    expect(filter.props.isShowAll).toBe(false);
+    filter.props.setIsShowAll((prev: boolean) => !prev);
+    expect(navigation.setParams).toHaveBeenCalledWith({ isShowAll: true });
+  });
+
+  it('keeps the single-address list on its own scene without a filter', () => {
+    const { element } = getRouteHeader(RootNames.History, {
+      isForMultipleAddress: false,
+    });
+    const screen = render(<>{element}</>);
+
+    expect(
+      screen.getByTestId('history-header-title').props.isForMultipleAddress,
+    ).toBe(false);
+    expect(screen.queryByTestId('history-filter')).toBeNull();
+  });
+
+  it('only renders the filter when the screen publishes support for it', () => {
+    const { element } = getRouteHeader(RootNames.MultiAddressHistory, {
+      headerIsSupportAccount: false,
+    });
+    const screen = render(<>{element}</>);
+
+    expect(screen.queryByTestId('history-filter')).toBeNull();
+  });
+});
+
+describe('Gnosis queue route header', () => {
+  beforeEach(() => {
+    mockScreens.clear();
+  });
+
+  it('declares a rendered title component instead of a bare string', () => {
+    render(<TransactionNavigator />);
+    const descriptor = mockScreens.get(RootNames.GnosisTransactionQueue);
+    expect(descriptor).toBeDefined();
+    const navigation = {
+      setParams: jest.fn(),
+      canGoBack: () => true,
+      isFocused: () => true,
+      addListener: () => () => {},
+    } as unknown as NativeStackHeaderProps['navigation'];
+    const route = {
+      key: 'gnosis-queue-cold-entry',
+      name: RootNames.GnosisTransactionQueue,
+      params: { headerTotal: 3 },
+    } as unknown as NativeStackHeaderProps['route'];
+    const options =
+      typeof descriptor!.options === 'function'
+        ? descriptor!.options({ route, navigation })
+        : descriptor!.options;
+
+    // The previous implementation returned a bare string renderer, which
+    // native-stack inserts into the center view without a Text wrapper.
+    expect(typeof options.header).toBe('function');
+    const screen = render(
+      <>{options.header!({ route, navigation, options })}</>,
+    );
+    expect(screen.getByText('page.safeQueue.title')).toBeTruthy();
   });
 });

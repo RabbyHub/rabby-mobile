@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import type { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
@@ -16,24 +15,22 @@ import { RootNames } from '@/constant/layout';
 import { Text } from '@/components/Typography';
 import { withBrowserDappServices } from '@/hooks/browser/browserServiceDependencies';
 
-function FavoriteDappsScreenContent(): JSX.Element {
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
+/**
+ * Route-level header title for the favourites list.
+ *
+ * Declared on the route (`headerTitle: () => <FavoriteDappsHeaderTitle />`)
+ * so the native header renders the final title from the first frame; the old
+ * effect installed it after mount, which swapped the header mid-transition.
+ */
+export function FavoriteDappsHeaderTitle() {
   const { favoriteApps } = useDappsHome();
+  const { styles } = useTheme2024({ getStyle });
 
-  const title = `Favorites（${favoriteApps.length}）`;
+  return <Text style={styles.title}>Favorites（{favoriteApps.length}）</Text>;
+}
 
-  const getHeaderTitle = useMemoizedFn(() => {
-    return <Text style={styles.title}>{title}</Text>;
-  });
-
-  React.useEffect(() => {
-    setNavigationOptions({
-      headerTitle: getHeaderTitle,
-      title,
-    });
-  }, [setNavigationOptions, getHeaderTitle, title]);
-
-  const { setBrowserHistory, updateFavorite } = useDappsHome();
+function FavoriteDappsScreenContent(): JSX.Element {
+  const { favoriteApps, setBrowserHistory, updateFavorite } = useDappsHome();
   const { openUrlAsDapp } = useDappWebViewScreen();
 
   const { styles, colors2024, isLight } = useTheme2024({

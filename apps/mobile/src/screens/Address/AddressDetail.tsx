@@ -1,4 +1,4 @@
-import React, { useCallback, useLayoutEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -19,24 +19,42 @@ import {
 } from '@/navigation-type';
 import { noop } from 'lodash';
 import { AddressDetailInner } from '@/components2024/AddressDetail/AddressDetailInner';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { useQrCodeModal } from '@/components2024/QrCodeModal/useQrCodeModal';
 import QrcodeSVG from '@/assets2024/icons/common/qrcode-cc.svg';
 import { resetNavigationTo } from '@/hooks/navigation';
-import { useTranslation } from 'react-i18next';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 
 type AddressDetailProps = CompositeScreenProps<
   NativeStackScreenProps<AddressNavigatorParamList, 'AddressDetail'>,
   NativeStackScreenProps<RootStackParamsList>
 >;
 
+/**
+ * Route-level trailing action (P6): the screen no longer installs headerRight
+ * from a layout effect.
+ */
+export function AddressDetailHeaderRight({ address }: { address?: string }) {
+  const { colors2024 } = useTheme2024();
+  const qrCodeModal = useQrCodeModal();
+
+  return (
+    <TouchableOpacity
+      hitSlop={10}
+      onPress={() => {
+        if (address) {
+          qrCodeModal.show(address);
+        }
+      }}>
+      <QrcodeSVG width={20} height={20} color={colors2024['neutral-body']} />
+    </TouchableOpacity>
+  );
+}
+
 function AddressDetailScreen(): JSX.Element {
   const { colors2024 } = useTheme2024();
   const isFocused = useIsFocused();
   const { params } = useRoute<AddressDetailProps['route']>();
-  const { setNavigationOptions, navigation } = useSafeSetNavigationOptions();
-  const qrCodeModal = useQrCodeModal();
-  const { t } = useTranslation();
+  const { navigation } = useSafeSetNavigationOptions();
   const { address, type, brandName } = params;
   const { accounts } = useAccounts();
   const account = useMemo(
@@ -49,25 +67,6 @@ function AddressDetailScreen(): JSX.Element {
       ),
     [accounts, address, type, brandName],
   );
-
-  const headerRight = useCallback(
-    () => (
-      <TouchableOpacity
-        hitSlop={10}
-        onPress={() => {
-          qrCodeModal.show(address);
-        }}>
-        <QrcodeSVG width={20} height={20} color={colors2024['neutral-body']} />
-      </TouchableOpacity>
-    ),
-    [address, colors2024, qrCodeModal],
-  );
-
-  useLayoutEffect(() => {
-    setNavigationOptions({
-      headerRight,
-    });
-  }, [headerRight, setNavigationOptions]);
 
   return (
     <NormalScreenContainer

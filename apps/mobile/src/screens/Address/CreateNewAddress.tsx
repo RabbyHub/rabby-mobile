@@ -23,10 +23,8 @@ import { Skeleton } from '@rneui/themed';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { StackActions, useRoute } from '@react-navigation/native';
 import type { GetNestedScreenRouteProp } from '@/navigation-type';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import LinearGradient from 'react-native-linear-gradient';
 import { useCreateAddressProc } from '@/hooks/address/useNewUser';
-import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { Text } from '@/components/Typography';
 
@@ -41,29 +39,12 @@ function MainListBlocks() {
   const [newAddress, setNewAddress] = useState('');
   const { styles } = useTheme2024({ getStyle });
   const navigation = useRabbyAppNavigation();
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
 
   const route =
     useRoute<
       GetNestedScreenRouteProp<'AddressNavigatorParamList', 'CreateNewAddress'>
     >();
   const state = route.params;
-
-  const getHeaderTitle = React.useCallback(() => {
-    return (
-      <HeaderTitleText2024 style={styles.title}>
-        {state?.title || state?.isFirstCreate
-          ? t('screens.addressStackTitle.CreateNewAddress')
-          : t('screens.addressStackTitle.ConfrimAddress')}
-      </HeaderTitleText2024>
-    );
-  }, [state?.isFirstCreate, state?.title, styles.title, t]);
-
-  React.useEffect(() => {
-    setNavigationOptions({
-      headerTitle: getHeaderTitle,
-    });
-  }, [setNavigationOptions, getHeaderTitle, state?.title]);
 
   const { value, loading, error } = useAsync(async () => {
     let accountsToCreate: any[] | undefined = [];
@@ -238,13 +219,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
-  },
-  title: {
-    color: colors2024['neutral-title-1'],
-    fontWeight: '800',
-    fontSize: 20,
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 24,
   },
 }));
 
