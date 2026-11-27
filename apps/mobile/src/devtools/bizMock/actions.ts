@@ -764,6 +764,34 @@ export async function runBizMockAction(
       const amount = new BigNumber(action.amount || '0.0001');
       const rawAmount = amount.times(1e18).toFixed(0);
       const to = '0x000000000000000000000000000000000000dEaD';
+      const kind = action.kind || 'send';
+      const ethToken = {
+        id: nativeTokenId,
+        symbol: 'ETH',
+        decimals: 18,
+        raw_amount: rawAmount,
+        price: 3000,
+        logo_url: '',
+      };
+      const usdcToken = {
+        id: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+        symbol: 'USDC',
+        decimals: 6,
+        raw_amount: '1000000',
+        price: 1,
+        logo_url: '',
+      };
+      const spender = '0x111111125421ca6dc452d289314280a0f8842a65';
+      const actionData =
+        kind === 'approve'
+          ? { approveToken: { token: usdcToken, spender } }
+          : kind === 'revoke'
+          ? { revokeToken: { token: usdcToken, spender } }
+          : kind === 'swap'
+          ? { swap: { payToken: ethToken, receiveToken: usdcToken } }
+          : kind === 'interaction'
+          ? undefined
+          : { send: { to, token: ethToken } };
       const hash = `0x${Array.from({ length: 64 })
         .map(() => Math.floor(Math.random() * 16).toString(16))
         .join('')}`;
@@ -794,22 +822,7 @@ export async function runBizMockAction(
           gas: '0x5208',
           gasPrice: '0x1',
         },
-        action: {
-          actionData: {
-            send: {
-              to,
-              token: {
-                id: nativeTokenId,
-                symbol: 'ETH',
-                decimals: 18,
-                raw_amount: rawAmount,
-                price: 3000,
-                logo_url: '',
-              },
-            },
-          },
-          requiredData: {},
-        },
+        action: { actionData, requiredData: {} },
         explain: { balance_change: [], pre_exec_version: 'v0' },
         tokenDict: {},
         projectDict: {},
@@ -819,7 +832,12 @@ export async function runBizMockAction(
         ok: true,
         action: action.action,
         code: 'ok',
-        data: { address: account.address, hash, amount: amount.toFixed() },
+        data: {
+          address: account.address,
+          hash,
+          amount: amount.toFixed(),
+          kind,
+        },
       };
     }
 
