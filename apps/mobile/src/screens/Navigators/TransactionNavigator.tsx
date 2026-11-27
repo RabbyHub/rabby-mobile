@@ -19,6 +19,7 @@ import { renderAppStackHeader } from '@/components/AppStackHeader';
 import { useTheme2024 } from '@/hooks/theme';
 
 import SendScreen from '../Send/Send';
+import { SendHeaderRight } from '../Send/SubScreens/SelectPolyScreen/HeaderRight';
 import SendNFTScreen from '../SendNFT/SendNFT';
 
 import { HistoryDetailScreen } from '../Transaction/HistoryDetailScreen';
@@ -40,6 +41,7 @@ import { MemeCoinHeader } from '../MemeCoin/components/MemeCoinHeader';
 import { MemeCoinExecuteScreen } from '../MemeCoin/execute/MemeCoinExecuteScreen';
 import { MemeCoinHomeScreen } from '../MemeCoin/home/MemeCoinHomeScreen';
 import { GasAccountScreen } from '../GasAccount';
+import { GasAccountHeader } from '../GasAccount/components/HeaderRight';
 import { HeaderAccountSwitcher } from '@/components/AccountSwitcher/HeaderAccountSwitcher';
 import MultiAddressHistory from '../Transaction/MultiAddressHistory';
 import { HistoryListHeaderTitle } from '../Transaction/components/HistoryListHeaderTitle';
@@ -190,6 +192,7 @@ export default function TransactionNavigator() {
         component={withScreenPropsInjection(RegressionSendScreen)}
         options={mergeScreenOptions({
           title: 'Send',
+          headerRight: () => <SendHeaderRight isForMultipleAddress={false} />,
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
             ...RoundedFontStyles.heavy,
@@ -202,6 +205,7 @@ export default function TransactionNavigator() {
         component={withScreenPropsInjection(RegressionMultiSendScreen)}
         options={mergeScreenOptions({
           title: 'Send',
+          headerRight: () => <SendHeaderRight isForMultipleAddress />,
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
             ...RoundedFontStyles.heavy,
@@ -503,19 +507,30 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.GasAccount}
         component={withScreenPropsInjection(GasAccountScreen)}
-        options={mergeScreenOptions({
-          title: 'Gas Deposit',
-          ...headerPresets.withBgCard2_2024,
-          headerTintColor: colors['neutral-title-1'],
-          headerTitleStyle: {
-            fontSize: 20,
-            ...RoundedFontStyles.heavy,
-            color: colors['neutral-title-1'],
-          },
-          headerStyle: {
-            backgroundColor: 'transparent',
-          },
-        })}
+        options={({ navigation }) =>
+          mergeScreenOptions({
+            title: 'Gas Deposit',
+            // The withdraw action lives on the route; the screen opens its
+            // modal when the timestamp param changes (P6).
+            headerRight: () => (
+              <GasAccountHeader
+                showWithdraw={() =>
+                  navigation?.setParams({ openWithdrawAt: Date.now() })
+                }
+              />
+            ),
+            ...headerPresets.withBgCard2_2024,
+            headerTintColor: colors['neutral-title-1'],
+            headerTitleStyle: {
+              fontSize: 20,
+              ...RoundedFontStyles.heavy,
+              color: colors['neutral-title-1'],
+            },
+            headerStyle: {
+              backgroundColor: 'transparent',
+            },
+          })
+        }
       />
 
       <TransactionStack.Screen
