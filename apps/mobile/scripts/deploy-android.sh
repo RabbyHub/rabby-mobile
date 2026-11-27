@@ -202,6 +202,14 @@ done
 # Reproducible production build: reuse the appstore preparation, then stop with
 # an unsigned AAB instead of signing and uploading it.
 if [ "$RABBY_MOBILE_REPRODUCE_BUILD" == "true" ]; then
+  # Ambient RABBY_MOBILE_* variables (shell profiles, CI env) leak into the JS
+  # bundle through babel's dotenv/env inlining. A reproducible build must start
+  # from a canonical environment: keep only the code, drop everything else.
+  for ambient in $(env | sed -n 's/^\(RABBY_MOBILE_[A-Z0-9_]*\)=.*/\1/p' | grep -v '^RABBY_MOBILE_CODE$' || true); do
+    unset "$ambient"
+  done
+  unset APP_ENV WITH_ROZENITE I18N_LIVE_PREVIEW 2>/dev/null || true
+
   reproduce_channel="${RABBY_MOBILE_REPRODUCE_CHANNEL:-production}"
   if [ "$reproduce_channel" == "production" ]; then
     reproduce_gradle_task="bundleReleaseUnsigned"
