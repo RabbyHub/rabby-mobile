@@ -333,10 +333,18 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.GnosisTransactionQueue}
         component={withScreenPropsInjection(GnosisQueueScreen)}
-        options={mergeScreenOptions({
-          title: 'Queue',
-          ...headerPresets.withBgCard2,
-        })}
+        options={({ route }) =>
+          mergeScreenOptions({
+            // Declared on the route; the screen publishes `headerTotal` via
+            // setParams so the title stays current without a header swap.
+            headerTitle: () =>
+              t('page.safeQueue.title', {
+                total: route.params?.headerTotal,
+              }),
+            title: 'Queue',
+            ...headerPresets.withBgCard2,
+          })
+        }
       />
       {/* ReceiveScreen */}
       {/* SwapBridgeScreen */}
