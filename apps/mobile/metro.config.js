@@ -336,22 +336,26 @@ const createModuleIdFactory = () => {
     }
 
     const result = Number(hash);
-    // 日志记录逻辑
-    const logEntry = `${_path}\t${result}\n`;
-    try {
-      fs.appendFileSync(LOG_FILE, logEntry, 'utf8');
-    } catch (err) {
-      console.error('写入日志失败:', err);
+    // The id log is a hashing-lane diagnostic; production builds must not
+    // leave a workspace artifact behind.
+    if (process.env.APP_ENV === 'hashing') {
+      const logEntry = `${_path}\t${result}\n`;
+      try {
+        fs.appendFileSync(LOG_FILE, logEntry, 'utf8');
+      } catch (err) {
+        console.error('写入日志失败:', err);
+      }
     }
     return result;
   };
 };
 
 /**
- * Higher-order function to enable stable hashing configuration.
- * Returns a new config object with stable hashing settings.
+ * Stable module ids for every build, so two machines produce the same byte
+ * code for the same sources. (The hashing lane used to be the only consumer;
+ * cross-machine reproducibility needs it in production too.)
  * @param {import('metro-config').MetroConfig} config - Input config (immutable)
- * @returns {import('metro-config').MetroConfig} New config with stable hashing
+ * @returns {import('metro-config').MetroConfig} New config with stable ids
  */
 const withStableHash = config => {
   return {
@@ -512,7 +516,8 @@ const config = {
 
 const mergedConfig = compose(
   withI18nLivePreview,
-  process.env.APP_ENV === 'hashing' ? withStableHash : withSentryConfig,
+  withStableHash,
+  withSentryConfig,
   wrapWithReanimatedMetroConfig,
   withPackageExportsDisabled,
 )(mergeConfig(defaultConfig, config));

@@ -202,26 +202,41 @@ done
 # Reproducible production build: reuse the appstore preparation, then stop with
 # an unsigned AAB instead of signing and uploading it.
 if [ "$RABBY_MOBILE_REPRODUCE_BUILD" == "true" ]; then
-  echo "[deploy-android] reproduce build: producing an unsigned production AAB"
-  export RABBY_MOBILE_BUILD_ENV="production"
+  reproduce_channel="${RABBY_MOBILE_REPRODUCE_CHANNEL:-production}"
+  if [ "$reproduce_channel" == "production" ]; then
+    reproduce_gradle_task="bundleReleaseUnsigned"
+    reproduce_output_subdir="releaseUnsigned"
+    echo "[deploy-android] reproduce build: producing an unsigned production AAB"
+    export RABBY_MOBILE_BUILD_ENV="production"
+    export buildchannel="${buildchannel:-appstore}"
+  else
+    reproduce_gradle_task="bundleSignonly"
+    reproduce_output_subdir="signonly"
+    echo "[deploy-android] reproduce build: producing an unsigned regression AAB"
+    export RABBY_MOBILE_BUILD_ENV="regression"
+    export buildchannel="${buildchannel:-selfhost-reg}"
+  fi
+  # Cross-machine reproducibility contract (see scripts/reproduce/README.md):
+  # build from the same absolute path, with BUILD_TIME from the commit and
+  # stable Metro module ids. Native objects embed their checkout path, so a
+  # shared build root is currently what keeps .so bytes identical.
   # The hash only covers the artifact; sourcemap upload is a publishing step.
   export SENTRY_DISABLE_AUTO_UPLOAD="${SENTRY_DISABLE_AUTO_UPLOAD:-true}"
   # Reproducibility: `scripts/resolve-build-info.js` stamps BUILD_TIME into an
   # asset, and the production identity is the appstore channel. Both builders
   # must use the same commit-derived timestamp instead of "now".
-  export buildchannel="${buildchannel:-appstore}"
   export ZERO_AR_DATE="${ZERO_AR_DATE:-$(git -C "$project_dir" show -s --format=%cI HEAD)}"
   load_env_var_from_candidate_files RABBY_MOBILE_CODE || true
   validate_rabbit_code || exit 1
   prepare_android_build_artifacts || exit $?
-  ./android/gradlew -p ./android bundleReleaseUnsigned --no-daemon \
+  ./android/gradlew -p ./android "$reproduce_gradle_task" --no-daemon \
     -Porg.gradle.parallel=false -Porg.gradle.caching=false || exit $?
-  reproduce_aab="$(find "$project_dir/android/app/build/outputs/bundle/releaseUnsigned" -type f -name '*.aab' | head -n 1)"
+  reproduce_aab="$(find "$project_dir/android/app/build/outputs/bundle/$reproduce_output_subdir" -type f -name '*.aab' | head -n 1)"
   if [ -z "$reproduce_aab" ] || [ ! -f "$reproduce_aab" ]; then
-    echo "[deploy-android] unsigned AAB not found under android/app/build/outputs/bundle/releaseUnsigned" >&2
+    echo "[deploy-android] unsigned AAB not found under android/app/build/outputs/bundle/$reproduce_output_subdir" >&2
     exit 1
   fi
-  reproduce_output="${RABBY_MOBILE_REPRODUCE_OUT:-$project_dir/.reproduce/production/app-release-unsigned.aab}"
+  reproduce_output="${RABBY_MOBILE_REPRODUCE_OUT:-$project_dir/.reproduce/$reproduce_channel/app-release-unsigned.aab}"
   mkdir -p "$(dirname "$reproduce_output")"
   cp "$reproduce_aab" "$reproduce_output"
   echo "[deploy-android] unsigned production AAB: $reproduce_output"

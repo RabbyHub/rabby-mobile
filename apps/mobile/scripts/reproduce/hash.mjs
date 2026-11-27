@@ -17,7 +17,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
 function parseArgs(argv) {
-  const args = { normalization: [] };
+  const args = { normalization: [], contract: [] };
   for (let i = 0; i < argv.length; i += 1) {
     const key = argv[i];
     if (!key.startsWith('--')) continue;
@@ -27,8 +27,8 @@ function parseArgs(argv) {
       args[name] = true;
       continue;
     }
-    if (name === 'normalization') {
-      args.normalization.push(next);
+    if (name === 'normalization' || name === 'contract') {
+      args[name].push(next);
     } else {
       args[name] = next;
     }
@@ -129,6 +129,16 @@ function toolchain() {
     return match ? match[1] : null;
   })();
   return {
+    // Native objects embed this path; it is part of the build contract.
+    build_root: (() => {
+      try {
+        return execFileSync('git', ['rev-parse', '--show-toplevel'], {
+          encoding: 'utf8',
+        }).trim();
+      } catch {
+        return null;
+      }
+    })(),
     macos: run('sw_vers', ['-productVersion'], { allowFailure: true }),
     xcode: xcode[0] || null,
     xcode_build: (xcode[1] || '').replace(/^Build version\s*/, '') || null,
@@ -176,6 +186,7 @@ const attest = {
   tree: null,
   toolchain: toolchain(),
   normalization: args.normalization,
+  contract: args.contract,
   builder: {
     host: os.hostname(),
     user: os.userInfo().username,

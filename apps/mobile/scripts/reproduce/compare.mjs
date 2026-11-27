@@ -32,6 +32,7 @@ compare('platform', a.platform, b.platform);
 compare('channel', a.channel, b.channel);
 compare('commit', a.commit, b.commit);
 compare('normalization', a.normalization, b.normalization);
+compare('contract', a.contract, b.contract);
 
 // Paths are expected to differ (Xcode/SDK installation paths); everything else
 // in the toolchain fingerprint must match.
