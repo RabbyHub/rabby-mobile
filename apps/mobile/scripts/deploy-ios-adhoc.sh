@@ -305,6 +305,7 @@ if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
     CODE_SIGNING_ALLOWED=NO \
     CODE_SIGN_IDENTITY="" \
     CODE_SIGNING_REQUIRED=NO \
+    SENTRY_DISABLE_AUTO_UPLOAD=true \
     $(rabby_ios_compilation_cache_xcargs) \
     archive || exit $?
   # An unsigned archive carries no entitlements, so the later gym export
