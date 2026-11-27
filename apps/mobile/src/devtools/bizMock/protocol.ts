@@ -50,7 +50,7 @@ export type BizMockAction =
   | { action: 'dapp.tabs'; op?: string; match?: string; name?: string }
   | { action: 'dapp.eval'; code?: string; file?: string }
   | { action: 'dapp.disconnect'; origin: string }
-  | { action: 'history.openLocalDetail'; address?: string }
+  | { action: 'history.openLocalDetail'; address?: string; kind?: string }
   | {
       action: 'history.seedLocalTx';
       address?: string;
@@ -504,6 +504,7 @@ export function parseBizMockAction(
       action: {
         action: 'history.openLocalDetail',
         address: readString(urlInfo.searchParams.get('address'), 128),
+        kind: readString(urlInfo.searchParams.get('kind'), 32),
       },
     };
   }

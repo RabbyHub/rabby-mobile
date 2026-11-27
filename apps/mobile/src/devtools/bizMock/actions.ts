@@ -689,7 +689,31 @@ export async function runBizMockAction(
         '@/core/serviceApi/transactionHistory'
       );
       const list = getTransactionHistoryListSnapshot(address);
-      const group = list.completeds[0] || list.pendings[0];
+      const requestedKind = action.kind;
+      const matchesKind = (candidate: any) => {
+        if (!requestedKind) {
+          return true;
+        }
+        const data = candidate?.maxGasTx?.action?.actionData;
+        if (requestedKind === 'interaction') {
+          return !data;
+        }
+        if (requestedKind === 'send') {
+          return Boolean(data?.send);
+        }
+        if (requestedKind === 'approve') {
+          return Boolean(data?.approveToken);
+        }
+        if (requestedKind === 'revoke') {
+          return Boolean(data?.revokeToken);
+        }
+        if (requestedKind === 'swap') {
+          return Boolean(data?.swap);
+        }
+        return true;
+      };
+      const pool = [...list.completeds, ...list.pendings].filter(matchesKind);
+      const group = pool[0] || list.completeds[0] || list.pendings[0];
       if (!group) {
         return {
           ok: false,
@@ -804,7 +828,7 @@ export async function runBizMockAction(
         to,
         value: rawAmount,
         chainId: 1,
-        nonce: 0,
+        nonce: Date.now() % 1_000_000,
         gas: '0x5208',
         gasPrice: '0x1',
         status: 'success',
@@ -813,12 +837,13 @@ export async function runBizMockAction(
         isSubmitFailed: false,
         isSynced: false,
         time_at: now,
+        createdAt: Date.now(),
         rawTx: {
           from: account.address,
           to,
           value: rawAmount,
           chainId: 1,
-          nonce: 0,
+          nonce: Date.now() % 1_000_000,
           gas: '0x5208',
           gasPrice: '0x1',
         },
