@@ -43,5 +43,27 @@ allprojects { project ->
         if (task.name.contains('SentryCollectModules')) {
             task.enabled = false
         }
+        // The React Native gradle plugin hardcodes the builder's LAN address
+        // into a generated string resource and offers no property override.
+        // Rewrite it before the resource merge consumes the file.
+        if (task.name.contains('ResValues')) {
+            task.doLast {
+                def generatedDir = new File(project.buildDir, 'generated/res/resValues')
+                if (generatedDir.isDirectory()) {
+                    generatedDir.eachFileRecurse { candidate ->
+                        if (candidate.isFile() && candidate.name == 'gradleResValues.xml') {
+                            def text = candidate.text
+                            def patched = text.replaceAll(
+                                /(<string name="react_native_dev_server_ip"[^>]*>)[^<]*(<\/string>)/,
+                                '$1' + '127.0.0.1' + '$2'
+                            )
+                            if (patched != text) {
+                                candidate.text = patched
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
