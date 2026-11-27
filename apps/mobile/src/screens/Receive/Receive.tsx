@@ -10,19 +10,10 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useIsFocused, useRoute } from '@react-navigation/native';
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
-import { View, Pressable, ScrollView } from 'react-native';
-import { useWindowDimensions } from '@/core/dimensions';
+import { View, ScrollView } from 'react-native';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
-import { IS_IOS } from '@/core/native/utils';
 import { trigger } from 'react-native-haptic-feedback';
 import { default as RcIconMCopy } from '@/assets2024/icons/address/mcopy-cc.svg';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
@@ -45,6 +36,69 @@ import { MODAL_GATE_IDS } from '@/utils/modalGate';
 
 function formatSafeAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+/**
+ * Route-level header content for the receive page.
+ *
+ * The row used to compensate for the native title slot (width - 100 and a 65pt
+ * trailing pad). The JS header owns its own slots, so it renders the row at its
+ * natural width and the eye toggle publishes `showName` through route params.
+ */
+export function ReceiveHeaderTitle({
+  account,
+  showName,
+  onToggleShowName,
+}: {
+  account?: {
+    type?: string;
+    address?: string;
+    aliasName?: string;
+  } | null;
+  showName: boolean;
+  onToggleShowName: () => void;
+}) {
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+
+  return (
+    <View style={styles.headerTitle}>
+      {showName ? (
+        <>
+          <WalletIcon
+            type={account?.type as KEYRING_TYPE}
+            address={account?.address}
+            width={styles.walletIcon.width}
+            height={styles.walletIcon.height}
+            style={styles.walletIcon}
+          />
+          <Text numberOfLines={1} ellipsizeMode="tail" style={styles.titleText}>
+            {account?.aliasName}
+          </Text>
+        </>
+      ) : (
+        <Text style={styles.titleText}>******</Text>
+      )}
+      <CustomTouchableOpacity
+        as="RNGHTouchableOpacity"
+        style={styles.eyeButton}
+        hitSlop={{ left: 14, right: 14 }}
+        onPress={onToggleShowName}>
+        {showName ? (
+          <RcIconEyeCC
+            width={16}
+            height={16}
+            color={colors2024['neutral-title-1']}
+          />
+        ) : (
+          <RcIconEyeCloseCC
+            width={16}
+            height={16}
+            color={colors2024['neutral-title-1']}
+          />
+        )}
+      </CustomTouchableOpacity>
+    </View>
+  );
 }
 
 function ReceiveScreen(): JSX.Element {
@@ -88,9 +142,10 @@ function ReceiveScreen(): JSX.Element {
   );
   const [isShowWatchModeModal, setIsShowWatchModeModal] = useState(isWatchMode);
 
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
+  const { navigation } = useSafeSetNavigationOptions();
 
-  const [showName, setShowName] = useState(true);
+  // The eye toggle lives in the route-level header and publishes this param.
+  const showName = route.params?.showName ?? true;
 
   // Backup reminder logic
   const needsBackupReminder = useBackupReminder(account);
@@ -103,83 +158,10 @@ function ReceiveScreen(): JSX.Element {
       !!offlineChainData.displayWillClosedChain &&
       !!offlineChainData.offlineChainInfo);
 
-  const { width: windowWidth } = useWindowDimensions();
-  // The 65pt correction balances the native back bar item; the Duo outer
-  // screen uses the JS replica header, which already reserves that slot, so
-  // applying it there would push the address group left (QA 1428).
-  const columnInset = useSystemColumnInset();
-  const isReplicaHeader = columnInset.left > 0 || columnInset.right > 0;
-  const headerTitle = useMemo(
-    () => (
-      <View
-        style={[
-          styles.headerTitle,
-          { width: windowWidth - 100 },
-          IS_IOS && !isReplicaHeader ? { paddingRight: 65 } : null,
-        ]}>
-        {showName ? (
-          <>
-            <WalletIcon
-              type={account?.type as KEYRING_TYPE}
-              address={account?.address}
-              width={styles.walletIcon.width}
-              height={styles.walletIcon.height}
-              style={styles.walletIcon}
-            />
-            <Text
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              style={styles.titleText}>
-              {account?.aliasName}
-            </Text>
-          </>
-        ) : (
-          <Text style={styles.titleText}>******</Text>
-        )}
-        <CustomTouchableOpacity
-          as="RNGHTouchableOpacity"
-          style={styles.eyeButton}
-          hitSlop={{ left: 14, right: 14 }}
-          onPress={() => setShowName(e => !e)}>
-          {showName ? (
-            <RcIconEyeCC
-              width={16}
-              height={16}
-              color={colors2024['neutral-title-1']}
-            />
-          ) : (
-            <RcIconEyeCloseCC
-              width={16}
-              height={16}
-              color={colors2024['neutral-title-1']}
-            />
-          )}
-        </CustomTouchableOpacity>
-      </View>
-    ),
-    [
-      styles.headerTitle,
-      styles.walletIcon,
-      styles.titleText,
-      styles.eyeButton,
-      showName,
-      account?.type,
-      account?.address,
-      account?.aliasName,
-      colors2024,
-      windowWidth,
-      isReplicaHeader,
-    ],
-  );
-
-  useLayoutEffect(() => {
-    setNavigationOptions({
-      headerTitle: () => headerTitle,
-      // The wallet/alias group is centred in its own container on both
-      // platforms; the row itself reserves even space on both sides.
-      headerTitleAlign: 'center',
-    });
-  }, [setNavigationOptions, headerTitle]);
+  // Publish the eye-toggle state so the route-level header can render it.
+  useEffect(() => {
+    navigation.setParams({ showName });
+  }, [navigation, showName]);
 
   useEffect(() => {
     // force disapper when not watch address
@@ -247,9 +229,9 @@ function ReceiveScreen(): JSX.Element {
   };
 
   const navBack = useCallback(() => {
-    const navigation = navigationRef.current;
-    if (navigation?.canGoBack()) {
-      navigation.goBack();
+    const nav = navigationRef.current;
+    if (nav?.canGoBack()) {
+      nav.goBack();
     } else {
       navigationRef.resetRoot({
         index: 0,

@@ -17,19 +17,23 @@ import {
   makeHeadersPresets,
   makeTxPageBackgroundColors,
 } from '@/constant/layout';
+import { renderAppStackHeader } from '@/components/AppStackHeader';
 import { useTheme2024 } from '@/hooks/theme';
 
 import SendScreen from '../Send/Send';
 import SendNFTScreen from '../SendNFT/SendNFT';
 
 import { HistoryDetailScreen } from '../Transaction/HistoryDetailScreen';
-import { BridgeDetailScreen } from '../Bridge/BridgeDetailScreen';
+import {
+  BridgeDetailHeaderNode,
+  BridgeDetailScreen,
+} from '../Bridge/BridgeDetailScreen';
 import { HistoryLocalDetailScreen } from '../Transaction/HistoryLocalDetailScreen';
 import { HistoryDetailHeader } from '../Transaction/components/HistoryDetailHeader';
 import { TransactionNavigatorParamList } from '@/navigation-type';
 import ApprovalsScreen from '../Approvals';
 import { ApprovalsHeader } from '../Approvals/components/Headers/ApprovalsHeader';
-import ReceiveScreen from '../Receive/Receive';
+import ReceiveScreen, { ReceiveHeaderTitle } from '../Receive/Receive';
 import SwapBridgeScreen from '../SwapBridge';
 import { renderSwapBridgeHeader } from '../SwapBridge/SwapBridgeHeader';
 import { ConvertDustScreen } from '../ConvertDust';
@@ -200,14 +204,34 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.Receive}
         component={withScreenPropsInjection(RegressionReceiveScreen)}
-        options={mergeScreenOptions({
-          title: 'Receive',
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            ...RoundedFontStyles.heavy,
-            fontSize: 20,
-          },
-        })}
+        options={({ route, navigation }) =>
+          mergeScreenOptions({
+            // Route-level JS header: the account row + eye toggle come from
+            // params the screen publishes, so the header type never changes.
+            header: renderAppStackHeader(() => ({
+              title: '',
+              titleNode: (
+                <ReceiveHeaderTitle
+                  account={route.params?.account}
+                  showName={route.params?.showName ?? true}
+                  onToggleShowName={() =>
+                    navigation.setParams({
+                      showName: !(route.params?.showName ?? true),
+                    })
+                  }
+                />
+              ),
+            })),
+            headerBackVisible: false,
+            headerLeft: () => null,
+            unstable_headerLeftItems: () => [],
+            headerTitleStyle: {
+              color: colors2024['neutral-title-1'],
+              ...RoundedFontStyles.heavy,
+              fontSize: 20,
+            },
+          })
+        }
       />
       <TransactionStack.Screen
         name={RootNames.MultiAddressHistory}
@@ -299,15 +323,31 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.BridgeDetail}
         component={withScreenPropsInjection(BridgeDetailScreen)}
-        options={mergeScreenOptions({
-          title: '',
-          headerTintColor: colors['neutral-title-1'],
-          headerStyle: {
-            backgroundColor: isLight
-              ? colors2024['neutral-bg-0']
-              : colors2024['neutral-bg-1'],
-          },
-        })}
+        options={({ route }) =>
+          mergeScreenOptions({
+            // Route-level JS header: the title and the account row come from
+            // params the screen publishes, so the type never changes on mount.
+            header: renderAppStackHeader(() => ({
+              title: '',
+              titleNode: (
+                <BridgeDetailHeaderNode
+                  title={route.params?.headerTitle}
+                  address={route.params?.address}
+                  accountType={route.params?.headerAccountType}
+                />
+              ),
+            })),
+            headerBackVisible: false,
+            headerLeft: () => null,
+            unstable_headerLeftItems: () => [],
+            headerTintColor: colors['neutral-title-1'],
+            headerStyle: {
+              backgroundColor: isLight
+                ? colors2024['neutral-bg-0']
+                : colors2024['neutral-bg-1'],
+            },
+          })
+        }
       />
       <TransactionStack.Screen
         name={RootNames.HistoryLocalDetail}

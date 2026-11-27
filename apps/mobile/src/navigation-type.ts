@@ -326,7 +326,10 @@ export type SingleAddressNavigatorParamList = {
 };
 
 export type TransactionNavigatorParamList = {
-  [RootNames.BridgeDetail]: import('./screens/Bridge/utils/statusTypes').BridgeRecordData;
+  [RootNames.BridgeDetail]: import('./screens/Bridge/utils/statusTypes').BridgeRecordData & {
+    headerTitle?: string;
+    headerAccountType?: string;
+  };
   [RootNames.History]?: {};
   [RootNames.MultiAddressHistory]?: {
     isInTokenDetail?: boolean;
@@ -392,6 +395,8 @@ export type TransactionNavigatorParamList = {
     account: Account;
     tokenSymbol?: string;
     chainEnum?: CHAINS_ENUM;
+    /** Eye toggle state for the route-level header. */
+    showName?: boolean;
   };
   [RootNames.Approvals]: {
     account: Account;
