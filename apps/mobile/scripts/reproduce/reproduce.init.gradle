@@ -1,0 +1,39 @@
+// Injected with `gradlew -I ...` by the reproduce builds.
+//
+// Requirements for cross-machine reproducible native output:
+//   - the checkout path must not appear in __FILE__/debug records
+//     (-ffile-prefix-map and friends);
+//   - the GNU build-id must be content derived, not linker-seeded
+//     (-Wl,--build-id=sha1), otherwise every build differs by 20 bytes.
+//
+// AGP builds its own `-DCMAKE_C_FLAGS` and wins over `cmake.arguments`, so the
+// flags go through the dedicated cFlags/cppFlags API instead.
+allprojects { project ->
+    def repoRoot = System.getenv('RABBY_REPRODUCE_REPO_ROOT')
+    def mapFlags = repoRoot
+        ? "-ffile-prefix-map=${repoRoot}=. -fdebug-prefix-map=${repoRoot}=. -fmacro-prefix-map=${repoRoot}=.".toString()
+        : ''
+    def applyFlags = {
+        try {
+            project.android.defaultConfig.externalNativeBuild.cmake {
+                if (mapFlags) {
+                    cFlags(mapFlags)
+                    cppFlags(mapFlags)
+                }
+                arguments('-DCMAKE_SHARED_LINKER_FLAGS=-Wl,--build-id=sha1')
+            }
+        } catch (Throwable ignored) {
+            // Projects without a cmake block simply ignore the configuration.
+        }
+    }
+    project.plugins.withId('com.android.library') { applyFlags() }
+    project.plugins.withId('com.android.application') { applyFlags() }
+
+    // Sentry's "collect modules" task writes into a source directory and would
+    // otherwise leak a machine-specific modules.json into the bundle.
+    project.tasks.configureEach { task ->
+        if (task.name.contains('SentryCollectModules')) {
+            task.enabled = false
+        }
+    }
+}
