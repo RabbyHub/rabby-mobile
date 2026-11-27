@@ -20,6 +20,7 @@ artifact="$out_dir/app-release-unsigned.aab"
 mkdir -p "$out_dir"
 
 export RABBY_MOBILE_REPRODUCE_BUILD=true
+export RABBY_REPRODUCE_BUILD_NODE="$(node -v)"
 export RABBY_MOBILE_REPRODUCE_CHANNEL="$channel"
 export RABBY_MOBILE_REPRODUCE_OUT="$artifact"
 
