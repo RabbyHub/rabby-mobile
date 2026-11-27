@@ -20,7 +20,7 @@ export RABBY_MOBILE_BUILD_ENV="regression";
 # re-signs a prebuilt APK and uploads it to the CDN. Neither path publishes to
 # Google Play, so the Play credentials (RABBY_MOBILE_CODE / KR_PWD) are not
 # required. The S3/CDN params still are.
-if [ "$RABBY_MOBILE_SIGN_ONLY_BUILD" != "true" ] && [ "$RABBY_MOBILE_REPRODUCE_BUILD" != "true" ]; then
+if [ "$RABBY_MOBILE_SIGN_ONLY_BUILD" != "true" ] && [ "$RABBY_MOBILE_UNSIGNED_BUILD" != "true" ]; then
   if [ -z "$RABBY_MOBILE_SIGN_ONLY_APK" ]; then
     check_build_params;
   fi
@@ -201,11 +201,11 @@ done
 
 # Reproducible production build: reuse the appstore preparation, then stop with
 # an unsigned AAB instead of signing and uploading it.
-if [ "$RABBY_MOBILE_REPRODUCE_BUILD" == "true" ]; then
+if [ "$RABBY_MOBILE_UNSIGNED_BUILD" == "true" ]; then
   # Ambient RABBY_MOBILE_* variables (shell profiles, CI env) leak into the JS
   # bundle through babel's dotenv/env inlining. A reproducible build must start
   # from a canonical environment: keep only the code, drop everything else.
-  for ambient in $(env | sed -n 's/^\(RABBY_MOBILE_[A-Z0-9_]*\)=.*/\1/p' | grep -vE '^RABBY_MOBILE_(CODE|REPRODUCE_.*)$' || true); do
+  for ambient in $(env | sed -n 's/^\(RABBY_MOBILE_[A-Z0-9_]*\)=.*/\1/p' | grep -vE '^RABBY_MOBILE_(CODE|UNSIGNED_.*)$' || true); do
     unset "$ambient"
   done
   unset APP_ENV WITH_ROZENITE I18N_LIVE_PREVIEW LOCAL_PACK 2>/dev/null || true
@@ -222,21 +222,21 @@ if [ "$RABBY_MOBILE_REPRODUCE_BUILD" == "true" ]; then
   export RABBY_MOBILE_NM_USE_CACHE=false
   export RABBY_MOBILE_ANDROID_FAST_BUILD=false
 
-  reproduce_channel="${RABBY_MOBILE_REPRODUCE_CHANNEL:-production}"
-  if [ "$reproduce_channel" == "production" ]; then
-    reproduce_gradle_task="bundleReleaseUnsigned"
-    reproduce_output_subdir="releaseUnsigned"
-    echo "[deploy-android] reproduce build: producing an unsigned production AAB"
+  unsigned_channel="${RABBY_MOBILE_UNSIGNED_CHANNEL:-production}"
+  if [ "$unsigned_channel" == "production" ]; then
+    unsigned_gradle_task="bundleReleaseUnsigned"
+    unsigned_output_subdir="releaseUnsigned"
+    echo "[deploy-android] unsigned build: producing an unsigned production AAB"
     export RABBY_MOBILE_BUILD_ENV="production"
     export buildchannel="${buildchannel:-appstore}"
   else
-    reproduce_gradle_task="bundleSignonly"
-    reproduce_output_subdir="signonly"
-    echo "[deploy-android] reproduce build: producing an unsigned regression AAB"
+    unsigned_gradle_task="bundleSignonly"
+    unsigned_output_subdir="signonly"
+    echo "[deploy-android] unsigned build: producing an unsigned regression AAB"
     export RABBY_MOBILE_BUILD_ENV="regression"
     export buildchannel="${buildchannel:-selfhost-reg}"
   fi
-  # Cross-machine reproducibility contract (see scripts/reproduce/README.md):
+  # Cross-machine reproducibility contract (see scripts/unsigned/README.md):
   # build from the same absolute path, with BUILD_TIME from the commit and
   # stable Metro module ids. Native objects embed their checkout path, so a
   # shared build root is currently what keeps .so bytes identical.
@@ -252,24 +252,24 @@ if [ "$RABBY_MOBILE_REPRODUCE_BUILD" == "true" ]; then
   # file from an earlier run would be packaged and break reproducibility.
   rm -f "$project_dir/android/app/src/main/assets/modules.json"
   prepare_android_build_artifacts || exit $?
-  export RABBY_REPRODUCE_REPO_ROOT="$(cd "$project_dir/../.." && pwd)"
+  export RABBY_UNSIGNED_REPO_ROOT="$(cd "$project_dir/../.." && pwd)"
   # The React Native gradle plugin writes the *builder's* LAN address into a
   # generated string resource (react_native_dev_server_ip); pin it so the
   # resource table does not depend on the machine.
-  ./android/gradlew -p ./android "$reproduce_gradle_task" --no-daemon \
-    -I "$project_dir/scripts/reproduce/reproduce.init.gradle" \
+  ./android/gradlew -p ./android "$unsigned_gradle_task" --no-daemon \
+    -I "$project_dir/scripts/unsigned/unsigned.init.gradle" \
     -PreactNativeDevServerIp=127.0.0.1 \
     -Porg.gradle.parallel=false -Porg.gradle.caching=false || exit $?
-  reproduce_aab="$(find "$project_dir/android/app/build/outputs/bundle/$reproduce_output_subdir" -type f -name '*.aab' | head -n 1)"
-  if [ -z "$reproduce_aab" ] || [ ! -f "$reproduce_aab" ]; then
-    echo "[deploy-android] unsigned AAB not found under android/app/build/outputs/bundle/$reproduce_output_subdir" >&2
+  unsigned_aab="$(find "$project_dir/android/app/build/outputs/bundle/$unsigned_output_subdir" -type f -name '*.aab' | head -n 1)"
+  if [ -z "$unsigned_aab" ] || [ ! -f "$unsigned_aab" ]; then
+    echo "[deploy-android] unsigned AAB not found under android/app/build/outputs/bundle/$unsigned_output_subdir" >&2
     exit 1
   fi
-  reproduce_output="${RABBY_MOBILE_REPRODUCE_OUT:-$project_dir/.reproduce/$reproduce_channel/app-release-unsigned.aab}"
-  mkdir -p "$(dirname "$reproduce_output")"
-  cp "$reproduce_aab" "$reproduce_output"
-  echo "[deploy-android] unsigned production AAB: $reproduce_output"
-  shasum -a 256 "$reproduce_output"
+  unsigned_output="${RABBY_MOBILE_UNSIGNED_OUT:-$project_dir/dist/unsigned/$unsigned_channel/app-release-unsigned.aab}"
+  mkdir -p "$(dirname "$unsigned_output")"
+  cp "$unsigned_aab" "$unsigned_output"
+  echo "[deploy-android] unsigned production AAB: $unsigned_output"
+  shasum -a 256 "$unsigned_output"
   exit 0
 fi
 

@@ -10,7 +10,7 @@
 // AGP builds its own `-DCMAKE_C_FLAGS` and wins over `cmake.arguments`, so the
 // flags go through the dedicated cFlags/cppFlags API instead.
 allprojects { project ->
-    def repoRoot = System.getenv('RABBY_REPRODUCE_REPO_ROOT')
+    def repoRoot = System.getenv('RABBY_UNSIGNED_REPO_ROOT')
     // macOS reaches /private/tmp through the /tmp symlink; the compiler records
     // whichever spelling it was invoked with, so map both.
     def roots = []

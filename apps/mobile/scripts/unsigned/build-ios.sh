@@ -5,7 +5,7 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 project_dir="$(cd "$script_dir/../.." && pwd)"
-out_dir="${1:-$project_dir/.reproduce/ios}"
+out_dir="${1:-$project_dir/dist/unsigned/ios}"
 archive="$out_dir/RabbyMobile.xcarchive"
 app="$archive/Products/Applications/RabbyMobile.app"
 
@@ -21,7 +21,7 @@ cd "$project_dir"
 bash ./scripts/sign-only/build-unsigned-ios.sh "$archive"
 
 if [ ! -d "$app" ]; then
-  echo "[reproduce] unsigned app not found at $app" >&2
+  echo "[unsigned] unsigned app not found at $app" >&2
   exit 1
 fi
 

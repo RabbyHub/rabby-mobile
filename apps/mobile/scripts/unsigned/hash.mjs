@@ -157,7 +157,7 @@ function toolchain() {
     macos: run('sw_vers', ['-productVersion'], { allowFailure: true }),
     xcode: xcode[0] || null,
     xcode_build: (xcode[1] || '').replace(/^Build version\s*/, '') || null,
-    node: process.env.RABBY_REPRODUCE_BUILD_NODE || process.version,
+    node: process.env.RABBY_UNSIGNED_BUILD_NODE || process.version,
     java: javaVersion || null,
     ruby: run('ruby', ['-v'], { allowFailure: true }).split(' ')[1] || null,
     cocoapods: run('pod', ['--version'], { allowFailure: true }) || null,
