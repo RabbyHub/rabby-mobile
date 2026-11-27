@@ -88,7 +88,8 @@ function assetCatalogSemanticSha256(file) {
     maxBuffer: 128 * 1024 * 1024,
   }).toString('utf8');
   const stripped = JSON.parse(info).map(entry => {
-    const { Timestamp, ...rest } = entry;
+    // Timestamp is the wall clock; DumpToolVersion comes from the host's CoreUI.
+    const { Timestamp, DumpToolVersion, ...rest } = entry;
     return rest;
   });
   return crypto
