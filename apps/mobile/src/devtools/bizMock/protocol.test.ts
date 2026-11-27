@@ -256,6 +256,18 @@ describe('parseBizMockAction', () => {
     ).toMatchObject({ matched: true, error: { code: 'missing-param' } });
   });
 
+  it('parses account.unlock', () => {
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=account.unlock',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      action: { action: 'account.unlock' },
+    });
+  });
+
   it('parses dapp actions', () => {
     expect(
       parseBizMockAction(

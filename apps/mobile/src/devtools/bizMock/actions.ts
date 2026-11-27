@@ -212,10 +212,26 @@ async function removeTestAccount(address: string): Promise<BizMockResult> {
 
 async function watchAccount(address: string): Promise<BizMockResult> {
   const input = address.toLowerCase().trim();
-  const [{ addWatchAddress }, { default: accountStore }] = await Promise.all([
+  const [
+    { addWatchAddress },
+    { default: accountStore },
+    { getAllAccountsToDisplay },
+  ] = await Promise.all([
     import('@/core/apis/address'),
     import('@/store/account'),
+    import('@/core/apis/account'),
   ]);
+  const existing = (await getAllAccountsToDisplay()).find(
+    account => String(account.address || '').toLowerCase() === input,
+  );
+  if (existing) {
+    return {
+      ok: true,
+      action: 'account.watch',
+      code: 'ok',
+      data: { address: input, existing: true },
+    };
+  }
   try {
     await addWatchAddress(input);
   } catch (error) {
@@ -236,6 +252,16 @@ async function watchAccount(address: string): Promise<BizMockResult> {
     code: 'ok',
     data: { address: input },
   };
+}
+
+async function unlockForBizMock(): Promise<BizMockResult> {
+  const [{ verifyPasswordOrUnlock }, { REGRESSION_DEFAULT_PASSWORD }] =
+    await Promise.all([
+      import('@/core/apis/lock'),
+      import('@/devtools/regressionScenarios/credentials.nonprod'),
+    ]);
+  await verifyPasswordOrUnlock(REGRESSION_DEFAULT_PASSWORD);
+  return { ok: true, action: 'account.unlock', code: 'ok' };
 }
 
 async function createTestWallet(): Promise<BizMockResult> {
@@ -455,6 +481,10 @@ export async function runBizMockAction(
 
     if (action.action === 'account.watch') {
       return await watchAccount(action.address);
+    }
+
+    if (action.action === 'account.unlock') {
+      return await unlockForBizMock();
     }
 
     if (action.action === 'account.create') {

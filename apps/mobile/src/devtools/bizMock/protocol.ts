@@ -27,6 +27,7 @@ export type BizMockAction =
   | { action: 'account.select'; address: string }
   | { action: 'account.remove'; address: string }
   | { action: 'account.watch'; address: string }
+  | { action: 'account.unlock' }
   | { action: 'account.create' }
   | {
       action: 'approval.injectFromFile';
@@ -322,6 +323,10 @@ export function parseBizMockAction(
       meta,
       action: { action: 'account.watch', address },
     };
+  }
+
+  if (command === 'account.unlock') {
+    return { matched: true, meta, action: { action: 'account.unlock' } };
   }
 
   if (command === 'account.create') {
