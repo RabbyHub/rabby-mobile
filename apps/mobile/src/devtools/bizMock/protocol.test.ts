@@ -283,6 +283,18 @@ describe('parseBizMockAction', () => {
     ).toMatchObject({ matched: true, error: { code: 'missing-param' } });
   });
 
+  it('parses history.openLocalDetail', () => {
+    expect(
+      parseBizMockAction(
+        'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=history.openLocalDetail&address=0xabc',
+        config,
+      ),
+    ).toMatchObject({
+      matched: true,
+      action: { action: 'history.openLocalDetail', address: '0xabc' },
+    });
+  });
+
   it('does not match a different protocol or path', () => {
     expect(
       parseBizMockAction(

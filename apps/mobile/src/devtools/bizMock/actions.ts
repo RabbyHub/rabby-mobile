@@ -602,6 +602,68 @@ export async function runBizMockAction(
       };
     }
 
+    if (action.action === 'history.openLocalDetail') {
+      const account = getFallbackAccountSnapshot();
+      const address = (action.address || account?.address || '')
+        .toLowerCase()
+        .trim();
+      if (!address) {
+        return {
+          ok: false,
+          action: action.action,
+          code: 'account-not-ready',
+          message: 'no address',
+        };
+      }
+      const { getTransactionHistoryListSnapshot } = await import(
+        '@/core/serviceApi/transactionHistory'
+      );
+      const list = getTransactionHistoryListSnapshot(address);
+      const group = list.completeds[0] || list.pendings[0];
+      if (!group) {
+        return {
+          ok: false,
+          action: action.action,
+          code: 'history-empty',
+          message: `no local history for ${address}`,
+        };
+      }
+      const actionData = (group as any).maxGasTx?.action?.actionData;
+      const type = actionData?.swap
+        ? 'swap'
+        : actionData?.send
+        ? 'send'
+        : actionData?.approveToken
+        ? 'approve'
+        : actionData?.revokeToken
+        ? 'revoke'
+        : undefined;
+      const [{ naviPush }, { RootNames }] = await Promise.all([
+        import('@/utils/navigation'),
+        import('@/constant/layout'),
+      ]);
+      naviPush(RootNames.StackTransaction, {
+        screen: RootNames.HistoryLocalDetail,
+        params: {
+          data: group,
+          type,
+          isForMultipleAddress: false,
+          account,
+        },
+      } as any);
+      return {
+        ok: true,
+        action: action.action,
+        code: 'ok',
+        data: {
+          address,
+          type: type || null,
+          txHash:
+            (group as any).maxGasTx?.hash || (group as any).maxTx?.hash || null,
+        },
+      };
+    }
+
     if (action.action === 'env.setScreenE2E') {
       const { storeApiExpSettingData } = await import('@/hooks/appSettings');
       storeApiExpSettingData.setScreenE2EEnabled(action.enabled);

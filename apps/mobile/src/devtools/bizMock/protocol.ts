@@ -48,6 +48,7 @@ export type BizMockAction =
   | { action: 'dapp.tabs'; op?: string; match?: string; name?: string }
   | { action: 'dapp.eval'; code?: string; file?: string }
   | { action: 'dapp.disconnect'; origin: string }
+  | { action: 'history.openLocalDetail'; address?: string }
   | { action: 'env.setScreenE2E'; enabled: boolean };
 
 export type BizMockMeta = {
@@ -461,6 +462,17 @@ export function parseBizMockAction(
       matched: true,
       meta,
       action: { action: 'dapp.disconnect', origin },
+    };
+  }
+
+  if (command === 'history.openLocalDetail') {
+    return {
+      matched: true,
+      meta,
+      action: {
+        action: 'history.openLocalDetail',
+        address: readString(urlInfo.searchParams.get('address'), 128),
+      },
     };
   }
 
