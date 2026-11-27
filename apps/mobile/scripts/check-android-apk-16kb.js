@@ -145,15 +145,23 @@ function runZipalign(zipalignPath, apkPath) {
   };
 }
 
-function listApkSharedObjects(apkPath) {
-  const output = execFileSync('unzip', ['-Z1', apkPath], {
+// An APK stores `lib/<abi>/<name>.so`; an AAB stores the same files under its
+// module directory, e.g. `base/lib/<abi>/<name>.so`.
+const SHARED_OBJECT_ENTRY = /^(?:[^/]+\/)?lib\/[^/]+\/[^/]+\.so$/;
+
+function isAndroidBundle(filePath) {
+  return /\.aab$/i.test(filePath || '');
+}
+
+function listSharedObjects(packagePath) {
+  const output = execFileSync('unzip', ['-Z1', packagePath], {
     encoding: 'utf8',
     maxBuffer: 64 * 1024 * 1024,
   });
   return output
     .split('\n')
     .map(line => line.trim())
-    .filter(entry => /^lib\/[^/]+\/[^/]+\.so$/.test(entry));
+    .filter(entry => SHARED_OBJECT_ENTRY.test(entry));
 }
 
 function extractApkEntry(apkPath, entry, targetDir) {
@@ -205,8 +213,10 @@ function inspectSharedObjects({ apkPath, llvmObjdumpPath }) {
   const rows = [];
 
   try {
-    for (const entry of listApkSharedObjects(apkPath)) {
-      const [, abi, lib] = entry.split('/');
+    for (const entry of listSharedObjects(apkPath)) {
+      const segments = entry.split('/');
+      const lib = segments[segments.length - 1];
+      const abi = segments[segments.length - 2];
       const soPath = extractApkEntry(apkPath, entry, tempDir);
       const alignInfo = inspectElfLoadAlignments(llvmObjdumpPath, soPath);
       const is64Bit = SIXTY_FOUR_BIT_ABIS.has(abi);
@@ -239,7 +249,7 @@ function summarizeFailures(failures, limit = 4) {
   return `${names.join(', ')}${more}`;
 }
 
-function makeReport({ apkPath, zipalign, elfRows, tools, mode, error }) {
+function makeReport({ apkPath, format, zipalign, elfRows, tools, mode, error }) {
   const failed64Bit = elfRows.filter(item => item.is64Bit && !item.ok);
   const failed32Bit = elfRows.filter(item => !item.is64Bit && !item.ok);
   const status = error
@@ -248,12 +258,20 @@ function makeReport({ apkPath, zipalign, elfRows, tools, mode, error }) {
     ? 'pass'
     : 'fail';
 
+  const zipalignLabel = zipalign.skipped
+    ? 'AAB ELF check'
+    : zipalign.ok
+    ? 'zipalign OK'
+    : 'zipalign failed';
+
   const summary =
     status === 'pass'
-      ? `16KB page-size: supported. zipalign OK, 64-bit ELF LOAD align OK.`
+      ? format === 'aab'
+        ? `16KB page-size: supported. 64-bit ELF LOAD align OK (AAB; Play aligns the generated APKs).`
+        : `16KB page-size: supported. zipalign OK, 64-bit ELF LOAD align OK.`
       : status === 'fail'
       ? `16KB page-size: unsupported. ${[
-          zipalign.ok ? 'zipalign OK' : 'zipalign failed',
+          zipalignLabel,
           failed64Bit.length
             ? `${failed64Bit.length} 64-bit .so failed (${summarizeFailures(
                 failed64Bit,
@@ -279,6 +297,7 @@ function makeReport({ apkPath, zipalign, elfRows, tools, mode, error }) {
     schemaVersion: 1,
     status,
     mode,
+    format,
     apk: apkPath,
     generatedAt: new Date().toISOString(),
     summary,
@@ -310,8 +329,10 @@ function main() {
     args.mode || process.env.RABBY_MOBILE_ANDROID_16KB_CHECK || 'warn';
 
   if (!apkPath || !pathExists(apkPath)) {
-    throw new Error(`APK not found: ${args.apk || '<empty>'}`);
+    throw new Error(`Package not found: ${args.apk || '<empty>'}`);
   }
+
+  const format = isAndroidBundle(apkPath) ? 'aab' : 'apk';
 
   const sdkRoots = unique([
     process.env.ANDROID_HOME,
@@ -327,20 +348,27 @@ function main() {
 
   let report;
   try {
-    if (!tools.zipalign) {
+    if (format === 'apk' && !tools.zipalign) {
       throw new Error('zipalign not found in Android SDK build-tools');
     }
     if (!tools.llvmObjdump) {
       throw new Error('llvm-objdump not found in Android NDK');
     }
 
-    const zipalign = runZipalign(tools.zipalign, apkPath);
+    // Play does not install the AAB itself: it generates (and aligns) the
+    // split APKs from it, so only the ELF LOAD alignment of the bundled .so
+    // files is meaningful here.
+    const zipalign =
+      format === 'aab'
+        ? { ok: true, skipped: true, reason: 'aab' }
+        : runZipalign(tools.zipalign, apkPath);
     const elfRows = inspectSharedObjects({
       apkPath,
       llvmObjdumpPath: tools.llvmObjdump,
     });
     report = makeReport({
       apkPath,
+      format,
       zipalign,
       elfRows,
       tools,
@@ -349,6 +377,7 @@ function main() {
   } catch (error) {
     report = makeReport({
       apkPath,
+      format,
       zipalign: { ok: false, outputTail: '' },
       elfRows: [],
       tools,

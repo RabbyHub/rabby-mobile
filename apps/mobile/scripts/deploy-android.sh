@@ -306,10 +306,20 @@ fi
 cp $android_export_target $deployment_local_dir/$apk_name
 
 android_16kb_check_mode="${RABBY_MOBILE_ANDROID_16KB_CHECK:-warn}"
+# Shipped packages - the Play AAB and sign-only APKs - must never go out without
+# 16 KB page-size support, so those lanes cannot degrade to "warn". "off" stays
+# available as an explicit, loud emergency opt-out.
+if [ "$RABBY_MOBILE_SIGN_ONLY" == "true" ] || [ -n "$RABBY_MOBILE_SIGN_ONLY_APK" ] || [ "$buildchannel" == "appstore" ]; then
+  if [ "$android_16kb_check_mode" == "off" ]; then
+    echo "[deploy-android] WARNING: 16KB page-size check is disabled for a shipped package" >&2
+  else
+    android_16kb_check_mode="strict"
+  fi
+fi
 android_16kb_report_json="$deployment_local_dir/android-16kb-page-size.json"
 android_16kb_report_text="$deployment_local_dir/android-16kb-page-size.txt"
-if [[ "$version_bundle_suffix" =~ .*\.apk ]] && [ "$android_16kb_check_mode" != "off" ]; then
-  echo "[deploy-android] check APK 16KB page-size support..."
+if [[ "$version_bundle_suffix" =~ \.(apk|aab)$ ]] && [ "$android_16kb_check_mode" != "off" ]; then
+  echo "[deploy-android] check 16KB page-size support for $android_export_target..."
   if ! node $script_dir/check-android-apk-16kb.js \
     --apk "$android_export_target" \
     --json "$android_16kb_report_json" \
