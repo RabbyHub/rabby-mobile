@@ -82,7 +82,11 @@ const PlateCustomLabel = ({
   // plate pop in fully formed.
   const plateOffset = (track: number) => {
     'worklet';
-    return clamp(clamp(track, 0, MAX_ASSET_INDEX) - index, -1, 1);
+    // Snap to the nearest tab (0.5 threshold) so the plate never rests between
+    // two labels: the outgoing label stays put until the swipe passes halfway,
+    // then the next label activates in one step.
+    const step = Math.round(clamp(track, 0, MAX_ASSET_INDEX));
+    return clamp(step - index, -1, 1);
   };
 
   const moverStyle = useAnimatedStyle(() => {
