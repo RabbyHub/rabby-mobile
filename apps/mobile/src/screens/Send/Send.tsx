@@ -73,7 +73,6 @@ import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog'
 import { hasBlockedAddress } from '@/core/utils/blockedAddress';
 import FromAddressControl2024 from './components/FromAddressControl';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
-import { SendHeaderRight } from './SubScreens/SelectPolyScreen/HeaderRight';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { getRecommendToken } from '@/utils/addressSupport';
 import { lowcaseSame } from '@/utils/common';
@@ -603,16 +602,6 @@ function SendScreen({
     apiSendToken.putScreenState({ inited: true });
     markSendScreenPerf('screen_inited_set');
   }, [currentAccount, isFocused, route.key, screenState.inited]);
-
-  const Header = useCallback(
-    () => <SendHeaderRight isForMultipleAddress={isForMultipleAddress} />,
-    [isForMultipleAddress],
-  );
-  useEffect(() => {
-    setNavigationOptions({
-      headerRight: Header,
-    });
-  }, [Header, setNavigationOptions]);
 
   const disableItemCheck = useCallback<ITokenCheck>(
     (token: TokenItemWithEntity) => {

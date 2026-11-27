@@ -112,6 +112,12 @@ jest.mock('../Send/Send', () => ({
   __esModule: true,
   default: Object.assign(() => null, { ForMultipleAddress: () => null }),
 }));
+jest.mock('../Send/SubScreens/SelectPolyScreen/HeaderRight', () => ({
+  SendHeaderRight: () => null,
+}));
+jest.mock('../GasAccount/components/HeaderRight', () => ({
+  GasAccountHeader: () => null,
+}));
 jest.mock('../SwapBridge', () => ({
   __esModule: true,
   default: Object.assign(() => null, { ForMultipleAddress: () => null }),
