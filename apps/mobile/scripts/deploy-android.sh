@@ -253,8 +253,12 @@ if [ "$RABBY_MOBILE_REPRODUCE_BUILD" == "true" ]; then
   rm -f "$project_dir/android/app/src/main/assets/modules.json"
   prepare_android_build_artifacts || exit $?
   export RABBY_REPRODUCE_REPO_ROOT="$(cd "$project_dir/../.." && pwd)"
+  # The React Native gradle plugin writes the *builder's* LAN address into a
+  # generated string resource (react_native_dev_server_ip); pin it so the
+  # resource table does not depend on the machine.
   ./android/gradlew -p ./android "$reproduce_gradle_task" --no-daemon \
     -I "$project_dir/scripts/reproduce/reproduce.init.gradle" \
+    -PreactNativeDevServerIp=127.0.0.1 \
     -Porg.gradle.parallel=false -Porg.gradle.caching=false || exit $?
   reproduce_aab="$(find "$project_dir/android/app/build/outputs/bundle/$reproduce_output_subdir" -type f -name '*.aab' | head -n 1)"
   if [ -z "$reproduce_aab" ] || [ ! -f "$reproduce_aab" ]; then
