@@ -243,10 +243,24 @@ function toolchain() {
     // Diagnostics only: the checkout path no longer shapes the artifact (the
     // canonicaliser removes it), but recording how it was chosen helps when a
     // comparison fails.
-    build_root_source: process.env.RABBY_MOBILE_IOS_BUILD_ROOT_SOURCE || null,
-    canonical_root_len: process.env.RABBY_MOBILE_IOS_CANONICAL_ROOT_LEN
-      ? Number(process.env.RABBY_MOBILE_IOS_CANONICAL_ROOT_LEN)
-      : null,
+    // The unsigned lane exports these, but the deploy script runs in a subshell
+    // and can be bypassed; fall back to deriving them from the checkout path.
+    build_root_source:
+      process.env.RABBY_MOBILE_IOS_BUILD_ROOT_SOURCE ||
+      (/(^|\/)tmp\/rabby-mobile-ios-/.test(
+        run('git', ['rev-parse', '--show-toplevel'], { allowFailure: true }),
+      )
+        ? 'tmp-channel'
+        : 'self'),
+    canonical_root_len: (() => {
+      if (process.env.RABBY_MOBILE_IOS_CANONICAL_ROOT_LEN) {
+        return Number(process.env.RABBY_MOBILE_IOS_CANONICAL_ROOT_LEN);
+      }
+      const root = run('git', ['rev-parse', '--show-toplevel'], {
+        allowFailure: true,
+      });
+      return root ? root.replace(/^\/private\//, '').length : null;
+    })(),
     // Only the versions the project actually pins matter; the list of installed
     // SDK components is host inventory, not part of the build contract.
     ndk_version: pinned('ndkVersion'),
