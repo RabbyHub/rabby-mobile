@@ -44,6 +44,12 @@ Output goes to `dist/unsigned/<channel>/` (ignored by git):
      same machine already differ in the linker's ObjC stub ordering (a handful
      of `LDR` immediates in `__text`/`__objc_stubs`/`__init_offsets`); the raw
      sha256 is still recorded in `attest.json → tree.executable.sha256` for audit.
+     The build disables selector stubs (`-fno-objc-msgsend-selector-stubs`, app
+     and pods), which removes the largest source of that churn; what is left is
+     ld64 picking between two identical literal-pool slots for `_objc_msgSend`
+     (1354 bytes of `LDR` immediates at the time of writing). The target remains
+     a zero-byte difference: as soon as a toolchain links deterministically the
+     structural step becomes a no-op and the contract reports 355/356 → 356/356.
 
 ## Determinism measures in the build
 
