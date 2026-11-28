@@ -21,6 +21,7 @@ import { setAllowAnyApproval } from '../screenRegistry/requestCapture';
 import { runTestAccountsImport } from '../testAccountsImport';
 import { TEST_ACCOUNTS_FILENAME } from '../testAccountsPath';
 import { listBizMockActions } from './actionRegistry';
+import { getBizMockScreenSnapshots } from './screenSnapshots';
 import type { BizMockAction } from './protocol';
 
 const BIZ_MOCK_DUMP_DIRNAME = 'biz-mock';
@@ -481,6 +482,7 @@ async function dumpState(name?: string): Promise<BizMockResult> {
     approval: summarizeApproval(approval),
     storePins: listInjectedStorePins(),
     bizMockActions: listBizMockActions(),
+    screens: getBizMockScreenSnapshots(),
   };
 
   await RNFS.mkdir(dir);

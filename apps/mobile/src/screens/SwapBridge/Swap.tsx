@@ -83,6 +83,10 @@ import {
   clearBizMockTokenBalances,
   setBizMockTokenBalance,
 } from '@/devtools/bizMock/tokenBalanceOverrides';
+import {
+  clearBizMockScreenSnapshot,
+  setBizMockScreenSnapshot,
+} from '@/devtools/bizMock/screenSnapshots';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { ApprovePendingTxItem } from '../Swap/components/PendingTxItem';
 import { toast } from '@/components2024/Toast';
@@ -1270,6 +1274,70 @@ const Swap = ({
     id: 'swap.clearMockBalance',
     handler: () => clearBizMockTokenBalances(),
   });
+  useBizMockAction({
+    id: 'swap.selectChain',
+    handler: (payload?: Record<string, unknown>) => {
+      const requested =
+        payload && typeof payload.chain === 'string' ? payload.chain : 'ETH';
+      switchChain(String(requested).toUpperCase() as any, {
+        changeTo: false,
+        markExplicitSelection: true,
+      });
+    },
+  });
+  useBizMockAction({
+    id: 'swap.selectToken',
+    handler: (payload?: Record<string, unknown>) => {
+      if (!payload) {
+        return;
+      }
+      const tokenId =
+        typeof payload.tokenId === 'string' ? payload.tokenId : '';
+      if (!tokenId) {
+        return;
+      }
+      const token = {
+        id: tokenId,
+        chain:
+          (typeof payload.chain === 'string' && payload.chain) ||
+          findChainByEnum(chain)?.serverId ||
+          'eth',
+        symbol:
+          (typeof payload.symbol === 'string' && payload.symbol) ||
+          tokenId.slice(0, 8),
+        decimals: Number(payload.decimals ?? 18),
+        price: Number(payload.price ?? 0),
+        logo_url: '',
+      } as any;
+      markExplicitSwapSelection();
+      if (payload.type === 'to') {
+        setReceiveToken(token);
+      } else {
+        setPayToken(token);
+      }
+    },
+  });
+  React.useEffect(() => {
+    setBizMockScreenSnapshot('swap', {
+      chain: chain ? findChainByEnum(chain)?.serverId || chain : null,
+      payTokenId: payToken?.id || null,
+      receiveTokenId: receiveToken?.id || null,
+      payAmount,
+      quoteLoading,
+      quoteReady: Boolean(activeProvider?.quote) && !quoteLoading,
+      provider: activeProvider?.name || null,
+      toTokenAmount: activeProvider?.quote?.toTokenAmount || null,
+    });
+  }, [
+    activeProvider?.name,
+    activeProvider?.quote,
+    chain,
+    payAmount,
+    payToken?.id,
+    quoteLoading,
+    receiveToken?.id,
+  ]);
+  React.useEffect(() => () => clearBizMockScreenSnapshot('swap'), []);
 
   const swapPreviewInfo = isPreviewVisible ? (
     <BridgeShowMore
