@@ -59,6 +59,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { toastLoading } from '@/components2024/Toast';
 import { sleep } from '@/utils/async';
 import { useBizMockAction } from '@/devtools/bizMock/useBizMockAction';
+import { setBizMockScreenSnapshot } from '@/devtools/bizMock/screenSnapshots';
 import BigNumber from 'bignumber.js';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
@@ -439,7 +440,53 @@ const SendScreenBody = React.memo(function SendScreenBody({
     handleFieldChange: ctx.callbacks.handleFieldChange,
     submitForm: ctx.callbacks.submitForm,
     saveCurrentFormValuesSnapshot: ctx.callbacks.saveCurrentFormValuesSnapshot,
+    handleCurrentTokenChange: ctx.callbacks.handleCurrentTokenChange,
+    handleClickMaxButton: ctx.callbacks.handleClickMaxButton,
   }));
+  const sendTokenInfo = useSendTokenScreenChainToken();
+  const sendFormValues = useSendTokenFormValuesShallowSelector(values => ({
+    amount: values.amount,
+    to: values.to,
+  }));
+  React.useEffect(() => {
+    setBizMockScreenSnapshot('send', {
+      tokenId: sendTokenInfo.currentToken?.id || null,
+      symbol: sendTokenInfo.currentToken?.symbol || null,
+      chain: sendTokenInfo.chainItem?.serverId || null,
+      amount: sendFormValues.amount,
+      to: sendFormValues.to,
+    });
+  }, [
+    sendFormValues.amount,
+    sendFormValues.to,
+    sendTokenInfo.chainItem?.serverId,
+    sendTokenInfo.currentToken?.id,
+    sendTokenInfo.currentToken?.symbol,
+  ]);
+  useBizMockAction({
+    id: 'send.selectToken',
+    handler: (payload?: Record<string, unknown>) => {
+      if (!payload || typeof payload.tokenId !== 'string') {
+        return;
+      }
+      const token = {
+        id: payload.tokenId,
+        chain:
+          (typeof payload.chain === 'string' && payload.chain) ||
+          sendTokenInfo.chainItem?.serverId ||
+          'eth',
+        symbol:
+          (typeof payload.symbol === 'string' && payload.symbol) ||
+          payload.tokenId.slice(0, 8),
+        decimals: Number(payload.decimals ?? 18),
+      } as any;
+      sendBizMockCallbacks.handleCurrentTokenChange(token);
+    },
+  });
+  useBizMockAction({
+    id: 'send.max',
+    handler: () => sendBizMockCallbacks.handleClickMaxButton(),
+  });
   useBizMockAction({
     id: 'send.form.set',
     testID: 'send-form',
