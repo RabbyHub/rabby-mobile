@@ -1331,7 +1331,12 @@ const Swap = ({
       inSufficient,
       allQuotesLoaded,
       quoteCount: (quoteList || []).length,
-      quoteNames: (quoteList || []).map(item => item.name),
+      quotes: (quoteList || []).map(item => ({
+        name: item.name,
+        loading: Boolean(item.loading),
+        hasData: Boolean(item.data),
+        hasError: Boolean((item as any).error),
+      })),
       payTokenPrice: payToken?.price ?? null,
       receiveTokenPrice: receiveToken?.price ?? null,
     });
