@@ -357,19 +357,35 @@ const createModuleIdFactory = () => {
  * @param {import('metro-config').MetroConfig} config - Input config (immutable)
  * @returns {import('metro-config').MetroConfig} New config with stable ids
  */
-const withStableHash = config => {
+// Stable module ids are safe for every build: they only change how ids are
+// derived, not when modules are evaluated.
+const withStableModuleIds = config => {
+  return {
+    ...config,
+    serializer: {
+      ...config.serializer,
+      createModuleIdFactory,
+    },
+  };
+};
+
+// The reproducibility lane is what produces the shipped artifact, so it pins
+// the remaining knobs. Ordinary builds keep their previous transform behavior
+// (lazy requires, injected minifier switches) and Sentry's Debug ID serializer.
+const withReproducibleTransforms = config => {
   return {
     ...config,
     serializer: {
       ...config.serializer,
       // hash 一致性时，防止 sentry 或其他来源干扰
       customSerializer: undefined,
-      createModuleIdFactory,
     },
     transformer: {
       ...config.transformer,
       minifierConfig: {
+        ...(config.transformer?.minifierConfig || {}),
         compress: {
+          ...(config.transformer?.minifierConfig?.compress || {}),
           switches: false, // 禁用 switches 优化
         },
       },
@@ -382,6 +398,11 @@ const withStableHash = config => {
     },
   };
 };
+
+const withReproducibleLane = config =>
+  process.env.RABBY_MOBILE_UNSIGNED_BUILD === 'true'
+    ? withReproducibleTransforms(config)
+    : config;
 
 /**
  * Higher-order function to disable package exports.
@@ -516,7 +537,8 @@ const config = {
 
 const mergedConfig = compose(
   withI18nLivePreview,
-  withStableHash,
+  withReproducibleLane,
+  withStableModuleIds,
   withSentryConfig,
   wrapWithReanimatedMetroConfig,
   withPackageExportsDisabled,

@@ -14,7 +14,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { structuralDigest } from './structural.mjs';
 
 function parseArgs(argv) {
@@ -177,9 +177,11 @@ function toolchain() {
   const xcode = run('xcodebuild', ['-version'], { allowFailure: true })
     .split('\n')
     .filter(Boolean);
-  const javaVersion = run('sh', ['-c', 'java -version 2>&1 | head -n 1'], {
-    allowFailure: true,
-  });
+  // `java -version` prints to stderr; read it without going through a shell.
+  const javaVersion = (() => {
+    const result = spawnSync('java', ['-version'], { encoding: 'utf8' });
+    return `${result.stdout || ''}`.trim() || `${result.stderr || ''}`.trim();
+  })();
   const sdkRoot =
     process.env.ANDROID_SDK_ROOT ||
     process.env.ANDROID_HOME ||

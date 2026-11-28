@@ -264,6 +264,9 @@ if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
     unsigned_configuration="Release"
     echo "[deploy-ios-adhoc] reproducible build: producing an unsigned production archive"
     export RABBY_MOBILE_BUILD_ENV="production"
+    # Phase-bundle only defaults the channel to appstore when it is empty, and
+    # this script exports selfhost-reg at the top: pin the production channel.
+    export buildchannel="appstore"
   else
     unsigned_scheme="RabbyMobileRegression"
     unsigned_configuration="Regression"
@@ -279,9 +282,11 @@ if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
   # Re-assert the channel knobs dropped by the canonicalisation above.
   if [ "$unsigned_channel" == "production" ]; then
     export RABBY_MOBILE_BUILD_ENV="production"
+    export buildchannel="appstore"
   else
     export RABBY_MOBILE_SIGN_ONLY=true
     export RABBY_MOBILE_BUILD_ENV="regression"
+    export buildchannel="selfhost-reg"
   fi
   export SENTRY_DISABLE_AUTO_UPLOAD="${SENTRY_DISABLE_AUTO_UPLOAD:-true}"
   export ZERO_AR_DATE="${ZERO_AR_DATE:-$(git -C "$project_dir" show -s --format=%cI HEAD)}"

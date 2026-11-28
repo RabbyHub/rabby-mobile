@@ -40,10 +40,11 @@ Output goes to `dist/unsigned/<channel>/` (ignored by git):
    - `assets.car:semantic` — `actool` writes a wall-clock `Timestamp` and the
      host `DumpToolVersion`; the digest uses `assetutil --info` without them.
    - `app-binary:structural` — the main executable is compared by section table,
-     symbol table and string table instead of bytes. Two clean builds on the
-     same machine already differ in the linker's ObjC stub ordering (a handful
-     of `LDR` immediates in `__text`/`__objc_stubs`/`__init_offsets`); the raw
-     sha256 is still recorded in `attest.json → tree.executable.sha256` for audit.
+     **content** (every section's bytes), symbol table and string table. The one
+     normalisation is the 12-bit immediate of an `ldr` that directly follows an
+     `adrp` (a literal/GOT slot load): two clean builds differ only in which of
+     two identical slots such an instruction references. The raw sha256 is still
+     recorded in `attest.json → tree.executable.sha256` for audit.
      The build disables selector stubs (`-fno-objc-msgsend-selector-stubs`, app
      and pods), which removes the largest source of that churn; what is left is
      ld64 picking between two identical literal-pool slots for `_objc_msgSend`
