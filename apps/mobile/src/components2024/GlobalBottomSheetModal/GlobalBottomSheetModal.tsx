@@ -379,6 +379,9 @@ export const GlobalBottomSheetModal2024 = () => {
 
         return (
           <AppBottomSheetModal
+            bizMockId={modal.id}
+            bizMockKind="global-2024"
+            bizMockName={modal.params.name}
             topInset={height.top}
             // bottomInset={androidOnlyBottomOffset}
             enableContentPanningGesture={false}

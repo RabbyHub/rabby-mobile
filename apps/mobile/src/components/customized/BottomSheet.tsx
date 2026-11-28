@@ -21,6 +21,8 @@ import { perfEvents } from '@/core/utils/perf';
 import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
 import { Text } from '@/components/Typography';
 import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
+import { useBizMockModalRegistration } from '@/devtools/bizMock/useBizMockModalRegistration';
+import type { BizMockModalKind } from '@/devtools/bizMock/modalRegistry';
 
 export const getBottomSheetHandleStyles = (colors: AppColorsVariants) => {
   return StyleSheet.create({
@@ -96,11 +98,21 @@ export function useAutoLockBottomSheetModalOnChange(
 
 export const AppBottomSheetModal = ({
   onChange,
+  onDismiss,
   ref,
+  bizMockId,
+  bizMockName,
+  bizMockKind = 'standalone',
+  testID,
   ...props
 }: React.ComponentProps<typeof BottomSheetModal> & {
   backdropProps?: Partial<BottomSheetDefaultBackdropProps>;
-} & { ref?: Ref<BottomSheetModal> }) => {
+} & { ref?: Ref<BottomSheetModal> } & {
+  bizMockId?: string;
+  bizMockName?: string;
+  bizMockKind?: BizMockModalKind;
+  testID?: string;
+}) => {
   const colors = useThemeColors();
   const columnInset = useSystemColumnInset();
   const styles = useMemo(() => getBottomSheetHandleStyles(colors), [colors]);
@@ -129,6 +141,41 @@ export const AppBottomSheetModal = ({
   );
 
   const { handleChange } = useAutoLockBottomSheetModalOnChange(onChange);
+  const bizMockModal = useBizMockModalRegistration({
+    kind: bizMockKind,
+    id: bizMockId,
+    name: bizMockName,
+    testID,
+  });
+  const {
+    setInstance: setBizMockModalInstance,
+    setActive: setBizMockModalActive,
+    markDismissed: markBizMockModalDismissed,
+  } = bizMockModal;
+  const mergedRef = useCallback(
+    (instance: BottomSheetModal | null) => {
+      setBizMockModalInstance(instance);
+      if (typeof ref === 'function') {
+        ref(instance);
+      } else if (ref) {
+        ref.current = instance;
+      }
+    },
+    [ref, setBizMockModalInstance],
+  );
+  const handleChangeWithBizMock = useCallback<
+    NonNullable<BottomSheetModalProps['onChange']>
+  >(
+    (index, position, type) => {
+      setBizMockModalActive(index >= 0);
+      handleChange(index, position, type);
+    },
+    [handleChange, setBizMockModalActive],
+  );
+  const handleDismissWithBizMock = useCallback(() => {
+    markBizMockModalDismissed();
+    onDismiss?.();
+  }, [markBizMockModalDismissed, onDismiss]);
 
   useEffect(() => {
     const sub = perfEvents.subscribe(
@@ -158,9 +205,10 @@ export const AppBottomSheetModal = ({
           marginRight: columnInset.right,
         },
       ]}
-      onChange={handleChange}
+      onChange={handleChangeWithBizMock}
+      onDismiss={handleDismissWithBizMock}
       backgroundStyle={backgroundStyle}
-      ref={ref}
+      ref={mergedRef}
       handleStyle={StyleSheet.flatten([styles.handleStyles, props.handleStyle])}
       handleIndicatorStyle={[
         StyleSheet.flatten([
@@ -176,10 +224,43 @@ export type AppBottomSheetModal = BottomSheetModal;
 
 export const OpenedDappBottomSheetModal = ({
   ref,
+  onChange,
+  onDismiss,
+  bizMockId,
+  bizMockName,
+  bizMockKind = 'standalone',
+  testID,
   ...props
 }: Omit<BottomSheetModalProps, 'handleComponent'> & {
   ref?: Ref<BottomSheetModal>;
+  bizMockId?: string;
+  bizMockName?: string;
+  bizMockKind?: BizMockModalKind;
+  testID?: string;
 }) => {
+  const bizMockModal = useBizMockModalRegistration({
+    kind: bizMockKind,
+    id: bizMockId,
+    name: bizMockName,
+    testID,
+  });
+  const {
+    setInstance: setBizMockModalInstance,
+    setActive: setBizMockModalActive,
+    markDismissed: markBizMockModalDismissed,
+  } = bizMockModal;
+  const mergedRef = useCallback(
+    (instance: BottomSheetModal | null) => {
+      setBizMockModalInstance(instance);
+      if (typeof ref === 'function') {
+        ref(instance);
+      } else if (ref) {
+        ref.current = instance;
+      }
+    },
+    [ref, setBizMockModalInstance],
+  );
+
   return (
     <BottomSheetModal
       {...props}
@@ -187,7 +268,15 @@ export const OpenedDappBottomSheetModal = ({
       enableHandlePanningGesture={false}
       // special, allow inner BottomSheetModal's backdrop can override this
       handleComponent={null}
-      ref={ref}
+      onChange={(index, position, type) => {
+        setBizMockModalActive(index >= 0);
+        onChange?.(index, position, type);
+      }}
+      onDismiss={() => {
+        markBizMockModalDismissed();
+        onDismiss?.();
+      }}
+      ref={mergedRef}
     />
   );
 };

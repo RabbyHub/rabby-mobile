@@ -437,6 +437,13 @@ async function dumpState(name?: string): Promise<BizMockResult> {
 
   const route = navigationRef.getCurrentRoute();
   const account = getFallbackAccountSnapshot();
+  let modals: unknown[] = [];
+  try {
+    const { listBizMockModals } = await import('./modalRegistry');
+    modals = listBizMockModals();
+  } catch {
+    // Modal registry is unavailable during early startup.
+  }
   let accountsCount = 0;
   try {
     const { getAllAccountsToDisplay } = await import('@/core/apis/account');
@@ -482,6 +489,7 @@ async function dumpState(name?: string): Promise<BizMockResult> {
     approval: summarizeApproval(approval),
     storePins: listInjectedStorePins(),
     bizMockActions: listBizMockActions(),
+    modals,
     screens: getBizMockScreenSnapshots(),
   };
 
@@ -1089,6 +1097,12 @@ export async function runBizMockAction(
     }
 
     if (action.action === 'modal.close') {
+      try {
+        const { dismissAllBizMockModals } = await import('./modalRegistry');
+        await dismissAllBizMockModals();
+      } catch {
+        // Fall through to the host-level cleanup below.
+      }
       const { removeAllGlobalBottomSheetModals2024 } = await import(
         '@/components2024/GlobalBottomSheetModal'
       );
@@ -1100,6 +1114,32 @@ export async function runBizMockAction(
         // The approval popup host may not be mounted.
       }
       return { ok: true, action: action.action, code: 'ok' };
+    }
+
+    if (action.action === 'modal.dismiss') {
+      const { dismissBizMockModal } = await import('./modalRegistry');
+      const dismissed = await dismissBizMockModal({
+        id: action.id,
+        testID: action.testID,
+        name: action.name,
+        kind: action.kind as any,
+        top: action.top,
+        timeoutMs: action.timeoutMs,
+      });
+      if (!dismissed.ok) {
+        return {
+          ok: false,
+          action: action.action,
+          code: dismissed.code,
+          message: dismissed.message,
+        };
+      }
+      return {
+        ok: true,
+        action: action.action,
+        code: 'ok',
+        data: dismissed.data,
+      };
     }
 
     return {

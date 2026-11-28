@@ -19,6 +19,23 @@ describe('parseBizMockAction', () => {
     });
   });
 
+  it('parses a modal dismiss action with selectors', () => {
+    const result = parseBizMockAction(
+      'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=modal.dismiss&testID=swap-quotes&kind=standalone&top=1&timeoutMs=2500',
+      config,
+    );
+    expect(result).toMatchObject({
+      matched: true,
+      action: {
+        action: 'modal.dismiss',
+        testID: 'swap-quotes',
+        kind: 'standalone',
+        top: true,
+        timeoutMs: 2500,
+      },
+    });
+  });
+
   it('parses a screen open action with inline params', () => {
     const result = parseBizMockAction(
       'rabbymock-debug://go.rabby.io/mobile-mock/?_cmd=screen.open&screen=Home&params=%7B%22a%22%3A1%7D&push=1',

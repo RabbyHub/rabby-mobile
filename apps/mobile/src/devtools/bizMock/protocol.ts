@@ -22,6 +22,15 @@ export type BizMockAction =
     }
   | { action: 'screen.resetToHome' }
   | { action: 'modal.close' }
+  | {
+      action: 'modal.dismiss';
+      id?: string;
+      testID?: string;
+      name?: string;
+      kind?: string;
+      top?: boolean;
+      timeoutMs?: number;
+    }
   | { action: 'state.dump'; name?: string }
   | { action: 'account.importFromFile'; file?: string }
   | { action: 'account.select'; address: string }
@@ -255,6 +264,27 @@ export function parseBizMockAction(
 
   if (command === 'modal.close') {
     return { matched: true, meta, action: { action: 'modal.close' } };
+  }
+
+  if (command === 'modal.dismiss') {
+    const rawTimeout = readString(urlInfo.searchParams.get('timeoutMs'), 16);
+    const parsedTimeout = rawTimeout ? Number(rawTimeout) : undefined;
+    return {
+      matched: true,
+      meta,
+      action: {
+        action: 'modal.dismiss',
+        id: readString(urlInfo.searchParams.get('id'), 128),
+        testID: readString(urlInfo.searchParams.get('testID'), 128),
+        name: readString(urlInfo.searchParams.get('name'), 64),
+        kind: readString(urlInfo.searchParams.get('kind'), 32),
+        top: readBoolean(urlInfo.searchParams.get('top')),
+        timeoutMs:
+          parsedTimeout !== undefined && Number.isFinite(parsedTimeout)
+            ? parsedTimeout
+            : undefined,
+      },
+    };
   }
 
   if (command === 'state.dump') {
