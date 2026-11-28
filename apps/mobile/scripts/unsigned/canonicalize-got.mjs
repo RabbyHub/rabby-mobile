@@ -14,6 +14,7 @@
  *
  *   node scripts/unsigned/canonicalize-got.mjs <macho> [--check]
  */
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 
 const file = process.argv[2];
@@ -33,6 +34,7 @@ const ncmds = data.readUInt32LE(16);
 let offset = 32;
 let symtab = null;
 let dysymtab = null;
+let uuidOffset = -1;
 const sections = [];
 
 for (let i = 0; i < ncmds; i += 1) {
@@ -64,6 +66,9 @@ for (let i = 0; i < ncmds; i += 1) {
       indirectsymoff: data.readUInt32LE(offset + 56),
       nindirectsyms: data.readUInt32LE(offset + 60),
     };
+  } else if (cmd === 0x1b) {
+    // LC_UUID
+    uuidOffset = offset + 8;
   }
   offset += size;
 }
@@ -115,51 +120,66 @@ if (canonical.size === 0) {
 }
 
 let patched = 0;
-let adrpReg = -1;
-let adrpPage = 0;
-let adrpAge = 0;
-for (let i = 0; i + 8 <= text.size; i += 4) {
-  const wordOffset = text.offset + i;
-  const word = data.readUInt32LE(wordOffset);
-  if ((word & 0x9f000000) >>> 0 === 0x90000000) {
-    adrpReg = word & 0x1f;
-    const pc = text.addr + i;
-    const immlo = (word >>> 29) & 0x3;
-    let immhi = (word >>> 5) & 0x7ffff;
-    if (immhi & 0x40000) immhi -= 0x80000;
-    adrpPage = Math.floor(pc / 0x1000) * 0x1000 + (immhi * 4 + immlo) * 0x1000;
-    adrpAge = 0;
-    continue;
-  }
-  adrpAge += 1;
-  const isLdr =
-    (word & 0xffc00000) >>> 0 === 0xf9400000 ||
-    (word & 0xffc00000) >>> 0 === 0xb9400000;
-  if (!isLdr || ((word >>> 5) & 0x1f) !== adrpReg || adrpAge > 8) {
-    adrpReg = -1;
-    continue;
-  }
-  const page = adrpPage;
-  const scale = (word & 0xffc00000) >>> 0 === 0xf9400000 ? 8 : 4;
-  const target = page + ((word >>> 10) & 0xfff) * scale;
-  const replacement = canonical.get(target);
-  if (replacement !== undefined) {
-    const delta = replacement - target;
-    if (delta % scale !== 0) continue;
-    const imm = ((word >>> 10) & 0xfff) + delta / scale;
-    if (imm < 0 || imm > 0xfff) continue;
-    if (!checkOnly) {
-      data.writeUInt32LE(
-        ((word & ~(0xfff << 10)) | (imm << 10)) >>> 0,
-        wordOffset,
-      );
+const scanSections = sections.filter(s =>
+  ['__text', '__objc_stubs', '__stubs', '__stub_helper'].includes(s.sectname),
+);
+for (const scan of scanSections) {
+  let adrpReg = -1;
+  let adrpPage = 0;
+  let adrpAge = 0;
+  for (let i = 0; i + 8 <= scan.size; i += 4) {
+    const wordOffset = scan.offset + i;
+    const word = data.readUInt32LE(wordOffset);
+    if ((word & 0x9f000000) >>> 0 === 0x90000000) {
+      adrpReg = word & 0x1f;
+      const pc = scan.addr + i;
+      const immlo = (word >>> 29) & 0x3;
+      let immhi = (word >>> 5) & 0x7ffff;
+      if (immhi & 0x40000) immhi -= 0x80000;
+      adrpPage =
+        Math.floor(pc / 0x1000) * 0x1000 + (immhi * 4 + immlo) * 0x1000;
+      adrpAge = 0;
+      continue;
     }
-    patched += 1;
+    adrpAge += 1;
+    const isLdr =
+      (word & 0xffc00000) >>> 0 === 0xf9400000 ||
+      (word & 0xffc00000) >>> 0 === 0xb9400000;
+    if (!isLdr || ((word >>> 5) & 0x1f) !== adrpReg || adrpAge > 8) {
+      adrpReg = -1;
+      continue;
+    }
+    const page = adrpPage;
+    const scale = (word & 0xffc00000) >>> 0 === 0xf9400000 ? 8 : 4;
+    const target = page + ((word >>> 10) & 0xfff) * scale;
+    const replacement = canonical.get(target);
+    if (replacement !== undefined) {
+      const delta = replacement - target;
+      if (delta % scale !== 0) continue;
+      const imm = ((word >>> 10) & 0xfff) + delta / scale;
+      if (imm < 0 || imm > 0xfff) continue;
+      if (!checkOnly) {
+        data.writeUInt32LE(
+          ((word & ~(0xfff << 10)) | (imm << 10)) >>> 0,
+          wordOffset,
+        );
+      }
+      patched += 1;
+    }
+    adrpReg = -1;
   }
-  adrpReg = -1;
 }
 
-if (!checkOnly && patched) fs.writeFileSync(file, data);
+if (!checkOnly && patched) {
+  // The UUID is content-derived at link time, so it differs between two links
+  // even when everything else now agrees. Re-derive it from the canonical bytes.
+  if (uuidOffset > 0) {
+    data.fill(0, uuidOffset, uuidOffset + 16);
+    const digest = crypto.createHash('sha256').update(data).digest();
+    digest.copy(data, uuidOffset, 0, 16);
+  }
+  fs.writeFileSync(file, data);
+}
 console.log(
   `[got] duplicated symbols=${canonical.size} patched-references=${patched}`,
 );
