@@ -1287,7 +1287,7 @@ const Swap = ({
   });
   useBizMockAction({
     id: 'swap.selectToken',
-    handler: async (payload?: Record<string, unknown>) => {
+    handler: (payload?: Record<string, unknown>) => {
       if (!payload) {
         return;
       }
@@ -1296,138 +1296,25 @@ const Swap = ({
       if (!tokenId) {
         return;
       }
-      const chainServerId =
-        (typeof payload.chain === 'string' && payload.chain) ||
-        findChainByEnum(chain)?.serverId ||
-        'eth';
-      // Use the app's own token shape so the quote pipeline receives the same
-      // fields a real token selection would (raw amount, is_core, ...).
-      let token: any = {
+      const token = {
         id: tokenId,
-        chain: chainServerId,
+        chain:
+          (typeof payload.chain === 'string' && payload.chain) ||
+          findChainByEnum(chain)?.serverId ||
+          'eth',
         symbol:
           (typeof payload.symbol === 'string' && payload.symbol) ||
           tokenId.slice(0, 8),
         decimals: Number(payload.decimals ?? 18),
         price: Number(payload.price ?? 0),
         logo_url: '',
-      };
-      try {
-        const { openapi } = await import('@/core/request');
-        const fetched = currentAccount?.address
-          ? await openapi.getToken(
-              currentAccount.address,
-              chainServerId,
-              tokenId,
-            )
-          : null;
-        if (fetched) {
-          token = fetched;
-        }
-      } catch {
-        // Fall back to the minimal token object.
-      }
-      // Put the token into the app token list so the quote pipeline sees the
-      // same chain token metadata a real selection would.
-      if (currentAccount?.address) {
-        try {
-          const { default: tokenStore } = await import('@/store/tokens');
-          const state = tokenStore.getState() as any;
-          const address = currentAccount.address.toLowerCase();
-          const list = state.tokenListMap?.[address] || [];
-          const nextList = [
-            token,
-            ...list.filter(
-              (item: any) =>
-                !(
-                  item.id === token.id &&
-                  String(item.chain) === String(token.chain)
-                ),
-            ),
-          ];
-          tokenStore.setState({
-            tokenListMap: { ...state.tokenListMap, [address]: nextList },
-          } as any);
-        } catch {
-          // Token list upsert is best-effort.
-        }
-      }
+      } as any;
       markExplicitSwapSelection();
       if (payload.type === 'to') {
         setReceiveToken(token);
       } else {
         setPayToken(token);
       }
-    },
-  });
-  useBizMockAction({
-    id: 'swap.setPair',
-    handler: async (payload?: Record<string, unknown>) => {
-      if (!payload) {
-        return;
-      }
-      const fromId = typeof payload.fromId === 'string' ? payload.fromId : '';
-      const toId = typeof payload.toId === 'string' ? payload.toId : '';
-      if (!fromId || !toId) {
-        return;
-      }
-      const chainServerId =
-        (typeof payload.chain === 'string' && payload.chain) ||
-        findChainByEnum(chain)?.serverId ||
-        'eth';
-      const fallback = (id: string) =>
-        ({
-          id,
-          chain: chainServerId,
-          symbol: id.slice(0, 8),
-          decimals: 18,
-          price: 0,
-          logo_url: '',
-        } as any);
-      const fetchToken = async (id: string) => {
-        if (!currentAccount?.address) {
-          return fallback(id);
-        }
-        try {
-          const { openapi } = await import('@/core/request');
-          const fetched = await openapi.getToken(
-            currentAccount.address,
-            chainServerId,
-            id,
-          );
-          return fetched || fallback(id);
-        } catch {
-          return fallback(id);
-        }
-      };
-      const [pay, receive] = await Promise.all([
-        fetchToken(fromId),
-        fetchToken(toId),
-      ]);
-      if (currentAccount?.address) {
-        try {
-          const { default: tokenStore } = await import('@/store/tokens');
-          const state = tokenStore.getState() as any;
-          const address = currentAccount.address.toLowerCase();
-          const list = state.tokenListMap?.[address] || [];
-          const withPair = [pay, receive, ...list].filter(
-            (item: any, index: number, all: any[]) =>
-              all.findIndex(
-                other =>
-                  other.id === item.id &&
-                  String(other.chain) === String(item.chain),
-              ) === index,
-          );
-          tokenStore.setState({
-            tokenListMap: { ...state.tokenListMap, [address]: withPair },
-          } as any);
-        } catch {
-          // Best-effort token list upsert.
-        }
-      }
-      markExplicitSwapSelection();
-      setPayToken(pay);
-      setReceiveToken(receive);
     },
   });
   React.useEffect(() => {
