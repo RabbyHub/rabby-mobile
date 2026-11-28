@@ -143,6 +143,10 @@ REPO_PATH_MAP_FLAG = %Q{"-ffile-prefix-map=#{REPO_ROOT}=/rabby"}
 REPO_SWIFT_PATH_MAP_FLAGS =
   %Q{-Xcc "-ffile-prefix-map=#{REPO_ROOT}=/rabby" } \
   "-file-prefix-map #{REPO_ROOT}=/rabby -debug-prefix-map #{REPO_ROOT}=/rabby"
+# The linker orders the synthesised ObjC selector stubs non-deterministically
+# (two links of the same objects differ). Plain objc_msgSend calls avoid the
+# stubs entirely and keep the binary stable across builds.
+NO_OBJC_SELECTOR_STUBS = '-fno-objc-msgsend-selector-stubs'
 
 def append_build_flag(config, key, flag)
   value = config.build_settings[key] || '$(inherited)'
@@ -167,6 +171,8 @@ def patch_build_settings(installer)
       append_build_flag(config, 'OTHER_CFLAGS', REPO_PATH_MAP_FLAG)
       append_build_flag(config, 'OTHER_CPLUSPLUSFLAGS', REPO_PATH_MAP_FLAG)
       append_build_flag(config, 'OTHER_SWIFT_FLAGS', REPO_SWIFT_PATH_MAP_FLAGS)
+      append_build_flag(config, 'OTHER_CFLAGS', NO_OBJC_SELECTOR_STUBS)
+      append_build_flag(config, 'OTHER_CPLUSPLUSFLAGS', NO_OBJC_SELECTOR_STUBS)
 
       # Xcode 27 rejects deployment targets below iOS 15. RN's own bump only covers
       # each pod's main target, so resource bundle targets (e.g. *_Privacy) keep

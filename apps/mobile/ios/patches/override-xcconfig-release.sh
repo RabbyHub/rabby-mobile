@@ -61,7 +61,9 @@ cat > "$localAppConfigPath" <<EOF
 RABBY_MOBILE_CODE = ${RABBY_MOBILE_CODE}
 
 // Reproducible builds: the checkout path must not leak into the app binary.
-OTHER_CFLAGS = \$(inherited) -ffile-prefix-map=${repo_root}=/rabby
-OTHER_CPLUSPLUSFLAGS = \$(inherited) -ffile-prefix-map=${repo_root}=/rabby
+// ObjC selector stubs are ordered by the linker in a way that varies between
+// links; plain objc_msgSend calls keep the output stable.
+OTHER_CFLAGS = \$(inherited) -ffile-prefix-map=${repo_root}=/rabby -fno-objc-msgsend-selector-stubs
+OTHER_CPLUSPLUSFLAGS = \$(inherited) -ffile-prefix-map=${repo_root}=/rabby -fno-objc-msgsend-selector-stubs
 OTHER_SWIFT_FLAGS = \$(inherited) -Xcc "-ffile-prefix-map=${repo_root}=/rabby" -file-prefix-map ${repo_root}=/rabby -debug-prefix-map ${repo_root}=/rabby
 EOF
