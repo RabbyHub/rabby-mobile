@@ -1360,6 +1360,76 @@ const Swap = ({
       }
     },
   });
+  useBizMockAction({
+    id: 'swap.setPair',
+    handler: async (payload?: Record<string, unknown>) => {
+      if (!payload) {
+        return;
+      }
+      const fromId = typeof payload.fromId === 'string' ? payload.fromId : '';
+      const toId = typeof payload.toId === 'string' ? payload.toId : '';
+      if (!fromId || !toId) {
+        return;
+      }
+      const chainServerId =
+        (typeof payload.chain === 'string' && payload.chain) ||
+        findChainByEnum(chain)?.serverId ||
+        'eth';
+      const fallback = (id: string) =>
+        ({
+          id,
+          chain: chainServerId,
+          symbol: id.slice(0, 8),
+          decimals: 18,
+          price: 0,
+          logo_url: '',
+        } as any);
+      const fetchToken = async (id: string) => {
+        if (!currentAccount?.address) {
+          return fallback(id);
+        }
+        try {
+          const { openapi } = await import('@/core/request');
+          const fetched = await openapi.getToken(
+            currentAccount.address,
+            chainServerId,
+            id,
+          );
+          return fetched || fallback(id);
+        } catch {
+          return fallback(id);
+        }
+      };
+      const [pay, receive] = await Promise.all([
+        fetchToken(fromId),
+        fetchToken(toId),
+      ]);
+      if (currentAccount?.address) {
+        try {
+          const { default: tokenStore } = await import('@/store/tokens');
+          const state = tokenStore.getState() as any;
+          const address = currentAccount.address.toLowerCase();
+          const list = state.tokenListMap?.[address] || [];
+          const withPair = [pay, receive, ...list].filter(
+            (item: any, index: number, all: any[]) =>
+              all.findIndex(
+                other =>
+                  other.id === item.id &&
+                  String(other.chain) === String(item.chain),
+              ) === index,
+          );
+          tokenStore.setState({
+            tokenListMap: { ...state.tokenListMap, [address]: withPair },
+          } as any);
+        } catch {
+          // Best-effort token list upsert.
+        }
+      }
+      markExplicitSwapSelection();
+      setPayToken(pay);
+      setReceiveToken(receive);
+    },
+  });
   React.useEffect(() => {
     setBizMockScreenSnapshot('swap', {
       chain: chain ? findChainByEnum(chain)?.serverId || chain : null,
