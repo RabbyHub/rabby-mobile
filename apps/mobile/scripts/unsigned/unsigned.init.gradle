@@ -1,0 +1,69 @@
+// Injected with `gradlew -I ...` by the reproduce builds.
+//
+// Requirements for cross-machine reproducible native output:
+//   - the checkout path must not appear in __FILE__/debug records
+//     (-ffile-prefix-map and friends);
+//   - the GNU build-id must not be emitted at all: lld derives it from
+//     linker inputs (including toolchain paths), so it differs per machine
+//     by exactly 20 bytes (-Wl,--build-id=none).
+//
+// AGP builds its own `-DCMAKE_C_FLAGS` and wins over `cmake.arguments`, so the
+// flags go through the dedicated cFlags/cppFlags API instead.
+allprojects { project ->
+    def repoRoot = System.getenv('RABBY_UNSIGNED_REPO_ROOT')
+    // macOS reaches /private/tmp through the /tmp symlink; the compiler records
+    // whichever spelling it was invoked with, so map both.
+    def roots = []
+    if (repoRoot) {
+        roots << repoRoot
+        roots << (repoRoot.startsWith('/private/') ? repoRoot.substring('/private'.length()) : "/private${repoRoot}".toString())
+    }
+    def mapFlags = roots.collect { root ->
+        "-ffile-prefix-map=${root}=. -fdebug-prefix-map=${root}=. -fmacro-prefix-map=${root}=.".toString()
+    }.join(' ')
+    def applyFlags = {
+        try {
+            project.android.defaultConfig.externalNativeBuild.cmake {
+                if (mapFlags) {
+                    cFlags(mapFlags)
+                    cppFlags(mapFlags)
+                }
+                arguments('-DCMAKE_SHARED_LINKER_FLAGS=-Wl,--build-id=none')
+            }
+        } catch (Throwable ignored) {
+            // Projects without a cmake block simply ignore the configuration.
+        }
+    }
+    project.plugins.withId('com.android.library') { applyFlags() }
+    project.plugins.withId('com.android.application') { applyFlags() }
+
+    // Sentry's "collect modules" task writes into a source directory and would
+    // otherwise leak a machine-specific modules.json into the bundle.
+    project.tasks.configureEach { task ->
+        if (task.name.contains('SentryCollectModules')) {
+            task.enabled = false
+        }
+        // The React Native gradle plugin hardcodes the builder's LAN address
+        // into a generated string resource and offers no property override.
+        // Rewrite it before the resource merge consumes the file.
+        if (task.name.contains('ResValues')) {
+            task.doLast {
+                def generatedDir = new File(project.buildDir, 'generated/res/resValues')
+                if (generatedDir.isDirectory()) {
+                    generatedDir.eachFileRecurse { candidate ->
+                        if (candidate.isFile() && candidate.name == 'gradleResValues.xml') {
+                            def text = candidate.text
+                            def patched = text.replaceAll(
+                                /(<string name="react_native_dev_server_ip"[^>]*>)[^<]*(<\/string>)/,
+                                '$1' + '127.0.0.1' + '$2'
+                            )
+                            if (patched != text) {
+                                candidate.text = patched
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

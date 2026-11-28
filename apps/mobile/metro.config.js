@@ -336,36 +336,56 @@ const createModuleIdFactory = () => {
     }
 
     const result = Number(hash);
-    // 日志记录逻辑
-    const logEntry = `${_path}\t${result}\n`;
-    try {
-      fs.appendFileSync(LOG_FILE, logEntry, 'utf8');
-    } catch (err) {
-      console.error('写入日志失败:', err);
+    // The id log is a hashing-lane diagnostic; production builds must not
+    // leave a workspace artifact behind.
+    if (process.env.APP_ENV === 'hashing') {
+      const logEntry = `${_path}\t${result}\n`;
+      try {
+        fs.appendFileSync(LOG_FILE, logEntry, 'utf8');
+      } catch (err) {
+        console.error('写入日志失败:', err);
+      }
     }
     return result;
   };
 };
 
 /**
- * Higher-order function to enable stable hashing configuration.
- * Returns a new config object with stable hashing settings.
+ * Stable module ids for every build, so two machines produce the same byte
+ * code for the same sources. (The hashing lane used to be the only consumer;
+ * cross-machine reproducibility needs it in production too.)
  * @param {import('metro-config').MetroConfig} config - Input config (immutable)
- * @returns {import('metro-config').MetroConfig} New config with stable hashing
+ * @returns {import('metro-config').MetroConfig} New config with stable ids
  */
-const withStableHash = config => {
+// Stable module ids are safe for every build: they only change how ids are
+// derived, not when modules are evaluated.
+const withStableModuleIds = config => {
+  return {
+    ...config,
+    serializer: {
+      ...config.serializer,
+      createModuleIdFactory,
+    },
+  };
+};
+
+// The reproducibility lane is what produces the shipped artifact, so it pins
+// the remaining knobs. Ordinary builds keep their previous transform behavior
+// (lazy requires, injected minifier switches) and Sentry's Debug ID serializer.
+const withReproducibleTransforms = config => {
   return {
     ...config,
     serializer: {
       ...config.serializer,
       // hash 一致性时，防止 sentry 或其他来源干扰
       customSerializer: undefined,
-      createModuleIdFactory,
     },
     transformer: {
       ...config.transformer,
       minifierConfig: {
+        ...(config.transformer?.minifierConfig || {}),
         compress: {
+          ...(config.transformer?.minifierConfig?.compress || {}),
           switches: false, // 禁用 switches 优化
         },
       },
@@ -378,6 +398,11 @@ const withStableHash = config => {
     },
   };
 };
+
+const withReproducibleLane = config =>
+  process.env.RABBY_MOBILE_UNSIGNED_BUILD === 'true'
+    ? withReproducibleTransforms(config)
+    : config;
 
 /**
  * Higher-order function to disable package exports.
@@ -512,7 +537,9 @@ const config = {
 
 const mergedConfig = compose(
   withI18nLivePreview,
-  process.env.APP_ENV === 'hashing' ? withStableHash : withSentryConfig,
+  withReproducibleLane,
+  withStableModuleIds,
+  withSentryConfig,
   wrapWithReanimatedMetroConfig,
   withPackageExportsDisabled,
 )(mergeConfig(defaultConfig, config));

@@ -20,7 +20,13 @@ export RABBY_MOBILE_BUILD_ENV="regression";
 # re-signs a prebuilt APK and uploads it to the CDN. Neither path publishes to
 # Google Play, so the Play credentials (RABBY_MOBILE_CODE / KR_PWD) are not
 # required. The S3/CDN params still are.
-if [ "$RABBY_MOBILE_SIGN_ONLY_BUILD" != "true" ]; then
+if [ "$RABBY_MOBILE_SIGN_ONLY_BUILD" != "true" ] && [ "$RABBY_MOBILE_UNSIGNED_BUILD" != "true" ]; then
+  # A production release must ship its symbols. Only the unsigned/verification
+  # lanes disable the build-time upload.
+  if [ "${SENTRY_DISABLE_AUTO_UPLOAD:-false}" = "true" ]; then
+    echo "[deploy-android] production builds must upload Sentry symbols: unset SENTRY_DISABLE_AUTO_UPLOAD" >&2
+    exit 1
+  fi
   if [ -z "$RABBY_MOBILE_SIGN_ONLY_APK" ]; then
     check_build_params;
   fi
@@ -198,6 +204,67 @@ for changelog in "${possible_changelogs[@]}"; do
   fi
 done
 # ============ prepare changelogs :end ============== #
+
+# Reproducible production build: reuse the appstore preparation, then stop with
+# an unsigned AAB instead of signing and uploading it.
+if [ "$RABBY_MOBILE_UNSIGNED_BUILD" == "true" ]; then
+  # Ambient RABBY_MOBILE_* variables (shell profiles, CI env) leak into the JS
+  # bundle through babel's dotenv/env inlining. A reproducible build must start
+  # from a canonical environment: keep only the code, drop everything else.
+  # The same contract is used by the iOS unsigned build.
+  . "$project_dir/scripts/unsigned/canonical-env.sh"
+  unsigned_apply_canonical_env
+
+  unsigned_channel="${RABBY_MOBILE_UNSIGNED_CHANNEL:-production}"
+  if [ "$unsigned_channel" == "production" ]; then
+    unsigned_gradle_task="bundleReleaseUnsigned"
+    unsigned_output_subdir="releaseUnsigned"
+    echo "[deploy-android] unsigned build: producing an unsigned production AAB"
+    export RABBY_MOBILE_BUILD_ENV="production"
+    export buildchannel="${buildchannel:-appstore}"
+  else
+    unsigned_gradle_task="bundleSignonly"
+    unsigned_output_subdir="signonly"
+    echo "[deploy-android] unsigned build: producing an unsigned regression AAB"
+    export RABBY_MOBILE_BUILD_ENV="regression"
+    export buildchannel="${buildchannel:-selfhost-reg}"
+  fi
+  # Cross-machine reproducibility contract (see scripts/unsigned/README.md):
+  # build from the same absolute path, with BUILD_TIME from the commit and
+  # stable Metro module ids. Native objects embed their checkout path, so a
+  # shared build root is currently what keeps .so bytes identical.
+  # The hash only covers the artifact; sourcemap upload is a publishing step.
+  export SENTRY_DISABLE_AUTO_UPLOAD="${SENTRY_DISABLE_AUTO_UPLOAD:-true}"
+  # Reproducibility: `scripts/resolve-build-info.js` stamps BUILD_TIME into an
+  # asset, and the production identity is the appstore channel. Both builders
+  # must use the same commit-derived timestamp instead of "now".
+  export ZERO_AR_DATE="${ZERO_AR_DATE:-$(git -C "$project_dir" show -s --format=%cI HEAD)}"
+  load_env_var_from_candidate_files RABBY_MOBILE_CODE || true
+  validate_rabbit_code || exit 1
+  # The Sentry "collect modules" task writes into a *source* directory; a stale
+  # file from an earlier run would be packaged and break reproducibility.
+  rm -f "$project_dir/android/app/src/main/assets/modules.json"
+  prepare_android_build_artifacts || exit $?
+  export RABBY_UNSIGNED_REPO_ROOT="$(cd "$project_dir/../.." && pwd)"
+  # The React Native gradle plugin writes the *builder's* LAN address into a
+  # generated string resource (react_native_dev_server_ip); pin it so the
+  # resource table does not depend on the machine.
+  ./android/gradlew -p ./android "$unsigned_gradle_task" --no-daemon \
+    -I "$project_dir/scripts/unsigned/unsigned.init.gradle" \
+    -PreactNativeDevServerIp=127.0.0.1 \
+    -Porg.gradle.parallel=false -Porg.gradle.caching=false || exit $?
+  unsigned_aab="$(find "$project_dir/android/app/build/outputs/bundle/$unsigned_output_subdir" -type f -name '*.aab' | head -n 1)"
+  if [ -z "$unsigned_aab" ] || [ ! -f "$unsigned_aab" ]; then
+    echo "[deploy-android] unsigned AAB not found under android/app/build/outputs/bundle/$unsigned_output_subdir" >&2
+    exit 1
+  fi
+  unsigned_output="${RABBY_MOBILE_UNSIGNED_OUT:-$project_dir/dist/unsigned/$unsigned_channel/app-release-unsigned.aab}"
+  mkdir -p "$(dirname "$unsigned_output")"
+  cp "$unsigned_aab" "$unsigned_output"
+  echo "[deploy-android] unsigned production AAB: $unsigned_output"
+  shasum -a 256 "$unsigned_output"
+  exit 0
+fi
 
 # Sign-only local build: reuse the exact feature-test build preparation, then
 # stop with an unsigned APK instead of signing and uploading.

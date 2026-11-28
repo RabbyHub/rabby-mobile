@@ -37,6 +37,12 @@ export buildchannel="selfhost-reg";
 export BUILD_TARGET_PLATFORM="ios";
 export RABBY_MOBILE_BUILD_ENV="regression";
 if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" != "true" ]; then
+  # A production release must ship its symbols; only the unsigned lanes disable
+  # the build-time upload.
+  if [ "${SENTRY_DISABLE_AUTO_UPLOAD:-false}" = "true" ]; then
+    echo "[deploy-ios-adhoc] production builds must upload Sentry symbols: unset SENTRY_DISABLE_AUTO_UPLOAD" >&2
+    exit 1
+  fi
   check_build_params;
   check_s3_params;
   checkout_s3_pub_deployment_params;
@@ -258,12 +264,95 @@ prepare_ios_native_deps() {
 # Sign-only local build: reuse the feature-test artifact preparation, then
 # archive without signing so the cloud machine can sign it.
 if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
-  echo "[deploy-ios-adhoc] sign-only build: producing an unsigned archive"
+  unsigned_channel="${RABBY_MOBILE_IOS_UNSIGNED_CHANNEL:-regression}"
+  if [ "$unsigned_channel" == "production" ]; then
+    unsigned_scheme="RabbyMobile"
+    unsigned_configuration="Release"
+    echo "[deploy-ios-adhoc] reproducible build: producing an unsigned production archive"
+    export RABBY_MOBILE_BUILD_ENV="production"
+    # Phase-bundle only defaults the channel to appstore when it is empty, and
+    # this script exports selfhost-reg at the top: pin the production channel.
+    export buildchannel="appstore"
+  else
+    unsigned_scheme="RabbyMobileRegression"
+    unsigned_configuration="Regression"
+    echo "[deploy-ios-adhoc] sign-only build: producing an unsigned archive"
+    export RABBY_MOBILE_SIGN_ONLY=true
+    export RABBY_MOBILE_BUILD_ENV="regression"
+  fi
   cd "$project_dir"
-  export RABBY_MOBILE_SIGN_ONLY=true
-  export RABBY_MOBILE_BUILD_ENV="regression"
+  # Same canonical environment as the Android unsigned build: ambient
+  # RABBY_MOBILE_* variables and cache lanes must not shape a shipped artifact.
+  . "$project_dir/scripts/unsigned/canonical-env.sh"
+  unsigned_apply_canonical_env
+  # Re-assert the channel knobs dropped by the canonicalisation above.
+  if [ "$unsigned_channel" == "production" ]; then
+    export RABBY_MOBILE_BUILD_ENV="production"
+    export buildchannel="appstore"
+  else
+    export RABBY_MOBILE_SIGN_ONLY=true
+    export RABBY_MOBILE_BUILD_ENV="regression"
+    export buildchannel="selfhost-reg"
+  fi
+  export SENTRY_DISABLE_AUTO_UPLOAD="${SENTRY_DISABLE_AUTO_UPLOAD:-true}"
+  export ZERO_AR_DATE="${ZERO_AR_DATE:-$(git -C "$project_dir" show -s --format=%cI HEAD)}"
+  # Swift embeds #file/#filePath literals that no driver flag remaps, so every
+  # builder of a channel must use the same absolute checkout path. The root is
+  # derived from the channel and is an intermediate value: it is not read from
+  # the environment, and the CI job checks the repository out there.
+  # `self` (the default) builds in place; `tmp-channel` uses the fixed
+  # per-channel directory. Any other value must be an absolute path.
+  build_root_spec="${RABBY_MOBILE_IOS_BUILD_ROOT:-self}"
+  case "$build_root_spec" in
+    self)
+      ios_build_root="$(cd "$project_dir/../.." && pwd -P)"
+      ios_build_root_source="self"
+      ;;
+    tmp-channel)
+      ios_build_root="/tmp/rabby-mobile-ios-${unsigned_channel}"
+      ios_build_root_source="tmp-channel"
+      ;;
+    /*)
+      ios_build_root="$build_root_spec"
+      ios_build_root_source="explicit"
+      ;;
+    *)
+      echo "[deploy-ios-adhoc] RABBY_MOBILE_IOS_BUILD_ROOT must be 'self', 'tmp-channel' or an absolute path (got: $build_root_spec)" >&2
+      exit 2
+      ;;
+  esac
+  export RABBY_MOBILE_IOS_BUILD_ROOT="$ios_build_root"
+  export RABBY_MOBILE_IOS_BUILD_ROOT_SOURCE="$ios_build_root_source"
+  current_root="$(cd "$project_dir/../.." && pwd)"
+  # Xcode hands /private/... paths to the compiler as /...; the canonicaliser
+  # subtracts this prefix length from the escaping-closure immediates. It must
+  # match the checkout the compiler actually saw.
+  canonical_root="${current_root#/private/}"
+  export RABBY_MOBILE_IOS_CANONICAL_ROOT_LEN="${#canonical_root}"
+  if [ "$ios_build_root_source" != "self" ] && [ "$current_root" != "$ios_build_root" ]; then
+    echo "[deploy-ios-adhoc] WARNING: checkout is at $current_root but the $unsigned_channel build root is $ios_build_root." >&2
+    echo "[deploy-ios-adhoc]          the canonicaliser will subtract that prefix length from its records." >&2
+  fi
+  # The RNFS pod compiles a Rust crate (rabby-safe-svg) inside the archive, and
+  # rustc embeds the toolchain and cargo-registry paths in the static library.
+  # Pin the compiler the CI workflows use and remap those prefixes so two
+  # builders produce the same bytes.
+  export RUSTUP_TOOLCHAIN="${RABBY_MOBILE_RUST_TOOLCHAIN:-1.95.0}"
+  rabby_rustup_home="${RUSTUP_HOME:-$HOME/.rustup}"
+  rabby_cargo_home="${CARGO_HOME:-$HOME/.cargo}"
+  rabby_rustflags="${RUSTFLAGS:-}"
+  rabby_rustflags="$rabby_rustflags --remap-path-prefix=${rabby_rustup_home}/toolchains=/rust-toolchain"
+  for registry_src in "$rabby_cargo_home"/registry/src/*; do
+    [ -d "$registry_src" ] || continue
+    rabby_rustflags="$rabby_rustflags --remap-path-prefix=${registry_src}=/cargo/registry/src/registry"
+  done
+  rabby_rustflags="$rabby_rustflags --remap-path-prefix=${project_dir}/../..=/rabby"
+  export RUSTFLAGS="$rabby_rustflags"
   prepare_ios_build_artifacts || exit $?
   prepare_ios_native_deps || exit $?
+  # Swift embeds #file literals; switch the affected pod sources to #fileID so
+  # the artifact no longer depends on the checkout path at all.
+  bash "$project_dir/scripts/unsigned/patch-swift-file-literals.sh" || exit $?
   sh ./ios/patches/override-xcconfig-release.sh
   unsigned_archive="${RABBY_MOBILE_IOS_UNSIGNED_ARCHIVE:-$project_dir/.sign-only/RabbyMobile.xcarchive}"
   rm -rf "$unsigned_archive" "${unsigned_archive}.zip"
@@ -275,13 +364,15 @@ if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
   find "$project_dir/ios/Pods" -maxdepth 1 -name ".last_build_configuration" -delete 2>/dev/null
   xcodebuild \
     -workspace "$project_dir/ios/RabbyMobile.xcworkspace" \
-    -scheme RabbyMobileRegression \
-    -configuration Regression \
+    -scheme "$unsigned_scheme" \
+    -configuration "$unsigned_configuration" \
     -destination 'generic/platform=iOS' \
     -archivePath "$unsigned_archive" \
+    -derivedDataPath "${RABBY_MOBILE_IOS_DERIVED_DATA:-/tmp/rabby-dd}" \
     CODE_SIGNING_ALLOWED=NO \
     CODE_SIGN_IDENTITY="" \
     CODE_SIGNING_REQUIRED=NO \
+    SENTRY_DISABLE_AUTO_UPLOAD=true \
     $(rabby_ios_compilation_cache_xcargs) \
     archive || exit $?
   # An unsigned archive carries no entitlements, so the later gym export
@@ -290,7 +381,19 @@ if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
   # app with the Release entitlements so the export keeps them.
   unsigned_app="$unsigned_archive/Products/Applications/RabbyMobile.app"
   unsigned_entitlements="$project_dir/ios/RabbyMobile/RabbyMobileRelease.entitlements"
-  if [ -d "$unsigned_app" ] && [ -f "$unsigned_entitlements" ]; then
+  # ld64 assigns the duplicated _objc_msgSend GOT slots and orders the
+  # synthesised objc stubs non-deterministically. Rewrite those references to
+  # one canonical slot (and re-derive LC_UUID) so two builders produce the same
+  # bytes; both slots bind the same symbol, so behaviour is unchanged.
+  if [ -d "$unsigned_app" ] && [ "${RABBY_MOBILE_IOS_CANONICALIZE_GOT:-true}" != "false" ]; then
+    unsigned_executable="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$unsigned_app/Info.plist" 2>/dev/null || echo RabbyMobile)"
+    echo "[deploy-ios-adhoc] canonicalising GOT/stub references in $unsigned_executable"
+    node "$project_dir/scripts/unsigned/canonicalize-got.mjs" \
+      "$unsigned_app/$unsigned_executable" --root "$current_root" || exit $?
+  fi
+  # A production archive must stay byte-identical to what the hash covers, so it
+  # is never ad-hoc signed here; the signing machine signs the verified bytes.
+  if [ "$unsigned_channel" != "production" ] && [ -d "$unsigned_app" ] && [ -f "$unsigned_entitlements" ]; then
     echo "[deploy-ios-adhoc] ad-hoc signing the unsigned archive with entitlements"
     codesign --force --sign - --timestamp=none --entitlements "$unsigned_entitlements" "$unsigned_app" || exit $?
   fi

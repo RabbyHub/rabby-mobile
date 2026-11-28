@@ -135,6 +135,24 @@ end
 # fixed prefix so hash validation builds match across machines.
 XCODE_PATH_MAP_FLAG = '"-fmacro-prefix-map=$(DEVELOPER_DIR)=/XcodeDeveloper"'
 
+# The checkout path is embedded in __FILE__ / Swift #file literals. Two builders
+# keep their checkout in different directories, so map the repository root to a
+# fixed prefix; the binary then no longer depends on where it was built.
+REPO_ROOT = File.expand_path('../../..', __dir__)
+# macOS resolves /tmp to /private/tmp in some places and not others, so the
+# compiler can see either spelling for the same checkout.
+REPO_ROOTS = [REPO_ROOT, REPO_ROOT.sub(%r{\A/private/tmp}, '/tmp')].uniq
+REPO_PATH_MAP_FLAG = REPO_ROOTS
+  .map { |root| %Q{"-ffile-prefix-map=#{root}=/rabby"} }
+  .join(' ')
+REPO_SWIFT_PATH_MAP_FLAGS = REPO_ROOTS
+  .flat_map { |root| ["-Xcc \"-ffile-prefix-map=#{root}=/rabby\"", "-file-prefix-map #{root}=/rabby", "-debug-prefix-map #{root}=/rabby"] }
+  .join(' ')
+# The linker orders the synthesised ObjC selector stubs non-deterministically
+# (two links of the same objects differ). Plain objc_msgSend calls avoid the
+# stubs entirely and keep the binary stable across builds.
+NO_OBJC_SELECTOR_STUBS = '-fno-objc-msgsend-selector-stubs'
+
 def append_build_flag(config, key, flag)
   value = config.build_settings[key] || '$(inherited)'
   value = value.join(' ') if value.is_a?(Array)
@@ -155,6 +173,11 @@ def patch_build_settings(installer)
       append_build_flag(config, 'OTHER_CFLAGS', XCODE_PATH_MAP_FLAG)
       append_build_flag(config, 'OTHER_CPLUSPLUSFLAGS', XCODE_PATH_MAP_FLAG)
       append_build_flag(config, 'OTHER_SWIFT_FLAGS', "-Xcc #{XCODE_PATH_MAP_FLAG}")
+      append_build_flag(config, 'OTHER_CFLAGS', REPO_PATH_MAP_FLAG)
+      append_build_flag(config, 'OTHER_CPLUSPLUSFLAGS', REPO_PATH_MAP_FLAG)
+      append_build_flag(config, 'OTHER_SWIFT_FLAGS', REPO_SWIFT_PATH_MAP_FLAGS)
+      append_build_flag(config, 'OTHER_CFLAGS', NO_OBJC_SELECTOR_STUBS)
+      append_build_flag(config, 'OTHER_CPLUSPLUSFLAGS', NO_OBJC_SELECTOR_STUBS)
 
       # Xcode 27 rejects deployment targets below iOS 15. RN's own bump only covers
       # each pod's main target, so resource bundle targets (e.g. *_Privacy) keep
