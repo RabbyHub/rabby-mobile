@@ -1254,7 +1254,8 @@ const Swap = ({
     handler: (payload?: Record<string, unknown>) => {
       const nextAmount =
         payload && typeof payload.amount === 'string' ? payload.amount : '';
-      handleAmountChange(nextAmount);
+      // Product handler (includes the auth-in-progress guard).
+      handlePayAmountChange(nextAmount);
     },
   });
   useBizMockAction({
@@ -1285,8 +1286,48 @@ const Swap = ({
       });
     },
   });
+  const buildBizMockToken = (payload: Record<string, unknown>) => {
+    const tokenId = typeof payload.tokenId === 'string' ? payload.tokenId : '';
+    if (!tokenId) {
+      return null;
+    }
+    return {
+      id: tokenId,
+      chain:
+        (typeof payload.chain === 'string' && payload.chain) ||
+        findChainByEnum(chain)?.serverId ||
+        'eth',
+      symbol:
+        (typeof payload.symbol === 'string' && payload.symbol) ||
+        tokenId.slice(0, 8),
+      decimals: Number(payload.decimals ?? 18),
+      price: Number(payload.price ?? 0),
+      logo_url: '',
+    } as any;
+  };
+  // Product actions: the same handlers passed to the token selectors.
   useBizMockAction({
-    id: 'swap.selectToken',
+    id: 'swap.fromToken.select',
+    handler: (payload?: Record<string, unknown>) => {
+      const token = payload ? buildBizMockToken(payload) : null;
+      if (token) {
+        handlePayTokenChange(token);
+      }
+    },
+  });
+  useBizMockAction({
+    id: 'swap.toToken.select',
+    handler: (payload?: Record<string, unknown>) => {
+      const token = payload ? buildBizMockToken(payload) : null;
+      if (token) {
+        handleReceiveTokenChange(token);
+      }
+    },
+  });
+  // Data/context injection only: writes the swap store directly. Never use
+  // this to claim product token-selection behavior.
+  useBizMockAction({
+    id: 'swap.setContextToken',
     handler: (payload?: Record<string, unknown>) => {
       if (!payload) {
         return;
