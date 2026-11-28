@@ -1327,6 +1327,31 @@ const Swap = ({
       } catch {
         // Fall back to the minimal token object.
       }
+      // Put the token into the app token list so the quote pipeline sees the
+      // same chain token metadata a real selection would.
+      if (currentAccount?.address) {
+        try {
+          const { default: tokenStore } = await import('@/store/tokens');
+          const state = tokenStore.getState() as any;
+          const address = currentAccount.address.toLowerCase();
+          const list = state.tokenListMap?.[address] || [];
+          const nextList = [
+            token,
+            ...list.filter(
+              (item: any) =>
+                !(
+                  item.id === token.id &&
+                  String(item.chain) === String(token.chain)
+                ),
+            ),
+          ];
+          tokenStore.setState({
+            tokenListMap: { ...state.tokenListMap, [address]: nextList },
+          } as any);
+        } catch {
+          // Token list upsert is best-effort.
+        }
+      }
       markExplicitSwapSelection();
       if (payload.type === 'to') {
         setReceiveToken(token);
