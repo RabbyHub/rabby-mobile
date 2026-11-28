@@ -21,6 +21,12 @@ export RABBY_MOBILE_BUILD_ENV="regression";
 # Google Play, so the Play credentials (RABBY_MOBILE_CODE / KR_PWD) are not
 # required. The S3/CDN params still are.
 if [ "$RABBY_MOBILE_SIGN_ONLY_BUILD" != "true" ] && [ "$RABBY_MOBILE_UNSIGNED_BUILD" != "true" ]; then
+  # A production release must ship its symbols. Only the unsigned/verification
+  # lanes disable the build-time upload.
+  if [ "${SENTRY_DISABLE_AUTO_UPLOAD:-false}" = "true" ]; then
+    echo "[deploy-android] production builds must upload Sentry symbols: unset SENTRY_DISABLE_AUTO_UPLOAD" >&2
+    exit 1
+  fi
   if [ -z "$RABBY_MOBILE_SIGN_ONLY_APK" ]; then
     check_build_params;
   fi

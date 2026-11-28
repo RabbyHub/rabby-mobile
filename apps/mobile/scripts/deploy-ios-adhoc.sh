@@ -37,6 +37,12 @@ export buildchannel="selfhost-reg";
 export BUILD_TARGET_PLATFORM="ios";
 export RABBY_MOBILE_BUILD_ENV="regression";
 if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" != "true" ]; then
+  # A production release must ship its symbols; only the unsigned lanes disable
+  # the build-time upload.
+  if [ "${SENTRY_DISABLE_AUTO_UPLOAD:-false}" = "true" ]; then
+    echo "[deploy-ios-adhoc] production builds must upload Sentry symbols: unset SENTRY_DISABLE_AUTO_UPLOAD" >&2
+    exit 1
+  fi
   check_build_params;
   check_s3_params;
   checkout_s3_pub_deployment_params;
