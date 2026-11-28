@@ -113,10 +113,9 @@ function bundleExecutable(dir) {
 function hashTree(dir) {
   const files = walk(dir);
   const applied = new Set();
-  // The linker's ObjC stub ordering is not reproducible under Xcode 27.1 (two
-  // clean builds of the same tree already differ), so the executable is hashed
-  // structurally - section table, symbols and strings - and its raw sha256 is
-  // reported separately for audit.
+  // The unsigned lane canonicalises the linker's non-deterministic GOT/stub
+  // references before hashing (see canonicalize-got.mjs), so the executable is
+  // compared byte for byte like every other file.
   const executable = bundleExecutable(dir);
   let executableInfo = null;
   const lines = files
