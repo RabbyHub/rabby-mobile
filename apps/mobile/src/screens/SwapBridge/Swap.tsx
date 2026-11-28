@@ -1264,6 +1264,10 @@ const Swap = ({
     handler: () => handleSwap({}),
   });
   useBizMockAction({
+    id: 'swap.openQuotesList',
+    handler: () => openQuotesList(),
+  });
+  useBizMockAction({
     id: 'swap.mockPayBalance',
     handler: (payload?: Record<string, unknown>) => {
       const requested =

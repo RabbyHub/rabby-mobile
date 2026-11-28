@@ -108,6 +108,7 @@ import DevForceLocalVersionSelector, {
   useLocalVersionSelectorModalVisible,
 } from './sheetModals/DevForceLocalVersionSelector';
 import { useShowUserAgreementLikeModal } from '../ManagePassword/components/UserAgreementLikeModalInner';
+import { useBizMockAction } from '@/devtools/bizMock/useBizMockAction';
 import WalletLockTestItemModal, {
   useWalletLockTestItemModalVisible,
 } from './sheetModals/DevWalletLock';
@@ -664,6 +665,11 @@ function SettingsBlocks() {
       },
     });
   }, [colors2024, isLight, t]);
+
+  useBizMockAction({
+    id: 'settings.openWalletsList',
+    handler: handleWalletsListPress,
+  });
 
   const settingsBlocks: Record<string, SettingBlock> = (() => {
     return {
