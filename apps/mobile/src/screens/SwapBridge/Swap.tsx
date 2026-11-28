@@ -1327,15 +1327,28 @@ const Swap = ({
       quoteReady: Boolean(activeProvider?.quote) && !quoteLoading,
       provider: activeProvider?.name || null,
       toTokenAmount: activeProvider?.quote?.toTokenAmount || null,
+      feeRate: feeRate || null,
+      inSufficient,
+      allQuotesLoaded,
+      quoteCount: (quoteList || []).length,
+      quoteNames: (quoteList || []).map(item => item.name),
+      payTokenPrice: payToken?.price ?? null,
+      receiveTokenPrice: receiveToken?.price ?? null,
     });
   }, [
     activeProvider?.name,
     activeProvider?.quote,
     chain,
+    feeRate,
     payAmount,
     payToken?.id,
+    payToken?.price,
     quoteLoading,
     receiveToken?.id,
+    receiveToken?.price,
+    inSufficient,
+    allQuotesLoaded,
+    quoteList,
   ]);
   React.useEffect(() => () => clearBizMockScreenSnapshot('swap'), []);
 
