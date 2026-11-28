@@ -51,6 +51,13 @@ echo "[RabbyMobileBuild] process project_dir: $project_dir"
 
 echo "[RabbyMobileBuild] write AppConfig override: $localAppConfigPath"
 repo_root=$(cd "$project_dir/../.." && pwd)
+repo_root_alias=$(printf '%s' "$repo_root" | sed -E 's#^/private/tmp#/tmp#')
+repo_map_flags="-ffile-prefix-map=${repo_root}=/rabby"
+repo_swift_flags="-Xcc \"-ffile-prefix-map=${repo_root}=/rabby\" -file-prefix-map ${repo_root}=/rabby -debug-prefix-map ${repo_root}=/rabby"
+if [ "$repo_root_alias" != "$repo_root" ]; then
+  repo_map_flags="$repo_map_flags -ffile-prefix-map=${repo_root_alias}=/rabby"
+  repo_swift_flags="$repo_swift_flags -Xcc \"-ffile-prefix-map=${repo_root_alias}=/rabby\" -file-prefix-map ${repo_root_alias}=/rabby -debug-prefix-map ${repo_root_alias}=/rabby"
+fi
 cat > "$localAppConfigPath" <<EOF
 //
 //  AppConfig.${configuration_name}.local.xcconfig
@@ -63,7 +70,7 @@ RABBY_MOBILE_CODE = ${RABBY_MOBILE_CODE}
 // Reproducible builds: the checkout path must not leak into the app binary.
 // ObjC selector stubs are ordered by the linker in a way that varies between
 // links; plain objc_msgSend calls keep the output stable.
-OTHER_CFLAGS = \$(inherited) -ffile-prefix-map=${repo_root}=/rabby -fno-objc-msgsend-selector-stubs
-OTHER_CPLUSPLUSFLAGS = \$(inherited) -ffile-prefix-map=${repo_root}=/rabby -fno-objc-msgsend-selector-stubs
-OTHER_SWIFT_FLAGS = \$(inherited) -Xcc "-ffile-prefix-map=${repo_root}=/rabby" -file-prefix-map ${repo_root}=/rabby -debug-prefix-map ${repo_root}=/rabby
+OTHER_CFLAGS = \$(inherited) ${repo_map_flags} -fno-objc-msgsend-selector-stubs
+OTHER_CPLUSPLUSFLAGS = \$(inherited) ${repo_map_flags} -fno-objc-msgsend-selector-stubs
+OTHER_SWIFT_FLAGS = \$(inherited) ${repo_swift_flags}
 EOF

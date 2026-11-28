@@ -139,10 +139,15 @@ XCODE_PATH_MAP_FLAG = '"-fmacro-prefix-map=$(DEVELOPER_DIR)=/XcodeDeveloper"'
 # keep their checkout in different directories, so map the repository root to a
 # fixed prefix; the binary then no longer depends on where it was built.
 REPO_ROOT = File.expand_path('../../..', __dir__)
-REPO_PATH_MAP_FLAG = %Q{"-ffile-prefix-map=#{REPO_ROOT}=/rabby"}
-REPO_SWIFT_PATH_MAP_FLAGS =
-  %Q{-Xcc "-ffile-prefix-map=#{REPO_ROOT}=/rabby" } \
-  "-file-prefix-map #{REPO_ROOT}=/rabby -debug-prefix-map #{REPO_ROOT}=/rabby"
+# macOS resolves /tmp to /private/tmp in some places and not others, so the
+# compiler can see either spelling for the same checkout.
+REPO_ROOTS = [REPO_ROOT, REPO_ROOT.sub(%r{\A/private/tmp}, '/tmp')].uniq
+REPO_PATH_MAP_FLAG = REPO_ROOTS
+  .map { |root| %Q{"-ffile-prefix-map=#{root}=/rabby"} }
+  .join(' ')
+REPO_SWIFT_PATH_MAP_FLAGS = REPO_ROOTS
+  .flat_map { |root| ["-Xcc \"-ffile-prefix-map=#{root}=/rabby\"", "-file-prefix-map #{root}=/rabby", "-debug-prefix-map #{root}=/rabby"] }
+  .join(' ')
 # The linker orders the synthesised ObjC selector stubs non-deterministically
 # (two links of the same objects differ). Plain objc_msgSend calls avoid the
 # stubs entirely and keep the binary stable across builds.
