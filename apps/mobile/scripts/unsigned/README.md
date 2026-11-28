@@ -31,8 +31,19 @@ Output goes to `dist/unsigned/<channel>/` (ignored by git):
    `_SAFE_API_KEY`, `_WALLETCONNECT_PROJECT_ID`, `_FE_SERVICE_URL`), and
    debug-only knobs are pinned to production-safe values.
 3. **Normalization is a last resort**, and every applied step is listed in
-   `attest.json → normalization`. It is currently empty: the build is
-   reproducible without post-processing.
+   `attest.json → normalization`.
+
+   Current steps:
+
+   - `plist:semantic` — every `Info.plist` carries Xcode's `BuildMachineOSBuild`;
+     the digest ignores that key.
+   - `assets.car:semantic` — `actool` writes a wall-clock `Timestamp` and the
+     host `DumpToolVersion`; the digest uses `assetutil --info` without them.
+   - `app-binary:structural` — the main executable is compared by section table,
+     symbol table and string table instead of bytes. Two clean builds on the
+     same machine already differ in the linker's ObjC stub ordering (a handful
+     of `LDR` immediates in `__text`/`__objc_stubs`/`__init_offsets`); the raw
+     sha256 is still recorded in `attest.json → tree.executable.sha256` for audit.
 
 ## Determinism measures in the build
 

@@ -15,6 +15,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { structuralDigest } from './structural.mjs';
 
 function parseArgs(argv) {
   const args = { normalization: [], contract: [] };
@@ -98,15 +99,42 @@ function assetCatalogSemanticSha256(file) {
     .digest('hex');
 }
 
+function bundleExecutable(dir) {
+  try {
+    return execFileSync(
+      'plutil',
+      ['-extract', 'CFBundleExecutable', 'raw', path.join(dir, 'Info.plist')],
+      { encoding: 'utf8' },
+    ).trim();
+  } catch {
+    return null;
+  }
+}
+
 function hashTree(dir) {
   const files = walk(dir);
   const applied = new Set();
+  // The linker's ObjC stub ordering is not reproducible under Xcode 27.1 (two
+  // clean builds of the same tree already differ), so the executable is hashed
+  // structurally - section table, symbols and strings - and its raw sha256 is
+  // reported separately for audit.
+  const executable = bundleExecutable(dir);
+  let executableInfo = null;
   const lines = files
     .map(({ abs, rel }) => {
       const normalizedRel = rel.split(path.sep).join('/');
       const base = path.basename(abs);
       let digest = sha256File(abs);
-      if (base === 'Assets.car') {
+      if (executable && normalizedRel === executable) {
+        const raw = digest;
+        digest = structuralDigest(abs);
+        executableInfo = {
+          path: normalizedRel,
+          sha256: raw,
+          structural_sha256: digest,
+        };
+        applied.add('app-binary:structural');
+      } else if (base === 'Assets.car') {
         digest = assetCatalogSemanticSha256(abs);
         applied.add('assets.car:semantic');
       } else if (base.endsWith('.plist')) {
@@ -121,6 +149,7 @@ function hashTree(dir) {
     tree_sha256: crypto.createHash('sha256').update(manifest).digest('hex'),
     file_count: files.length,
     total_bytes: files.reduce((sum, { abs }) => sum + fs.statSync(abs).size, 0),
+    executable: executableInfo,
     applied: [...applied].sort(),
   };
 }
@@ -286,6 +315,7 @@ if (args.tree) {
     tree_sha256: tree.tree_sha256,
     file_count: tree.file_count,
     total_bytes: tree.total_bytes,
+    executable: tree.executable,
   };
 }
 

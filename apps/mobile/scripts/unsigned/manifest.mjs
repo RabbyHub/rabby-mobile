@@ -12,6 +12,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { structuralDigest } from './structural.mjs';
 
 const dir = process.argv[2];
 if (!dir) {
@@ -63,13 +64,29 @@ function assetCatalogSemantic(file) {
     .digest('hex');
 }
 
+function bundleExecutable(root) {
+  try {
+    return execFileSync(
+      'plutil',
+      ['-extract', 'CFBundleExecutable', 'raw', path.join(root, 'Info.plist')],
+      { encoding: 'utf8' },
+    ).trim();
+  } catch {
+    return null;
+  }
+}
+
+const root = path.resolve(dir);
+const executable = bundleExecutable(root);
 const files = [];
-walk(path.resolve(dir), path.resolve(dir), files);
+walk(root, root, files);
 const lines = files
   .map(({ abs, rel }) => {
     const base = path.basename(abs);
     let digest = sha256(abs);
-    if (base === 'Assets.car') digest = assetCatalogSemantic(abs);
+    if (executable && rel.split(path.sep).join('/') === executable) {
+      digest = structuralDigest(abs);
+    } else if (base === 'Assets.car') digest = assetCatalogSemantic(abs);
     else if (base.endsWith('.plist')) digest = plistSemantic(abs);
     return `${digest}  ${rel.split(path.sep).join('/')}`;
   })
