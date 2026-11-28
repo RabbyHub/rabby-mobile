@@ -18,6 +18,8 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 
 const file = process.argv[2];
+const rootArgIndex = process.argv.indexOf('--root');
+const buildRoot = rootArgIndex > 0 ? process.argv[rootArgIndex + 1] : null;
 const checkOnly = process.argv.includes('--check');
 if (!file) {
   console.error('usage: canonicalize-got.mjs <macho> [--check]');
@@ -170,7 +172,52 @@ for (const scan of scanSections) {
   }
 }
 
-if (!checkOnly && patched) {
+// Swift's frontend embeds the length of the source path in the `mov w2` of
+// every `_swift_isEscapingClosureAtFileLocation` call; no flag remaps it. The
+// suffix is identical across builders, only the root prefix differs, so rewrite
+// the immediate to `suffix + len('/rabby')`.
+let escapingPatched = 0;
+if (buildRoot) {
+  // Xcode canonicalises /private/... to /... before handing paths to the
+  // compiler, so that is the prefix the frontend baked in.
+  const effectiveRoot = buildRoot.replace(/^\/private\//, '/');
+  const textSection = sections.find(s => s.sectname === '__text');
+  const sites = [];
+  for (let i = 0; i + 20 <= textSection.size; i += 4) {
+    const at = textSection.offset + i;
+    const word = data.readUInt32LE(at);
+    if ((word & 0x7f800000) >>> 0 !== 0x52800000) continue;
+    if ((word & 0x1f) !== 2) continue;
+    const next = [1, 2, 3].map(k => data.readUInt32LE(at + k * 4));
+    if (next.some(w => (w & 0x7f800000) >>> 0 !== 0x52800000)) continue;
+    if (((next[2] >>> 5) & 0xffff) !== 1) continue;
+    const branch = data.readUInt32LE(at + 16);
+    if (branch >>> 26 !== 0b100101) continue;
+    sites.push({ at, word, imm: (word >>> 5) & 0xffff });
+  }
+  const rootLength = effectiveRoot.length;
+  if (process.env.RABBY_CANONICALIZE_DEBUG) {
+    console.log(
+      '[got] escaping root length',
+      rootLength,
+      'sites',
+      sites.length,
+    );
+  }
+  for (const site of sites) {
+    const replacement = site.imm - rootLength + '/rabby'.length;
+    if (replacement < 0 || replacement > 0xfff) continue;
+    if (!checkOnly) {
+      data.writeUInt32LE(
+        ((site.word & ~(0xffff << 5)) | (replacement << 5)) >>> 0,
+        site.at,
+      );
+    }
+    escapingPatched += 1;
+  }
+}
+
+if (!checkOnly && (patched || escapingPatched)) {
   // The UUID is content-derived at link time, so it differs between two links
   // even when everything else now agrees. Re-derive it from the canonical bytes.
   if (uuidOffset > 0) {
@@ -181,5 +228,6 @@ if (!checkOnly && patched) {
   fs.writeFileSync(file, data);
 }
 console.log(
-  `[got] duplicated symbols=${canonical.size} patched-references=${patched}`,
+  `[got] duplicated symbols=${canonical.size} patched-references=${patched} ` +
+    `escaping-closure-lengths=${escapingPatched}`,
 );

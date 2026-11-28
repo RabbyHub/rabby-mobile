@@ -357,7 +357,8 @@ if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
   if [ -d "$unsigned_app" ] && [ "${RABBY_MOBILE_IOS_CANONICALIZE_GOT:-true}" != "false" ]; then
     unsigned_executable="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$unsigned_app/Info.plist" 2>/dev/null || echo RabbyMobile)"
     echo "[deploy-ios-adhoc] canonicalising GOT/stub references in $unsigned_executable"
-    node "$project_dir/scripts/unsigned/canonicalize-got.mjs" "$unsigned_app/$unsigned_executable" || exit $?
+    node "$project_dir/scripts/unsigned/canonicalize-got.mjs" \
+      "$unsigned_app/$unsigned_executable" --root "$current_root" || exit $?
   fi
   # A production archive must stay byte-identical to what the hash covers, so it
   # is never ad-hoc signed here; the signing machine signs the verified bytes.
