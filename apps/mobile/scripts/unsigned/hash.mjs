@@ -15,7 +15,6 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { structuralDigest } from './structural.mjs';
 
 function parseArgs(argv) {
   const args = { normalization: [], contract: [] };
@@ -126,14 +125,10 @@ function hashTree(dir) {
       const base = path.basename(abs);
       let digest = sha256File(abs);
       if (executable && normalizedRel === executable) {
-        const raw = digest;
-        digest = structuralDigest(abs);
-        executableInfo = {
-          path: normalizedRel,
-          sha256: raw,
-          structural_sha256: digest,
-        };
-        applied.add('app-binary:structural');
+        // The unsigned lane canonicalises the linker's non-deterministic
+        // GOT/stub references before hashing (canonicalize-got.mjs), so the
+        // executable is compared byte for byte like every other file.
+        executableInfo = { path: normalizedRel, sha256: digest };
       } else if (base === 'Assets.car') {
         digest = assetCatalogSemanticSha256(abs);
         applied.add('assets.car:semantic');

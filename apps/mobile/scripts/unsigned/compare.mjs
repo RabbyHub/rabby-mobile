@@ -76,17 +76,10 @@ if (a.artifact || b.artifact) {
 if (a.tree || b.tree) {
   compare('tree.sha256', a.tree?.tree_sha256, b.tree?.tree_sha256);
   compare('tree.file_count', a.tree?.file_count, b.tree?.file_count);
-  if (a.tree?.executable || b.tree?.executable) {
-    compare(
-      'tree.executable.structural_sha256',
-      a.tree?.executable?.structural_sha256,
-      b.tree?.executable?.structural_sha256,
+  if (a.tree?.executable?.sha256 !== b.tree?.executable?.sha256) {
+    notes.push(
+      'app binary sha256 differs (canonicalisation may have missed a section)',
     );
-    if (a.tree?.executable?.sha256 !== b.tree?.executable?.sha256) {
-      notes.push(
-        'app binary sha256 differs (linker stub ordering is not reproducible; the structural digest is the contract)',
-      );
-    }
   }
 }
 

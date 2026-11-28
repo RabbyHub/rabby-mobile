@@ -39,18 +39,13 @@ Output goes to `dist/unsigned/<channel>/` (ignored by git):
      the digest ignores that key.
    - `assets.car:semantic` — `actool` writes a wall-clock `Timestamp` and the
      host `DumpToolVersion`; the digest uses `assetutil --info` without them.
-   - `app-binary:structural` — the main executable is compared by section table,
-     **content** (every section's bytes), symbol table and string table. The one
-     normalisation is the 12-bit immediate of an `ldr` that directly follows an
-     `adrp` (a literal/GOT slot load): two clean builds differ only in which of
-     two identical slots such an instruction references. The raw sha256 is still
-     recorded in `attest.json → tree.executable.sha256` for audit.
-     The build disables selector stubs (`-fno-objc-msgsend-selector-stubs`, app
-     and pods), which removes the largest source of that churn; what is left is
-     ld64 picking between two identical literal-pool slots for `_objc_msgSend`
-     (1354 bytes of `LDR` immediates at the time of writing). The target remains
-     a zero-byte difference: as soon as a toolchain links deterministically the
-     structural step becomes a no-op and the contract reports 355/356 → 356/356.
+     The executable is hashed byte for byte like every other file. ld64's
+     non-determinism (duplicate `_objc_msgSend` GOT slots and the order of the
+     synthesised objc stubs) is removed **before** hashing by
+     `scripts/unsigned/canonicalize-got.mjs`, which rewrites those references to
+     one canonical slot and re-derives `LC_UUID`. Both slots bind the same symbol,
+     so behaviour is unchanged; two independently linked binaries then agree
+     byte for byte. Set `RABBY_MOBILE_IOS_CANONICALIZE_GOT=false` to skip it.
 
 ## Determinism measures in the build
 

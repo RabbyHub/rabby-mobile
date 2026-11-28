@@ -335,6 +335,15 @@ if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
   # app with the Release entitlements so the export keeps them.
   unsigned_app="$unsigned_archive/Products/Applications/RabbyMobile.app"
   unsigned_entitlements="$project_dir/ios/RabbyMobile/RabbyMobileRelease.entitlements"
+  # ld64 assigns the duplicated _objc_msgSend GOT slots and orders the
+  # synthesised objc stubs non-deterministically. Rewrite those references to
+  # one canonical slot (and re-derive LC_UUID) so two builders produce the same
+  # bytes; both slots bind the same symbol, so behaviour is unchanged.
+  if [ -d "$unsigned_app" ] && [ "${RABBY_MOBILE_IOS_CANONICALIZE_GOT:-true}" != "false" ]; then
+    unsigned_executable="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$unsigned_app/Info.plist" 2>/dev/null || echo RabbyMobile)"
+    echo "[deploy-ios-adhoc] canonicalising GOT/stub references in $unsigned_executable"
+    node "$project_dir/scripts/unsigned/canonicalize-got.mjs" "$unsigned_app/$unsigned_executable" || exit $?
+  fi
   # A production archive must stay byte-identical to what the hash covers, so it
   # is never ad-hoc signed here; the signing machine signs the verified bytes.
   if [ "$unsigned_channel" != "production" ] && [ -d "$unsigned_app" ] && [ -f "$unsigned_entitlements" ]; then
