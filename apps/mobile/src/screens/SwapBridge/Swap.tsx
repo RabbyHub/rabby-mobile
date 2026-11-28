@@ -1287,7 +1287,7 @@ const Swap = ({
   });
   useBizMockAction({
     id: 'swap.selectToken',
-    handler: (payload?: Record<string, unknown>) => {
+    handler: async (payload?: Record<string, unknown>) => {
       if (!payload) {
         return;
       }
@@ -1296,19 +1296,37 @@ const Swap = ({
       if (!tokenId) {
         return;
       }
-      const token = {
+      const chainServerId =
+        (typeof payload.chain === 'string' && payload.chain) ||
+        findChainByEnum(chain)?.serverId ||
+        'eth';
+      // Use the app's own token shape so the quote pipeline receives the same
+      // fields a real token selection would (raw amount, is_core, ...).
+      let token: any = {
         id: tokenId,
-        chain:
-          (typeof payload.chain === 'string' && payload.chain) ||
-          findChainByEnum(chain)?.serverId ||
-          'eth',
+        chain: chainServerId,
         symbol:
           (typeof payload.symbol === 'string' && payload.symbol) ||
           tokenId.slice(0, 8),
         decimals: Number(payload.decimals ?? 18),
         price: Number(payload.price ?? 0),
         logo_url: '',
-      } as any;
+      };
+      try {
+        const { openapi } = await import('@/core/request');
+        const fetched = currentAccount?.address
+          ? await openapi.getToken(
+              currentAccount.address,
+              chainServerId,
+              tokenId,
+            )
+          : null;
+        if (fetched) {
+          token = fetched;
+        }
+      } catch {
+        // Fall back to the minimal token object.
+      }
       markExplicitSwapSelection();
       if (payload.type === 'to') {
         setReceiveToken(token);
