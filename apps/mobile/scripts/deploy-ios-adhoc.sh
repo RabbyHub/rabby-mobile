@@ -290,6 +290,20 @@ if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
   fi
   export SENTRY_DISABLE_AUTO_UPLOAD="${SENTRY_DISABLE_AUTO_UPLOAD:-true}"
   export ZERO_AR_DATE="${ZERO_AR_DATE:-$(git -C "$project_dir" show -s --format=%cI HEAD)}"
+  # Swift embeds #file/#filePath literals that no driver flag remaps, so every
+  # builder of a channel must use the same absolute checkout path. The root is
+  # derived from the channel and is an intermediate value: it is not read from
+  # the environment, and the CI job checks the repository out there.
+  case "$unsigned_channel" in
+    production) ios_build_root="/tmp/rabby-mobile-ios/production" ;;
+    *) ios_build_root="/tmp/rabby-mobile-ios/regression" ;;
+  esac
+  export RABBY_MOBILE_IOS_BUILD_ROOT="$ios_build_root"
+  current_root="$(cd "$project_dir/../.." && pwd)"
+  if [ "$current_root" != "$ios_build_root" ]; then
+    echo "[deploy-ios-adhoc] WARNING: checkout is at $current_root but the $unsigned_channel build root is $ios_build_root." >&2
+    echo "[deploy-ios-adhoc]          Swift #file literals embed the checkout path; both builders must use the same root." >&2
+  fi
   # The RNFS pod compiles a Rust crate (rabby-safe-svg) inside the archive, and
   # rustc embeds the toolchain and cargo-registry paths in the static library.
   # Pin the compiler the CI workflows use and remap those prefixes so two

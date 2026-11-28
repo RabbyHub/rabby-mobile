@@ -42,6 +42,9 @@ compare('contract', a.contract, b.contract);
 // The checkout path is mapped out of the binaries (-ffile-prefix-map) and the
 // ambient Ruby only drives the pinned CocoaPods, so neither is a contract field.
 const COMPARED_TOOLCHAIN_KEYS = [
+  // Swift embeds #file/#filePath literals, so the checkout path is part of the
+  // build contract for iOS: both builders must use the same channel root.
+  'build_root',
   'xcode',
   'xcode_build',
   'node',
