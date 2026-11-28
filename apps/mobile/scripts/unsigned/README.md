@@ -47,6 +47,12 @@ Output goes to `dist/unsigned/<channel>/` (ignored by git):
      so behaviour is unchanged; two independently linked binaries then agree
      byte for byte. Set `RABBY_MOBILE_IOS_CANONICALIZE_GOT=false` to skip it.
 
+   Because the canonicaliser also rewrites the compiler's escaping-closure path
+   lengths, the checkout path no longer shapes the artifact. `build_root` is
+   therefore diagnostic only; `RABBY_MOBILE_IOS_BUILD_ROOT` accepts `self`
+   (default: build in place), `tmp-channel` (`/tmp/rabby-mobile-ios-<channel>`)
+   or an absolute path.
+
 ## Determinism measures in the build
 
 - Metro module ids are stable hashes (not traversal-order integers);

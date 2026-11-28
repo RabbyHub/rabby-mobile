@@ -42,9 +42,6 @@ compare('contract', a.contract, b.contract);
 // The checkout path is mapped out of the binaries (-ffile-prefix-map) and the
 // ambient Ruby only drives the pinned CocoaPods, so neither is a contract field.
 const COMPARED_TOOLCHAIN_KEYS = [
-  // Swift embeds #file/#filePath literals, so the checkout path is part of the
-  // build contract for iOS: both builders must use the same channel root.
-  'build_root',
   'xcode',
   'xcode_build',
   'node',
@@ -82,6 +79,14 @@ if (a.tree || b.tree) {
   if (a.tree?.executable?.sha256 !== b.tree?.executable?.sha256) {
     notes.push(
       'app binary sha256 differs (canonicalisation may have missed a section)',
+    );
+  }
+  if (
+    a.tree?.tree_sha256 !== b.tree?.tree_sha256 &&
+    a.toolchain?.build_root !== b.toolchain?.build_root
+  ) {
+    notes.push(
+      `different build roots (${a.toolchain?.build_root} vs ${b.toolchain?.build_root}): suspect an uncanonicalised path`,
     );
   }
 }

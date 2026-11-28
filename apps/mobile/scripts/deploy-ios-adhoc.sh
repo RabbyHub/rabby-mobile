@@ -294,13 +294,38 @@ if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
   # builder of a channel must use the same absolute checkout path. The root is
   # derived from the channel and is an intermediate value: it is not read from
   # the environment, and the CI job checks the repository out there.
-  default_ios_build_root="/tmp/rabby-mobile-ios-${unsigned_channel}"
-  ios_build_root="${RABBY_MOBILE_IOS_BUILD_ROOT:-$default_ios_build_root}"
+  # `self` (the default) builds in place; `tmp-channel` uses the fixed
+  # per-channel directory. Any other value must be an absolute path.
+  build_root_spec="${RABBY_MOBILE_IOS_BUILD_ROOT:-self}"
+  case "$build_root_spec" in
+    self)
+      ios_build_root="$(cd "$project_dir/../.." && pwd -P)"
+      ios_build_root_source="self"
+      ;;
+    tmp-channel)
+      ios_build_root="/tmp/rabby-mobile-ios-${unsigned_channel}"
+      ios_build_root_source="tmp-channel"
+      ;;
+    /*)
+      ios_build_root="$build_root_spec"
+      ios_build_root_source="explicit"
+      ;;
+    *)
+      echo "[deploy-ios-adhoc] RABBY_MOBILE_IOS_BUILD_ROOT must be 'self', 'tmp-channel' or an absolute path (got: $build_root_spec)" >&2
+      exit 2
+      ;;
+  esac
   export RABBY_MOBILE_IOS_BUILD_ROOT="$ios_build_root"
+  export RABBY_MOBILE_IOS_BUILD_ROOT_SOURCE="$ios_build_root_source"
   current_root="$(cd "$project_dir/../.." && pwd)"
-  if [ "$current_root" != "$ios_build_root" ]; then
+  # Xcode hands /private/... paths to the compiler as /...; the canonicaliser
+  # subtracts this prefix length from the escaping-closure immediates. It must
+  # match the checkout the compiler actually saw.
+  canonical_root="${current_root#/private/}"
+  export RABBY_MOBILE_IOS_CANONICAL_ROOT_LEN="${#canonical_root}"
+  if [ "$ios_build_root_source" != "self" ] && [ "$current_root" != "$ios_build_root" ]; then
     echo "[deploy-ios-adhoc] WARNING: checkout is at $current_root but the $unsigned_channel build root is $ios_build_root." >&2
-    echo "[deploy-ios-adhoc]          Swift #file literals embed the checkout path; both builders must use the same root." >&2
+    echo "[deploy-ios-adhoc]          the canonicaliser will subtract that prefix length from its records." >&2
   fi
   # The RNFS pod compiles a Rust crate (rabby-safe-svg) inside the archive, and
   # rustc embeds the toolchain and cargo-registry paths in the static library.
