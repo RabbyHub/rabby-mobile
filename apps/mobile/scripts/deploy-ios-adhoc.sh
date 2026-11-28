@@ -294,10 +294,8 @@ if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
   # builder of a channel must use the same absolute checkout path. The root is
   # derived from the channel and is an intermediate value: it is not read from
   # the environment, and the CI job checks the repository out there.
-  case "$unsigned_channel" in
-    production) ios_build_root="/tmp/rabby-mobile-ios/production" ;;
-    *) ios_build_root="/tmp/rabby-mobile-ios/regression" ;;
-  esac
+  default_ios_build_root="/tmp/rabby-mobile-ios-${unsigned_channel}"
+  ios_build_root="${RABBY_MOBILE_IOS_BUILD_ROOT:-$default_ios_build_root}"
   export RABBY_MOBILE_IOS_BUILD_ROOT="$ios_build_root"
   current_root="$(cd "$project_dir/../.." && pwd)"
   if [ "$current_root" != "$ios_build_root" ]; then
@@ -321,6 +319,9 @@ if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
   export RUSTFLAGS="$rabby_rustflags"
   prepare_ios_build_artifacts || exit $?
   prepare_ios_native_deps || exit $?
+  # Swift embeds #file literals; switch the affected pod sources to #fileID so
+  # the artifact no longer depends on the checkout path at all.
+  bash "$project_dir/scripts/unsigned/patch-swift-file-literals.sh" || exit $?
   sh ./ios/patches/override-xcconfig-release.sh
   unsigned_archive="${RABBY_MOBILE_IOS_UNSIGNED_ARCHIVE:-$project_dir/.sign-only/RabbyMobile.xcarchive}"
   rm -rf "$unsigned_archive" "${unsigned_archive}.zip"
